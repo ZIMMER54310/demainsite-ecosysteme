@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0",
+  "langue": "fr",
+  "site": {
+    "id": "ID-OBJ-SITE-PUBLIC-A-REMPLACER",
+    "nom": "DemainSite Écosystème",
+    "initiales": "DS",
+    "signature": "Un écosystème numérique évolutif",
+    "urlAccueil": "./"
+  },
+  "seo": {
+    "titre": "DemainSite Écosystème",
+    "description": "Un moteur multi-sites piloté par les référentiels SharePoint DSE."
+  },
+  "theme": {
+    "primary": "#0b5cab",
+    "primaryDark": "#073b70",
+    "secondary": "#14b8a6",
+    "accent": "#f59e0b"
+  },
+  "navigation": [
+    { "id": "ID-OBJ-MENU-SITE-ACCUEIL", "label": "Accueil", "url": "#contenu" },
+    { "id": "ID-OBJ-MENU-SITE-SERVICES", "label": "Solutions", "url": "#servicesTitle" },
+    { "id": "ID-OBJ-MENU-SITE-UNIVERS", "label": "Écosystème", "url": "#universTitle" },
+    { "id": "ID-OBJ-MENU-SITE-CONTACT", "label": "Contact", "url": "#ctaTitle" }
+  ],
+  "hero": {
+    "surTitre": "DemainSite Écosystème",
+    "titre": "Le centre de votre univers numérique",
+    "texte": "Un moteur partagé pour créer, organiser et faire évoluer des sites, des projets et des contenus, avec SharePoint comme source officielle.",
+    "actions": [
+      { "label": "Découvrir l'écosystème", "url": "#universTitle" },
+      { "label": "Voir les solutions", "url": "#servicesTitle" }
+    ]
+  },
+  "statut": {
+    "titre": "Socle DSE prêt",
+    "texte": "Cette version lit toute son interface dans un fichier JSON, sans contenu métier placé dans le code JavaScript."
+  },
+  "services": {
+    "surTitre": "Solutions",
+    "titre": "Que souhaitez-vous réaliser ?",
+    "texte": "Les blocs ci-dessous sont alimentés par la configuration DSE et pourront ensuite provenir des listes SharePoint.",
+    "elements": [
+      { "id": "ID-OBJ-MODULE-SITE-PUBLIC-1", "icone": "🌐", "titre": "Développer une présence", "description": "Créer et faire évoluer un site public adapté à une organisation.", "lien": "Découvrir", "url": "#ctaTitle" },
+      { "id": "ID-OBJ-MODULE-SITE-PUBLIC-2", "icone": "📂", "titre": "Organiser des projets", "description": "Centraliser les contenus, informations et accès utiles.", "lien": "Découvrir", "url": "#ctaTitle" },
+      { "id": "ID-OBJ-MODULE-SITE-PUBLIC-3", "icone": "🤖", "titre": "Préparer avec l'IA", "description": "Produire des propositions contrôlées avant validation et publication.", "lien": "Découvrir", "url": "#ctaTitle" }
+    ]
+  },
+  "univers": {
+    "surTitre": "Univers reliés",
+    "titre": "Un moteur, plusieurs identités",
+    "texte": "Chaque domaine peut conserver sa propre identité tout en utilisant le même moteur générique.",
+    "elements": [
+      { "id": "ID-OBJ-SITE-PUBLIC-1", "titre": "DemainSite", "description": "Sites, accompagnement et solutions numériques.", "lien": "Explorer", "url": "#ctaTitle" },
+      { "id": "ID-OBJ-SITE-PUBLIC-2", "titre": "Éditions PascLaure", "description": "Créations, collections et produits numériques.", "lien": "Explorer", "url": "#ctaTitle" },
+      { "id": "ID-OBJ-SITE-PUBLIC-3", "titre": "Blogs-Site", "description": "Articles, actualités et contenus thématiques.", "lien": "Explorer", "url": "#ctaTitle" },
+      { "id": "ID-OBJ-SITE-PUBLIC-4", "titre": "Sites clients", "description": "Des espaces adaptés à chaque client et à chaque domaine.", "lien": "Explorer", "url": "#ctaTitle" }
+    ]
+  },
+  "appelAction": {
+    "surTitre": "Démarrer",
+    "titre": "Construisons progressivement le moteur DSE",
+    "texte": "Cette base est prête à recevoir les exports JSON des listes SharePoint, puis à être publiée dans GitHub Pages.",
+    "actions": [
+      { "label": "Contacter DemainSite", "url": "mailto:contact@exemple.fr" }
+    ]
+  },
+  "piedDePage": {
+    "texte": "© 2026 DemainSite Écosystème. Configuration pilotée par DSE.",
+    "liens": [
+      { "label": "Mentions légales", "url": "#" },
+      { "label": "Confidentialité", "url": "#" }
+    ]
+  }
+}
