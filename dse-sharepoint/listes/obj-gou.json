@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0",
-  "moteurVersion": "1.0.1",
+  "moteurVersion": "1.0.4",
   "source": {
     "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
     "liste": "OBJ-GOU",
     "listeId": "cbd59842-b27e-4258-941d-20b6742300db"
   },
-  "exporteLe": "2026-09-24T10:37:42.3694632+02:00",
+  "exporteLe": "2026-09-24T11:01:22.4554760+02:00",
   "nombreElements": 0,
   "elements": []
 }
