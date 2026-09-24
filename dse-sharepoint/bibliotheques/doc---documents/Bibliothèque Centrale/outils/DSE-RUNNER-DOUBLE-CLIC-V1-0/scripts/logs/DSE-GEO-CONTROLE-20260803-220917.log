@@ -1,0 +1,100 @@
+**********************
+PowerShell transcript start
+Start time: 20260803220917
+Username: AzureAD\PascalZIMMER_b9lyro1
+RunAs User: AzureAD\PascalZIMMER_b9lyro1
+Configuration Name: 
+Machine: ZENBOOK17 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-RUNNER-DOUBLE-CLIC-V1-0\scripts\RUN-CONTROLE-GEO.ps1 -Mode AuditOnly
+Process ID: 12492
+PSVersion: 7.6.3
+PSEdition: Core
+GitCommitId: 7.6.3
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+
+============================================================
+ DEMAINSITE - CONTROLE GEOGRAPHIE V1.3
+============================================================
+Mode : AuditOnly
+PS>TerminatingError(Get-PnPWeb): "You are not signed in. Please use Connect-PnPOnline to connect."
+Connexion SharePoint absente. Connexion DeviceLogin...
+Connexion SharePoint OK : https://blogssite.sharepoint.com/sites/Bibliotheque
+Liste journal creee : Journal actions
+Colonne ajoutee : Journal actions / Type
+Colonne ajoutee : Journal actions / Module
+Colonne ajoutee : Journal actions / Objet
+Colonne ajoutee : Journal actions / Message
+Colonne ajoutee : Journal actions / Statut
+Liste journal creee : Journal erreurs
+Colonne ajoutee : Journal erreurs / Type
+Colonne ajoutee : Journal erreurs / Module
+Colonne ajoutee : Journal erreurs / Objet
+Colonne ajoutee : Journal erreurs / Message
+Colonne ajoutee : Journal erreurs / Statut
+
+============================================================
+ COMPTAGE DES LISTES
+============================================================
+Pays : 1 elements
+Regions : 18 elements
+Departements : 104 elements
+Villes : 92 elements / minimum attendu 30000
+CodesPostaux : 6329 elements
+CodesPostauxVilles : 161 elements / minimum attendu 30000
+
+============================================================
+ CONTROLE DES CHAMPS VIDES
+============================================================
+Departements sans Code Region : 3
+Departements sans Nom Region : 3
+Villes sans Code Departement : 3
+Villes sans Nom Departement : 90
+Villes sans Code Region : 90
+Villes sans Nom Region : 90
+CodesPostaux sans Code Postal : 0
+CP/Villes sans Code Postal : 0
+CP/Villes sans Code INSEE : 0
+CP/Villes sans Ville : 0
+CP/Villes sans Departement : 7
+CP/Villes sans Region : 159
+
+============================================================
+ CREATION DES VUES DE CONTROLE
+============================================================
+Vue creee : Departements / Departements - Controle complet
+Vue creee : Departements / Departements - Sans region
+Vue creee : Villes / Villes - Controle complet
+Vue creee : Villes / Villes - Sans departement
+Vue creee : Villes / Villes - Sans region
+Vue creee : CodesPostaux / Codes postaux - Controle complet
+Vue creee : CodesPostaux / Codes postaux - Sans code
+Vue creee : CodesPostauxVilles / CP Villes - Controle complet
+Vue creee : CodesPostauxVilles / CP Villes - Sans ville
+Vue creee : CodesPostauxVilles / CP Villes - Sans code postal
+Vue creee : CodesPostauxVilles / CP Villes - Sans departement ou region
+
+============================================================
+ RAPPORT FINAL
+============================================================
+
+DateControle        Liste              Nombre MinimumAttendu Statut
+------------        -----              ------ -------------- ------
+2026-08-03 22:09:37 Pays                    1              1 OK
+2026-08-03 22:09:37 Regions                18             18 OK
+2026-08-03 22:09:38 Departements          104            100 OK
+2026-08-03 22:09:38 Villes                 92          30000 ALERTE_VOLUME
+2026-08-03 22:09:40 CodesPostaux         6329           5000 OK
+2026-08-03 22:09:40 CodesPostauxVilles    161          30000 ALERTE_VOLUME
+
+Rapport CSV : C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-RUNNER-DOUBLE-CLIC-V1-0\scripts\logs\DSE-GEO-CONTROLE-20260803-220917.csv
+Controle termine.
+**********************
+PowerShell transcript end
+End time: 20260803221022
+**********************
