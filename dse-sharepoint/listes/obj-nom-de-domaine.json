@@ -1,0 +1,925 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-NOM DE DOMAINE",
+    "listeId": "75873d46-9e57-4b80-bfd0-1895354407bd"
+  },
+  "exporteLe": "2026-09-24T10:38:08.3049974+02:00",
+  "nombreElements": 12,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "demainsite.fr",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 1,
+        "valeur": "Principal"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 1,
+        "valeur": "Principal"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2025-11-17T23:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": {
+        "id": 1,
+        "valeur": "1 AN"
+      },
+      "Temps_x0020_de_x0020_souscriptio0": {
+        "id": 1,
+        "valeur": "365.000000000000"
+      },
+      "Date_x0020_d_x0027_expiration": "2026-11-17T23:00:00.0000000Z",
+      "jourprovisoire": 365.0,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:29.0000000Z",
+      "Created": "2026-09-21T14:32:08.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "10.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "demainsite.com",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2025-11-17T23:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": {
+        "id": 1,
+        "valeur": "1 AN"
+      },
+      "Temps_x0020_de_x0020_souscriptio0": {
+        "id": 1,
+        "valeur": "365.000000000000"
+      },
+      "Date_x0020_d_x0027_expiration": "2026-11-17T23:00:00.0000000Z",
+      "jourprovisoire": 365.0,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:24.0000000Z",
+      "Created": "2026-09-21T14:32:13.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "11.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "pasclaure.fr",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2026-02-15T23:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": {
+        "id": 1,
+        "valeur": "1 AN"
+      },
+      "Temps_x0020_de_x0020_souscriptio0": {
+        "id": 1,
+        "valeur": "365.000000000000"
+      },
+      "Date_x0020_d_x0027_expiration": "2027-02-15T23:00:00.0000000Z",
+      "jourprovisoire": 365.0,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:21.0000000Z",
+      "Created": "2026-09-21T14:32:17.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "10.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "pasclaure.com",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2026-02-15T23:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": {
+        "id": 1,
+        "valeur": "1 AN"
+      },
+      "Temps_x0020_de_x0020_souscriptio0": {
+        "id": 1,
+        "valeur": "365.000000000000"
+      },
+      "Date_x0020_d_x0027_expiration": "2027-02-15T23:00:00.0000000Z",
+      "jourprovisoire": 365.0,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:19.0000000Z",
+      "Created": "2026-09-21T14:32:22.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "10.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "carottagexpress.fr",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 3,
+        "valeur": "CarottagExpert "
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 3,
+        "valeur": "CarottagExpert "
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2026-04-24T22:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": {
+        "id": 1,
+        "valeur": "1 AN"
+      },
+      "Temps_x0020_de_x0020_souscriptio0": {
+        "id": 1,
+        "valeur": "365.000000000000"
+      },
+      "Date_x0020_d_x0027_expiration": "2027-04-24T22:00:00.0000000Z",
+      "jourprovisoire": 365.0,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:15.0000000Z",
+      "Created": "2026-09-21T14:37:19.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "11.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 6,
+      "Title": "carottagesxpress.com",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 3,
+        "valeur": "CarottagExpert "
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 3,
+        "valeur": "CarottagExpert "
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2026-04-24T22:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": {
+        "id": 1,
+        "valeur": "1 AN"
+      },
+      "Temps_x0020_de_x0020_souscriptio0": {
+        "id": 1,
+        "valeur": "365.000000000000"
+      },
+      "Date_x0020_d_x0027_expiration": "2027-04-24T22:00:00.0000000Z",
+      "jourprovisoire": 365.0,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:14.0000000Z",
+      "Created": "2026-09-21T14:37:24.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "10.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 7,
+      "Title": "carottagexpert.fr",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 3,
+        "valeur": "CarottagExpert "
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 3,
+        "valeur": "CarottagExpert "
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2026-04-24T22:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": {
+        "id": 1,
+        "valeur": "1 AN"
+      },
+      "Temps_x0020_de_x0020_souscriptio0": {
+        "id": 1,
+        "valeur": "365.000000000000"
+      },
+      "Date_x0020_d_x0027_expiration": "2027-04-24T22:00:00.0000000Z",
+      "jourprovisoire": 365.0,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:11.0000000Z",
+      "Created": "2026-09-21T14:37:34.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "10.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 8,
+      "Title": "carottagexpert.com",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 1,
+        "valeur": "Principal"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 1,
+        "valeur": "Principal"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 3,
+        "valeur": "CarottagExpert "
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 3,
+        "valeur": "CarottagExpert "
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2026-04-24T22:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": {
+        "id": 1,
+        "valeur": "1 AN"
+      },
+      "Temps_x0020_de_x0020_souscriptio0": {
+        "id": 1,
+        "valeur": "365.000000000000"
+      },
+      "Date_x0020_d_x0027_expiration": "2027-04-24T22:00:00.0000000Z",
+      "jourprovisoire": 365.0,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:08.0000000Z",
+      "Created": "2026-09-21T14:37:55.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "9.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 9,
+      "Title": "dseco.fr",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 1,
+        "valeur": "Principal"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 1,
+        "valeur": "Principal"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2026-09-22T22:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": null,
+      "Temps_x0020_de_x0020_souscriptio0": null,
+      "Date_x0020_d_x0027_expiration": "2027-09-22T22:00:00.0000000Z",
+      "jourprovisoire": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:06.0000000Z",
+      "Created": "2026-09-23T15:31:44.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 10,
+      "Title": "blog-site.fr",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 1,
+        "valeur": "Principal"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 1,
+        "valeur": "Principal"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2026-09-22T22:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": null,
+      "Temps_x0020_de_x0020_souscriptio0": null,
+      "Date_x0020_d_x0027_expiration": null,
+      "jourprovisoire": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 2,
+        "valeur": "NON"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:03.0000000Z",
+      "Created": "2026-09-23T15:33:29.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 11,
+      "Title": "blogs-site.pro",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2026-09-22T22:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": null,
+      "Temps_x0020_de_x0020_souscriptio0": null,
+      "Date_x0020_d_x0027_expiration": null,
+      "jourprovisoire": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 2,
+        "valeur": "NON"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:01.0000000Z",
+      "Created": "2026-09-23T15:33:32.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 12,
+      "Title": "blogs-site.com",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM0": {
+        "id": 2,
+        "valeur": "Allias"
+      },
+      "OBJ_x002d_CLIENT": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_CLIENT_x003a_Titre": {
+        "id": 2,
+        "valeur": "DemaintSite Ecosystème"
+      },
+      "OBJ_x002d_NOM_x0020_DE_x0020_DOM1": {
+        "id": 1,
+        "valeur": "OVH"
+      },
+      "ID_x002d_NOM_x0020_DE_x0020_DOMA": "ID-NOM DE DOMAINE0000000000",
+      "DateAchat": "2026-09-22T22:00:00.0000000Z",
+      "Temps_x0020_de_x0020_souscriptio": null,
+      "Temps_x0020_de_x0020_souscriptio0": null,
+      "Date_x0020_d_x0027_expiration": null,
+      "jourprovisoire": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "OBJ_x002d_ACTIF": {
+        "id": 1,
+        "valeur": "Oui - Actif"
+      },
+      "OBJ_x002d_VALIDE": {
+        "id": 1,
+        "valeur": "OUI"
+      },
+      "OBJ_x002d_VEROUILLE": {
+        "id": 2,
+        "valeur": "NON"
+      },
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "Modified": "2026-09-23T15:40:00.0000000Z",
+      "Created": "2026-09-23T15:33:36.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    }
+  ]
+}
