@@ -1,0 +1,249 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-ORG-COMPTE",
+    "listeId": "517854dd-e469-46aa-a826-6d35d47a486e"
+  },
+  "exporteLe": "2026-09-24T10:38:17.1242061+02:00",
+  "nombreElements": 4,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "Microsoft 365",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDCOMPTE": "COMPTE-000001",
+      "NOMCOMPTE": "Microsoft 365",
+      "IDENTIFIANT": "administrateur@demainsite.local",
+      "URLCONNEXION": null,
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "COMMENTAIRES": null,
+      "ORG": {
+        "id": 4,
+        "valeur": "DemainSite Ecosysteme"
+      },
+      "CONTINENT": null,
+      "ZONE": null,
+      "PAYS": null,
+      "REGION": null,
+      "DEPARTEMENT": null,
+      "TERRITOIRE": null,
+      "FUSEAUHORAIRE": null,
+      "TYPECOMPTE": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-11T13:30:53.0000000Z",
+      "Created": "2026-09-11T13:30:53.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "SharePoint",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDCOMPTE": "COMPTE-000002",
+      "NOMCOMPTE": "SharePoint",
+      "IDENTIFIANT": "sharepoint-admin",
+      "URLCONNEXION": null,
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "COMMENTAIRES": null,
+      "ORG": {
+        "id": 4,
+        "valeur": "DemainSite Ecosysteme"
+      },
+      "CONTINENT": null,
+      "ZONE": null,
+      "PAYS": null,
+      "REGION": null,
+      "DEPARTEMENT": null,
+      "TERRITOIRE": null,
+      "FUSEAUHORAIRE": null,
+      "TYPECOMPTE": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-11T13:30:55.0000000Z",
+      "Created": "2026-09-11T13:30:55.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "WordPress",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDCOMPTE": "COMPTE-000003",
+      "NOMCOMPTE": "WordPress",
+      "IDENTIFIANT": "wp-admin",
+      "URLCONNEXION": null,
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "COMMENTAIRES": null,
+      "ORG": {
+        "id": 1,
+        "valeur": "DemainSite"
+      },
+      "CONTINENT": null,
+      "ZONE": null,
+      "PAYS": null,
+      "REGION": null,
+      "DEPARTEMENT": null,
+      "TERRITOIRE": null,
+      "FUSEAUHORAIRE": null,
+      "TYPECOMPTE": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-11T13:30:58.0000000Z",
+      "Created": "2026-09-11T13:30:58.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "OVH",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDCOMPTE": "COMPTE-000004",
+      "NOMCOMPTE": "OVH",
+      "IDENTIFIANT": "ovh-admin",
+      "URLCONNEXION": null,
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "COMMENTAIRES": null,
+      "ORG": {
+        "id": 1,
+        "valeur": "DemainSite"
+      },
+      "CONTINENT": null,
+      "ZONE": null,
+      "PAYS": null,
+      "REGION": null,
+      "DEPARTEMENT": null,
+      "TERRITOIRE": null,
+      "FUSEAUHORAIRE": null,
+      "TYPECOMPTE": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-11T13:31:00.0000000Z",
+      "Created": "2026-09-11T13:31:00.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    }
+  ]
+}
