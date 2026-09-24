@@ -1,0 +1,39 @@
+**********************
+PowerShell transcript start
+Start time: 20260803220834
+Username: AzureAD\PascalZIMMER_b9lyro1
+RunAs User: AzureAD\PascalZIMMER_b9lyro1
+Configuration Name: 
+Machine: ZENBOOK17 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-RUNNER-DOUBLE-CLIC-V1-0\scripts\RUN-INSTALL-PROCEDURE-GEO-001.ps1
+Process ID: 15144
+PSVersion: 7.6.3
+PSEdition: Core
+GitCommitId: 7.6.3
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+
+============================================================
+ INSTALLATION PROCEDURE GEO-001
+============================================================
+PS>TerminatingError(Get-PnPWeb): "You are not signed in. Please use Connect-PnPOnline to connect."
+Connexion SharePoint absente. Connexion DeviceLogin...
+Connexion SharePoint OK : https://blogssite.sharepoint.com/sites/Bibliotheque
+Liste presente : Procedures
+Colonne creee : Code procedure
+Colonne creee : Version procedure
+Colonne creee : Statut procedure
+Colonne creee : Domaine procedure
+Colonne creee : Contenu procedure
+Procedure creee : GEO-001 - Referentiel Geographique France
+Installation procedure GEO-001 terminee.
+Log : C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-RUNNER-DOUBLE-CLIC-V1-0\scripts\INSTALL-PROCEDURE-GEO-001-20260803-220834.log
+**********************
+PowerShell transcript end
+End time: 20260803220902
+**********************
