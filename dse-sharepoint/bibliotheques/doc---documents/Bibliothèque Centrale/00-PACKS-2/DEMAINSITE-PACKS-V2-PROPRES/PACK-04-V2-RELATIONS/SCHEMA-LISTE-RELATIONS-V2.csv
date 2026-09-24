@@ -1,0 +1,20 @@
+﻿Champ interne;Nom affiché;Type;Obligatoire;Rôle
+Title;Nom_Relation;Texte;Oui;Nom lisible de la relation
+ID_Relation;ID_Relation;Texte;Non;ID automatique REL-000001
+Type_Relation;Type_Relation;Choix;Oui;Prospect, Client, Association, etc.
+Statut;Statut;Choix;Oui;Actif, En préparation, etc.
+Contact_Principal;Contact_Principal;Texte;Non;Nom du contact principal
+Telephone;Telephone;Texte;Non;Téléphone principal
+Email;Email;Texte;Non;Email principal
+Adresse;Adresse;Texte long;Non;Adresse complète
+Code_Postal;Code_Postal;Texte;Non;Code postal
+Ville;Ville;Texte;Non;Ville
+Pays;Pays;Choix;Non;Pays
+Responsable;Responsable;Personne ou texte;Non;Responsable interne
+Site_Internet;Site_Internet;URL;Non;Site web principal
+Domaine_Principal;Domaine_Principal;Texte;Non;Domaine de référence
+Compte_Microsoft;Compte_Microsoft;Choix;Non;Oui, Non, À vérifier
+Logo_Officiel;Logo_Officiel;Lien ou texte;Non;Chemin du logo officiel
+Score_Completude;Score_Completude;Nombre;Non;Score 0 à 100
+Controle_Doublon;Controle_Doublon;Choix;Oui;Contrôle anti-doublon
+Journal;Journal;Texte long;Non;Historique des décisions
