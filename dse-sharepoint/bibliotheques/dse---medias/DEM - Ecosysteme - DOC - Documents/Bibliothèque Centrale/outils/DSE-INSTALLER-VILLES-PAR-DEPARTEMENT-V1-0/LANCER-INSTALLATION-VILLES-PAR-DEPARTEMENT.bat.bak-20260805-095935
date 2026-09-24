@@ -1,0 +1,28 @@
+@echo off
+setlocal
+chcp 65001 >nul
+cd /d "%~dp0"
+title DemainSite - Villes par departement V1.0
+echo ============================================================
+echo  DEMAINSITE ECOSYSTEME - VILLES PAR DEPARTEMENT V1.0
+echo ============================================================
+echo.
+echo Choix disponibles :
+echo  STRUCTURE = creer les listes et vues sans importer toutes les communes
+echo  54        = importer uniquement le departement 54
+echo  57        = importer uniquement le departement 57
+echo  TOUS      = importer tous les departements fournis par l'API Geo
+echo.
+set /p CHOIX=Ecris STRUCTURE, un code departement, ou TOUS : 
+if "%CHOIX%"=="" set CHOIX=STRUCTURE
+where pwsh >nul 2>nul
+if %errorlevel%==0 (
+  pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0RUN-INSTALL-VILLES-PAR-DEPARTEMENT.ps1" -Choix "%CHOIX%"
+) else (
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0RUN-INSTALL-VILLES-PAR-DEPARTEMENT.ps1" -Choix "%CHOIX%"
+)
+echo.
+echo ============================================================
+echo  Termine. Consulter le dossier logs si besoin.
+echo ============================================================
+pause
