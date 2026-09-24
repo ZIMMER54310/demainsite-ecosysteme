@@ -1,0 +1,19 @@
+ORDRE OFFICIEL D'INSTALLATION - BIBLIOTHEQUE CENTRALE DEMAIN SITE ECOSYSTEME V1
+
+Objectif : déposer tous les packs maintenant puis les exploiter dans le bon ordre, sans erreur.
+
+Ordre recommandé :
+1. PACK-01-FONDATION-LISTES-SHAREPOINT
+2. PACK-02-CHOIX-OFFICIELS
+3. PACK-03-IDENTIFIANTS-OFFICIELS
+4. PACK-04-ARBORESCENCES-STANDARD
+5. PACK-05-MODELES-TEAMS
+6. PACK-06-MODELES-SHAREPOINT
+7. PACK-07-VUES-OFFICIELLES
+8. PACK-08-PROCEDURES-OFFICIELLES
+9. PACK-09-POWER-AUTOMATE-SPECS
+10. PACK-10-IMPORTS-EXEMPLES-CLIENTS
+
+Première installation conseillée : PACK-01-FONDATION-LISTES-SHAREPOINT.
+Règle permanente : PascARA IA propose, Pascal valide.
+Aucune action sensible ne doit être exécutée sans validation de Pascal.
