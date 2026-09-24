@@ -1,0 +1,11 @@
+﻿Ordre;Pack;Objectif;Action immédiate;Statut
+1;PACK-01-FONDATION-LISTES-SHAREPOINT;Créer automatiquement les listes SharePoint et colonnes principales;Exécuter le script PowerShell après validation Pascal;À installer
+2;PACK-02-CHOIX-OFFICIELS;Centraliser les valeurs de choix;Conserver comme référence;À déposer
+3;PACK-03-IDENTIFIANTS-OFFICIELS;Fixer les préfixes ID;Conserver comme référence;À déposer
+4;PACK-04-ARBORESCENCES-STANDARD;Standardiser les dossiers clients/projets/sites;Conserver puis utiliser pour automatisation;À déposer
+5;PACK-05-MODELES-TEAMS;Standardiser les équipes et canaux Teams;Conserver puis utiliser après validation;À déposer
+6;PACK-06-MODELES-SHAREPOINT;Standardiser les bibliothèques SharePoint;Conserver puis utiliser après validation;À déposer
+7;PACK-07-VUES-OFFICIELLES;Préparer les vues SharePoint utiles;Créer les vues une par une plus tard;À déposer
+8;PACK-08-PROCEDURES-OFFICIELLES;Procédures métier PRC-001 à PRC-006;Conserver comme procédures actives V1;À déposer
+9;PACK-09-POWER-AUTOMATE-SPECS;Spécifications des flux futurs;Ne rien exécuter maintenant;À déposer
+10;PACK-10-IMPORTS-EXEMPLES-CLIENTS;Exemples ActiDem et Carottagexpress;Importer plus tard si besoin;À déposer
