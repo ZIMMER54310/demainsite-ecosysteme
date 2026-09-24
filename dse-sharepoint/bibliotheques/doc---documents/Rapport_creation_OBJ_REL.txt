@@ -1,0 +1,88 @@
+RAPPORT DE CRÉATION — OBJ-REL
+
+Date
+04/09/2026 19:04 (Europe/Paris, UTC+02:00)
+
+Liste créée
+OBJ-REL
+Identifiant : e9161ccf-859d-4d49-b245-ac6e6cd0271b
+Objet : gestion des relations entre objets DSE selon le modèle OBJ Source → Type de relation → OBJ Cible.
+Nombre de lignes après création : 0.
+Aucune autre liste n’a été modifiée.
+
+Colonnes créées
+- ID-REL : Texte, obligatoire, valeurs uniques.
+- OBJ-SOURCE : Lookup obligatoire.
+- TYPE-RELATION : Lookup obligatoire.
+- OBJ-CIBLE : Lookup obligatoire.
+- ACTIF : Oui/Non, défaut Oui.
+- DATE-DEBUT : Date uniquement.
+- DATE-FIN : Date uniquement.
+- SOURCE-RELATION : Texte.
+- CONTROLE-PASC-ARA : Oui/Non, défaut Non.
+- VERROUILLE : Oui/Non, défaut Non.
+- NOTES : Texte multilignes, texte brut.
+
+Lookups créés
+- OBJ-SOURCE → liste OBJ, champ affiché ID-OBJ.
+- TYPE-RELATION → liste OBJ-REF-70, champ affiché NOM-REF.
+- OBJ-CIBLE → liste OBJ, champ affiché ID-OBJ.
+
+Index créés
+- ID-REL : index créé avec l’unicité.
+- OBJ-SOURCE : index créé.
+- TYPE-RELATION : index créé.
+- OBJ-CIBLE : index créé.
+- ACTIF : index non conservé, car la configuration disponible ne permettait pas de maintenir simultanément l’index et le défaut Oui sur cette colonne Oui/Non. Le défaut Oui, exigence fonctionnelle, a été priorisé.
+
+Contraintes appliquées
+- ID-REL obligatoire et unique.
+- OBJ-SOURCE obligatoire : l’existence est contrôlée par le Lookup vers OBJ.
+- TYPE-RELATION obligatoire : l’existence est contrôlée par le Lookup vers OBJ-REF-70.
+- OBJ-CIBLE obligatoire : l’existence est contrôlée par le Lookup vers OBJ.
+- Valeurs par défaut : ACTIF=Oui, CONTROLE-PASC-ARA=Non, VERROUILLE=Non.
+- OBJ-SOURCE ≠ OBJ-CIBLE : non appliqué. La validation native de liste disponible ne prend pas en charge une comparaison fiable entre deux colonnes Lookup. À traiter ultérieurement par formulaire personnalisé ou workflow de validation, après accord.
+
+Conseils IA SharePoint
+Structure proposée
+- Modèle relationnel clair et adapté à une table d’arêtes entre objets DSE.
+- Les deux Lookups vers OBJ garantissent la cohérence référentielle à la saisie.
+- Le référentiel OBJ-REF-70 centralise correctement les types de relation.
+
+Risques
+- Auto-relation encore possible tant que le contrôle OBJ-SOURCE ≠ OBJ-CIBLE n’est pas automatisé.
+- Doublons fonctionnels possibles : même source, même type et même cible avec plusieurs ID-REL.
+- DATE-FIN peut être antérieure à DATE-DEBUT faute de règle dédiée.
+- Une suppression dans une liste source peut fragiliser la lisibilité historique selon le comportement de suppression des Lookups.
+- Le champ TYPE-RELATION affiche NOM-REF ; vérifier que ce libellé reste stable et sans ambiguïté.
+
+Colonnes potentiellement manquantes
+- ID-RELATION-INVERSE ou indicateur BIDIRECTIONNEL pour les relations symétriques.
+- ORDRE ou PRIORITE pour hiérarchiser plusieurs relations.
+- MOTIF-VERROUILLAGE et DATE-VERROUILLAGE pour l’audit.
+- ORIGINE-SYSTEME / ID-EXTERNE pour les imports et synchronisations.
+- DATE-DERNIER-CONTROLE et ANOMALIE-DETECTEE pour l’exploitation du pilote.
+Ces propositions n’ont pas été appliquées.
+
+Optimisations possibles
+- Ajouter ultérieurement un contrôle anti-doublon composite sur OBJ-SOURCE + TYPE-RELATION + OBJ-CIBLE.
+- Mettre en place un contrôle DATE-FIN ≥ DATE-DEBUT.
+- Indexer ACTIF par un mécanisme d’administration compatible tout en conservant son défaut Oui.
+- Définir explicitement le comportement en cas de suppression d’un OBJ ou d’un type de relation : restriction recommandée pour préserver l’intégrité.
+- Créer des vues dédiées : relations actives, relations verrouillées, relations à contrôler. Non créées pour respecter « Ne rien modifier » après l’analyse.
+- Aucun formatage de colonne n’a été ajouté, conformément à la consigne de ne rien modifier après l’analyse.
+
+Compatibilité avec le pilote Application DemainSite
+- Compatible comme table centrale de relations entre objets.
+- Convient aux parcours source → relation → cible et aux traitements de graphe simples.
+- Avant usage pilote en écriture, sécuriser l’anti-auto-relation, l’anti-doublon composite et la cohérence des dates.
+- Prévoir des contrôles applicatifs si le pilote consomme les relations dans les deux sens.
+
+Erreurs éventuelles
+- Plusieurs passes techniques ont été nécessaires pour faire respecter l’obligation et l’unicité de ID-REL.
+- L’index ACTIF n’a pas pu être conservé avec son défaut Oui par le mécanisme disponible ; le défaut demandé a été conservé.
+- La contrainte OBJ-SOURCE ≠ OBJ-CIBLE n’a pas pu être appliquée nativement sur des Lookups.
+
+Résultat final
+SUCCÈS AVEC DEUX LIMITES DOCUMENTÉES.
+La liste OBJ-REL est créée, vide et opérationnelle. Toutes les colonnes et les trois Lookups demandés existent. Les index ID-REL, OBJ-SOURCE, TYPE-RELATION et OBJ-CIBLE sont actifs. ACTIF conserve le défaut Oui mais n’est pas indexé. Aucun élément, aucune relation et aucune donnée n’ont été créés.
