@@ -1,0 +1,6 @@
+﻿"Id";"Title";"CODESCRIPT";"NOMSCRIPT";"DESCRIPTIONSCRIPT";"TYPESCRIPT";"STATUTSCRIPT";"JOURNALISATION";"ORDREEXECUTION";"EXISTENCESCRIPT";"VERSIONSCRIPT";"CHEMINSCRIPT";"ACTIF";"VERROUILLE";"NOTES";"OBJREF"
+"1";"50-01-synchronisation-automation";"50-01-synchronisation-automation";"";"";"";"";"";"";"";"";"50-MAINTENANCE\50-01-synchronisation-automation.ps1";"";"";"";""
+"2";"50-02-synchronisation-obj-lst";"50-02-synchronisation-obj-lst";"";"";"";"";"";"";"";"";"50-MAINTENANCE\50-02-synchronisation-obj-lst.ps1";"";"";"";""
+"3";"50-03-migration-typepage-lookup";"50-03-migration-typepage-lookup";"";"";"";"";"";"";"";"";"50-MAINTENANCE\50-03-migration-typepage-lookup.ps1";"";"";"";""
+"4";"50-04-nettoyage-prefixe-zz";"50-04-nettoyage-prefixe-zz";"";"";"";"";"";"";"";"";"50-MAINTENANCE\50-04-nettoyage-prefixe-zz.ps1";"";"";"";""
+"5";"50-05-reparation-lookups-casses";"50-05-reparation-lookups-casses";"";"";"";"";"";"";"";"";"50-MAINTENANCE\50-05-reparation-lookups-casses.ps1";"";"";"";""
