@@ -1,0 +1,30 @@
+﻿Titre - Statut;ID OBJ Statut;Code Statut;Type Statut;Phase Statut;Description Statut;Statut Initial;Statut Final;Autorise Modification;Autorise Suppression;Couleur;Icone;Actif;Ordre Affichage;Validation DSE
+Brouillon;ID-OBJ-STA-000001;BROUILLON;PREPARATION;DEBUT;Élément en cours de préparation et non encore soumis à validation.;Oui;Non;Oui;Non;Gris;Edit;Oui;10;Non
+Proposition IA;ID-OBJ-STA-000002;PROPOSITION-IA;PREPARATION;DEBUT;Élément préparé ou proposé par une intelligence artificielle avant contrôle humain.;Oui;Non;Oui;Non;Violet;Sparkle;Oui;20;Non
+À compléter;ID-OBJ-STA-000003;A-COMPLETER;PREPARATION;EN-COURS;Élément incomplet nécessitant des informations supplémentaires.;Non;Non;Oui;Non;Orange;Edit;Oui;30;Non
+À contrôler;ID-OBJ-STA-000004;A-CONTROLER;CONTROLE;EN-COURS;Élément nécessitant un contrôle fonctionnel ou technique.;Non;Non;Oui;Non;Orange;Search;Oui;40;Non
+Contrôle en cours;ID-OBJ-STA-000005;CONTROLE-EN-COURS;CONTROLE;EN-COURS;Élément actuellement analysé ou vérifié.;Non;Non;Oui;Non;Bleu;Search;Oui;50;Non
+Conforme;ID-OBJ-STA-000006;CONFORME;CONTROLE;EN-COURS;Élément ayant réussi les contrôles applicables.;Non;Non;Oui;Non;Vert;Checkmark;Oui;60;Non
+Non conforme;ID-OBJ-STA-000007;NON-CONFORME;CONTROLE;EN-COURS;Élément présentant une ou plusieurs anomalies bloquantes.;Non;Non;Oui;Non;Rouge;Error;Oui;70;Non
+Correction demandée;ID-OBJ-STA-000008;CORRECTION-DEMANDEE;CORRECTION;EN-COURS;Élément retourné pour correction avant une nouvelle validation.;Non;Non;Oui;Non;Orange;Edit;Oui;80;Non
+Correction en cours;ID-OBJ-STA-000009;CORRECTION-EN-COURS;CORRECTION;EN-COURS;Correction de l’élément actuellement en cours.;Non;Non;Oui;Non;Bleu;Edit;Oui;90;Non
+À valider;ID-OBJ-STA-000010;A-VALIDER;VALIDATION;EN-COURS;Élément prêt à être soumis au validateur autorisé.;Non;Non;Oui;Non;Orange;Approval;Oui;100;Non
+Validation en cours;ID-OBJ-STA-000011;VALIDATION-EN-COURS;VALIDATION;EN-COURS;Décision de validation actuellement en cours.;Non;Non;Non;Non;Bleu;Approval;Oui;110;Non
+Validé;ID-OBJ-STA-000012;VALIDE;VALIDATION;EN-COURS;Élément officiellement validé mais pas nécessairement publié ou activé.;Non;Non;Oui;Non;Vert;Checkmark;Oui;120;Non
+Refusé;ID-OBJ-STA-000013;REFUSE;VALIDATION;EN-COURS;Élément refusé par le validateur et nécessitant une correction ou un abandon.;Non;Non;Oui;Non;Rouge;Dismiss;Oui;130;Non
+Actif;ID-OBJ-STA-000014;ACTIF;EXPLOITATION;EN-COURS;Élément actuellement disponible et utilisable dans DSE.;Non;Non;Oui;Non;Vert;Play;Oui;140;Non
+Inactif;ID-OBJ-STA-000015;INACTIF;EXPLOITATION;EN-COURS;Élément conservé mais temporairement indisponible.;Non;Non;Oui;Non;Gris;Pause;Oui;150;Non
+Suspendu;ID-OBJ-STA-000016;SUSPENDU;EXPLOITATION;EN-COURS;Élément temporairement suspendu en attente d’une décision ou d’une correction.;Non;Non;Oui;Non;Orange;Pause;Oui;160;Non
+Verrouillé;ID-OBJ-STA-000017;VERROUILLE;SECURITE;EN-COURS;Élément protégé contre les modifications ordinaires.;Non;Non;Non;Non;Rouge;Lock;Oui;170;Non
+Erreur;ID-OBJ-STA-000018;ERREUR;ANOMALIE;EN-COURS;Élément dont le traitement a rencontré une erreur.;Non;Non;Oui;Non;Rouge;Error;Oui;180;Non
+Avertissement;ID-OBJ-STA-000019;AVERTISSEMENT;ANOMALIE;EN-COURS;Élément utilisable mais comportant une alerte à examiner.;Non;Non;Oui;Non;Orange;Warning;Oui;190;Non
+Fichier manquant;ID-OBJ-STA-000020;FICHIER-MANQUANT;SOURCE;EN-COURS;Source attendue mais absente de son emplacement officiel.;Non;Non;Oui;Non;Rouge;DocumentError;Oui;200;Non
+À mettre à jour;ID-OBJ-STA-000021;A-METTRE-A-JOUR;MAINTENANCE;EN-COURS;Élément nécessitant une synchronisation ou une mise à jour.;Non;Non;Oui;Non;Orange;Sync;Oui;210;Non
+Mise à jour en cours;ID-OBJ-STA-000022;MISE-A-JOUR-EN-COURS;MAINTENANCE;EN-COURS;Mise à jour ou synchronisation actuellement en cours.;Non;Non;Non;Non;Bleu;Sync;Oui;220;Non
+Synchronisé;ID-OBJ-STA-000023;SYNCHRONISE;MAINTENANCE;EN-COURS;Élément aligné avec sa source officielle.;Non;Non;Oui;Non;Vert;Sync;Oui;230;Non
+Désactivé;ID-OBJ-STA-000024;DESACTIVE;EXPLOITATION;EN-COURS;Élément volontairement désactivé sans suppression de ses données.;Non;Non;Oui;Non;Gris;Blocked;Oui;240;Non
+Archivé;ID-OBJ-STA-000025;ARCHIVE;ARCHIVAGE;FIN;Élément retiré de l’usage courant mais conservé pour l’historique.;Non;Oui;Non;Non;Gris;Archive;Oui;250;Non
+Obsolète;ID-OBJ-STA-000026;OBSOLETE;ARCHIVAGE;FIN;Élément remplacé ou devenu inadapté mais conservé pour traçabilité.;Non;Oui;Non;Non;Gris;History;Oui;260;Non
+Annulé;ID-OBJ-STA-000027;ANNULE;CLOTURE;FIN;Traitement abandonné volontairement avant son achèvement.;Non;Oui;Non;Non;Gris;Dismiss;Oui;270;Non
+Terminé;ID-OBJ-STA-000028;TERMINE;CLOTURE;FIN;Traitement achevé normalement.;Non;Oui;Non;Non;Vert;Completed;Oui;280;Non
+Non déterminé;ID-OBJ-STA-000029;NON-DETERMINE;CONTROLE;EN-COURS;Statut temporaire utilisé lorsqu’aucune qualification fiable n’est disponible.;Non;Non;Oui;Non;Orange;Question;Oui;990;Non
