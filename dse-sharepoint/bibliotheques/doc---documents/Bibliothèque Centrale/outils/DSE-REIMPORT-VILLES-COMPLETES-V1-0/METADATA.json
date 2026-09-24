@@ -1,0 +1,9 @@
+{
+  "nom": "DSE-REIMPORT-VILLES-COMPLETES",
+  "version": "1.0",
+  "projet": "DemainSite Ecosysteme",
+  "site_sharepoint": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+  "listes": ["Villes", "CodesPostaux", "CodesPostauxVilles"],
+  "suppression_automatique": false,
+  "journalisation": true
+}
