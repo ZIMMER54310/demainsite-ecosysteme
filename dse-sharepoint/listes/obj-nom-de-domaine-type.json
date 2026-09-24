@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-NOM DE DOMAINE-TYPE",
+    "listeId": "4ff0dfe2-86f8-4e99-a5f7-78733c94a347"
+  },
+  "exporteLe": "2026-09-24T10:38:12.3725205+02:00",
+  "nombreElements": 2,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "Principal",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "Modified": "2026-09-21T14:28:25.0000000Z",
+      "Created": "2026-09-21T14:28:25.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "Allias",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "Modified": "2026-09-21T14:28:32.0000000Z",
+      "Created": "2026-09-21T14:28:32.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    }
+  ]
+}
