@@ -1,0 +1,13 @@
+﻿Ordre;Pack;Objectif;Installation maintenant
+1;PACK-01-V2-FONDATION-BIBLIOTHEQUE-CENTRALE;Créer les dossiers et règles de base de la Bibliothèque Centrale;Oui
+2;PACK-02-V2-IDENTIFIANTS-OFFICIELS;Définir les préfixes et règles des IDs uniques;Oui
+3;PACK-03-V2-CHOIX-OFFICIELS;Définir les valeurs de choix officielles;Oui
+4;PACK-04-V2-RELATIONS;Structurer la liste Relations, racine métier;Oui
+5;PACK-05-V2-SITES-DOMAINES;Structurer les listes Sites et Domaines;Oui
+6;PACK-06-V2-PROJETS-MEDIAS-DOCUMENTS;Structurer Projets, Médias et Documents;Oui
+7;PACK-07-V2-UTILISATEURS-DROITS-TEAMS;Structurer Utilisateurs, équipes Teams et canaux;Oui
+8;PACK-08-V2-VUES-SHAREPOINT;Préparer les vues SharePoint officielles;Oui
+9;PACK-09-V2-AUTOMATISATIONS;Spécifier les automatisations Power Automate;Non, spécifications seulement
+10;PACK-10-V2-IMPORTS-EXEMPLES;Fournir exemples ActiDem, Carottage Expert, Pascal;Oui, après validation
+11;PACK-11-V2-PROCEDURES-GOUVERNANCE;Gouvernance, archivage, anti-régression, validation;Oui
+12;PACK-12-V2-COCKPIT-MAQUETTES;Références cockpit Super Administrateur et vues utilisateur;Oui
