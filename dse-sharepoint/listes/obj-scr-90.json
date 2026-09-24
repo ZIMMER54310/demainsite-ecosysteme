@@ -1,0 +1,343 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-SCR-90",
+    "listeId": "32512ede-d16b-4fd7-afdc-d247fdc44351"
+  },
+  "exporteLe": "2026-09-24T10:39:09.6876480+02:00",
+  "nombreElements": 6,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "90-00",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODESCRIPT": "90-00",
+      "NOMSCRIPT": "90-00",
+      "DESCRIPTIONSCRIPT": null,
+      "ORDREEXECUTION": null,
+      "VERSIONSCRIPT": null,
+      "CHEMINSCRIPT": "90-PASC-ARA-IA\\90-00.ps1",
+      "NOTES": "Ajout automatique par 40-02. OBJ-REF à valider manuellement.",
+      "TYPESCRIPTREF": null,
+      "STATUTSCRIPTREF": null,
+      "JOURNALISATIONREF": null,
+      "EXISTENCESCRIPTREF": null,
+      "ACTIFREF": null,
+      "VERROUILLEREF": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-18T11:24:32.0000000Z",
+      "Created": "2026-09-18T10:59:59.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "7.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "90-01",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODESCRIPT": "90-01",
+      "NOMSCRIPT": "90-01",
+      "DESCRIPTIONSCRIPT": null,
+      "ORDREEXECUTION": null,
+      "VERSIONSCRIPT": null,
+      "CHEMINSCRIPT": "90-PASC-ARA-IA\\90-01.ps1",
+      "NOTES": "Ajout automatique par 40-02. OBJ-REF à valider manuellement.",
+      "TYPESCRIPTREF": null,
+      "STATUTSCRIPTREF": null,
+      "JOURNALISATIONREF": null,
+      "EXISTENCESCRIPTREF": null,
+      "ACTIFREF": null,
+      "VERROUILLEREF": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-18T11:24:33.0000000Z",
+      "Created": "2026-09-18T11:00:00.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "7.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "90-05-B",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODESCRIPT": "90-05-B",
+      "NOMSCRIPT": null,
+      "DESCRIPTIONSCRIPT": null,
+      "ORDREEXECUTION": null,
+      "VERSIONSCRIPT": null,
+      "CHEMINSCRIPT": "90-PASC-ARA-IA\\90-05-B.ps1",
+      "NOTES": null,
+      "TYPESCRIPTREF": null,
+      "STATUTSCRIPTREF": null,
+      "JOURNALISATIONREF": null,
+      "EXISTENCESCRIPTREF": null,
+      "ACTIFREF": null,
+      "VERROUILLEREF": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T09:12:25.0000000Z",
+      "Created": "2026-09-19T08:43:13.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 24,
+      "Title": "90-02-sauvegarde-hebdomadaire-toutes-listes",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODESCRIPT": "90-02-sauvegarde-hebdomadaire-toutes-listes",
+      "NOMSCRIPT": null,
+      "DESCRIPTIONSCRIPT": null,
+      "ORDREEXECUTION": null,
+      "VERSIONSCRIPT": null,
+      "CHEMINSCRIPT": "90-PASC-ARA-IA\\90-02-sauvegarde-hebdomadaire-toutes-listes.ps1",
+      "NOTES": null,
+      "TYPESCRIPTREF": null,
+      "STATUTSCRIPTREF": null,
+      "JOURNALISATIONREF": null,
+      "EXISTENCESCRIPTREF": null,
+      "ACTIFREF": null,
+      "VERROUILLEREF": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T10:15:50.0000000Z",
+      "Created": "2026-09-19T10:15:35.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 25,
+      "Title": "90-03-controle-obj-aut-azure",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODESCRIPT": "90-03-controle-obj-aut-azure",
+      "NOMSCRIPT": null,
+      "DESCRIPTIONSCRIPT": null,
+      "ORDREEXECUTION": null,
+      "VERSIONSCRIPT": null,
+      "CHEMINSCRIPT": "90-PASC-ARA-IA\\90-03-controle-obj-aut-azure.ps1",
+      "NOTES": null,
+      "TYPESCRIPTREF": null,
+      "STATUTSCRIPTREF": null,
+      "JOURNALISATIONREF": null,
+      "EXISTENCESCRIPTREF": null,
+      "ACTIFREF": null,
+      "VERROUILLEREF": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T12:42:32.0000000Z",
+      "Created": "2026-09-19T12:42:27.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 27,
+      "Title": "90-04-declenchement-manuel",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODESCRIPT": "90-04-declenchement-manuel",
+      "NOMSCRIPT": null,
+      "DESCRIPTIONSCRIPT": null,
+      "ORDREEXECUTION": null,
+      "VERSIONSCRIPT": null,
+      "CHEMINSCRIPT": "/sites/Bibliotheque/DSEOUTILS/90-PASC-ARA-IA/90-04-declenchement-manuel.ps1",
+      "NOTES": null,
+      "TYPESCRIPTREF": null,
+      "STATUTSCRIPTREF": null,
+      "JOURNALISATIONREF": null,
+      "EXISTENCESCRIPTREF": null,
+      "ACTIFREF": null,
+      "VERROUILLEREF": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T13:45:09.0000000Z",
+      "Created": "2026-09-19T13:45:09.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    }
+  ]
+}
