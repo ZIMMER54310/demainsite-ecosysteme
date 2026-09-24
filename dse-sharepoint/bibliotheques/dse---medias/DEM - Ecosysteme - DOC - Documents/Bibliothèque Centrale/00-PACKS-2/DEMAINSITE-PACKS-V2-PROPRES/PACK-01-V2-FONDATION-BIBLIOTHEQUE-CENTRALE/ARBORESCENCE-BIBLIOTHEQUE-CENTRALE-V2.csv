@@ -1,0 +1,12 @@
+﻿Dossier;Usage;Parent;Création
+00-PACKS-V2;Packs propres actuels;Racine;Manuel
+01-REFERENTIELS;CSV, schémas, choix, identifiants;Racine;Manuel
+02-PROCEDURES;Procédures officielles actives;Racine;Manuel
+03-MODELES;Modèles réutilisables;Racine;Manuel
+04-IMPORTS;Fichiers exemples et imports validés;Racine;Manuel
+RELATIONS;Dossiers liés aux relations si besoin documentaire;Racine;Après validation
+SITES;Documentation par site si besoin;Racine;Après validation
+PROJETS;Documents projets transverses;Racine;Après validation
+MEDIAS;Médias validés et sources;Racine;Après validation
+ARCHIVES;Archives, anciens packs, objets suspendus;Racine;Manuel
+ARCHIVES/PACKS-V1;Anciens packs à conserver sans suppression;ARCHIVES;Manuel
