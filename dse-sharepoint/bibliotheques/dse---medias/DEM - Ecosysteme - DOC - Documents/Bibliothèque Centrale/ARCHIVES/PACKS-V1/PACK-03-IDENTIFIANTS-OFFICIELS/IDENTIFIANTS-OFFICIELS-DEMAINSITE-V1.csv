@@ -1,0 +1,14 @@
+﻿Objet;Préfixe;Exemple;Règle
+Relation;REL;REL-ACT-001;ID automatique, permanent, non modifiable, jamais recyclé
+Client;CLI;CLI-ACT-001;ID automatique, permanent, non modifiable, jamais recyclé
+Projet;PROJ;PROJ-ACT-001;Lié à un client
+Site;SIT;SIT-ACT-001;Lié à un client et projet
+Domaine;DOM;DOM-ACT-001;Un seul domaine principal par site
+Page;PAG;PAG-ACT-001;Liée à un site
+Média;MED;MED-ACT-001;Versionné, jamais écrasé sans version
+Document;DOC;DOC-ACT-001;Versionnement obligatoire
+Utilisateur;USR;USR-DEN-001;Email principal unique
+Équipe Teams;TEAM;TEAM-ACT-001;Liée à un client principal
+Canal Teams;CHAN;CHAN-ACT-001;Lié à une équipe Teams
+SharePoint;SP;SP-ACT-001;Lié à un client ou objet métier
+Procédure;PRC;PRC-001;Une seule procédure active par objectif
