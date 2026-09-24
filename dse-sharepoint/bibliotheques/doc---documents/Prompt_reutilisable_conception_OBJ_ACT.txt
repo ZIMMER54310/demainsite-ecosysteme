@@ -1,0 +1,184 @@
+MISSION
+
+Concevoir la structure de :
+
+OBJ-ACT
+
+Ne rien créer.
+
+Ne rien modifier.
+
+Ne rien supprimer.
+
+=================================================
+
+OBJECTIF
+
+OBJ-ACT doit permettre de gérer :
+
+OBJ
+↓
+ACTEUR
+↓
+ROLE
+↓
+RESPONSABILITE
+
+=================================================
+
+CONTEXTE
+
+OBJ existe.
+
+OBJ-REF-50 existe et contient
+les rôles et responsabilités.
+
+OBJ est le registre principal
+des objets DSE.
+
+=================================================
+
+ANALYSE DEMANDEE
+
+Proposer :
+
+- les colonnes nécessaires ;
+- le type de chaque colonne ;
+- les colonnes obligatoires ;
+- les colonnes facultatives ;
+- les lookups recommandés ;
+- les index recommandés ;
+- les contraintes recommandées.
+
+=================================================
+
+QUESTIONS A ANALYSER
+
+1.
+
+L'acteur doit-il être :
+
+- Personne Microsoft 365
+- Entreprise
+- Compte
+- Equipe
+- IA
+- autre
+
+2.
+
+Faut-il prévoir :
+
+ACTEUR-PERSONNE
+
+et
+
+ACTEUR-ENTITE
+
+ou un modèle unique ?
+
+3.
+
+Faut-il permettre :
+
+plusieurs responsables
+pour un même objet ?
+
+4.
+
+Faut-il prévoir :
+
+RESPONSABLE PRINCIPAL
+
+Oui / Non
+
+5.
+
+Faut-il gérer :
+
+DATE-DEBUT
+
+DATE-FIN
+
+6.
+
+Faut-il gérer :
+
+ACTIF
+
+VERROUILLE
+
+CONTROLE-PASC-ARA
+
+7.
+
+Faut-il empêcher :
+
+plusieurs responsables principaux
+simultanés ?
+
+=================================================
+
+CONTRAINTE
+
+OBJ-ACT doit fonctionner avec :
+
+OBJ
+
+OBJ-REF-50
+
+OBJ-JRN
+
+OBJ-REL
+
+=================================================
+
+NE RIEN CREER
+
+Aucune liste
+
+Aucune colonne
+
+Aucune donnée
+
+=================================================
+
+CONSEIL IA SHAREPOINT
+
+Si vous étiez architecte DSE :
+
+Quelle serait la structure idéale
+de OBJ-ACT avant le pilote
+Application DemainSite ?
+
+=================================================
+
+RAPPORT OBLIGATOIRE
+
+Créer :
+
+Rapport_Conception_OBJ_ACT.txt
+
+Contenu :
+
+- Structure proposée
+- Colonnes recommandées
+- Lookups recommandés
+- Index recommandés
+- Contraintes recommandées
+- Risques
+- Avantages
+- Exemple concret
+- Recommandation finale
+
+Créer le rapport même en cas d'échec.
+
+Proposer le rapport en téléchargement.
+
+=================================================
+
+PROMPT UTILISE
+
+Créer également :
+
+Prompt_reutilisable_conception_OBJ_ACT.txt
