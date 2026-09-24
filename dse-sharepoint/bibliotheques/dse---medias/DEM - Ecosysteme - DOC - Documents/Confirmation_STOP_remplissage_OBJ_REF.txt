@@ -1,0 +1,64 @@
+RAPPORT DE CONFIRMATION — ARRÊT DU REMPLISSAGE OBJ-REF
+Site : DEM - Ecosysteme
+
+=================================================
+1. DÉCISION
+=================================================
+
+La création de données dans les listes OBJ-REF est suspendue.
+
+Aucune ligne ne doit être créée tant que le format officiel et définitif du champ ID-OBJ n’a pas été validé par une décision d’architecture.
+
+=================================================
+2. LISTES CONCERNÉES
+=================================================
+
+- OBJ-REF-00
+- OBJ-REF-10
+- OBJ-REF-20
+- OBJ-REF-30
+- OBJ-REF-40
+- OBJ-REF-50
+- OBJ-REF-60
+- OBJ-REF-70
+- OBJ-REF-80
+- OBJ-REF-90
+
+Ces listes doivent rester vides jusqu’à la validation du format ID-OBJ.
+
+=================================================
+3. ÉTAT CONFIRMÉ
+=================================================
+
+- Les structures des listes sont validées.
+- Les colonnes sont validées.
+- Aucun remplissage n’est autorisé pour le moment.
+- Aucune ligne n’a été créée dans le cadre de la demande de remplissage de OBJ-REF-00.
+- Aucune migration n’a été réalisée.
+- Aucune nouvelle colonne n’a été créée.
+- Aucune colonne existante n’a été modifiée.
+- Aucune relation ou hiérarchie n’a été créée.
+- Aucune automatisation n’a été créée.
+- OBJ, OBJ-JRN et les autres listes du site ne sont pas concernés par un remplissage.
+
+=================================================
+4. CONDITION DE REPRISE
+=================================================
+
+Le remplissage pourra reprendre uniquement après validation explicite des points suivants :
+
+1. Format officiel du champ ID-OBJ.
+2. Règle de génération de l’identifiant.
+3. Portée d’unicité de l’identifiant.
+4. Gestion future des niveaux et relations entre référentiels.
+5. Autorisation explicite de créer les éléments.
+
+=================================================
+5. CONSIGNE ACTIVE
+=================================================
+
+STOP CRÉATION DES DONNÉES.
+CONSERVER TOUTES LES LISTES OBJ-REF VIDES.
+ATTENDRE LA VALIDATION D’ARCHITECTURE DU FORMAT ID-OBJ.
+
+FIN DU RAPPORT
