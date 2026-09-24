@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-CATALOGUE",
+    "listeId": "b2f8560e-e056-4af4-af00-ff7462c8fa8a"
+  },
+  "exporteLe": "2026-09-24T10:35:40.3573715+02:00",
+  "nombreElements": 1,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "OBJ-CATALOGUE - liste creee en prevision",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "DESCRIPTION": "Catalogue produits/boutique (avec filtre par marque : DemainSite, Edition PascLaure, Blogs-Site)",
+      "COMMENTAIRES": "Liste standard creee en prevision des chantiers futurs (clients/boutique). Structure a completer selon besoin metier reel.",
+      "ACTIF": false,
+      "VERROUILLE": false,
+      "DATECREATION": "2026-09-19T09:22:05.0000000Z",
+      "DATEMAJ": null,
+      "IDPRODUIT": null,
+      "NOMPRODUIT": null,
+      "DESCRIPTIONPRODUIT": null,
+      "MARQUE": null,
+      "PRIX": null,
+      "DEVISE": null,
+      "TYPEPRODUIT": null,
+      "STATUTPRODUIT": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:22:07.0000000Z",
+      "Created": "2026-09-19T07:22:07.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    }
+  ]
+}
