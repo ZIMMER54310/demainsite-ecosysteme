@@ -1,0 +1,9 @@
+﻿Code;Déclencheur;Action prévue;Règle
+AUTO-REL-ID;Quand une relation est créée;Générer ID_Relation si vide;Validation avant activation
+AUTO-SIT-ID;Quand un site est créé;Générer ID_Site si vide;Validation avant activation
+AUTO-DOM-ID;Quand un domaine est créé;Générer ID_Domaine si vide;Validation avant activation
+AUTO-PROJ-ID;Quand un projet est créé;Générer ID_Projet si vide;Validation avant activation
+AUTO-SCORE-REL;Quand une relation est modifiée;Calculer Score_Completude;Proposition IA puis validation
+AUTO-DOUBLON-REL;Quand une relation est créée;Comparer nom, email, domaine;Alerte seulement
+AUTO-TEAMS-CLIENT;Après validation relation/projet;Préparer équipe Teams et canaux;Jamais sans validation Pascal
+AUTO-ARCHIVE;Quand statut = Archivé;Déplacer dossier documentaire si prévu;Jamais supprimer
