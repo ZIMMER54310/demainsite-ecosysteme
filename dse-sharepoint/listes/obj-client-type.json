@@ -1,0 +1,286 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-CLIENT-TYPE",
+    "listeId": "d6983865-b837-4307-892d-5ff6215c0b89"
+  },
+  "exporteLe": "2026-09-24T10:35:44.7174218+02:00",
+  "nombreElements": 7,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "Particulier",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "ACTIF": true,
+      "VEROUILLER": true,
+      "ID_x0020_OBJ_x002d_CLIENT_x002d_": "CLI-TYPE-0000000000",
+      "Modified": "2026-09-21T13:52:42.0000000Z",
+      "Created": "2026-09-21T13:44:25.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "Prospect",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "ACTIF": true,
+      "VEROUILLER": true,
+      "ID_x0020_OBJ_x002d_CLIENT_x002d_": "CLI-TYPE-0000000000",
+      "Modified": "2026-09-21T13:52:43.0000000Z",
+      "Created": "2026-09-21T13:45:41.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "Clients",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "ACTIF": true,
+      "VEROUILLER": true,
+      "ID_x0020_OBJ_x002d_CLIENT_x002d_": "CLI-TYPE-0000000000",
+      "Modified": "2026-09-21T13:52:45.0000000Z",
+      "Created": "2026-09-21T13:45:51.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "Partenaire",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "ACTIF": true,
+      "VEROUILLER": true,
+      "ID_x0020_OBJ_x002d_CLIENT_x002d_": "CLI-TYPE-0000000000",
+      "Modified": "2026-09-21T13:52:46.0000000Z",
+      "Created": "2026-09-21T13:46:02.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "Revendeur",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "ACTIF": true,
+      "VEROUILLER": true,
+      "ID_x0020_OBJ_x002d_CLIENT_x002d_": "CLI-TYPE-0000000000",
+      "Modified": "2026-09-21T13:52:48.0000000Z",
+      "Created": "2026-09-21T13:46:08.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 6,
+      "Title": "Fournisseur",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "ACTIF": true,
+      "VEROUILLER": true,
+      "ID_x0020_OBJ_x002d_CLIENT_x002d_": "CLI-TYPE-0000000000",
+      "Modified": "2026-09-21T13:52:57.0000000Z",
+      "Created": "2026-09-21T13:46:21.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 8,
+      "Title": "ND",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NOTE_x002d_COURTE": null,
+      "NOTE_x002d_LONGUE": null,
+      "ACTIF": true,
+      "VEROUILLER": true,
+      "ID_x0020_OBJ_x002d_CLIENT_x002d_": "CLI-TYPE-0000000000",
+      "Modified": "2026-09-21T13:52:27.0000000Z",
+      "Created": "2026-09-21T13:46:47.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": null
+    }
+  ]
+}
