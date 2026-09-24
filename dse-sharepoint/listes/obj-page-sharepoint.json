@@ -1,0 +1,3433 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-PAGE-SHAREPOINT",
+    "listeId": "bab82ede-f0cf-4aac-8592-705825d2cd1c"
+  },
+  "exporteLe": "2026-09-24T10:38:25.8507961+02:00",
+  "nombreElements": 60,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "Catalogue OBJ-REF",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-REF",
+      "NOMPAGE": "Catalogue OBJ-REF",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-REF.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-REF.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-REF",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-18T17:24:29.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:08.0000000Z",
+      "Created": "2026-09-18T15:24:31.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "7.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "Catalogue OBJ-SCR-70",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SCR-70",
+      "NOMPAGE": "Catalogue OBJ-SCR-70",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SCR-70.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SCR-70.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SCR-70",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-18T17:24:31.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:23.0000000Z",
+      "Created": "2026-09-18T15:24:33.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "7.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "Journal OBJ-JRN",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-JRN",
+      "NOMPAGE": "Journal OBJ-JRN",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-JRN.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-JRN.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-JRN",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-18T17:24:33.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:46.0000000Z",
+      "Created": "2026-09-18T15:24:35.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "7.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "Catalogue OBJ-LST",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-LST",
+      "NOMPAGE": "Catalogue OBJ-LST",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-LST.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-LST.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-LST",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-18T17:24:35.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:52.0000000Z",
+      "Created": "2026-09-18T15:24:36.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "7.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "Toutes les listes SharePoint DSE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-TOUTES-LISTES",
+      "NOMPAGE": "Toutes les listes SharePoint DSE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/DSE-Toutes-les-Listes.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Toutes-les-Listes.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page generale recensant les pages de detail de chaque liste DSE.",
+      "NBUSAGES": 59.0,
+      "DATEDERNIERCONTROLE": "2026-09-18T17:24:36.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:35.0000000Z",
+      "Created": "2026-09-18T15:24:38.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "7.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 6,
+      "Title": "OBJ",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ",
+      "NOMPAGE": "OBJ",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:09.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:00.0000000Z",
+      "Created": "2026-09-19T05:56:11.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 7,
+      "Title": "OBJ-ACT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-ACT",
+      "NOMPAGE": "OBJ-ACT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-ACT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-ACT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-ACT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:11.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:04.0000000Z",
+      "Created": "2026-09-19T05:56:13.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 8,
+      "Title": "Catalogue OBJ-AUD",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-AUD",
+      "NOMPAGE": "Catalogue OBJ-AUD",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-AUD.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-AUD.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-AUD",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:12.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:06.0000000Z",
+      "Created": "2026-09-19T05:56:14.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 9,
+      "Title": "OBJ-AUDIT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-AUDIT",
+      "NOMPAGE": "OBJ-AUDIT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-AUDIT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-AUDIT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-AUDIT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:14.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:07.0000000Z",
+      "Created": "2026-09-19T05:56:16.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 10,
+      "Title": "Catalogue OBJ-DEP",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-DEP",
+      "NOMPAGE": "Catalogue OBJ-DEP",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-DEP.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-DEP.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-DEP",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:15.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:22.0000000Z",
+      "Created": "2026-09-19T05:56:18.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 11,
+      "Title": "OBJ-GEO-CAPITALE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-CAPITALE",
+      "NOMPAGE": "OBJ-GEO-CAPITALE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-CAPITALE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-CAPITALE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-CAPITALE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:17.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:24.0000000Z",
+      "Created": "2026-09-19T05:56:19.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 12,
+      "Title": "OBJ-GEO-CONTINENT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-CONTINENT",
+      "NOMPAGE": "OBJ-GEO-CONTINENT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-CONTINENT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-CONTINENT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-CONTINENT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:19.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:25.0000000Z",
+      "Created": "2026-09-19T05:56:21.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 13,
+      "Title": "OBJ-GEO-DEPARTEMENT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-DEPARTEMENT",
+      "NOMPAGE": "OBJ-GEO-DEPARTEMENT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-DEPARTEMENT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-DEPARTEMENT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-DEPARTEMENT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:20.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:27.0000000Z",
+      "Created": "2026-09-19T05:56:23.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 14,
+      "Title": "OBJ-GEO-DEVISE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-DEVISE",
+      "NOMPAGE": "OBJ-GEO-DEVISE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-DEVISE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-DEVISE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-DEVISE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:22.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:28.0000000Z",
+      "Created": "2026-09-19T05:56:24.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 15,
+      "Title": "OBJ-GEO-FUSEAU-HORAIRE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-FUSEAU-HORAIRE",
+      "NOMPAGE": "OBJ-GEO-FUSEAU-HORAIRE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-FUSEAU-HORAIRE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-FUSEAU-HORAIRE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-FUSEAU-HORAIRE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:24.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:30.0000000Z",
+      "Created": "2026-09-19T05:56:26.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 16,
+      "Title": "OBJ-GEO-LANGUE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-LANGUE",
+      "NOMPAGE": "OBJ-GEO-LANGUE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-LANGUE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-LANGUE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-LANGUE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:26.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:31.0000000Z",
+      "Created": "2026-09-19T05:56:28.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 17,
+      "Title": "OBJ-GEO-NATIONALITE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-NATIONALITE",
+      "NOMPAGE": "OBJ-GEO-NATIONALITE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-NATIONALITE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-NATIONALITE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-NATIONALITE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:27.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:34.0000000Z",
+      "Created": "2026-09-19T05:56:30.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 18,
+      "Title": "OBJ-GEO-PAYS",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-PAYS",
+      "NOMPAGE": "OBJ-GEO-PAYS",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-PAYS.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-PAYS.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-PAYS",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:30.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:34.0000000Z",
+      "Created": "2026-09-19T05:56:32.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 19,
+      "Title": "OBJ-GEO-REGION",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-REGION",
+      "NOMPAGE": "OBJ-GEO-REGION",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-REGION.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-REGION.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-REGION",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:31.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:36.0000000Z",
+      "Created": "2026-09-19T05:56:34.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 20,
+      "Title": "OBJ-GEO-SOURCE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-SOURCE",
+      "NOMPAGE": "OBJ-GEO-SOURCE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-SOURCE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-SOURCE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-SOURCE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:33.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:38.0000000Z",
+      "Created": "2026-09-19T05:56:35.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 21,
+      "Title": "OBJ-GEO-STATUT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-STATUT",
+      "NOMPAGE": "OBJ-GEO-STATUT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-STATUT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-STATUT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-STATUT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:35.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:39.0000000Z",
+      "Created": "2026-09-19T05:56:37.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 22,
+      "Title": "OBJ-GEO-TERRITOIRE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-TERRITOIRE",
+      "NOMPAGE": "OBJ-GEO-TERRITOIRE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-TERRITOIRE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-TERRITOIRE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-TERRITOIRE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:37.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:41.0000000Z",
+      "Created": "2026-09-19T05:56:39.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 23,
+      "Title": "OBJ-GEO-VILLE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-VILLE",
+      "NOMPAGE": "OBJ-GEO-VILLE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-VILLE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-VILLE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-VILLE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:38.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:43.0000000Z",
+      "Created": "2026-09-19T05:56:40.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 24,
+      "Title": "OBJ-GEO-ZONE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-GEO-ZONE",
+      "NOMPAGE": "OBJ-GEO-ZONE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-GEO-ZONE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-GEO-ZONE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-GEO-ZONE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:40.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:45.0000000Z",
+      "Created": "2026-09-19T05:56:42.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 25,
+      "Title": "Catalogue OBJ-JRN-10",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-JRN-10",
+      "NOMPAGE": "Catalogue OBJ-JRN-10",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-JRN-10.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-JRN-10.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-JRN-10",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:43.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:48.0000000Z",
+      "Created": "2026-09-19T05:56:45.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 26,
+      "Title": "OBJ-JRN-GEO",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-JRN-GEO",
+      "NOMPAGE": "OBJ-JRN-GEO",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-JRN-GEO.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-JRN-GEO.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-JRN-GEO",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:45.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:51.0000000Z",
+      "Created": "2026-09-19T05:56:47.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 27,
+      "Title": "OBJ-MODULE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-MODULE",
+      "NOMPAGE": "OBJ-MODULE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-MODULE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-MODULE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-MODULE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:48.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:54.0000000Z",
+      "Created": "2026-09-19T05:56:50.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 28,
+      "Title": "OBJ-ORG",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-ORG",
+      "NOMPAGE": "OBJ-ORG",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-ORG.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-ORG.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-ORG",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:50.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:55.0000000Z",
+      "Created": "2026-09-19T05:56:52.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 29,
+      "Title": "OBJ-ORG-COMPTE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-ORG-COMPTE",
+      "NOMPAGE": "OBJ-ORG-COMPTE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-ORG-COMPTE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-ORG-COMPTE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-ORG-COMPTE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:52.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:57.0000000Z",
+      "Created": "2026-09-19T05:56:54.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 30,
+      "Title": "OBJ-ORG-CONTACT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-ORG-CONTACT",
+      "NOMPAGE": "OBJ-ORG-CONTACT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-ORG-CONTACT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-ORG-CONTACT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-ORG-CONTACT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:53.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:58.0000000Z",
+      "Created": "2026-09-19T05:56:55.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 31,
+      "Title": "Catalogue OBJ-PAG-PPB",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-PAG-PPB",
+      "NOMPAGE": "Catalogue OBJ-PAG-PPB",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-PAGE-PPB.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-PAG-PPB.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-PAG-PPB",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:55.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:00.0000000Z",
+      "Created": "2026-09-19T05:56:57.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 32,
+      "Title": "Catalogue OBJ-PAG-PPW",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-PAG-PPW",
+      "NOMPAGE": "Catalogue OBJ-PAG-PPW",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-PAGE-PPW.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-PAG-PPW.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-PAG-PPW",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:57.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:01.0000000Z",
+      "Created": "2026-09-19T05:56:59.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 33,
+      "Title": "Catalogue OBJ-PAG-SHAR",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-PAG-SHAR",
+      "NOMPAGE": "Catalogue OBJ-PAG-SHAR",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-PAGE-SHAREPOINT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-PAG-SHAR.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-PAG-SHAR",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:56:58.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:03.0000000Z",
+      "Created": "2026-09-19T05:57:00.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 34,
+      "Title": "Catalogue OBJ-PAR",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-PAR",
+      "NOMPAGE": "Catalogue OBJ-PAR",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-PAR.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-PAR.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-PAR",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:00.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:05.0000000Z",
+      "Created": "2026-09-19T05:57:02.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 35,
+      "Title": "OBJ-PWS",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-PWS",
+      "NOMPAGE": "OBJ-PWS",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-PWS.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-PWS.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-PWS",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:02.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:07.0000000Z",
+      "Created": "2026-09-19T05:57:04.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 36,
+      "Title": "OBJ-REL",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-REL",
+      "NOMPAGE": "OBJ-REL",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-REL.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-REL.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-REL",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:05.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:10.0000000Z",
+      "Created": "2026-09-19T05:57:07.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 37,
+      "Title": "Catalogue OBJ-SCR-00",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SCR-00",
+      "NOMPAGE": "Catalogue OBJ-SCR-00",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SCR-00.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SCR-00.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SCR-00",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:07.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:11.0000000Z",
+      "Created": "2026-09-19T05:57:09.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 38,
+      "Title": "Catalogue OBJ-SCR-10",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SCR-10",
+      "NOMPAGE": "Catalogue OBJ-SCR-10",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SCR-10.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SCR-10.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SCR-10",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:08.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:13.0000000Z",
+      "Created": "2026-09-19T05:57:10.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 39,
+      "Title": "Catalogue OBJ-SCR-20",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SCR-20",
+      "NOMPAGE": "Catalogue OBJ-SCR-20",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SCR-20.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SCR-20.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SCR-20",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:10.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:14.0000000Z",
+      "Created": "2026-09-19T05:57:12.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 40,
+      "Title": "Catalogue OBJ-SCR-30",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SCR-30",
+      "NOMPAGE": "Catalogue OBJ-SCR-30",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SCR-30.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SCR-30.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SCR-30",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:11.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:16.0000000Z",
+      "Created": "2026-09-19T05:57:14.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 41,
+      "Title": "Catalogue OBJ-SCR-40",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SCR-40",
+      "NOMPAGE": "Catalogue OBJ-SCR-40",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SCR-40.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SCR-40.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SCR-40",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:13.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:17.0000000Z",
+      "Created": "2026-09-19T05:57:15.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 42,
+      "Title": "Catalogue OBJ-SCR-50",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SCR-50",
+      "NOMPAGE": "Catalogue OBJ-SCR-50",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SCR-50.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SCR-50.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SCR-50",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:15.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:20.0000000Z",
+      "Created": "2026-09-19T05:57:17.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 43,
+      "Title": "Catalogue OBJ-SCR-60",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SCR-60",
+      "NOMPAGE": "Catalogue OBJ-SCR-60",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SCR-60.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SCR-60.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SCR-60",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:16.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:20.0000000Z",
+      "Created": "2026-09-19T05:57:18.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 44,
+      "Title": "Catalogue OBJ-SCR-80",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SCR-80",
+      "NOMPAGE": "Catalogue OBJ-SCR-80",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SCR-80.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SCR-80.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SCR-80",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:19.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:24.0000000Z",
+      "Created": "2026-09-19T05:57:21.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 45,
+      "Title": "Catalogue OBJ-SCR-90",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SCR-90",
+      "NOMPAGE": "Catalogue OBJ-SCR-90",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SCR-90.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SCR-90.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SCR-90",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:21.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:25.0000000Z",
+      "Created": "2026-09-19T05:57:23.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 46,
+      "Title": "OBJ-SITE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-SITE",
+      "NOMPAGE": "OBJ-SITE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-SITE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-SITE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-SITE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:23.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:27.0000000Z",
+      "Created": "2026-09-19T05:57:25.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 47,
+      "Title": "OBJ-STATUT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-STATUT",
+      "NOMPAGE": "OBJ-STATUT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-STATUT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-STATUT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-STATUT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:24.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:29.0000000Z",
+      "Created": "2026-09-19T05:57:26.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 48,
+      "Title": "Catalogue OBJ-VAL",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-VAL",
+      "NOMPAGE": "Catalogue OBJ-VAL",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-VAL.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-VAL.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-VAL",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:26.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:32.0000000Z",
+      "Created": "2026-09-19T05:57:28.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 49,
+      "Title": "Catalogue OBJ-WKF",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-WKF",
+      "NOMPAGE": "Catalogue OBJ-WKF",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-WKF.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-WKF.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-WKF",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T07:57:27.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:34.0000000Z",
+      "Created": "2026-09-19T05:57:29.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 50,
+      "Title": "OBJ-ACHAT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-ACHAT",
+      "NOMPAGE": "OBJ-ACHAT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-ACHAT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-ACHAT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-ACHAT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:39:14.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:02.0000000Z",
+      "Created": "2026-09-19T07:39:17.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 51,
+      "Title": "OBJ-AUT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-AUT",
+      "NOMPAGE": "OBJ-AUT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-AUT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-AUT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-AUT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:39:21.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:09.0000000Z",
+      "Created": "2026-09-19T07:39:23.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 52,
+      "Title": "OBJ-BIB-SHAR",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-BIB-SHAR",
+      "NOMPAGE": "OBJ-BIB-SHAR",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-BIB-SHAR.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-BIB-SHAR.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-BIB-SHAR",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:39:22.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:10.0000000Z",
+      "Created": "2026-09-19T07:39:25.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 53,
+      "Title": "OBJ-CATALOGUE",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-CATALOGUE",
+      "NOMPAGE": "OBJ-CATALOGUE",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-CATALOGUE.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-CATALOGUE.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-CATALOGUE",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:39:24.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:12.0000000Z",
+      "Created": "2026-09-19T07:39:26.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 54,
+      "Title": "OBJ-CLIENT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-CLIENT",
+      "NOMPAGE": "OBJ-CLIENT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-CLIENT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-CLIENT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-CLIENT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:39:26.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:13.0000000Z",
+      "Created": "2026-09-19T07:39:28.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 55,
+      "Title": "OBJ-JRN-AUT",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-JRN-AUT",
+      "NOMPAGE": "OBJ-JRN-AUT",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-JRN-AUT.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-JRN-AUT.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-JRN-AUT",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:39:54.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:49.0000000Z",
+      "Created": "2026-09-19T07:39:56.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 56,
+      "Title": "OBJ-THEME-PPW",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-THEME-PPW",
+      "NOMPAGE": "OBJ-THEME-PPW",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-THEME-PPW.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-THEME-PPW.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-THEME-PPW",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:40:34.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:35:30.0000000Z",
+      "Created": "2026-09-19T07:40:36.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 57,
+      "Title": "Catalogue OBJ-COD-NIV-00",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-COD-NIV-00",
+      "NOMPAGE": "Catalogue OBJ-COD-NIV-00",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-COD-NIV-00.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-COD-NIV-00.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-COD-NIV-00",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T16:04:27.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:15.0000000Z",
+      "Created": "2026-09-19T14:04:30.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 58,
+      "Title": "Catalogue OBJ-COD-NIV-01",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-COD-NIV-01",
+      "NOMPAGE": "Catalogue OBJ-COD-NIV-01",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-COD-NIV-01.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-COD-NIV-01.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-COD-NIV-01",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T16:04:29.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:17.0000000Z",
+      "Created": "2026-09-19T14:04:32.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 59,
+      "Title": "Catalogue OBJ-CODE-NIV-03",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-CODE-NIV-03",
+      "NOMPAGE": "Catalogue OBJ-CODE-NIV-03",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-CODE-NIV-03.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-CODE-NIV-03.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-CODE-NIV-03",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T16:04:31.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:20.0000000Z",
+      "Created": "2026-09-19T14:04:33.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 60,
+      "Title": "Catalogue OBJ-DEC",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEPAGE": "PAG-OBJ-DEC",
+      "NOMPAGE": "Catalogue OBJ-DEC",
+      "URLPAGE": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/OBJ-DEC.aspx",
+        "description": "/sites/Bibliotheque/SitePages/DSE-Liste-OBJ-DEC.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Page de detail de la liste OBJ-DEC",
+      "NBUSAGES": 1.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T16:04:32.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "SITEINTRANET": null,
+      "TYPEPAGE": null,
+      "USAGE": null,
+      "STATUTPAGE": null,
+      "_FormSourceId_0": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T14:34:20.0000000Z",
+      "Created": "2026-09-19T14:04:35.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "2.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    }
+  ]
+}
