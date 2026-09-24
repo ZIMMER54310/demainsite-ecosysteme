@@ -1,0 +1,564 @@
+AUDIT DES LISTES « ZZ - » ET DE LEURS COLONNES
+Site : DEM - Ecosysteme
+Périmètre : listes visibles dont le titre commence exactement par « ZZ - »
+Format : audit de schéma (colonnes configurées), hors contenu détaillé des éléments
+
+============================================================
+1. SYNTHÈSE
+============================================================
+
+- Listes auditées : 27
+- Éléments cumulés : 1 618
+- Listes vides : 11
+- Colonnes métier configurées : 330 occurrences
+- Colonnes système communes exclues du détail : ID, Type de contenu, Modifié, Créé, Créé par, Modifié par, Pièces jointes
+- Versioning activé sur les 27 listes
+- Pièces jointes activées sur les 27 listes
+
+Listes vides :
+- ZZ - ENT-ENT-MET
+- ZZ - ENT-ENTREPRISES
+- ZZ - ENT-MET
+- ZZ - GEO - Indicatifs
+- ZZ - GEO - Langues
+- ZZ - GEO-CAMP
+- ZZ - GEO-CONTACT
+- ZZ - GEO-GRP-EUR
+- ZZ - GEO-LOC-GRP-EUR
+- ZZ - GEO-RUE-EUR
+- ZZ - GEO-ZONE
+
+Constats prioritaires :
+1. Huit listes vides ne possèdent qu’une colonne métier « Titre » : les 3 listes ENT et les 5 listes GEO relationnelles suivantes : GEO-CAMP, GEO-CONTACT, GEO-GRP-EUR, GEO-LOC-GRP-EUR, GEO-RUE-EUR, GEO-ZONE (six listes GEO, donc neuf listes minimales au total avec les ENT).
+2. ZZ - JRN - Journal Global contient plusieurs familles de colonnes d’exécution qui semblent redondantes : champs sans préfixe, champs DSEDSE*, puis champs DSE*.
+3. ZZ - CLI - Relations contient plusieurs doublons fonctionnels probables : Nom Relation, Source officielle, Score complétude, Notes et Date de contrôle sous plusieurs noms internes.
+4. ZZ - REF - Referentiels conserve plusieurs colonnes historiques préfixées « ZZ- » en parallèle de colonnes plus récentes.
+5. Plusieurs données numériques ou géographiques sont stockées en Texte : Population, Superficie, Latitude et Longitude dans DEP/REG ; cela limite tris numériques, calculs et contrôles.
+6. Plusieurs dates sont stockées en Texte dans ZZ - ZZ-CLI-COMPTES : Date Début Relation, Date Fin Relation et Date Dernier Contrôle.
+7. Dans DEP, Type Département REF et Statut Département REF sont de type Texte malgré le suffixe REF.
+8. Certains lookups Continent de DEP, PAY et REG ciblent l’identifiant 9d22cd33-91be-4790-b3f9-88afbae17906, différent de la liste visible ZZ - GEO - Continents (d40577eb-8d31-4e26-9d67-14d0005f46d8). Cible à vérifier.
+
+Légende :
+- * = colonne obligatoire
+- !U = valeurs uniques imposées
+- Format : Nom affiché [NomInterne] : Type
+
+============================================================
+2. DÉTAIL PAR LISTE
+============================================================
+
+------------------------------------------------------------
+2.1 ZZ - CLI - Relations
+ID : afe17273-bf0c-4423-8069-04ed827f22fc
+Éléments : 5 | Colonnes métier : 41
+------------------------------------------------------------
+Nom Relation [Title] : Texte
+ID Relation [ID_Relation] : Texte
+Contact Principal [Contact_Principal] : Texte
+Telephone [Telephone] : Texte
+Email [Email] : Texte
+Code Postal [Code_Postal] : Texte
+Ville [Ville] : Texte
+Responsable Interne [Responsable_Interne] : Texte
+Adresse [Adresse] : Texte
+Site Internet [Site_Internet] : URL
+Domaine Principal [Domaine_Principal] : Texte
+Logo Officiel [Logo_Officiel] : Texte
+Journal [Journal] : Texte multiligne
+Client [Client] : Recherche
+WP ID [WP_ID] : Texte
+WP Type [WP_Type] : Texte
+WP Slug [WP_Slug] : Texte
+Sync Source [Sync_Source] : Texte
+Sync Statut [Sync_Statut] : Texte
+Derniere Synchro [Derniere_Synchro] : Date/heure
+Erreur Synchro [Erreur_Synchro] : Texte multiligne
+ID DSE [IDDSE] : Texte
+Famille objet [FamilleObjet] : Texte
+Source officielle [SourceOfficielle] : Texte
+Score completude [ScoreCompletude] : Nombre
+Notes DSE [NotesDSE] : Texte multiligne
+Date DSE [DateDSE] : Date/heure
+Type Relation REF [TypeRelationREF] : Recherche -> ZZ - REF - Referentiels
+Statut Relation REF [StatutRelationREF] : Recherche -> ZZ - REF - Referentiels
+Code Relation [CodeRelation] : Texte
+Nom Relation [NomRelation] : Texte
+Compte Principal [ComptePrincipal] : Recherche -> ZZ - ZZ-CLI-COMPTES
+Email Relation [EmailRelation] : Texte
+Telephone Relation [TelephoneRelation] : Texte
+Site Web Relation [SiteWebRelation] : Texte
+Pays REF [PaysREF] : Recherche -> ZZ - REF - Referentiels
+Notes Relation [NotesRelation] : Texte multiligne
+Score Completude [ScoreCompletudeRelation] : Nombre
+Date Controle [DateControleDSE] : Date/heure
+Source Officielle [SourceOfficielleDSE] : Texte
+Statut Controle [StatutControleDSE] : Texte
+
+------------------------------------------------------------
+2.2 ZZ - DEP - Départements
+ID : 26ee56c9-6f19-4e1a-88a4-6c07fcd3f517
+Éléments : 101 | Colonnes métier : 29
+------------------------------------------------------------
+Nom Département [Title] : Texte *
+ID Département [IDDepartement] : Texte *
+Code Département [CodeDepartement] : Texte *
+Code ISO2 Pays [CodeISO2Pays] : Texte
+Code Région [CodeRegion] : Texte
+Nom Département Source [NomDepartementSource] : Texte
+Continent REF [ContinentREF] : Recherche -> cible à vérifier
+Pays REF [PaysREF] : Recherche -> ZZ - PAY - Pays
+Région REF [RegionREF] : Recherche -> ZZ - REG - Régions
+Type Département REF [TypeDepartementREF] : Texte
+Statut Département REF [StatutDepartementREF] : Texte
+Niveau Administratif [NiveauAdministratif] : Texte
+Chef-Lieu [ChefLieu] : Texte
+Population [Population] : Texte
+Superficie [Superficie] : Texte
+Code Postal Principal [CodePostalPrincipal] : Texte
+Latitude [Latitude] : Texte
+Longitude [Longitude] : Texte
+Actif [Actif] : Oui/Non
+Ordre Affichage [OrdreAffichage] : Nombre
+Source Donnée [SourceDonnee] : Texte
+Statut Officialisation [StatutOfficialisation] : Texte
+Fréquence MAJ [FrequenceMAJ] : Texte
+MAJ Automatique Prévue [MAJAutomatiquePrevue] : Texte
+Dernière Vérification Texte [DerniereVerificationTexte] : Texte
+À Compléter [ACompleter] : Oui/Non
+Contrôle Doublon [ControleDoublon] : Texte
+Prochaine Action [ProchaineAction] : Texte
+Notes [NotesDEP] : Texte multiligne
+
+------------------------------------------------------------
+2.3 ZZ - ENT-ENT-MET
+ID : e9b69f92-9249-4140-86bf-d6f48876b428
+Éléments : 0 | Colonnes métier : 1
+------------------------------------------------------------
+Titre [Title] : Texte
+
+------------------------------------------------------------
+2.4 ZZ - ENT-ENTREPRISES
+ID : f2a2da0f-3c78-472d-b0b3-2c512ce49759
+Éléments : 0 | Colonnes métier : 1
+------------------------------------------------------------
+Titre [Title] : Texte
+
+------------------------------------------------------------
+2.5 ZZ - ENT-MET
+ID : 8ad4309b-36ff-473f-b5ca-f1e65ca1d938
+Éléments : 0 | Colonnes métier : 1
+------------------------------------------------------------
+Titre [Title] : Texte
+
+------------------------------------------------------------
+2.6 ZZ - GEO - Continents
+ID : d40577eb-8d31-4e26-9d67-14d0005f46d8
+Éléments : 7 | Colonnes métier : 5
+------------------------------------------------------------
+Titre - Continent [Title] : Texte * !U
+Code Continent [CodeContinent] : Texte * !U
+Actif [Actif] : Oui/Non *
+Ordre Affichage [OrdreAffichage] : Nombre *
+ID GEO Continent [IDGEO] : Texte * !U
+
+------------------------------------------------------------
+2.7 ZZ - GEO - Devises
+ID : 5e995a24-0aeb-44dc-8676-c26c878cc62c
+Éléments : 154 | Colonnes métier : 9
+------------------------------------------------------------
+Titre - Devise [Title] : Texte * !U
+ID GEO Devise [IDGEDevise] : Texte * !U
+Code Devise [CodeDevise] : Texte * !U
+Symbole Devise [SymboleDevise] : Texte
+Pays [Pays] : Recherche multiple -> ZZ - GEO - Pays *
+Actif [Actif] : Oui/Non *
+Ordre Affichage [OrdreAffichage] : Nombre *
+Validation DSE [ValidationDSE] : Oui/Non *
+Continent [Continent] : Recherche multiple -> ZZ - GEO - Continents *
+
+------------------------------------------------------------
+2.8 ZZ - GEO - Indicatifs
+ID : 29289220-6b9e-4673-8b25-09214c5d79f6
+Éléments : 0 | Colonnes métier : 7
+------------------------------------------------------------
+Titre - Indicatif [Title] : Texte * !U
+ID GEO Indicatif [IDGEOIndicatif] : Texte * !U
+Code Indicatif [CodeIndicatif] : Texte * !U
+Pays [Pays] : Recherche multiple -> ZZ - GEO - Pays *
+Actif [Actif] : Oui/Non *
+Ordre Affichage [OrdreAffichage] : Nombre *
+Validation DSE [ValidationDSE] : Oui/Non *
+
+------------------------------------------------------------
+2.9 ZZ - GEO - Langues
+ID : a96a9e9e-d46a-4915-8d05-6df8224db43c
+Éléments : 0 | Colonnes métier : 7
+------------------------------------------------------------
+Titre - Langue [Title] : Texte * !U
+ID GEO Langue [IDGEOLangue] : Texte * !U
+Code Langue [CodeLangue] : Texte * !U
+Pays [Pays] : Recherche multiple -> ZZ - GEO - Pays *
+Actif [Actif] : Oui/Non *
+Ordre Affichage [OrdreAffichage] : Nombre *
+Validation DSE [ValidationDSE] : Oui/Non *
+
+------------------------------------------------------------
+2.10 ZZ - GEO - Pays
+ID : d762cd9b-28c3-4e33-b956-8912d06ce139
+Éléments : 249 | Colonnes métier : 10
+------------------------------------------------------------
+Titre - Pays [Title] : Texte * !U
+ID GEO Pays [IDGEOPays] : Texte * !U
+Code Pays [CodePays] : Texte * !U
+Code ISO 2 [CodeISO2] : Texte !U
+Code ISO 3 [CodeISO3] : Texte !U
+Continent [Continent] : Recherche -> ZZ - GEO - Continents *
+Actif [Actif] : Oui/Non *
+Ordre Affichage [OrdreAffichage] : Nombre *
+Validation DSE [ValidationDSE] : Oui/Non *
+Capitale [Capitale] : Recherche -> ZZ - OBJ-GEO - Capitales
+
+------------------------------------------------------------
+2.11 ZZ - GEO-CAMP
+ID : 8b2950e1-26b9-4510-99cb-b7ea1c9ebc02
+Éléments : 0 | Colonnes métier : 1
+------------------------------------------------------------
+Titre [Title] : Texte
+
+------------------------------------------------------------
+2.12 ZZ - GEO-CONTACT
+ID : 7980fb99-b8a9-408b-995f-1072878b7534
+Éléments : 0 | Colonnes métier : 1
+------------------------------------------------------------
+Titre [Title] : Texte
+
+------------------------------------------------------------
+2.13 ZZ - GEO-GRP-EUR
+ID : f3a3a63c-75a1-42e8-879d-f3a6f438ec44
+Éléments : 0 | Colonnes métier : 1
+------------------------------------------------------------
+Titre [Title] : Texte
+
+------------------------------------------------------------
+2.14 ZZ - GEO-LOC-GRP-EUR
+ID : e7f6286f-6e47-4701-be44-b7e51a3f3293
+Éléments : 0 | Colonnes métier : 1
+------------------------------------------------------------
+Titre [Title] : Texte
+
+------------------------------------------------------------
+2.15 ZZ - GEO-RUE-EUR
+ID : 1f2f45c5-c4e4-4f20-8be2-c864b5818022
+Éléments : 0 | Colonnes métier : 1
+------------------------------------------------------------
+Titre [Title] : Texte
+
+------------------------------------------------------------
+2.16 ZZ - GEO-ZONE
+ID : 89b274ed-f1b5-4011-82e9-678544067f0f
+Éléments : 0 | Colonnes métier : 1
+------------------------------------------------------------
+Titre [Title] : Texte
+
+------------------------------------------------------------
+2.17 ZZ - JRN - Décisions Fondatrices DSE
+ID : 99b86852-bd86-4567-addf-6c6b2156be76
+Éléments : 15 | Colonnes métier : 9
+------------------------------------------------------------
+Titre [Title] : Texte *
+Code Decision [CodeDecision] : Texte
+Date Decision [DateDecision] : Date/heure
+Decisionnaire [Decisionnaire] : Texte
+Actif [Actif] : Oui/Non
+Valide [Valide] : Oui/Non
+Categorie [Categorie] : Texte
+Description [DescriptionDSE] : Texte multiligne
+Notes [NotesDSE] : Texte multiligne
+
+------------------------------------------------------------
+2.18 ZZ - JRN - Journal Global
+ID : 6dd92212-37c8-489c-b901-91f25b07bfe9
+Éléments : 129 | Colonnes métier : 50
+------------------------------------------------------------
+Libellé Journal [Title] : Texte *
+Code Journal [CodeJournal] : Texte *
+Date Action Texte [DateActionTexte] : Texte
+Type Objet REF [TypeObjetREF] : Recherche -> ZZ - REF - Referentiels
+Liste Source [ListeSource] : Texte
+Code Objet [CodeObjet] : Texte
+Nom Objet [NomObjet] : Texte
+Compte REF [CompteREF] : Recherche -> ZZ - ZZ-CLI-COMPTES
+Type Action REF [TypeActionREF] : Recherche -> ZZ - REF - Referentiels
+Champ Modifié [ChampModifie] : Texte
+Nouvelle Valeur [NouvelleValeur] : Texte multiligne
+Modifié Par Texte [ModifieParTexte] : Texte
+Origine Action REF [OrigineActionREF] : Recherche -> ZZ - REF - Referentiels
+Impact REF [ImpactREF] : Recherche -> ZZ - REF - Referentiels
+Statut Journal REF [StatutJournalREF] : Recherche -> ZZ - REF - Referentiels
+Commentaire [Commentaire] : Texte multiligne
+Lien Élément [LienElement] : Texte
+Source Donnée [SourceDonnee] : Texte
+Notes [NotesJRN] : Texte multiligne
+Projet REF [ProjetREF] : Recherche
+Échange REF [EchangeREF] : Recherche
+Document REF [DocumentREF] : Recherche -> DOC - Documents
+Liaison Compte REF [LiaisonCompteREF] : Recherche
+Configuration Teams SharePoint REF [ConfigurationTeamsSharePointREF] : Recherche
+Code Execution [CodeExecution] : Texte
+Nom Pack [NomPack] : Texte
+Version Pack [VersionPack] : Texte
+Mode Execution [ModeExecution] : Texte
+Statut Execution [StatutExecution] : Texte
+Rapport Copilot [RapportCopilot] : Texte multiligne
+Detail Execution [DetailExecution] : Texte multiligne
+Date Execution [DateExecution] : Date/heure
+DSE Code Execution [DSEDSECodeExecution] : Texte
+DSE Nom Pack [DSEDSENomPack] : Texte
+DSE Version Pack [DSEDSEVersionPack] : Texte
+DSE Mode Execution [DSEDSEModeExecution] : Texte
+DSE Statut Execution [DSEDSEStatutExecution] : Texte
+DSE Rapport Copilot [DSEDSERapportCopilot] : Texte multiligne
+DSE Detail Execution [DSEDSEDetailExecution] : Texte multiligne
+DSE Date Execution Texte [DSEDateExecutionTexte] : Texte
+DSE Code Execution [DSECodeExecution] : Texte
+DSE Nom Pack [DSENomPack] : Texte
+DSE Version Pack [DSEVersionPack] : Texte
+DSE Mode Execution [DSEModeExecution] : Texte
+DSE Statut Execution [DSEStatutExecution] : Texte
+DSE Rapport Copilot [DSERapportCopilot] : Texte multiligne
+DSE Detail Execution [DSEDetailExecution] : Texte multiligne
+DSE - Liste source [DSESourceList] : Texte
+DSE - ID source [DSESourceItemId] : Texte
+DSE - Cle source [DSESourceKey] : Texte
+
+------------------------------------------------------------
+2.19 ZZ - OBJ-GEO - Capitales
+ID : 5491713b-cab9-4a4b-8c11-cfea8cd2eb3d
+Éléments : 249 | Colonnes métier : 8
+------------------------------------------------------------
+Titre - Capitale [Title] : Texte * !U
+ID GEO Capitale [IDGEOCapitale] : Texte * !U
+Code Capitale [CodeCapitale] : Texte * !U
+Actif [Actif] : Oui/Non *
+Ordre Affichage [OrdreAffichage] : Nombre *
+Validation DSE [ValidationDSE] : Oui/Non *
+Pays [Pays] : Recherche -> ZZ - GEO - Pays *
+Continent [Continent] : Recherche -> ZZ - GEO - Continents *
+
+------------------------------------------------------------
+2.20 ZZ - OBJ-OBJETS
+ID : 73247846-541f-43be-ba87-d5f18bdbf70c
+Éléments : 5 | Colonnes métier : 10
+------------------------------------------------------------
+Nom objet [Title] : Texte * !U
+ID-REF-n-00 [ID_x002d_REF] : Recherche -> ZZ - REF - Referentiels
+ID-REF-N-01 [ID_x002d_REF_x002d_N_x002d_01] : Recherche -> ZZ - REF-N-01
+ID-REF-N-02 [ID_x002d_REF_x002d_N_x002d_02] : Recherche -> ZZ - REF-N-02
+ID-REF-N-03 [ID_x002d_REF_x002d_N_x002d_03] : Recherche -> ZZ - REF-N-03
+Actif [Actif] : Oui/Non
+Verrouille [Verrouille] : Oui/Non
+Notes [Notes] : Texte multiligne
+Date Création Objet [Date_x0020_Cr_x00e9_ation_x0020_] : Date/heure
+ID Objet [IDObjet] : Texte * !U
+
+------------------------------------------------------------
+2.21 ZZ - PAY - Pays
+ID : 17b4e602-a45b-43e3-b8dc-32e722361589
+Éléments : 195 | Colonnes métier : 26
+------------------------------------------------------------
+Nom Pays [Title] : Texte *
+ID Pays [IDPays] : Texte *
+Code Pays [CodePays] : Texte
+Nom Officiel [NomOfficiel] : Texte
+Nom Pays Source [NomPaysSource] : Texte
+Code ISO2 [CodeISO2] : Texte
+Code ISO3 [CodeISO3] : Texte
+Code Numerique [CodeNumerique] : Texte
+Code ISO 3166-2 [CodeISO3166_2] : Texte
+Continent [Continent] : Recherche -> cible à vérifier
+Sous Region [SousRegion] : Texte
+Region Intermediaire [RegionIntermediaire] : Texte
+Code Region ONU [CodeRegionONU] : Texte
+Code Sous Region ONU [CodeSousRegionONU] : Texte
+Code Telephone [CodeTelephone] : Texte
+Nationalite [Nationalite] : Texte
+Devise [Devise] : Texte
+Code Devise ISO [CodeDeviseISO] : Texte
+Langue Principale [LanguePrincipale] : Texte
+Drapeau [Drapeau] : Texte
+Actif [Actif] : Oui/Non
+Ordre Affichage [OrdreAffichage] : Nombre
+Statut Geo [StatutGeo] : Texte
+Source Donnee [SourceDonnee] : Texte
+Date Import [DateImport] : Date/heure
+Notes [NotesPAY] : Texte multiligne
+
+------------------------------------------------------------
+2.22 ZZ - REF - Referentiels
+ID : 4baa7433-8092-4fd5-9eff-982651404156
+Éléments : 220 | Colonnes métier : 17
+------------------------------------------------------------
+Titre-REF-Référentiels [Title] : Texte
+ID-REF [IDReference] : Texte * !U
+ID-REF-N-01 [ID_x002d_REF_x002d_N_x002d_01] : Recherche multiple -> ZZ - REF-N-01 *
+ID-REF-N-02 [ID_x002d_REF_x002d_N_x002d_02] : Recherche multiple -> ZZ - REF-N-02 *
+ID-REF-N-03 [Ref_x002d_R_x00e9_f_x00e9_rentie] : Recherche multiple -> ZZ - REF-N-03 *
+ZZ-REF-Catégorie [REF_x002d_Cat_x00e9_gorie] : Recherche -> ZZ - REF-N-02
+Actif [Actif] : Oui/Non
+ZZ-Description [DescriptionRef] : Texte multiligne
+Date Creation [DateCreation] : Date/heure
+ZZ-REF-FAMILLES [REF_x002d_FAM_x002d__x002d_FAMIL] : Recherche -> ZZ - REF-N-01
+Code Reference [CodeReference] : Texte
+ZZ-Famille REF [FamilleREF] : Recherche -> ZZ - REF-N-01
+ZZ-Categorie REF [CategorieREF] : Recherche -> ZZ - REF-N-02
+ZZ-SousCategorie REF [SousCategorieREF] : Recherche -> ZZ - REF-N-03
+ZZ-Source Donnee [SourceDonnee] : Texte
+ZZ-Statut Migration [StatutMigration] : Texte
+Notes [NotesREF] : Texte multiligne
+
+------------------------------------------------------------
+2.23 ZZ - REF-N-01
+ID : ed1eb5d5-db97-40f7-8f08-762b3ef5213d
+Éléments : 19 | Colonnes métier : 5
+------------------------------------------------------------
+Titre-REF-N 01 [Title] : Texte * !U
+ZZ-Description Famille [DescriptionFamille] : Texte
+Actif [Actif] : Oui/Non
+Valider [Verrouille] : Oui/Non
+Notes [NotesREF] : Texte multiligne
+
+------------------------------------------------------------
+2.24 ZZ - REF-N-02
+ID : fb7fd1aa-0bd2-4dab-b8f8-e2809dbdcda6
+Éléments : 56 | Colonnes métier : 8
+------------------------------------------------------------
+Titre-REF-N-02 [Title] : Texte * !U
+Code Categorie [CodeCategorie] : Texte * !U
+Libelle Categorie [LibelleCategorie] : Texte * !U
+Description Categorie [DescriptionCategorie] : Texte
+Actif [Actif] : Oui/Non
+Verrouille [Verrouille] : Oui/Non
+Famille REF [FamilleREF] : Recherche -> ZZ - REF-N-01
+Notes [NotesREF] : Texte multiligne
+
+------------------------------------------------------------
+2.25 ZZ - REF-N-03
+ID : f26165de-7029-426b-988e-fdbda7d2fa2b
+Éléments : 193 | Colonnes métier : 7
+------------------------------------------------------------
+Titre-REF-N-03 [Title] : Texte * !U
+ID-REF-N-01 [IDREFN01] : Recherche -> ZZ - REF-N-01
+Categorie REF [IDREFN02] : Recherche -> ZZ - REF-N-02
+Actif [Actif] : Oui/Non
+Verrouille [Verrouille] : Oui/Non
+Notes [NotesREF] : Texte multiligne
+ID-REF-N-03 [IDREFN03] : Texte !U
+
+------------------------------------------------------------
+2.26 ZZ - REG - Régions
+ID : 5c3fd93e-b8c4-42b5-975e-08606075557f
+Éléments : 18 | Colonnes métier : 26
+------------------------------------------------------------
+Nom Région [Title] : Texte *
+ID Région [IDRegion] : Texte *
+Pays [Pays] : Recherche -> ZZ - PAY - Pays
+Continent [Continent] : Recherche -> cible à vérifier
+Code Région [CodeRegion] : Texte
+Type Région [TypeRegion] : Texte
+Statut Région [StatutRegion] : Texte
+Niveau Administratif [NiveauAdministratif] : Texte
+Capitale Région [CapitaleRegion] : Texte
+Population [Population] : Texte
+Superficie [Superficie] : Texte
+Actif [Actif] : Oui/Non
+Ordre Affichage [OrdreAffichage] : Nombre
+Source Donnée [SourceDonnee] : Texte
+Notes [NotesREG] : Texte multiligne
+Code ISO2 Pays [CodeISO2Pays] : Texte
+Nom Pays Source [NomPaysSource] : Texte
+Nom Région Source [NomRegionSource] : Texte
+Parent Région Code [ParentRegionCode] : Texte
+Nom Local Autre [NomLocalAutre] : Texte multiligne
+Latitude [Latitude] : Texte
+Longitude [Longitude] : Texte
+Drapeau Région [DrapeauRegion] : Texte
+Historique [HistoriqueRegion] : Texte multiligne
+Date Import Texte [DateImportTexte] : Texte
+Langue Source [LangueSource] : Texte
+
+------------------------------------------------------------
+2.27 ZZ - ZZ-CLI-COMPTES
+ID : 143f3a11-605f-4e92-9e29-3874744fecbb
+Éléments : 3 | Colonnes métier : 47
+------------------------------------------------------------
+Nom Compte [Title] : Texte *
+Code Compte [CodeCompte] : Texte *
+Nom Court [NomCourt] : Texte
+Nom Officiel [NomOfficiel] : Texte
+Nature Compte REF [NatureCompteREF] : Recherche -> ZZ - REF - Referentiels
+Relation Compte REF [RelationCompteREF] : Recherche multiple -> ZZ - REF - Referentiels
+Statut Compte REF [StatutCompteREF] : Recherche -> ZZ - REF - Referentiels
+Type Entité REF [TypeEntiteREF] : Recherche -> ZZ - REF - Referentiels
+Confidentialité REF [ConfidentialiteREF] : Recherche -> ZZ - REF - Referentiels
+Priorité Compte REF [PrioriteCompteREF] : Recherche -> ZZ - REF - Referentiels
+Propriétaire Compte REF [ProprietaireCompteREF] : Recherche -> ZZ - REF - Referentiels
+Compte Parent REF [CompteParentREF] : Recherche -> cette même liste
+Email Principal [EmailPrincipal] : Texte
+Téléphone Principal [TelephonePrincipal] : Texte
+Site Web [SiteWeb] : Texte
+Adresse Ligne 1 [AdresseLigne1] : Texte
+Adresse Ligne 2 [AdresseLigne2] : Texte
+Code Postal [CodePostal] : Texte
+Ville [Ville] : Texte
+SIRET [SIRET] : Texte
+SIREN [SIREN] : Texte
+TVA Intracommunautaire [TVAIntracommunautaire] : Texte
+Date Début Relation [DateDebutRelation] : Texte
+Date Fin Relation [DateFinRelation] : Texte
+Date Dernier Contrôle [DateDernierControle] : Texte
+Contrôle Doublon [ControleDoublon] : Texte
+Statut Officialisation [StatutOfficialisation] : Texte
+Source Donnée [SourceDonnee] : Texte
+Pays REF [PaysREF] : Recherche -> ZZ - PAY - Pays
+Région REF [RegionREF] : Recherche -> ZZ - REG - Régions
+Département REF [DepartementREF] : Recherche -> ZZ - DEP - Départements
+Score Complétude [ScoreCompletude] : Nombre
+Informations Manquantes [InformationsManquantes] : Texte multiligne
+À Compléter [ACompleter] : Oui/Non
+Notes [NotesCLI] : Texte multiligne
+Code DSE [CodeDSE] : Texte
+Source officielle [SourceOfficielleDSE] : Texte
+Score completude DSE [ScoreCompletudeDSE] : Nombre
+Date controle DSE [DateControleDSE] : Date/heure
+Statut controle DSE [StatutControleDSE] : Texte
+Nom Affiche [NomAffiche] : Texte
+Telephone [Telephone] : Texte
+Type Compte REF [TypeCompteREF] : Recherche -> ZZ - REF - Referentiels
+UPN Microsoft [UPNMicrosoft] : Texte
+ID Microsoft [IDMicrosoft] : Texte
+Compte Microsoft Actif [CompteMicrosoftActif] : Oui/Non
+Notes [NotesCompte] : Texte multiligne
+
+============================================================
+3. RECOMMANDATIONS
+============================================================
+
+Priorité haute :
+- Vérifier et corriger les lookups Continent qui ne ciblent pas la liste visible ZZ - GEO - Continents.
+- Définir ou supprimer les listes vides à structure minimale afin d’éviter des objets fantômes.
+- Rationaliser les trois familles de colonnes d’exécution dans Journal Global avant toute nouvelle automatisation.
+- Identifier les doublons de colonnes dans CLI - Relations et CLI-COMPTES, migrer les valeurs vers une colonne canonique, puis retirer les anciennes colonnes après validation.
+
+Priorité moyenne :
+- Convertir Population, Superficie, Latitude et Longitude vers des types Nombre adaptés.
+- Convertir les dates stockées en Texte vers Date/heure lorsque les valeurs sont normalisables.
+- Remplacer les champs suffixés REF stockés en Texte par de vrais lookups, ou retirer le suffixe REF.
+- Uniformiser les accents, espaces, préfixes DSE/ZZ et conventions de noms internes pour les futures colonnes.
+
+Contrôles avant modification :
+- Exporter les valeurs des colonnes candidates à fusion ou suppression.
+- Vérifier les dépendances : vues, formats JSON, règles, workflows, formulaires et lookups.
+- Réaliser les changements dans une copie ou par lots réversibles.
+- Ne supprimer aucune colonne tant que la migration des données et les dépendances ne sont pas validées.
+
+FIN DU RAPPORT
