@@ -1,0 +1,99 @@
+RAPPORT DE CONFIGURATION — LISTE OBJ
+=====================================
+
+Site : DEM - Ecosysteme
+Liste concernée : OBJ
+Emplacement : /sites/Bibliotheque/Lists/OBJ
+
+1. MISSION RÉALISÉE
+-------------------
+La liste OBJ a été configurée pour devenir la liste principale du système DSE et accueillir les futurs objets : clients, comptes, entreprises, pages, sites, noms de domaine, documents, produits, médias, rapports, fonctions, menus, référentiels, scripts, applications et journaux.
+
+2. COLONNES CONFIGURÉES
+-----------------------
+
+ID-OBJ
+- Type : Texte une ligne
+- Obligatoire : Oui
+- Valeurs uniques : Oui
+
+NOM-OBJ
+- Type : Texte une ligne
+- Obligatoire : Oui
+
+DESCRIPTION-OBJ
+- Type : Texte plusieurs lignes
+- Obligatoire : Non
+- Texte enrichi : Non
+
+OBJ-REF-00
+- Type : Recherche multiple
+- Source : OBJ-REF-00
+- Colonne affichée : NOM-REF
+
+OBJ-REF-10
+- Type : Recherche multiple
+- Source : OBJ-REF-10
+- Colonne affichée : NOM-REF
+
+OBJ-REF-20
+- Type : Recherche multiple
+- Source : OBJ-REF-20
+- Colonne affichée : NOM-REF
+
+OBJ-REF-30
+- Type : Recherche multiple
+- Source : OBJ-REF-30
+- Colonne affichée : NOM-REF
+
+OBJ-REF-40
+- Type : Recherche multiple
+- Source : OBJ-REF-40
+- Colonne affichée : NOM-REF
+
+OBJ-REF-50
+- Type : Recherche multiple
+- Source : OBJ-REF-50
+- Colonne affichée : NOM-REF
+
+OBJ-REF-60
+- Type : Recherche multiple
+- Source : OBJ-REF-60
+- Colonne affichée : NOM-REF
+
+OBJ-REF-70
+- Type : Recherche multiple
+- Source : OBJ-REF-70
+- Colonne affichée : NOM-REF
+
+OBJ-REF-80
+- Type : Recherche multiple
+- Source : OBJ-REF-80
+- Colonne affichée : NOM-REF
+
+OBJ-REF-90
+- Type : Recherche multiple
+- Source : OBJ-REF-90
+- Colonne affichée : NOM-REF
+
+VERROUILLE
+- Type : Oui/Non
+- Valeur par défaut : Non
+
+CONTROLE-PASC-ARA
+- Type : Oui/Non
+- Valeur par défaut : Non
+
+3. CONTRÔLES
+------------
+- Nombre d’éléments dans OBJ après configuration : 0
+- Aucun élément créé
+- Aucune donnée remplie
+- Aucune liste OBJ-REF-XX modifiée
+- Liste OBJ-JRN non modifiée
+- Listes ZZ-* non modifiées
+- Aucun formatage visuel supplémentaire appliqué
+
+4. CONCLUSION
+-------------
+La structure demandée est en place dans OBJ. La liste reste vide et prête à recevoir les futurs objets du système DSE.
