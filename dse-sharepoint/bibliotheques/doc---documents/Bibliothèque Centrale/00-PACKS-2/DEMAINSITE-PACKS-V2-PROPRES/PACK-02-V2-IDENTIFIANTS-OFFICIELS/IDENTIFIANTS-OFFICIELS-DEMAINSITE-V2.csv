@@ -1,0 +1,13 @@
+﻿Objet;Préfixe;Exemple;Règle
+Relation;REL;REL-000001;Racine métier. Tout objet important doit pouvoir remonter à une relation.
+Site;SIT;SIT-000001;Site rattaché à une relation.
+Domaine;DOM;DOM-000001;Domaine rattaché à un site. Un domaine principal obligatoire par site actif.
+Projet;PROJ;PROJ-000001;Projet rattaché à une relation et éventuellement à un site.
+Utilisateur;USR;USR-000001;Utilisateur interne, client, collaborateur ou responsable autorisé.
+Média;MED;MED-000001;Média versionné, jamais écrasé sans nouvelle version.
+Document;DOC;DOC-000001;Document versionné et rattachable à relation/projet/site.
+Procédure;PRC;PRC-000001;Une seule procédure active par sujet, anciennes versions archivées.
+Équipe Teams;TEAM;TEAM-000001;Équipe Teams rattachée à relation/projet/site.
+Canal Teams;CHAN;CHAN-000001;Canal Teams rattaché à une équipe.
+Automatisation;AUTO;AUTO-000001;Workflow Power Automate, statut contrôlé.
+Ticket;TCK;TCK-000001;Ticket support ou demande client future.
