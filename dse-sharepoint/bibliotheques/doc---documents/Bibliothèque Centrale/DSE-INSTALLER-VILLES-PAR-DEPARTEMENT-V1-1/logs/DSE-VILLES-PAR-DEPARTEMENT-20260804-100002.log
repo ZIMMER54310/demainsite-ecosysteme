@@ -1,0 +1,49 @@
+**********************
+PowerShell transcript start
+Start time: 20260804100002
+Username: AzureAD\PascalZIMMER_b9lyro1
+RunAs User: AzureAD\PascalZIMMER_b9lyro1
+Configuration Name: 
+Machine: ZENBOOK17 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-VILLES-PAR-DEPARTEMENT-V1-1\RUN-INSTALL-VILLES-PAR-DEPARTEMENT.ps1 -Choix oui
+Process ID: 17836
+PSVersion: 7.6.3
+PSEdition: Core
+GitCommitId: 7.6.3
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+
+============================================================
+ DEMAINSITE ECOSYSTEME - VILLES PAR DEPARTEMENT V1.1
+============================================================
+
+============================================================
+ CONNEXION SHAREPOINT DEMAINSITE
+============================================================
+PS>TerminatingError(Get-PnPWeb): "You are not signed in. Please use Connect-PnPOnline to connect."
+Connexion SharePoint absente. Connexion DeviceLogin...
+Connexion SharePoint OK : https://blogssite.sharepoint.com/sites/Bibliotheque
+Liste presente : Journal actions
+Liste presente : Journal erreurs
+
+============================================================
+ PREPARATION INDEX VILLES
+============================================================
+Liste presente : Geo - Villes Index
+
+============================================================
+ NOTE PROJET SHAREPOINT
+============================================================
+Liste presente : Projets
+PS>TerminatingError(Set-PnPListItem): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: No -Identity has been provided specifying the item to update"
+>> TerminatingError(Set-PnPListItem): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: No -Identity has been provided specifying the item to update"
+ERREUR : No -Identity has been provided specifying the item to update
+**********************
+PowerShell transcript end
+End time: 20260804100052
+**********************
