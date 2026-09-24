@@ -1,0 +1,17 @@
+﻿Liste;Champ interne;Nom affiché;Type;Obligatoire;Rôle
+Utilisateurs;Title;Nom_Utilisateur;Texte;Oui;Nom affiché
+Utilisateurs;ID_Utilisateur;ID_Utilisateur;Texte;Non;ID USR
+Utilisateurs;Email;Email;Texte;Oui;Email principal
+Utilisateurs;Role_Visible;Role_Visible;Choix;Oui;Rôle simple visible
+Utilisateurs;Relation_Associee;Relation_Associee;Recherche/texte;Non;Relation autorisée
+Utilisateurs;Statut;Statut;Choix;Oui;Actif, Suspendu, Archivé
+Equipes_Teams;Title;Nom_Equipe;Texte;Oui;Nom équipe
+Equipes_Teams;ID_Team;ID_Team;Texte;Non;ID TEAM
+Equipes_Teams;Relation_Associee;Relation_Associee;Recherche/texte;Non;Relation liée
+Equipes_Teams;Projet_Associe;Projet_Associe;Recherche/texte;Non;Projet lié
+Equipes_Teams;Proprietaires;Proprietaires;Texte long;Non;Propriétaires
+Canaux_Teams;Title;Nom_Canal;Texte;Oui;Nom canal
+Canaux_Teams;ID_Canal;ID_Canal;Texte;Non;ID CHAN
+Canaux_Teams;Equipe_Associee;Equipe_Associee;Recherche/texte;Oui;Équipe liée
+Canaux_Teams;Type_Canal;Type_Canal;Choix;Oui;Standard, Privé, Partagé
+Canaux_Teams;Membres_Autorises;Membres_Autorises;Texte long;Non;Membres autorisés
