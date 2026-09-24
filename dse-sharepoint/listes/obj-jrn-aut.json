@@ -1,0 +1,1003 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-JRN-AUT",
+    "listeId": "080913bf-2f1d-453a-b4ed-bb7cac607fad"
+  },
+  "exporteLe": "2026-09-24T10:37:51.7577723+02:00",
+  "nombreElements": 18,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "JOB-39bc7860-a3a7-41be-831a-8dddc00b61a8",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-70-84-CONTROLE-USAGES",
+      "NOM": "Job DSE-70-84-CONTROLE-USAGES - Failed",
+      "IDJRN": "JOB-39bc7860-a3a7-41be-831a-8dddc00b61a8",
+      "DATEDEBUT": "2026-09-18T15:12:23.0000000Z",
+      "DATEFIN": "2026-09-18T15:12:23.0000000Z",
+      "DUREESECONDES": 0.0,
+      "ANOMALIE": true,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 4,
+        "valeur": "AUT-RB-DSE-70-84-CONTROLE-USAGES"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T06:12:02.0000000Z",
+      "Created": "2026-09-19T06:12:02.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "JOB-430a2338-688f-4dfc-a655-7ff78f8e3593",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-70-84-CONTROLE-USAGES",
+      "NOM": "Job DSE-70-84-CONTROLE-USAGES - Failed",
+      "IDJRN": "JOB-430a2338-688f-4dfc-a655-7ff78f8e3593",
+      "DATEDEBUT": "2026-09-18T15:14:19.0000000Z",
+      "DATEFIN": "2026-09-18T15:14:19.0000000Z",
+      "DUREESECONDES": 0.0,
+      "ANOMALIE": true,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 4,
+        "valeur": "AUT-RB-DSE-70-84-CONTROLE-USAGES"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T06:12:04.0000000Z",
+      "Created": "2026-09-19T06:12:04.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "JOB-cb9d875d-7433-49d8-9050-f2b301863db0",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-70-84-CONTROLE-USAGES",
+      "NOM": "Job DSE-70-84-CONTROLE-USAGES - Stopped",
+      "IDJRN": "JOB-cb9d875d-7433-49d8-9050-f2b301863db0",
+      "DATEDEBUT": "2026-09-18T15:23:18.0000000Z",
+      "DATEFIN": "2026-09-18T15:33:50.0000000Z",
+      "DUREESECONDES": 632.0,
+      "ANOMALIE": true,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 4,
+        "valeur": "AUT-RB-DSE-70-84-CONTROLE-USAGES"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T06:12:06.0000000Z",
+      "Created": "2026-09-19T06:12:06.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "JOB-e5eaf775-97cb-4865-91ed-1137a2b49443",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-70-84-CONTROLE-USAGES",
+      "NOM": "Job DSE-70-84-CONTROLE-USAGES - Stopped",
+      "IDJRN": "JOB-e5eaf775-97cb-4865-91ed-1137a2b49443",
+      "DATEDEBUT": "2026-09-18T15:49:37.0000000Z",
+      "DATEFIN": "2026-09-18T15:53:45.0000000Z",
+      "DUREESECONDES": 248.0,
+      "ANOMALIE": true,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 4,
+        "valeur": "AUT-RB-DSE-70-84-CONTROLE-USAGES"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T06:12:07.0000000Z",
+      "Created": "2026-09-19T06:12:07.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "JOB-fb7360b4-0fc6-4011-a39a-a2d91a9d8b42",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-70-84-CONTROLE-USAGES",
+      "NOM": "Job DSE-70-84-CONTROLE-USAGES - Failed",
+      "IDJRN": "JOB-fb7360b4-0fc6-4011-a39a-a2d91a9d8b42",
+      "DATEDEBUT": "2026-09-18T16:02:11.0000000Z",
+      "DATEFIN": "2026-09-18T16:02:11.0000000Z",
+      "DUREESECONDES": 0.0,
+      "ANOMALIE": true,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 4,
+        "valeur": "AUT-RB-DSE-70-84-CONTROLE-USAGES"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T06:12:09.0000000Z",
+      "Created": "2026-09-19T06:12:09.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 6,
+      "Title": "JOB-5cb67744-4f4f-413d-9492-1ba024ce9715",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-70-84-CONTROLE-USAGES",
+      "NOM": "Job DSE-70-84-CONTROLE-USAGES - Completed",
+      "IDJRN": "JOB-5cb67744-4f4f-413d-9492-1ba024ce9715",
+      "DATEDEBUT": "2026-09-18T16:06:39.0000000Z",
+      "DATEFIN": "2026-09-18T16:10:41.0000000Z",
+      "DUREESECONDES": 242.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 4,
+        "valeur": "AUT-RB-DSE-70-84-CONTROLE-USAGES"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T06:12:10.0000000Z",
+      "Created": "2026-09-19T06:12:10.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 7,
+      "Title": "JOB-4490f962-93e8-42d3-a603-da884d990809",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-70-84-CONTROLE-USAGES",
+      "NOM": "Job DSE-70-84-CONTROLE-USAGES - Completed",
+      "IDJRN": "JOB-4490f962-93e8-42d3-a603-da884d990809",
+      "DATEDEBUT": "2026-09-18T16:16:34.0000000Z",
+      "DATEFIN": "2026-09-18T16:21:02.0000000Z",
+      "DUREESECONDES": 268.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 4,
+        "valeur": "AUT-RB-DSE-70-84-CONTROLE-USAGES"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T06:12:12.0000000Z",
+      "Created": "2026-09-19T06:12:12.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 8,
+      "Title": "JOB-e1083333-8fbf-4782-a883-e6c051368995",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-70-84-CONTROLE-USAGES",
+      "NOM": "Job DSE-70-84-CONTROLE-USAGES - Completed",
+      "IDJRN": "JOB-e1083333-8fbf-4782-a883-e6c051368995",
+      "DATEDEBUT": "2026-09-18T16:24:56.0000000Z",
+      "DATEFIN": "2026-09-18T16:29:17.0000000Z",
+      "DUREESECONDES": 261.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 4,
+        "valeur": "AUT-RB-DSE-70-84-CONTROLE-USAGES"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T06:12:13.0000000Z",
+      "Created": "2026-09-19T06:12:13.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 9,
+      "Title": "JOB-4cbb11f7-4628-41ad-919b-b6d90ebcaf82",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-90-02-SAUVEGARDE-HEBDOMADAIRE",
+      "NOM": "Job DSE-90-02-SAUVEGARDE-HEBDOMADAIRE - Completed",
+      "IDJRN": "JOB-4cbb11f7-4628-41ad-919b-b6d90ebcaf82",
+      "DATEDEBUT": "2026-09-19T12:19:08.0000000Z",
+      "DATEFIN": "2026-09-19T12:31:29.0000000Z",
+      "DUREESECONDES": 741.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 6,
+        "valeur": "AUT-RB-DSE-90-02-SAUVEGARDE-HEBDOMADAIRE"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T12:18:50.0000000Z",
+      "Created": "2026-09-19T12:18:50.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 10,
+      "Title": "JOB-361761cd-29c8-4d08-b02b-b79d6cb5cd9f",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-90-02-SAUVEGARDE-HEBDOMADAIRE",
+      "NOM": "Job DSE-90-02-SAUVEGARDE-HEBDOMADAIRE - Completed",
+      "IDJRN": "JOB-361761cd-29c8-4d08-b02b-b79d6cb5cd9f",
+      "DATEDEBUT": "2026-09-19T12:33:03.0000000Z",
+      "DATEFIN": "2026-09-19T13:19:08.0000000Z",
+      "DUREESECONDES": 2765.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 6,
+        "valeur": "AUT-RB-DSE-90-02-SAUVEGARDE-HEBDOMADAIRE"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T12:18:51.0000000Z",
+      "Created": "2026-09-19T12:18:51.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 11,
+      "Title": "JOB-bd60fc28-2113-4594-9c22-d74788d79894",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-90-02-SAUVEGARDE-HEBDOMADAIRE",
+      "NOM": "Job DSE-90-02-SAUVEGARDE-HEBDOMADAIRE - Completed",
+      "IDJRN": "JOB-bd60fc28-2113-4594-9c22-d74788d79894",
+      "DATEDEBUT": "2026-09-19T13:36:07.0000000Z",
+      "DATEFIN": "2026-09-19T13:50:28.0000000Z",
+      "DUREESECONDES": 861.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 6,
+        "valeur": "AUT-RB-DSE-90-02-SAUVEGARDE-HEBDOMADAIRE"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T12:18:53.0000000Z",
+      "Created": "2026-09-19T12:18:53.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 12,
+      "Title": "JOB-6b24b78b-e2ba-4fb9-af4e-b40ef744785f",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-90-02-SAUVEGARDE-HEBDOMADAIRE",
+      "NOM": "Job DSE-90-02-SAUVEGARDE-HEBDOMADAIRE - Completed",
+      "IDJRN": "JOB-6b24b78b-e2ba-4fb9-af4e-b40ef744785f",
+      "DATEDEBUT": "2026-09-19T14:06:38.0000000Z",
+      "DATEFIN": "2026-09-19T14:13:03.0000000Z",
+      "DUREESECONDES": 385.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 6,
+        "valeur": "AUT-RB-DSE-90-02-SAUVEGARDE-HEBDOMADAIRE"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T12:18:55.0000000Z",
+      "Created": "2026-09-19T12:18:55.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 13,
+      "Title": "JOB-e2fccdff-199a-4ecc-9bce-5b6dbd060b69",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-90-03-CONTROLE-OBJ-AUT-AZURE",
+      "NOM": "Job DSE-90-03-CONTROLE-OBJ-AUT-AZURE - Completed",
+      "IDJRN": "JOB-e2fccdff-199a-4ecc-9bce-5b6dbd060b69",
+      "DATEDEBUT": "2026-09-19T14:44:23.0000000Z",
+      "DATEFIN": "2026-09-19T14:44:54.0000000Z",
+      "DUREESECONDES": 30.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 33,
+        "valeur": "AUT-RB-DSE-90-03-CONTROLE-OBJ-AUT-AZURE"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T12:46:12.0000000Z",
+      "Created": "2026-09-19T12:46:12.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 14,
+      "Title": "JOB-9725f5fe-6cf8-437a-a4e7-94d8d72d9bad",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-90-03-CONTROLE-OBJ-AUT-AZURE",
+      "NOM": "Job DSE-90-03-CONTROLE-OBJ-AUT-AZURE - Completed",
+      "IDJRN": "JOB-9725f5fe-6cf8-437a-a4e7-94d8d72d9bad",
+      "DATEDEBUT": "2026-09-19T14:47:00.0000000Z",
+      "DATEFIN": "2026-09-19T14:47:26.0000000Z",
+      "DUREESECONDES": 26.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 33,
+        "valeur": "AUT-RB-DSE-90-03-CONTROLE-OBJ-AUT-AZURE"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T12:50:16.0000000Z",
+      "Created": "2026-09-19T12:50:16.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 15,
+      "Title": "JOB-3e5f4e9b-0805-48a7-90ed-84550a2be538",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-90-03-CONTROLE-OBJ-AUT-AZURE",
+      "NOM": "Job DSE-90-03-CONTROLE-OBJ-AUT-AZURE - Completed",
+      "IDJRN": "JOB-3e5f4e9b-0805-48a7-90ed-84550a2be538",
+      "DATEDEBUT": "2026-09-19T14:48:21.0000000Z",
+      "DATEFIN": "2026-09-19T14:48:54.0000000Z",
+      "DUREESECONDES": 33.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 33,
+        "valeur": "AUT-RB-DSE-90-03-CONTROLE-OBJ-AUT-AZURE"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T12:50:17.0000000Z",
+      "Created": "2026-09-19T12:50:17.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 16,
+      "Title": "JOB-8c9708b1-fdbe-4a25-aedd-c0671ca7c3da",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-90-03-CONTROLE-OBJ-AUT-AZURE",
+      "NOM": "Job DSE-90-03-CONTROLE-OBJ-AUT-AZURE - Completed",
+      "IDJRN": "JOB-8c9708b1-fdbe-4a25-aedd-c0671ca7c3da",
+      "DATEDEBUT": "2026-09-19T14:53:50.0000000Z",
+      "DATEFIN": "2026-09-19T14:54:19.0000000Z",
+      "DUREESECONDES": 30.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 33,
+        "valeur": "AUT-RB-DSE-90-03-CONTROLE-OBJ-AUT-AZURE"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T13:52:57.0000000Z",
+      "Created": "2026-09-19T13:52:57.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 17,
+      "Title": "JOB-bc62305b-b411-4ebd-9fdb-c3daa9f0eb45",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-90-02-SAUVEGARDE-HEBDOMADAIRE",
+      "NOM": "Job DSE-90-02-SAUVEGARDE-HEBDOMADAIRE - Completed",
+      "IDJRN": "JOB-bc62305b-b411-4ebd-9fdb-c3daa9f0eb45",
+      "DATEDEBUT": "2026-09-19T15:41:01.0000000Z",
+      "DATEFIN": "2026-09-19T15:46:29.0000000Z",
+      "DUREESECONDES": 329.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 6,
+        "valeur": "AUT-RB-DSE-90-02-SAUVEGARDE-HEBDOMADAIRE"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T13:52:59.0000000Z",
+      "Created": "2026-09-19T13:52:59.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 18,
+      "Title": "JOB-ab812c71-80f5-4e09-8719-fdd5b7742c80",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODE": "DSE-90-04-DECLENCHEMENT-MANUEL",
+      "NOM": "Job DSE-90-04-DECLENCHEMENT-MANUEL - Completed",
+      "IDJRN": "JOB-ab812c71-80f5-4e09-8719-fdd5b7742c80",
+      "DATEDEBUT": "2026-09-19T15:48:31.0000000Z",
+      "DATEFIN": "2026-09-19T15:48:46.0000000Z",
+      "DUREESECONDES": 14.0,
+      "ANOMALIE": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "STATUT": null,
+      "RUNBOOKLIE": {
+        "id": 36,
+        "valeur": "AUT-RB-DSE-90-04-DECLENCHEMENT-MANUEL"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T13:53:00.0000000Z",
+      "Created": "2026-09-19T13:53:00.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    }
+  ]
+}
