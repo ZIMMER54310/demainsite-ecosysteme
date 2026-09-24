@@ -1,0 +1,154 @@
+MISSION
+
+Créer la liste :
+
+OBJ-REL
+
+Ne modifier aucune autre liste.
+
+=================================================
+
+OBJECTIF
+
+OBJ-REL doit gérer les relations entre objets DSE.
+
+Modèle :
+
+OBJ Source
+↓
+Type de relation
+↓
+OBJ Cible
+
+=================================================
+
+COLONNES
+
+ID-REL
+Type : Texte
+Obligatoire
+Unique
+
+OBJ-SOURCE
+Type : Lookup
+Source : OBJ
+
+TYPE-RELATION
+Type : Lookup
+Source : OBJ-REF-70
+
+OBJ-CIBLE
+Type : Lookup
+Source : OBJ
+
+ACTIF
+Type : Oui/Non
+Défaut : Oui
+
+DATE-DEBUT
+Type : Date
+
+DATE-FIN
+Type : Date
+
+SOURCE-RELATION
+Type : Texte
+
+CONTROLE-PASC-ARA
+Type : Oui/Non
+Défaut : Non
+
+VERROUILLE
+Type : Oui/Non
+Défaut : Non
+
+NOTES
+Type : Texte multilignes
+
+=================================================
+
+INDEX RECOMMANDES
+
+ID-REL
+
+OBJ-SOURCE
+
+TYPE-RELATION
+
+OBJ-CIBLE
+
+ACTIF
+
+=================================================
+
+CONTROLES
+
+Empêcher :
+
+OBJ-SOURCE = OBJ-CIBLE
+
+Vérifier existence :
+
+OBJ Source
+
+OBJ Cible
+
+Type de relation
+
+=================================================
+
+NE PAS CREER
+
+Aucune ligne
+
+Aucune relation
+
+Aucune donnée
+
+=================================================
+
+CONSEIL IA SHAREPOINT
+
+Après création :
+
+Analyser :
+
+- la structure proposée ;
+- les risques ;
+- les colonnes manquantes ;
+- les optimisations possibles ;
+- la compatibilité avec le pilote Application DemainSite.
+
+Ne rien modifier.
+
+=================================================
+
+RAPPORT OBLIGATOIRE
+
+Créer :
+
+Rapport_creation_OBJ_REL.txt
+
+Contenu :
+
+- Date
+- Liste créée
+- Colonnes créées
+- Lookups créés
+- Index créés
+- Contraintes appliquées
+- Conseils IA SharePoint
+- Erreurs éventuelles
+- Résultat final
+
+Créer le rapport même en cas d'échec.
+
+Proposer le rapport en téléchargement.
+
+=================================================
+
+PROMPT UTILISÉ
+
+Conserver également ce prompt dans :
+
+Prompt_reutilisable_creation_OBJ_REL.txt
