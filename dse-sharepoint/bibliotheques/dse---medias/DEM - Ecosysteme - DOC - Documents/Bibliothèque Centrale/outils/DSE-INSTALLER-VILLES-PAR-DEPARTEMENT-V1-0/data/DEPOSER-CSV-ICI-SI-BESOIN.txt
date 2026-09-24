@@ -1,0 +1,1 @@
+Optionnel. Le script V1.0 utilise l API Geo en direct. Ce dossier est reserve aux evolutions CSV.
