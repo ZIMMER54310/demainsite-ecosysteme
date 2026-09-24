@@ -1,0 +1,23 @@
+﻿Titre - Statut;ID GEO Statut;Code Statut;Type Statut;Description Statut;Actif;Ordre Affichage;Validation DSE
+État souverain;ID-GEO-STA-000001;ETAT-SOUVERAIN;SOUVERAIN;État indépendant disposant d’une souveraineté reconnue.;Oui;10;Non
+Territoire dépendant;ID-GEO-STA-000002;TERRITOIRE-DEPENDANT;DEPENDANCE;Territoire placé sous la responsabilité ou l’administration d’un autre État.;Oui;20;Non
+Territoire d’outre-mer;ID-GEO-STA-000003;TERRITOIRE-OUTRE-MER;OUTRE-MER;Territoire géographiquement éloigné de l’État auquel il est rattaché.;Oui;30;Non
+Collectivité territoriale;ID-GEO-STA-000004;COLLECTIVITE;COLLECTIVITE;Entité territoriale disposant d’une organisation administrative propre.;Oui;40;Non
+Région administrative;ID-GEO-STA-000005;REGION-ADMINISTRATIVE;ADMINISTRATIF;Division administrative de premier ou de second niveau.;Oui;50;Non
+Département;ID-GEO-STA-000006;DEPARTEMENT;ADMINISTRATIF;Division administrative rattachée à une région et à un pays.;Oui;60;Non
+Province;ID-GEO-STA-000007;PROVINCE;ADMINISTRATIF;Division territoriale ou administrative appelée province.;Oui;70;Non
+État fédéré;ID-GEO-STA-000008;ETAT-FEDERE;FEDERAL;Entité politique membre d’un État fédéral.;Oui;80;Non
+Territoire autonome;ID-GEO-STA-000009;TERRITOIRE-AUTONOME;AUTONOME;Territoire bénéficiant d’un régime d’autonomie particulier.;Oui;90;Non
+Région autonome;ID-GEO-STA-000010;REGION-AUTONOME;AUTONOME;Région disposant de compétences autonomes définies juridiquement.;Oui;100;Non
+Zone spéciale;ID-GEO-STA-000011;ZONE-SPECIALE;SPECIAL;Zone géographique soumise à un statut ou à un régime particulier.;Oui;110;Non
+Zone internationale;ID-GEO-STA-000012;ZONE-INTERNATIONALE;INTERNATIONAL;Zone relevant d’un régime ou d’une gestion internationale.;Oui;120;Non
+Territoire contesté;ID-GEO-STA-000013;TERRITOIRE-CONTESTE;CONTESTE;Territoire dont la souveraineté ou le rattachement fait l’objet d’une contestation.;Oui;130;Non
+Territoire non autonome;ID-GEO-STA-000014;TERRITOIRE-NON-AUTONOME;NON-AUTONOME;Territoire ne disposant pas d’une autonomie politique complète.;Oui;140;Non
+Territoire inhabité;ID-GEO-STA-000015;TERRITOIRE-INHABITE;INHABITE;Territoire ne comportant pas de population permanente.;Oui;150;Non
+Zone maritime;ID-GEO-STA-000016;ZONE-MARITIME;MARITIME;Zone géographique principalement maritime ou océanique.;Oui;160;Non
+Commune;ID-GEO-STA-000017;COMMUNE;ADMINISTRATIF;Collectivité ou division administrative locale correspondant à une commune.;Oui;170;Non
+Commune associée;ID-GEO-STA-000018;COMMUNE-ASSOCIEE;ADMINISTRATIF;Ancienne commune ou entité locale associée à une autre commune.;Oui;180;Non
+Commune déléguée;ID-GEO-STA-000019;COMMUNE-DELEGUEE;ADMINISTRATIF;Commune conservant une représentation locale au sein d’une commune nouvelle.;Oui;190;Non
+Ancienne entité;ID-GEO-STA-000020;ANCIENNE-ENTITE;HISTORIQUE;Entité géographique ou administrative qui n’est plus active mais reste conservée pour l’historique.;Oui;200;Non
+À contrôler;ID-GEO-STA-000021;A-CONTROLER;CONTROLE;Statut temporaire attribué lorsqu’une qualification géographique doit être vérifiée.;Oui;900;Non
+Non déterminé;ID-GEO-STA-000022;NON-DETERMINE;INCONNU;Statut utilisé lorsqu’aucune qualification fiable n’est encore disponible.;Oui;990;Non
