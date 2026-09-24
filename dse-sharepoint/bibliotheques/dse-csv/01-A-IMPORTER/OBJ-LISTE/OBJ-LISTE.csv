@@ -1,0 +1,34 @@
+﻿Titre - Structure;ID OBJ Liste;Code Liste;Nom Structure;Type Structure;Famille;Description;Statut Déploiement;Nom Protégé;Modification Réservée Super Admin;Journalisation Obligatoire;Source Officielle;Actif;Ordre Affichage;Validation DSE
+OBJ-STATUT;ID-OBJ-LST-000001;OBJ-STATUT;OBJ-STATUT;LISTE;OBJ;Référentiel universel des statuts DSE.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;10;Non
+OBJ-TYPE;ID-OBJ-LST-000002;OBJ-TYPE;OBJ-TYPE;LISTE;OBJ;Référentiel universel des types d’objets DSE.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;20;Non
+OBJ-SITE;ID-OBJ-LST-000003;OBJ-SITE;OBJ-SITE;LISTE;OBJ;Référentiel officiel des sites DSE.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;30;Non
+OBJ-MODULE;ID-OBJ-LST-000004;OBJ-MODULE;OBJ-MODULE;LISTE;OBJ;Référentiel officiel des modules DSE.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;40;Non
+OBJ-LISTE;ID-OBJ-LST-000005;OBJ-LISTE;OBJ-LISTE;LISTE;GOUVERNANCE;Registre maître des listes bibliothèques et journaux DSE.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;50;Non
+OBJ-REGNE;ID-OBJ-LST-000006;OBJ-REGNE;OBJ-REGNE;LISTE;KNOWLEDGE;Référentiel des règnes et domaines de connaissance DSE.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;60;Non
+OBJ-COLLECTION;ID-OBJ-LST-000007;OBJ-COLLECTION;OBJ-COLLECTION;LISTE;KNOWLEDGE;Référentiel des collections DSE.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;70;Non
+OBJ-GALERIE;ID-OBJ-LST-000008;OBJ-GALERIE;OBJ-GALERIE;LISTE;KNOWLEDGE;Référentiel des galeries et sujets de médias DSE.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;80;Non
+OBJ-TYPE-MEDIA;ID-OBJ-LST-000009;OBJ-TYPE-MEDIA;OBJ-TYPE-MEDIA;LISTE;MEDIA;Référentiel des types de médias DSE.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;90;Non
+OBJ-LICENCE;ID-OBJ-LST-000010;OBJ-LICENCE;OBJ-LICENCE;LISTE;MEDIA;Référentiel des licences et droits d’utilisation.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;100;Non
+OBJ-PROMPT-IA;ID-OBJ-LST-000011;OBJ-PROMPT-IA;OBJ-PROMPT-IA;LISTE;IA;Bibliothèque structurée des prompts maîtres Azure IA.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;110;Non
+OBJ-MEDIA;ID-OBJ-LST-000012;OBJ-MEDIA;OBJ-MEDIA;LISTE;MEDIA;Catalogue universel des médias DSE.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;120;Non
+OBJ-COMMANDE;ID-OBJ-LST-000013;OBJ-COMMANDE;OBJ-COMMANDE;LISTE;COMMERCE;Registre des commandes licences et téléchargements.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;130;Non
+MEDIA-UNIVERSAL;ID-OBJ-LST-000014;MEDIA-UNIVERSAL;MEDIA-UNIVERSAL;BIBLIOTHEQUE;MEDIA;Bibliothèque officielle de stockage des médias DSE.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;140;Non
+OBJ-JRN-00;ID-OBJ-LST-000015;OBJ-JRN-00;OBJ-JRN-00;JOURNAL;JRN;Journal maître et index global DSE.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;200;Non
+OBJ-JRN-01;ID-OBJ-LST-000016;OBJ-JRN-01;OBJ-JRN-01;JOURNAL;JRN;Journal de gouvernance et des décisions officielles.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;210;Non
+OBJ-JRN-10;ID-OBJ-LST-000017;OBJ-JRN-10;OBJ-JRN-10;JOURNAL;JRN;Journal des référentiels DSE.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;220;Non
+OBJ-JRN-20;ID-OBJ-LST-000018;OBJ-JRN-20;OBJ-JRN-20;JOURNAL;JRN;Journal des prompts et générations IA.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;230;Non
+OBJ-JRN-30;ID-OBJ-LST-000019;OBJ-JRN-30;OBJ-JRN-30;JOURNAL;JRN;Journal des médias signatures filigranes et publications.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;240;Non
+OBJ-JRN-40;ID-OBJ-LST-000020;OBJ-JRN-40;OBJ-JRN-40;JOURNAL;JRN;Journal des automates et traitements techniques.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;250;Non
+OBJ-JRN-50;ID-OBJ-LST-000021;OBJ-JRN-50;OBJ-JRN-50;JOURNAL;JRN;Journal des commandes et téléchargements.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;260;Non
+OBJ-JRN-60;ID-OBJ-LST-000022;OBJ-JRN-60;OBJ-JRN-60;JOURNAL;JRN;Journal de sécurité permissions et opérations critiques.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;270;Non
+OBJ-JRN-70;ID-OBJ-LST-000023;OBJ-JRN-70;OBJ-JRN-70;JOURNAL;JRN;Journal des portails et publications publiques.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;280;Non
+OBJ-JRN-80;ID-OBJ-LST-000024;OBJ-JRN-80;OBJ-JRN-80;JOURNAL;JRN;Journal des audits contrôles et anomalies.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;290;Non
+OBJ-JRN-90;ID-OBJ-LST-000025;OBJ-JRN-90;OBJ-JRN-90;JOURNAL;JRN;Journal des archives et opérations clôturées.;A-CREER;Oui;Oui;Oui;SharePoint;Oui;300;Non
+OBJ-GEO-CONTINENT;ID-OBJ-LST-000026;OBJ-GEO-CONTINENT;OBJ-GEO-CONTINENT;LISTE;GEO;Référentiel officiel des continents.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;400;Non
+OBJ-GEO-DEVISE;ID-OBJ-LST-000027;OBJ-GEO-DEVISE;OBJ-GEO-DEVISE;LISTE;GEO;Référentiel officiel des devises.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;410;Non
+OBJ-GEO-LANGUE;ID-OBJ-LST-000028;OBJ-GEO-LANGUE;OBJ-GEO-LANGUE;LISTE;GEO;Référentiel officiel des langues.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;420;Non
+OBJ-GEO-PAYS;ID-OBJ-LST-000029;OBJ-GEO-PAYS;OBJ-GEO-PAYS;LISTE;GEO;Référentiel officiel des pays et territoires.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;430;Non
+OBJ-GEO-CAPITALE;ID-OBJ-LST-000030;OBJ-GEO-CAPITALE;OBJ-GEO-CAPITALE;LISTE;GEO;Référentiel officiel des capitales.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;440;Non
+OBJ-GEO-VILLE;ID-OBJ-LST-000031;OBJ-GEO-VILLE;OBJ-GEO-VILLE;LISTE;GEO;Référentiel officiel des villes et communes.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;450;Non
+OBJ-GEO-SOURCE;ID-OBJ-LST-000032;OBJ-GEO-SOURCE;OBJ-GEO-SOURCE;LISTE;GEO;Registre des sources CSV GEO.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;460;Non
+OBJ-JRN-GEO;ID-OBJ-LST-000033;OBJ-JRN-GEO;OBJ-JRN-GEO;JOURNAL;GEO;Journal spécialisé des traitements GEO.;EXISTANTE;Oui;Oui;Oui;SharePoint;Oui;470;Non
