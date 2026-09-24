@@ -1,0 +1,43 @@
+Table;Colonne;Type;Obligatoire;Role
+DSE_Comptes;NomCompte;Texte;Oui;Nom du compte client ou interne
+DSE_Comptes;CodeCompte;Texte;Oui;Identifiant unique type CLI-000001
+DSE_Comptes;TypeCompte;Choix;Oui;Interne, Client, Association, Prospect
+DSE_Comptes;StatutCompte;Choix;Oui;Actif, Preparation, Suspendu, Archive
+DSE_Comptes;ResponsableInterne;Texte;Oui;Responsable DemainSite
+DSE_Comptes;ScoreCompletude;Nombre;Non;Score qualite
+DSE_Relations;NomRelation;Texte;Oui;Racine metier
+DSE_Relations;CodeRelation;Texte;Oui;Identifiant REL
+DSE_Relations;CompteLie;Lookup;Oui;Lien vers DSE_Comptes
+DSE_Relations;StatutRelation;Choix;Oui;Actif, Preparation, Suspendu, Archive
+DSE_Sites;NomSite;Texte;Oui;Nom lisible du site
+DSE_Sites;CodeSite;Texte;Oui;Identifiant SIT
+DSE_Sites;CompteLie;Lookup;Oui;Compte proprietaire
+DSE_Sites;DomainePrincipal;Texte;Oui;Domaine officiel
+DSE_Sites;StatutSite;Choix;Oui;Actif, Maintenance, Construction, Suspendu, Archive
+DSE_Sites;TypeSite;Choix;Oui;Vitrine, Boutique, Portail client, Interne
+DSE_Domaines;NomDomaine;Texte;Oui;Nom de domaine
+DSE_Domaines;SiteLie;Lookup;Oui;Site associe
+DSE_Domaines;StatutDomaine;Choix;Oui;Actif, A verifier, Suspendu, Archive
+DSE_Projets;NomProjet;Texte;Oui;Nom projet
+DSE_Projets;CodeProjet;Texte;Oui;Identifiant PROJ
+DSE_Projets;CompteLie;Lookup;Oui;Compte/client associe
+DSE_Projets;SiteLie;Lookup;Non;Site associe si applicable
+DSE_Projets;StatutProjet;Choix;Oui;Preparation, En cours, Valide, Termine, Suspendu
+DSE_Documents;NomDocument;Texte;Oui;Nom document
+DSE_Documents;CompteLie;Lookup;Oui;Compte proprietaire
+DSE_Documents;ProjetLie;Lookup;Non;Projet associe
+DSE_Documents;UrlSharePoint;URL;Oui;Lien document SharePoint
+DSE_Documents;StatutDocument;Choix;Oui;Actif, Valide, Archive
+DSE_Produits;NomProduit;Texte;Oui;Produit vendable ou offert
+DSE_Produits;CompteLie;Lookup;Non;Compte concerne si specifique
+DSE_Produits;Prix;Devise;Non;Prix produit
+DSE_Produits;StatutProduit;Choix;Oui;Brouillon, Actif, Suspendu
+DSE_Commandes;NumeroCommande;Texte;Oui;Identifiant commande
+DSE_Commandes;CompteLie;Lookup;Oui;Client acheteur
+DSE_Commandes;ProduitLie;Lookup;Oui;Produit commande
+DSE_Commandes;StatutCommande;Choix;Oui;En cours, Payee, Annulee, Remboursee
+DSE_JournalActions;DateAction;DateHeure;Oui;Date action
+DSE_JournalActions;ObjetConcerne;Texte;Oui;Objet ou table impactee
+DSE_JournalActions;Action;Texte;Oui;Action realisee
+DSE_JournalActions;Resultat;Choix;Oui;OK, ERREUR, A_VERIFIER
+DSE_JournalActions;Message;TexteMultiligne;Non;Detail lisible humainement
