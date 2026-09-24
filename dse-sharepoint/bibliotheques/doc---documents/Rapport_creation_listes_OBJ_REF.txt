@@ -1,0 +1,117 @@
+RAPPORT DE CRÉATION SHAREPOINT
+Site : DEM - Ecosysteme
+Emplacement : https://blogssite.sharepoint.com/sites/Bibliotheque
+
+=================================================
+1. OBJET DU RAPPORT
+=================================================
+
+Création contrôlée des listes suivantes, sans remplissage, migration ni suppression :
+
+- OBJ-JRN
+- OBJ-REF-00
+- OBJ-REF-10
+- OBJ-REF-20
+- OBJ-REF-30
+- OBJ-REF-40
+- OBJ-REF-50
+- OBJ-REF-60
+- OBJ-REF-70
+- OBJ-REF-80
+- OBJ-REF-90
+
+Nombre total de listes créées : 11
+
+=================================================
+2. LISTE OBJ-JRN
+=================================================
+
+Nom : OBJ-JRN
+Statut : créée
+Nombre d’éléments : 0
+
+Aucune colonne métier spécifique supplémentaire n’a été créée.
+La liste contient uniquement les colonnes natives générées automatiquement par SharePoint.
+
+=================================================
+3. LISTES OBJ-REF
+=================================================
+
+Les dix listes suivantes ont été créées avec la même structure :
+
+- OBJ-REF-00
+- OBJ-REF-10
+- OBJ-REF-20
+- OBJ-REF-30
+- OBJ-REF-40
+- OBJ-REF-50
+- OBJ-REF-60
+- OBJ-REF-70
+- OBJ-REF-80
+- OBJ-REF-90
+
+Structure métier de chaque liste :
+
+1. ID-OBJ
+   Type : Texte une ligne
+   Obligatoire : Oui
+   Valeur unique : Oui
+
+2. CODE-REF
+   Type : Texte une ligne
+   Obligatoire : Oui
+   Valeur unique : Oui
+
+3. NOM-REF
+   Type : Texte une ligne
+   Obligatoire : Oui
+   Nom interne SharePoint : Title
+
+4. DESCRIPTION-REF
+   Type : Texte plusieurs lignes
+   Obligatoire : Non
+
+5. ACTIF
+   Type : Oui/Non
+   Valeur par défaut : Oui
+
+6. NOTES
+   Type : Texte plusieurs lignes
+   Obligatoire : Non
+
+Chaque liste contient également les colonnes système natives créées automatiquement par SharePoint.
+
+=================================================
+4. CONTRÔLES EFFECTUÉS
+=================================================
+
+- Les 11 listes demandées ont été créées.
+- Aucune autre liste n’a été créée.
+- Toutes les listes créées sont vides.
+- Aucun élément n’a été ajouté.
+- Aucune migration n’a été réalisée.
+- Aucune suppression n’a été réalisée.
+- Aucune liste antérieure n’a été supprimée.
+- ID-OBJ est obligatoire et unique dans chaque liste OBJ-REF.
+- CODE-REF est obligatoire et unique dans chaque liste OBJ-REF.
+- NOM-REF est obligatoire dans chaque liste OBJ-REF.
+- ACTIF a Oui comme valeur par défaut.
+- Aucune mise en forme de colonne n’a été ajoutée.
+- Aucune automatisation n’a été créée.
+- Aucune colonne métier supplémentaire non demandée n’a été ajoutée.
+
+=================================================
+5. POINT DE VIGILANCE
+=================================================
+
+Une liste nommée OBJ existait déjà sur le site avant cette opération.
+Elle n’a pas été créée, modifiée, remplie ou supprimée pendant cette mission.
+
+=================================================
+6. RÉSULTAT
+=================================================
+
+Mission terminée.
+Les 11 listes demandées sont disponibles et vides, avec la structure définie.
+
+FIN DU RAPPORT
