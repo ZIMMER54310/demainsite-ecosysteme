@@ -1,0 +1,9 @@
+{
+  "nom": "DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES",
+  "version": "2.0",
+  "projet": "DemainSite Ecosysteme",
+  "site_sharepoint": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+  "fonction": "Installer ou mettre a jour toutes les communes de France dans SharePoint",
+  "suppression_automatique": false,
+  "journalisation": true
+}
