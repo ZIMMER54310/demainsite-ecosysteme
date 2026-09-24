@@ -1,0 +1,61 @@
+RAPPORT DE CREATION - PREMIER OBJET PILOTE
+================================================
+
+Date du rapport : 04/09/2026
+Site : DEM - Ecosysteme
+
+1. SYNTHESE
+------------
+Le premier objet pilote a été créé avec succès dans la liste OBJ.
+
+ID-OBJ : OBJ-APP-DSE-000001
+Nom : Application DemainSite
+Titre : Application DemainSite
+État : Test
+Qualité : Expérimental
+Verrouillé : Non
+Contrôle PASC-ARA : Non
+
+2. DESCRIPTION
+--------------
+Application centrale de gestion et d’exploitation de l’écosystème DemainSite. Objet pilote destiné à valider la classification, les responsabilités, les relations, le cycle de vie, les contrôles et la journalisation du socle OBJ.
+
+3. CLASSIFICATION
+-----------------
+OBJ-REF-00 - Type : APPLICATION
+OBJ-REF-10 - Écosystème : DemainSite
+OBJ-REF-20 - Cycle de vie : Test
+OBJ-REF-30 - Criticité : Critique, Haute
+OBJ-REF-40 - Usages : Administration, Gestion, Usage Client, Usage Audit, Reporting
+OBJ-REF-50 - Rôles : non renseigné dans OBJ ; géré par OBJ-ACT
+OBJ-REF-60 - Fonctionnement : Assisté, Temps réel, Déclenché événement, Planifié
+OBJ-REF-70 - Relations : non renseigné dans OBJ ; géré par OBJ-REL
+OBJ-REF-80 - Temporalité : Permanent, Temps réel
+OBJ-REF-90 - Qualité : Expérimental
+
+4. JOURNALISATION
+-----------------
+ID-JRN : JRN-OBJ-APP-DSE-000001-0001
+Type d'événement : CREATION
+Action : Création du premier objet pilote Application DemainSite
+Source : IA
+Résultat : SUCCES
+Nouvelle valeur : ID-OBJ=OBJ-APP-DSE-000001; statut=Test; qualité=Expérimental; verrouillé=Non
+
+5. ÉLÉMENTS NON CRÉÉS
+---------------------
+Aucune affectation OBJ-ACT n'a été créée, car aucun acteur n'a été explicitement désigné.
+Aucune relation OBJ-REL n'a été créée, car aucun objet cible réel n'a été explicitement désigné.
+
+6. PROCHAINES ÉTAPES RECOMMANDÉES
+---------------------------------
+1. Désigner le responsable métier et le responsable technique.
+2. Créer les affectations correspondantes dans OBJ-ACT.
+3. Identifier les premiers objets enfants ou dépendances réelles.
+4. Créer les relations dans OBJ-REL.
+5. Effectuer le contrôle de cohérence et passer l'objet de Test à En revue.
+6. Après recette, passer l'objet à Validé puis le verrouiller.
+
+7. CONCLUSION
+-------------
+La création initiale est conforme au scénario pilote retenu. Le socle OBJ, les référentiels et la journalisation sont opérationnels. La validation complète reste conditionnée à la désignation des responsables, à la création de relations réelles et au contrôle final.
