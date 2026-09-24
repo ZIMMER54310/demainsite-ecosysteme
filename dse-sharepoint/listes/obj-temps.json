@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-TEMPS",
+    "listeId": "ff8af114-d14f-4753-bb03-3a8f38ccc832"
+  },
+  "exporteLe": "2026-09-24T10:39:25.5361762+02:00",
+  "nombreElements": 3,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "1 AN",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "jours": 365.0,
+      "Modified": "2026-09-21T14:58:03.0000000Z",
+      "Created": "2026-09-21T14:56:37.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "2 ANS",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "jours": null,
+      "Modified": "2026-09-21T14:56:45.0000000Z",
+      "Created": "2026-09-21T14:56:45.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 3,
+      "Title": null,
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "jours": null,
+      "Modified": "2026-09-21T14:56:46.0000000Z",
+      "Created": "2026-09-21T14:56:46.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    }
+  ]
+}
