@@ -1,0 +1,622 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-GEO-TERRITOIRE",
+    "listeId": "6db67fd3-1f15-4202-bc8c-98fa2c125be1"
+  },
+  "exporteLe": "2026-09-24T10:36:28.2894475+02:00",
+  "nombreElements": 9,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "Saint-Pierre-et-Miquelon",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoTerritoire": "ID-GEO-TER-000001",
+      "CodeTerritoire": "975",
+      "TypeTerritoire": "COLLECTIVITE-OUTRE-MER",
+      "DescriptionTerritoire": "Territoire français d’outre-mer ou territoire spécifique Saint-Pierre-et-Miquelon, code COG 975.",
+      "Actif": true,
+      "OrdreAffichage": 10.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-TERRITOIRES.csv sans lookup; Operation IMPORT-GEO-TERRITOIRES-SANS-LOOKUP-20260910-203526",
+      "ChefLieu": "Saint-Pierre",
+      "PaysRattachementTexte": "France",
+      "ContinentTexte": "Amérique du Nord",
+      "ZoneTexte": "Caraïbes",
+      "SourceTexte": "https://www.insee.fr/fr/information/7929495",
+      "PaysRattachement": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "DSELookupContinent": {
+        "id": 5,
+        "valeur": "Amérique du Nord"
+      },
+      "DSELookupZone": {
+        "id": 19,
+        "valeur": "Caraïbes"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:35:31.0000000Z",
+      "Created": "2026-09-10T18:35:46.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "6.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "Saint-Barthélemy",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoTerritoire": "ID-GEO-TER-000002",
+      "CodeTerritoire": "977",
+      "TypeTerritoire": "COLLECTIVITE-OUTRE-MER",
+      "DescriptionTerritoire": "Territoire français d’outre-mer ou territoire spécifique Saint-Barthélemy, code COG 977.",
+      "Actif": true,
+      "OrdreAffichage": 20.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-TERRITOIRES.csv sans lookup; Operation IMPORT-GEO-TERRITOIRES-SANS-LOOKUP-20260910-203526",
+      "ChefLieu": "Gustavia",
+      "PaysRattachementTexte": "France",
+      "ContinentTexte": "Amérique du Nord",
+      "ZoneTexte": "Caraïbes",
+      "SourceTexte": "https://www.insee.fr/fr/information/7929495",
+      "PaysRattachement": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "DSELookupContinent": {
+        "id": 5,
+        "valeur": "Amérique du Nord"
+      },
+      "DSELookupZone": {
+        "id": 19,
+        "valeur": "Caraïbes"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:35:32.0000000Z",
+      "Created": "2026-09-10T18:35:47.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "Saint-Martin",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoTerritoire": "ID-GEO-TER-000003",
+      "CodeTerritoire": "978",
+      "TypeTerritoire": "COLLECTIVITE-OUTRE-MER",
+      "DescriptionTerritoire": "Territoire français d’outre-mer ou territoire spécifique Saint-Martin, code COG 978.",
+      "Actif": true,
+      "OrdreAffichage": 30.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-TERRITOIRES.csv sans lookup; Operation IMPORT-GEO-TERRITOIRES-SANS-LOOKUP-20260910-203526",
+      "ChefLieu": "Marigot",
+      "PaysRattachementTexte": "France",
+      "ContinentTexte": "Amérique du Nord",
+      "ZoneTexte": "Caraïbes",
+      "SourceTexte": "https://www.insee.fr/fr/information/7929495",
+      "PaysRattachement": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "DSELookupContinent": {
+        "id": 5,
+        "valeur": "Amérique du Nord"
+      },
+      "DSELookupZone": {
+        "id": 19,
+        "valeur": "Caraïbes"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:35:33.0000000Z",
+      "Created": "2026-09-10T18:35:48.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "Île des Faisans",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoTerritoire": "ID-GEO-TER-000004",
+      "CodeTerritoire": "981",
+      "TypeTerritoire": "TERRITOIRE-PARTAGE",
+      "DescriptionTerritoire": "Territoire français d’outre-mer ou territoire spécifique Île des Faisans, code COG 981.",
+      "Actif": true,
+      "OrdreAffichage": 40.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-TERRITOIRES.csv sans lookup; Operation IMPORT-GEO-TERRITOIRES-SANS-LOOKUP-20260910-203526",
+      "ChefLieu": null,
+      "PaysRattachementTexte": "France / Espagne",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/7929495",
+      "PaysRattachement": null,
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:35:35.0000000Z",
+      "Created": "2026-09-10T18:35:48.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "3.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "Terres australes et antarctiques françaises",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoTerritoire": "ID-GEO-TER-000005",
+      "CodeTerritoire": "984",
+      "TypeTerritoire": "TERRITOIRE-OUTRE-MER",
+      "DescriptionTerritoire": "Territoire français d’outre-mer ou territoire spécifique Terres australes et antarctiques françaises, code COG 984.",
+      "Actif": true,
+      "OrdreAffichage": 50.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-TERRITOIRES.csv sans lookup; Operation IMPORT-GEO-TERRITOIRES-SANS-LOOKUP-20260910-203526",
+      "ChefLieu": "Saint-Pierre, La Réunion",
+      "PaysRattachementTexte": "France",
+      "ContinentTexte": "Antarctique",
+      "ZoneTexte": "Antarctique",
+      "SourceTexte": "https://www.insee.fr/fr/information/7929495",
+      "PaysRattachement": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "DSELookupContinent": {
+        "id": 2,
+        "valeur": "Antarctique"
+      },
+      "DSELookupZone": {
+        "id": 25,
+        "valeur": "Antarctique"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:35:36.0000000Z",
+      "Created": "2026-09-10T18:35:49.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 6,
+      "Title": "Wallis-et-Futuna",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoTerritoire": "ID-GEO-TER-000006",
+      "CodeTerritoire": "986",
+      "TypeTerritoire": "COLLECTIVITE-OUTRE-MER",
+      "DescriptionTerritoire": "Territoire français d’outre-mer ou territoire spécifique Wallis-et-Futuna, code COG 986.",
+      "Actif": true,
+      "OrdreAffichage": 60.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-TERRITOIRES.csv sans lookup; Operation IMPORT-GEO-TERRITOIRES-SANS-LOOKUP-20260910-203526",
+      "ChefLieu": "Mata-Utu",
+      "PaysRattachementTexte": "France",
+      "ContinentTexte": "Océanie",
+      "ZoneTexte": "Polynésie",
+      "SourceTexte": "https://www.insee.fr/fr/information/7929495",
+      "PaysRattachement": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "DSELookupContinent": {
+        "id": 7,
+        "valeur": "Océanie"
+      },
+      "DSELookupZone": {
+        "id": 24,
+        "valeur": "Polynésie"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:35:36.0000000Z",
+      "Created": "2026-09-10T18:35:50.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 7,
+      "Title": "Polynésie française",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoTerritoire": "ID-GEO-TER-000007",
+      "CodeTerritoire": "987",
+      "TypeTerritoire": "COLLECTIVITE-OUTRE-MER",
+      "DescriptionTerritoire": "Territoire français d’outre-mer ou territoire spécifique Polynésie française, code COG 987.",
+      "Actif": true,
+      "OrdreAffichage": 70.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-TERRITOIRES.csv sans lookup; Operation IMPORT-GEO-TERRITOIRES-SANS-LOOKUP-20260910-203526",
+      "ChefLieu": "Papeete",
+      "PaysRattachementTexte": "France",
+      "ContinentTexte": "Océanie",
+      "ZoneTexte": "Polynésie",
+      "SourceTexte": "https://www.insee.fr/fr/information/7929495",
+      "PaysRattachement": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "DSELookupContinent": {
+        "id": 7,
+        "valeur": "Océanie"
+      },
+      "DSELookupZone": {
+        "id": 24,
+        "valeur": "Polynésie"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:35:37.0000000Z",
+      "Created": "2026-09-10T18:35:51.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 8,
+      "Title": "Nouvelle-Calédonie",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoTerritoire": "ID-GEO-TER-000008",
+      "CodeTerritoire": "988",
+      "TypeTerritoire": "COLLECTIVITE-SUI-GENERIS",
+      "DescriptionTerritoire": "Territoire français d’outre-mer ou territoire spécifique Nouvelle-Calédonie, code COG 988.",
+      "Actif": true,
+      "OrdreAffichage": 80.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-TERRITOIRES.csv sans lookup; Operation IMPORT-GEO-TERRITOIRES-SANS-LOOKUP-20260910-203526",
+      "ChefLieu": "Nouméa",
+      "PaysRattachementTexte": "France",
+      "ContinentTexte": "Océanie",
+      "ZoneTexte": "Mélanésie",
+      "SourceTexte": "https://www.insee.fr/fr/information/7929495",
+      "PaysRattachement": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "DSELookupContinent": {
+        "id": 7,
+        "valeur": "Océanie"
+      },
+      "DSELookupZone": {
+        "id": 22,
+        "valeur": "Mélanésie"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:35:38.0000000Z",
+      "Created": "2026-09-10T18:35:52.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 9,
+      "Title": "La Passion-Clipperton",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoTerritoire": "ID-GEO-TER-000009",
+      "CodeTerritoire": "989",
+      "TypeTerritoire": "TERRITOIRE-OUTRE-MER",
+      "DescriptionTerritoire": "Territoire français d’outre-mer ou territoire spécifique La Passion-Clipperton, code COG 989.",
+      "Actif": true,
+      "OrdreAffichage": 90.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-TERRITOIRES.csv sans lookup; Operation IMPORT-GEO-TERRITOIRES-SANS-LOOKUP-20260910-203526",
+      "ChefLieu": null,
+      "PaysRattachementTexte": "France",
+      "ContinentTexte": "Amérique du Nord",
+      "ZoneTexte": "Amérique centrale",
+      "SourceTexte": "https://www.insee.fr/fr/information/7929495",
+      "PaysRattachement": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "DSELookupContinent": {
+        "id": 5,
+        "valeur": "Amérique du Nord"
+      },
+      "DSELookupZone": {
+        "id": 18,
+        "valeur": "Amérique centrale"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:35:39.0000000Z",
+      "Created": "2026-09-10T18:35:52.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    }
+  ]
+}
