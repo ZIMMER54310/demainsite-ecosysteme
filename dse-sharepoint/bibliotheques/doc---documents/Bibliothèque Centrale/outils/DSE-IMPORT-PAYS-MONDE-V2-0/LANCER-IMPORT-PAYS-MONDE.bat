@@ -1,0 +1,32 @@
+@echo off
+setlocal
+chcp 65001 >nul
+cd /d "%~dp0"
+title DemainSite - Import Pays Monde V2.0
+
+echo ============================================================
+echo  DEMAINSITE ECOSYSTEME - IMPORT PAYS MONDE V2.0
+echo ============================================================
+echo.
+echo Connexion valide DemainSite : DeviceLogin + Tenant + ClientId.
+echo Ce lanceur ajoute ou met a jour les pays dans la liste Pays.
+echo Aucune suppression automatique.
+echo.
+set /p CONFIRM=Ecris OUI pour lancer l'import des pays : 
+if /I not "%CONFIRM%"=="OUI" (
+    echo Annule.
+    pause
+    exit /b 0
+)
+
+where pwsh >nul 2>nul
+if %errorlevel%==0 (
+    pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0RUN-IMPORT-PAYS-MONDE-V2.ps1" -Mode Update
+) else (
+    pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0RUN-IMPORT-PAYS-MONDE-V2.ps1" -Mode Update
+)
+
+echo.
+echo Termine. Tu peux fermer cette fenetre apres verification.
+pause
+
