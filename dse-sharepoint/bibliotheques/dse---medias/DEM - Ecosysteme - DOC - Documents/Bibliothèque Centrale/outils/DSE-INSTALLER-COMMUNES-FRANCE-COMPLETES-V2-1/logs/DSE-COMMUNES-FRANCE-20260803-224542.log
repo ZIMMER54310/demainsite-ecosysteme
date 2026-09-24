@@ -1,0 +1,74 @@
+**********************
+PowerShell transcript start
+Start time: 20260803224542
+Username: AzureAD\PascalZIMMER_b9lyro1
+RunAs User: AzureAD\PascalZIMMER_b9lyro1
+Configuration Name: 
+Machine: ZENBOOK17 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES-V2-1\RUN-INSTALL-COMMUNES-FRANCE-COMPLETES.ps1 -Mode Update
+Process ID: 24204
+PSVersion: 7.6.3
+PSEdition: Core
+GitCommitId: 7.6.3
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+
+============================================================
+ DEMAINSITE - INSTALLATION COMMUNES FRANCE COMPLETES V2.1
+============================================================
+Mode : Update
+PS>TerminatingError(Get-PnPWeb): "You are not signed in. Please use Connect-PnPOnline to connect."
+Connexion SharePoint absente. Connexion DeviceLogin...
+Connexion SharePoint OK : https://blogssite.sharepoint.com/sites/Bibliotheque
+
+============================================================
+ PREPARATION DES LISTES ET COLONNES
+============================================================
+
+============================================================
+ TELECHARGEMENT AUTOMATIQUE DU CSV DES COMMUNES
+============================================================
+Interrogation : https://www.data.gouv.fr/api/1/datasets/communes-de-france-base-des-codes-postaux/
+Essai telechargement : 20230823-communes-departement-region.csv / score 1850
+Controle source CSV : C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES-V2-1\data\20230823-communes-departement-region.csv.csv / lignes donnees = 39201
+Source CSV complete validee : C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES-V2-1\data\20230823-communes-departement-region.csv.csv
+CSV utilise : C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES-V2-1\data\20230823-communes-departement-region.csv.csv
+Separateur detecte : ,
+Lignes source : 39201
+
+============================================================
+ LECTURE DES INDEX SHAREPOINT
+============================================================
+Index : Pays / CodePays
+Index Pays : 1
+Index : Regions / CodeRegion
+Index Regions : 18
+Index : Departements / CodeDepartement
+Index Departements : 104
+Index : Villes / CodeINSEE
+Index Villes : 92
+Index : CodesPostaux / CodePostal
+Index CodesPostaux : 6329
+Index : CodesPostauxVilles / CleCPVille
+Index CodesPostauxVilles : 161
+
+============================================================
+ IMPORT / MISE A JOUR DES COMMUNES
+============================================================
+PS>TerminatingError(Get-ItemProperty): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES-V2-1\@{code_commune_INSEE=1001; nom_commune_postal=L ABERGEMENT CLEMENCIAT; code_postal=1400; libelle_acheminement=L ABERGEMENT CLEMENCIAT; ligne_5=; latitude=46.1534255214; longitude=4.92611354223; code_commune=1; article=L'; nom_commune=Abergement-Clémenciat; nom_commune_complet=L'Abergement-Clémenciat; code_departement=1; nom_departement=Ain; code_region=84; nom_region=Auvergne-Rhône-Alpes}' because it does not exist."
+ERREUR : Cannot find path 'C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES-V2-1\@{code_commune_INSEE=1001; nom_commune_postal=L ABERGEMENT CLEMENCIAT; code_postal=1400; libelle_acheminement=L ABERGEMENT CLEMENCIAT; ligne_5=; latitude=46.1534255214; longitude=4.92611354223; code_commune=1; article=L'; nom_commune=Abergement-Clémenciat; nom_commune_complet=L'Abergement-Clémenciat; code_departement=1; nom_departement=Ain; code_region=84; nom_region=Auvergne-Rhône-Alpes}' because it does not exist.
+PS>TerminatingError(Add-PnPListItem): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Valeur de texte non valide.
+
+Un champ texte contient des données non valides. Vérifiez la valeur, puis réessayez."
+Journal non ecrit : Valeur de texte non valide.
+
+Un champ texte contient des données non valides. Vérifiez la valeur, puis réessayez.
+**********************
+PowerShell transcript end
+End time: 20260803224628
+**********************
