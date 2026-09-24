@@ -1,0 +1,313 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-PAGE-SHAREPOINT-TYPE",
+    "listeId": "78794e56-a46a-4f31-85d3-589e763ca3ce"
+  },
+  "exporteLe": "2026-09-24T10:38:28.2145958+02:00",
+  "nombreElements": 8,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "Automatisation et journalisation",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-21T09:31:46.0000000Z",
+      "Created": "2026-09-21T09:31:46.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "Géographie",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-21T09:31:46.0000000Z",
+      "Created": "2026-09-21T09:31:46.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "Organisation",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-21T09:31:47.0000000Z",
+      "Created": "2026-09-21T09:31:47.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "Pages et bibliothèque",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-21T09:31:47.0000000Z",
+      "Created": "2026-09-21T09:31:47.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "Référentiels et codes",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-21T09:31:47.0000000Z",
+      "Created": "2026-09-21T09:31:47.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 6,
+      "Title": "Structure et technique",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-21T09:31:47.0000000Z",
+      "Created": "2026-09-21T09:31:47.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": null,
+      "AppEditor": null
+    },
+    {
+      "idSharePoint": 7,
+      "Title": "ND",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-21T09:35:47.0000000Z",
+      "Created": "2026-09-21T09:35:47.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      }
+    },
+    {
+      "idSharePoint": 8,
+      "Title": "Client",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "ACTIF": null,
+      "VERROUILLE": null,
+      "VALIDER": null,
+      "Modified": "2026-09-21T09:39:03.0000000Z",
+      "Created": "2026-09-21T09:39:03.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      },
+      "AppEditor": {
+        "id": 10,
+        "valeur": "OneDrive SyncEngine"
+      }
+    }
+  ]
+}
