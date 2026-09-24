@@ -1,0 +1,8 @@
+﻿"id";"Title";"IDGeoContinent";"CodeContinent";"CodeRegionONU";"Actif";"OrdreAffichage";"ValidationDSE";"Verrouille";"ControlePascAra";"AnomalieDetectee";"NotesDSE";"OBJREF";"Modified";"Created";"Author";"Editor"
+"1";"Afrique";"GEO-CON-000001";"AF";"";"Oui";"10";"Non";"Non";"Non";"Non";"Import GEO-CONTINENTS.csv";"";"09/10/2026 07:56:43";"09/10/2026 07:56:43";"UserId:11";"UserId:11"
+"2";"Antarctique";"GEO-CON-000002";"AN";"";"Oui";"20";"Non";"Non";"Non";"Non";"Import GEO-CONTINENTS.csv";"";"09/10/2026 07:56:44";"09/10/2026 07:56:44";"UserId:11";"UserId:11"
+"3";"Asie";"GEO-CON-000003";"AS";"";"Oui";"30";"Non";"Non";"Non";"Non";"Import GEO-CONTINENTS.csv";"";"09/10/2026 07:56:46";"09/10/2026 07:56:46";"UserId:11";"UserId:11"
+"4";"Europe";"GEO-CON-000004";"EU";"";"Oui";"40";"Non";"Non";"Non";"Non";"Import GEO-CONTINENTS.csv";"";"09/10/2026 07:56:48";"09/10/2026 07:56:48";"UserId:11";"UserId:11"
+"5";"Amérique du Nord";"GEO-CON-000005";"NA";"";"Oui";"50";"Non";"Non";"Non";"Non";"Import GEO-CONTINENTS.csv";"";"09/10/2026 07:56:49";"09/10/2026 07:56:49";"UserId:11";"UserId:11"
+"6";"Amérique du Sud";"GEO-CON-000006";"SA";"";"Oui";"60";"Non";"Non";"Non";"Non";"Import GEO-CONTINENTS.csv";"";"09/10/2026 07:56:50";"09/10/2026 07:56:50";"UserId:11";"UserId:11"
+"7";"Océanie";"GEO-CON-000007";"OC";"";"Oui";"70";"Non";"Non";"Non";"Non";"Import GEO-CONTINENTS.csv";"";"09/10/2026 07:56:52";"09/10/2026 07:56:52";"UserId:11";"UserId:11"
