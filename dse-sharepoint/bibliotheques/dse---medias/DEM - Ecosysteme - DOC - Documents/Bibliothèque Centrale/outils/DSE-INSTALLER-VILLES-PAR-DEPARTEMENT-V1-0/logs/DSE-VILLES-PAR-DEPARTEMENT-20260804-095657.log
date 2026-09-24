@@ -1,0 +1,67 @@
+**********************
+PowerShell transcript start
+Start time: 20260804095657
+Username: AzureAD\PascalZIMMER_b9lyro1
+RunAs User: AzureAD\PascalZIMMER_b9lyro1
+Configuration Name: 
+Machine: ZENBOOK17 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-VILLES-PAR-DEPARTEMENT-V1-0\RUN-INSTALL-VILLES-PAR-DEPARTEMENT.ps1 -Choix oui
+Process ID: 22212
+PSVersion: 7.6.3
+PSEdition: Core
+GitCommitId: 7.6.3
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+
+============================================================
+ DEMAINSITE ECOSYSTEME - VILLES PAR DEPARTEMENT V1.0
+============================================================
+
+============================================================
+ CONNEXION SHAREPOINT DEMAINSITE
+============================================================
+PS>TerminatingError(Get-PnPWeb): "You are not signed in. Please use Connect-PnPOnline to connect."
+Connexion SharePoint absente. Connexion DeviceLogin...
+Connexion SharePoint OK : https://blogssite.sharepoint.com/sites/Bibliotheque
+Liste presente : Journal actions
+Liste presente : Journal erreurs
+
+============================================================
+ PREPARATION INDEX VILLES
+============================================================
+Liste creee : Geo - Villes Index
+Colonne creee : Geo - Villes Index / Code departement
+Colonne creee : Geo - Villes Index / Nom departement
+Colonne creee : Geo - Villes Index / Code region
+Colonne creee : Geo - Villes Index / Liste SharePoint
+Colonne nombre creee : Geo - Villes Index / Communes importees
+Colonne nombre creee : Geo - Villes Index / Articles WordPress
+Colonne nombre creee : Geo - Villes Index / Medias associes
+Colonne nombre creee : Geo - Villes Index / Produits associes
+Colonne nombre creee : Geo - Villes Index / Score completude
+Colonne creee : Geo - Villes Index / Statut geo
+Colonne date creee : Geo - Villes Index / Date dernier import
+
+============================================================
+ NOTE PROJET SHAREPOINT
+============================================================
+Liste presente : Projets
+Colonne creee : Projets / Code projet DSE
+Colonne creee : Projets / Statut projet DSE
+Colonne texte long creee : Projets / Note projet DSE
+Projet cree : PROJET-GEO-VILLES-PAR-DEPARTEMENT
+Lecture API : https://geo.api.gouv.fr/departements
+
+============================================================
+ MODE IMPORT DEPARTEMENT OUI
+============================================================
+ERREUR : Departement introuvable dans l'API : OUI
+**********************
+PowerShell transcript end
+End time: 20260804095744
+**********************
