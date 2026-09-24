@@ -1,0 +1,7 @@
+﻿Liste;Vue;Filtre;Tri;Colonnes
+Relations;Relations actuelles;Statut différent de Archivé;Nom_Relation A-Z;Nom_Relation, Type_Relation, Ville, Statut, Score_Completude
+Clients;Clients actifs;Statut = Actif;Nom_Client A-Z;Nom_Client, Type_Client, Ville, Responsable_Interne, Score_Completude
+Projets;Projets en cours;Statut = En cours;Priorité puis Date cible;Nom_Projet, Client_Associe, Type_Projet, Statut, Priorite
+Sites;Sites actifs;Statut = Actif ou Construction;Nom_Site A-Z;Nom_Site, Client_Proprietaire, Domaine_Principal, Statut
+Domaines;Domaines à surveiller;Statut = Actif ou Expiré;Date_Expiration;Nom_Domaine, Site_Associe, Statut, Date_Expiration
+Médias;Médias validés;Statut = Validé ou Actif;Nom_Media A-Z;Nom_Media, Type_Media, Client_Proprietaire, Nombre_Utilisations
