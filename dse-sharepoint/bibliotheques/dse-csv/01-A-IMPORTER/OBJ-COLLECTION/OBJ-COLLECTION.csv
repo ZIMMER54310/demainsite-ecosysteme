@@ -1,0 +1,31 @@
+﻿Titre - Collection;ID OBJ Collection;Code Collection;Règne;Type Collection;Description Collection;Galeries Conseillées;Génération IA Autorisée;Actif;Ordre Affichage;Validation DSE
+Ours;ID-OBJ-COL-000001;OURS;ANIMAL;ESPECE;Collection consacrée aux ours et à leurs espèces.;Identification | Jeunes | Habitat | Nourriture | Anatomie | Squelette | Reproduction | Cycle de vie;Oui;Oui;10;Non
+Lion;ID-OBJ-COL-000002;LION;ANIMAL;ESPECE;Collection consacrée aux lions.;Identification | Lionceau | Habitat | Nourriture | Chasse | Anatomie | Squelette | Cycle de vie;Oui;Oui;20;Non
+Loup;ID-OBJ-COL-000003;LOUP;ANIMAL;ESPECE;Collection consacrée aux loups.;Identification | Louveteau | Meute | Habitat | Nourriture | Anatomie | Squelette | Cycle de vie;Oui;Oui;30;Non
+Tigre;ID-OBJ-COL-000004;TIGRE;ANIMAL;ESPECE;Collection consacrée aux tigres.;Identification | Jeunes | Habitat | Nourriture | Chasse | Anatomie | Squelette | Cycle de vie;Oui;Oui;40;Non
+Aigle;ID-OBJ-COL-000005;AIGLE;ANIMAL;ESPECE;Collection consacrée aux aigles.;Identification | Aiglon | Vol | Habitat | Nourriture | Anatomie | Squelette | Cycle de vie;Oui;Oui;50;Non
+Chêne;ID-OBJ-COL-000006;CHENE;VEGETAL;ESPECE;Collection consacrée aux chênes.;Arbre entier | Feuilles | Fleurs | Fruits | Graines | Racines | Habitat | Cycle de vie | Utilisations;Oui;Oui;60;Non
+Rose;ID-OBJ-COL-000007;ROSE;VEGETAL;ESPECE;Collection consacrée aux roses.;Plante entière | Tige | Feuilles | Fleurs | Fruits | Graines | Racines | Culture | Utilisations;Oui;Oui;70;Non
+Sapin;ID-OBJ-COL-000008;SAPIN;VEGETAL;ESPECE;Collection consacrée aux sapins.;Arbre entier | Aiguilles | Cônes | Graines | Racines | Habitat | Cycle de vie | Utilisations;Oui;Oui;80;Non
+Bambou;ID-OBJ-COL-000009;BAMBOU;VEGETAL;ESPECE;Collection consacrée aux bambous.;Plante entière | Tiges | Feuilles | Pousses | Racines | Habitat | Croissance | Utilisations;Oui;Oui;90;Non
+Amanite tue-mouches;ID-OBJ-COL-000010;AMANITE-TUE-MOUCHES;CHAMPIGNON;ESPECE;Collection éducative consacrée à l’amanite tue-mouches.;Aspect général | Chapeau | Pied | Lamelles | Spores | Habitat | Cycle de vie | Toxicité;Oui;Oui;100;Non
+Quartz;ID-OBJ-COL-000011;QUARTZ;MINERAL;MINERAL;Collection consacrée au quartz.;Aspect général | Cristaux | Couleurs | Composition | Gisements | Extraction | Utilisations | Collection;Oui;Oui;110;Non
+Diamant;ID-OBJ-COL-000012;DIAMANT;MINERAL;GEMME;Collection consacrée au diamant.;Aspect brut | Cristaux | Taille | Couleurs | Composition | Gisements | Extraction | Utilisations;Oui;Oui;120;Non
+Or;ID-OBJ-COL-000013;OR;MINERAL;METAL;Collection consacrée à l’or.;Aspect brut | Pépites | Composition | Gisements | Extraction | Transformation | Utilisations;Oui;Oui;130;Non
+Améthyste;ID-OBJ-COL-000014;AMETHYSTE;MINERAL;GEMME;Collection consacrée à l’améthyste.;Aspect général | Cristaux | Couleurs | Composition | Gisements | Taille | Utilisations;Oui;Oui;140;Non
+France;ID-OBJ-COL-000015;FRANCE;GEOGRAPHIE;PAYS;Collection géographique consacrée à la France.;Drapeau | Carte | Régions | Départements | Villes | Monuments | Paysages | Culture | Tourisme;Oui;Oui;150;Non
+Europe;ID-OBJ-COL-000016;EUROPE;GEOGRAPHIE;CONTINENT;Collection géographique consacrée à l’Europe.;Carte | Pays | Capitales | Drapeaux | Monuments | Paysages | Culture;Oui;Oui;160;Non
+Paris;ID-OBJ-COL-000017;PARIS;GEOGRAPHIE;VILLE;Collection géographique et patrimoniale consacrée à Paris.;Carte | Vue générale | Monuments | Architecture | Rues | Culture | Tourisme;Oui;Oui;170;Non
+Tour Eiffel;ID-OBJ-COL-000018;TOUR-EIFFEL;PATRIMOINE;MONUMENT;Collection patrimoniale consacrée à la Tour Eiffel.;Vue générale | Architecture | Construction | Détails | Histoire | Visites | Nuit;Oui;Oui;180;Non
+Lune;ID-OBJ-COL-000019;LUNE;ASTRONOMIE;SATELLITE;Collection astronomique consacrée à la Lune.;Vue générale | Phases | Surface | Cratères | Orbite | Exploration | Schémas;Oui;Oui;190;Non
+Mars;ID-OBJ-COL-000020;MARS;ASTRONOMIE;PLANETE;Collection astronomique consacrée à Mars.;Vue générale | Surface | Relief | Atmosphère | Satellites | Exploration | Schémas;Oui;Oui;200;Non
+Système solaire;ID-OBJ-COL-000021;SYSTEME-SOLAIRE;ASTRONOMIE;SYSTEME;Collection consacrée au système solaire.;Vue générale | Soleil | Planètes | Satellites | Astéroïdes | Orbites | Exploration | Schémas;Oui;Oui;210;Non
+Châteaux de France;ID-OBJ-COL-000022;CHATEAUX-FRANCE;PATRIMOINE;SERIE;Collection consacrée aux châteaux et domaines historiques français.;Vue générale | Architecture | Intérieurs | Jardins | Histoire | Restauration | Visites;Oui;Oui;220;Non
+Révolution française;ID-OBJ-COL-000023;REVOLUTION-FRANCAISE;HISTOIRE;PERIODE;Collection éducative consacrée à la Révolution française.;Chronologie | Événements | Lieux | Objets | Cartes | Documents | Reconstitutions;Oui;Oui;230;Non
+Intelligence artificielle;ID-OBJ-COL-000024;INTELLIGENCE-ARTIFICIELLE;TECHNOLOGIE;TECHNOLOGIE;Collection éducative consacrée à l’intelligence artificielle.;Vue générale | Fonctionnement | Modèles | Usages | Données | Sécurité | Éthique | Évolution;Oui;Oui;240;Non
+Forêt;ID-OBJ-COL-000025;FORET;ENVIRONNEMENT;ECOSYSTEME;Collection consacrée aux écosystèmes forestiers.;Paysage | Faune | Flore | Sol | Eau | Saisons | Risques | Protection;Oui;Oui;250;Non
+Océan;ID-OBJ-COL-000026;OCEAN;ENVIRONNEMENT;ECOSYSTEME;Collection consacrée aux océans et milieux marins.;Paysage | Faune | Flore | Fonds marins | Courants | Climat | Risques | Protection;Oui;Oui;260;Non
+Pain;ID-OBJ-COL-000027;PAIN;ALIMENTATION;ALIMENT;Collection consacrée au pain et à sa fabrication.;Ingrédients | Préparation | Cuisson | Variétés | Présentation | Origine | Utilisations;Oui;Oui;270;Non
+Football;ID-OBJ-COL-000028;FOOTBALL;SPORT;DISCIPLINE;Collection consacrée au football.;Terrain | Équipement | Techniques | Entraînement | Match | Histoire | Sécurité;Oui;Oui;280;Non
+Supports pédagogiques;ID-OBJ-COL-000029;SUPPORTS-PEDAGOGIQUES;EDUCATION;RESSOURCE;Collection transversale de contenus destinés à l’apprentissage.;Cours | Fiches | Schémas | Exercices | Quiz | Présentations | Synthèses;Oui;Oui;290;Non
+Non déterminé;ID-OBJ-COL-000030;NON-DETERMINE;NON-DETERMINE;CONTROLE;Collection temporaire utilisée lorsqu’un classement n’est pas encore validé.;À contrôler;Non;Oui;990;Non
