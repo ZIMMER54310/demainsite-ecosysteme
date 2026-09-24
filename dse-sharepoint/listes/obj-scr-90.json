@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0",
-  "moteurVersion": "1.0.1",
+  "moteurVersion": "1.0.4",
   "source": {
     "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
     "liste": "OBJ-SCR-90",
     "listeId": "32512ede-d16b-4fd7-afdc-d247fdc44351"
   },
-  "exporteLe": "2026-09-24T10:39:09.6876480+02:00",
+  "exporteLe": "2026-09-24T11:02:53.7079308+02:00",
   "nombreElements": 6,
   "elements": [
     {
