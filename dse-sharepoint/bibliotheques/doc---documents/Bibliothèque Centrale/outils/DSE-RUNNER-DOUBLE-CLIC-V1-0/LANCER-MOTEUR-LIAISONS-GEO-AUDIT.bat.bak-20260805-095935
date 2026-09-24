@@ -1,0 +1,22 @@
+@echo off
+setlocal
+chcp 65001 >nul
+cd /d "%~dp0"
+title DemainSite - Moteur Liaisons Geo - Audit
+
+echo ============================================================
+echo  DEMAINSITE ECOSYSTEME - MOTEUR LIAISONS GEO - AUDIT
+echo ============================================================
+echo.
+echo Mode controle seulement : aucune modification.
+echo.
+
+where pwsh >nul 2>nul
+if %errorlevel%==0 (
+    pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\DSE-GEO-MOTEUR-LIAISONS-V1-0.ps1" -Mode AuditOnly
+) else (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\DSE-GEO-MOTEUR-LIAISONS-V1-0.ps1" -Mode AuditOnly
+)
+
+echo.
+pause
