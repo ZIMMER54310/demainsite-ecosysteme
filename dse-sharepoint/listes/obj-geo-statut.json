@@ -1,0 +1,1135 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-GEO-STATUT",
+    "listeId": "3526af04-b199-411e-921a-9e6b3b29efbb"
+  },
+  "exporteLe": "2026-09-24T10:36:25.8673358+02:00",
+  "nombreElements": 22,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "État souverain",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000001",
+      "CodeStatut": "ETAT-SOUVERAIN",
+      "TypeStatut": "SOUVERAIN",
+      "DescriptionStatut": "État indépendant disposant d’une souveraineté reconnue.",
+      "Actif": true,
+      "OrdreAffichage": 10.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:16.0000000Z",
+      "Created": "2026-09-10T20:12:16.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "Territoire dépendant",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000002",
+      "CodeStatut": "TERRITOIRE-DEPENDANT",
+      "TypeStatut": "DEPENDANCE",
+      "DescriptionStatut": "Territoire placé sous la responsabilité ou l’administration d’un autre État.",
+      "Actif": true,
+      "OrdreAffichage": 20.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:17.0000000Z",
+      "Created": "2026-09-10T20:12:17.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "Territoire d’outre-mer",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000003",
+      "CodeStatut": "TERRITOIRE-OUTRE-MER",
+      "TypeStatut": "OUTRE-MER",
+      "DescriptionStatut": "Territoire géographiquement éloigné de l’État auquel il est rattaché.",
+      "Actif": true,
+      "OrdreAffichage": 30.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:19.0000000Z",
+      "Created": "2026-09-10T20:12:19.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "Collectivité territoriale",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000004",
+      "CodeStatut": "COLLECTIVITE",
+      "TypeStatut": "COLLECTIVITE",
+      "DescriptionStatut": "Entité territoriale disposant d’une organisation administrative propre.",
+      "Actif": true,
+      "OrdreAffichage": 40.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:19.0000000Z",
+      "Created": "2026-09-10T20:12:19.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "Région administrative",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000005",
+      "CodeStatut": "REGION-ADMINISTRATIVE",
+      "TypeStatut": "ADMINISTRATIF",
+      "DescriptionStatut": "Division administrative de premier ou de second niveau.",
+      "Actif": true,
+      "OrdreAffichage": 50.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:19.0000000Z",
+      "Created": "2026-09-10T20:12:19.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 6,
+      "Title": "Département",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000006",
+      "CodeStatut": "DEPARTEMENT",
+      "TypeStatut": "ADMINISTRATIF",
+      "DescriptionStatut": "Division administrative rattachée à une région et à un pays.",
+      "Actif": true,
+      "OrdreAffichage": 60.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:20.0000000Z",
+      "Created": "2026-09-10T20:12:20.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 7,
+      "Title": "Province",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000007",
+      "CodeStatut": "PROVINCE",
+      "TypeStatut": "ADMINISTRATIF",
+      "DescriptionStatut": "Division territoriale ou administrative appelée province.",
+      "Actif": true,
+      "OrdreAffichage": 70.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:21.0000000Z",
+      "Created": "2026-09-10T20:12:21.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 8,
+      "Title": "État fédéré",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000008",
+      "CodeStatut": "ETAT-FEDERE",
+      "TypeStatut": "FEDERAL",
+      "DescriptionStatut": "Entité politique membre d’un État fédéral.",
+      "Actif": true,
+      "OrdreAffichage": 80.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:22.0000000Z",
+      "Created": "2026-09-10T20:12:22.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 9,
+      "Title": "Territoire autonome",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000009",
+      "CodeStatut": "TERRITOIRE-AUTONOME",
+      "TypeStatut": "AUTONOME",
+      "DescriptionStatut": "Territoire bénéficiant d’un régime d’autonomie particulier.",
+      "Actif": true,
+      "OrdreAffichage": 90.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:22.0000000Z",
+      "Created": "2026-09-10T20:12:22.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 10,
+      "Title": "Région autonome",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000010",
+      "CodeStatut": "REGION-AUTONOME",
+      "TypeStatut": "AUTONOME",
+      "DescriptionStatut": "Région disposant de compétences autonomes définies juridiquement.",
+      "Actif": true,
+      "OrdreAffichage": 100.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:23.0000000Z",
+      "Created": "2026-09-10T20:12:23.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 11,
+      "Title": "Zone spéciale",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000011",
+      "CodeStatut": "ZONE-SPECIALE",
+      "TypeStatut": "SPECIAL",
+      "DescriptionStatut": "Zone géographique soumise à un statut ou à un régime particulier.",
+      "Actif": true,
+      "OrdreAffichage": 110.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:24.0000000Z",
+      "Created": "2026-09-10T20:12:24.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 12,
+      "Title": "Zone internationale",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000012",
+      "CodeStatut": "ZONE-INTERNATIONALE",
+      "TypeStatut": "INTERNATIONAL",
+      "DescriptionStatut": "Zone relevant d’un régime ou d’une gestion internationale.",
+      "Actif": true,
+      "OrdreAffichage": 120.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:24.0000000Z",
+      "Created": "2026-09-10T20:12:24.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 13,
+      "Title": "Territoire contesté",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000013",
+      "CodeStatut": "TERRITOIRE-CONTESTE",
+      "TypeStatut": "CONTESTE",
+      "DescriptionStatut": "Territoire dont la souveraineté ou le rattachement fait l’objet d’une contestation.",
+      "Actif": true,
+      "OrdreAffichage": 130.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:25.0000000Z",
+      "Created": "2026-09-10T20:12:25.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 14,
+      "Title": "Territoire non autonome",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000014",
+      "CodeStatut": "TERRITOIRE-NON-AUTONOME",
+      "TypeStatut": "NON-AUTONOME",
+      "DescriptionStatut": "Territoire ne disposant pas d’une autonomie politique complète.",
+      "Actif": true,
+      "OrdreAffichage": 140.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:26.0000000Z",
+      "Created": "2026-09-10T20:12:26.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 15,
+      "Title": "Territoire inhabité",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000015",
+      "CodeStatut": "TERRITOIRE-INHABITE",
+      "TypeStatut": "INHABITE",
+      "DescriptionStatut": "Territoire ne comportant pas de population permanente.",
+      "Actif": true,
+      "OrdreAffichage": 150.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:27.0000000Z",
+      "Created": "2026-09-10T20:12:27.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 16,
+      "Title": "Zone maritime",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000016",
+      "CodeStatut": "ZONE-MARITIME",
+      "TypeStatut": "MARITIME",
+      "DescriptionStatut": "Zone géographique principalement maritime ou océanique.",
+      "Actif": true,
+      "OrdreAffichage": 160.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:27.0000000Z",
+      "Created": "2026-09-10T20:12:27.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 17,
+      "Title": "Commune",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000017",
+      "CodeStatut": "COMMUNE",
+      "TypeStatut": "ADMINISTRATIF",
+      "DescriptionStatut": "Collectivité ou division administrative locale correspondant à une commune.",
+      "Actif": true,
+      "OrdreAffichage": 170.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:28.0000000Z",
+      "Created": "2026-09-10T20:12:28.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 18,
+      "Title": "Commune associée",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000018",
+      "CodeStatut": "COMMUNE-ASSOCIEE",
+      "TypeStatut": "ADMINISTRATIF",
+      "DescriptionStatut": "Ancienne commune ou entité locale associée à une autre commune.",
+      "Actif": true,
+      "OrdreAffichage": 180.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:29.0000000Z",
+      "Created": "2026-09-10T20:12:29.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 19,
+      "Title": "Commune déléguée",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000019",
+      "CodeStatut": "COMMUNE-DELEGUEE",
+      "TypeStatut": "ADMINISTRATIF",
+      "DescriptionStatut": "Commune conservant une représentation locale au sein d’une commune nouvelle.",
+      "Actif": true,
+      "OrdreAffichage": 190.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:30.0000000Z",
+      "Created": "2026-09-10T20:12:30.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 20,
+      "Title": "Ancienne entité",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000020",
+      "CodeStatut": "ANCIENNE-ENTITE",
+      "TypeStatut": "HISTORIQUE",
+      "DescriptionStatut": "Entité géographique ou administrative qui n’est plus active mais reste conservée pour l’historique.",
+      "Actif": true,
+      "OrdreAffichage": 200.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:30.0000000Z",
+      "Created": "2026-09-10T20:12:30.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 21,
+      "Title": "À contrôler",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000021",
+      "CodeStatut": "A-CONTROLER",
+      "TypeStatut": "CONTROLE",
+      "DescriptionStatut": "Statut temporaire attribué lorsqu’une qualification géographique doit être vérifiée.",
+      "Actif": true,
+      "OrdreAffichage": 900.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:33.0000000Z",
+      "Created": "2026-09-10T20:12:33.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 22,
+      "Title": "Non déterminé",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoStatut": "ID-GEO-STA-000022",
+      "CodeStatut": "NON-DETERMINE",
+      "TypeStatut": "INCONNU",
+      "DescriptionStatut": "Statut utilisé lorsqu’aucune qualification fiable n’est encore disponible.",
+      "Actif": true,
+      "OrdreAffichage": 990.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-STATUTS.csv sans lookup; Operation IMPORT-GEO-STATUTS-SANS-LOOKUP-20260910-221204",
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:12:33.0000000Z",
+      "Created": "2026-09-10T20:12:33.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    }
+  ]
+}
