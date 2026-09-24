@@ -1,0 +1,1291 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-GEO-FRANCE-REGION",
+    "listeId": "bb590d24-239b-48f7-be43-4db0b101e855"
+  },
+  "exporteLe": "2026-09-24T10:36:09.2950322+02:00",
+  "nombreElements": 18,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "Guadeloupe",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000001",
+      "CodeRegion": "1",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Guadeloupe, code officiel géographique 01, chef-lieu Basse-Terre.",
+      "Actif": true,
+      "OrdreAffichage": 10.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Basse-Terre",
+      "TypeRegion": "OUTRE-MER",
+      "PaysTexte": "France",
+      "ContinentTexte": "Amérique du Nord",
+      "ZoneTexte": "Caraïbes",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 5,
+        "valeur": "Amérique du Nord"
+      },
+      "DSELookupZone": {
+        "id": 19,
+        "valeur": "Caraïbes"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:28:49.0000000Z",
+      "Created": "2026-09-10T18:23:45.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "6.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "Martinique",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000002",
+      "CodeRegion": "2",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Martinique, code officiel géographique 02, chef-lieu Fort-de-France.",
+      "Actif": true,
+      "OrdreAffichage": 20.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Fort-de-France",
+      "TypeRegion": "OUTRE-MER",
+      "PaysTexte": "France",
+      "ContinentTexte": "Amérique du Nord",
+      "ZoneTexte": "Caraïbes",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 5,
+        "valeur": "Amérique du Nord"
+      },
+      "DSELookupZone": {
+        "id": 19,
+        "valeur": "Caraïbes"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:28:50.0000000Z",
+      "Created": "2026-09-10T18:23:46.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "Guyane",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000003",
+      "CodeRegion": "3",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Guyane, code officiel géographique 03, chef-lieu Cayenne.",
+      "Actif": true,
+      "OrdreAffichage": 30.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Cayenne",
+      "TypeRegion": "OUTRE-MER",
+      "PaysTexte": "France",
+      "ContinentTexte": "Amérique du Sud",
+      "ZoneTexte": "Amérique du Sud",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 6,
+        "valeur": "Amérique du Sud"
+      },
+      "DSELookupZone": {
+        "id": 20,
+        "valeur": "Amérique du Sud"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:28:51.0000000Z",
+      "Created": "2026-09-10T18:23:48.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "La Réunion",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000004",
+      "CodeRegion": "4",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française La Réunion, code officiel géographique 04, chef-lieu Saint-Denis.",
+      "Actif": true,
+      "OrdreAffichage": 40.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Saint-Denis",
+      "TypeRegion": "OUTRE-MER",
+      "PaysTexte": "France",
+      "ContinentTexte": "Afrique",
+      "ZoneTexte": "Afrique de l’Est",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 1,
+        "valeur": "Afrique"
+      },
+      "DSELookupZone": {
+        "id": 5,
+        "valeur": "Afrique de l'Est"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:28:52.0000000Z",
+      "Created": "2026-09-10T18:23:48.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "Mayotte",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000005",
+      "CodeRegion": "6",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Mayotte, code officiel géographique 06, chef-lieu Mamoudzou.",
+      "Actif": true,
+      "OrdreAffichage": 50.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Mamoudzou",
+      "TypeRegion": "OUTRE-MER",
+      "PaysTexte": "France",
+      "ContinentTexte": "Afrique",
+      "ZoneTexte": "Afrique de l’Est",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 1,
+        "valeur": "Afrique"
+      },
+      "DSELookupZone": {
+        "id": 5,
+        "valeur": "Afrique de l'Est"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:28:54.0000000Z",
+      "Created": "2026-09-10T18:23:49.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 6,
+      "Title": "Île-de-France",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000006",
+      "CodeRegion": "11",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Île-de-France, code officiel géographique 11, chef-lieu Paris.",
+      "Actif": true,
+      "OrdreAffichage": 60.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Paris",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:28:55.0000000Z",
+      "Created": "2026-09-10T18:23:49.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 7,
+      "Title": "Centre-Val de Loire",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000007",
+      "CodeRegion": "24",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Centre-Val de Loire, code officiel géographique 24, chef-lieu Orléans.",
+      "Actif": true,
+      "OrdreAffichage": 70.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Orléans",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:28:56.0000000Z",
+      "Created": "2026-09-10T18:23:50.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 8,
+      "Title": "Bourgogne-Franche-Comté",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000008",
+      "CodeRegion": "27",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Bourgogne-Franche-Comté, code officiel géographique 27, chef-lieu Dijon.",
+      "Actif": true,
+      "OrdreAffichage": 80.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Dijon",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:28:57.0000000Z",
+      "Created": "2026-09-10T18:23:51.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 9,
+      "Title": "Normandie",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000009",
+      "CodeRegion": "28",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Normandie, code officiel géographique 28, chef-lieu Rouen.",
+      "Actif": true,
+      "OrdreAffichage": 90.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Rouen",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:28:58.0000000Z",
+      "Created": "2026-09-10T18:23:52.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 10,
+      "Title": "Hauts-de-France",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000010",
+      "CodeRegion": "32",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Hauts-de-France, code officiel géographique 32, chef-lieu Lille.",
+      "Actif": true,
+      "OrdreAffichage": 100.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Lille",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:28:59.0000000Z",
+      "Created": "2026-09-10T18:23:53.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 11,
+      "Title": "Grand Est",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000011",
+      "CodeRegion": "44",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Grand Est, code officiel géographique 44, chef-lieu Strasbourg.",
+      "Actif": true,
+      "OrdreAffichage": 110.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Strasbourg",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:29:01.0000000Z",
+      "Created": "2026-09-10T18:23:55.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 12,
+      "Title": "Pays de la Loire",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000012",
+      "CodeRegion": "52",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Pays de la Loire, code officiel géographique 52, chef-lieu Nantes.",
+      "Actif": true,
+      "OrdreAffichage": 120.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Nantes",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:29:01.0000000Z",
+      "Created": "2026-09-10T18:23:55.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 13,
+      "Title": "Bretagne",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000013",
+      "CodeRegion": "53",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Bretagne, code officiel géographique 53, chef-lieu Rennes.",
+      "Actif": true,
+      "OrdreAffichage": 130.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Rennes",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:29:02.0000000Z",
+      "Created": "2026-09-10T18:23:56.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 14,
+      "Title": "Nouvelle-Aquitaine",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000014",
+      "CodeRegion": "75",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Nouvelle-Aquitaine, code officiel géographique 75, chef-lieu Bordeaux.",
+      "Actif": true,
+      "OrdreAffichage": 140.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Bordeaux",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:29:03.0000000Z",
+      "Created": "2026-09-10T18:23:58.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 15,
+      "Title": "Occitanie",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000015",
+      "CodeRegion": "76",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Occitanie, code officiel géographique 76, chef-lieu Toulouse.",
+      "Actif": true,
+      "OrdreAffichage": 150.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Toulouse",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:29:04.0000000Z",
+      "Created": "2026-09-10T18:23:58.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 16,
+      "Title": "Auvergne-Rhône-Alpes",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000016",
+      "CodeRegion": "84",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Auvergne-Rhône-Alpes, code officiel géographique 84, chef-lieu Lyon.",
+      "Actif": true,
+      "OrdreAffichage": 160.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Lyon",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:29:05.0000000Z",
+      "Created": "2026-09-10T18:23:58.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 17,
+      "Title": "Provence-Alpes-Côte d’Azur",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000017",
+      "CodeRegion": "93",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Provence-Alpes-Côte d’Azur, code officiel géographique 93, chef-lieu Marseille.",
+      "Actif": true,
+      "OrdreAffichage": 170.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Marseille",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe de l’Ouest",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 13,
+        "valeur": "Europe de l'Ouest"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:29:06.0000000Z",
+      "Created": "2026-09-10T18:23:59.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 18,
+      "Title": "Corse",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "IDGeoRegion": "ID-GEO-REG-000018",
+      "CodeRegion": "94",
+      "CodeRegionONU": null,
+      "CodeSousRegionONU": null,
+      "DescriptionRegion": "Région française Corse, code officiel géographique 94, chef-lieu Ajaccio.",
+      "Actif": true,
+      "OrdreAffichage": 180.0,
+      "ValidationDSE": false,
+      "Verrouille": false,
+      "ControlePascAra": false,
+      "AnomalieDetectee": false,
+      "NotesDSE": "Import GEO-REGIONS.csv sans lookup; Operation IMPORT-GEO-REGIONS-SANS-LOOKUP-20260910-202324",
+      "Pays": {
+        "id": 75,
+        "valeur": "France"
+      },
+      "Source": null,
+      "ChefLieu": "Ajaccio",
+      "TypeRegion": "METROPOLE",
+      "PaysTexte": "France",
+      "ContinentTexte": "Europe",
+      "ZoneTexte": "Europe du Sud",
+      "SourceTexte": "https://www.insee.fr/fr/information/8740222",
+      "DSELookupContinent": {
+        "id": 4,
+        "valeur": "Europe"
+      },
+      "DSELookupZone": {
+        "id": 16,
+        "valeur": "Europe du Sud"
+      },
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-10T20:29:07.0000000Z",
+      "Created": "2026-09-10T18:24:00.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "4.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    }
+  ]
+}
