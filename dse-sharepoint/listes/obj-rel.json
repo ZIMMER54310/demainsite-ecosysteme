@@ -1,0 +1,1613 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-REL",
+    "listeId": "e9161ccf-859d-4d49-b245-ac6e6cd0271b"
+  },
+  "exporteLe": "2026-09-24T10:38:44.0221983+02:00",
+  "nombreElements": 32,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "5926381b-d3da-4dfb-a9bd-4753688734ae",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:18.0000000Z",
+      "Created": "2026-09-08T07:38:18.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "a02ecfef-518a-4ba2-b22f-c29ca28ffc8f",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:19.0000000Z",
+      "Created": "2026-09-08T07:38:19.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "e41a1b77-39c6-402c-b5ba-6a531668f007",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:19.0000000Z",
+      "Created": "2026-09-08T07:38:19.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "bfcc99a5-783a-4e1e-9fd3-857a6ec1e5c5",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:20.0000000Z",
+      "Created": "2026-09-08T07:38:20.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "abfca5df-02b6-4a13-8d6a-49d32e414fee",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:20.0000000Z",
+      "Created": "2026-09-08T07:38:20.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 6,
+      "Title": "30e946f7-8795-4989-a8b9-a72479334ace",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:21.0000000Z",
+      "Created": "2026-09-08T07:38:21.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 7,
+      "Title": "35135ce4-1f22-42c1-a1bb-dbfa1fc033e9",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:22.0000000Z",
+      "Created": "2026-09-08T07:38:22.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 8,
+      "Title": "ec6c4c2b-3485-4938-9a9e-54472b08f5c0",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:22.0000000Z",
+      "Created": "2026-09-08T07:38:22.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 9,
+      "Title": "432f3ddb-fd74-40ac-98ab-a5f9d4f6980b",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:23.0000000Z",
+      "Created": "2026-09-08T07:38:23.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 10,
+      "Title": "aba927be-d4e5-4118-a04e-4016d77945e6",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:24.0000000Z",
+      "Created": "2026-09-08T07:38:24.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 11,
+      "Title": "2f6bdcb4-57cf-4641-acd6-573b50ae7a58",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:24.0000000Z",
+      "Created": "2026-09-08T07:38:24.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 12,
+      "Title": "3b1deea9-473b-4d12-bc5e-e8c5719cff25",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:25.0000000Z",
+      "Created": "2026-09-08T07:38:25.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 13,
+      "Title": "474c5289-582b-4678-aa99-5176d39e436b",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:25.0000000Z",
+      "Created": "2026-09-08T07:38:25.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 14,
+      "Title": "bf272aef-0651-458f-9eb7-ba6da56a11ad",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:26.0000000Z",
+      "Created": "2026-09-08T07:38:26.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 15,
+      "Title": "eaf5960e-1039-4240-afa1-1050973ecdc5",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:26.0000000Z",
+      "Created": "2026-09-08T07:38:26.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 16,
+      "Title": "e9161ccf-859d-4d49-b245-ac6e6cd0271b",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:27.0000000Z",
+      "Created": "2026-09-08T07:38:27.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 17,
+      "Title": "afe17273-bf0c-4423-8069-04ed827f22fc",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:28.0000000Z",
+      "Created": "2026-09-08T07:38:28.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 18,
+      "Title": "26ee56c9-6f19-4e1a-88a4-6c07fcd3f517",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:28.0000000Z",
+      "Created": "2026-09-08T07:38:28.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 19,
+      "Title": "d40577eb-8d31-4e26-9d67-14d0005f46d8",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:29.0000000Z",
+      "Created": "2026-09-08T07:38:29.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 20,
+      "Title": "5e995a24-0aeb-44dc-8676-c26c878cc62c",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:29.0000000Z",
+      "Created": "2026-09-08T07:38:29.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 21,
+      "Title": "d762cd9b-28c3-4e33-b956-8912d06ce139",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:31.0000000Z",
+      "Created": "2026-09-08T07:38:31.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 22,
+      "Title": "99b86852-bd86-4567-addf-6c6b2156be76",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:31.0000000Z",
+      "Created": "2026-09-08T07:38:31.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 23,
+      "Title": "6dd92212-37c8-489c-b901-91f25b07bfe9",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:31.0000000Z",
+      "Created": "2026-09-08T07:38:31.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 24,
+      "Title": "5491713b-cab9-4a4b-8c11-cfea8cd2eb3d",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:32.0000000Z",
+      "Created": "2026-09-08T07:38:32.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 25,
+      "Title": "73247846-541f-43be-ba87-d5f18bdbf70c",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:32.0000000Z",
+      "Created": "2026-09-08T07:38:32.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 26,
+      "Title": "4baa7433-8092-4fd5-9eff-982651404156",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:33.0000000Z",
+      "Created": "2026-09-08T07:38:33.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 27,
+      "Title": "ed1eb5d5-db97-40f7-8f08-762b3ef5213d",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:33.0000000Z",
+      "Created": "2026-09-08T07:38:33.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 28,
+      "Title": "fb7fd1aa-0bd2-4dab-b8f8-e2809dbdcda6",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:34.0000000Z",
+      "Created": "2026-09-08T07:38:34.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 29,
+      "Title": "f26165de-7029-426b-988e-fdbda7d2fa2b",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:35.0000000Z",
+      "Created": "2026-09-08T07:38:35.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 30,
+      "Title": "5c3fd93e-b8c4-42b5-975e-08606075557f",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:35.0000000Z",
+      "Created": "2026-09-08T07:38:35.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 31,
+      "Title": "143f3a11-605f-4e92-9e29-3874744fecbb",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:37.0000000Z",
+      "Created": "2026-09-08T07:38:37.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    },
+    {
+      "idSharePoint": 32,
+      "Title": "6e293034-25e4-495d-9e22-a7dba8cb8fe1",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "OBJSOURCE": null,
+      "OBJCIBLE": null,
+      "ACTIF": true,
+      "DATEDEBUT": null,
+      "DATEFIN": null,
+      "SOURCERELATION": null,
+      "CONTROLEPASCARA": false,
+      "VERROUILLE": false,
+      "NOTES": null,
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "TYPERELATION": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-08T07:38:37.0000000Z",
+      "Created": "2026-09-08T07:38:37.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      },
+      "AppEditor": {
+        "id": 22,
+        "valeur": "Microsoft Power Platform"
+      }
+    }
+  ]
+}
