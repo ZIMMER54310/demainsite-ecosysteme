@@ -1,0 +1,113 @@
+﻿Titre - Langue;ID GEO Langue;Code Langue;Code ISO 639-1;Pays;Continent;Actif;Ordre Affichage;Validation DSE
+Afrikaans;ID-GEO-LAN-000001;AF;af;Afrique du Sud | Namibie;Afrique;Oui;1;Non
+Amharique;ID-GEO-LAN-000002;AM;am;Éthiopie;Afrique;Oui;2;Non
+Arabe;ID-GEO-LAN-000003;AR;ar;Algérie | Arabie Saoudite | Bahreïn | Comores | Djibouti | Irak | Israël | Jordanie | Koweït | Liban | Libye | Maroc | Mauritanie | Oman | Qatar | Somalie | Soudan | Syrie | Tchad | Tunisie | Yémen | Égypte | Émirats arabes unis | Érythrée | État de Palestine;Afrique | Asie;Oui;3;Non
+Aymara;ID-GEO-LAN-000004;AY;ay;Bolivie;Amérique du Sud;Oui;4;Non
+Azéri;ID-GEO-LAN-000005;AZ;az;Azerbaïdjan;Asie;Oui;5;Non
+Biélorusse;ID-GEO-LAN-000006;BE;be;Bélarus;Europe;Oui;6;Non
+Bulgare;ID-GEO-LAN-000007;BG;bg;Bulgarie;Europe;Oui;7;Non
+Bichelamar;ID-GEO-LAN-000008;BI;bi;Vanuatu;Océanie;Oui;8;Non
+Bengali;ID-GEO-LAN-000009;BN;bn;Bangladesh;Asie;Oui;9;Non
+Bosnien;ID-GEO-LAN-000010;BS;bs;Bosnie-Herzégovine;Europe;Oui;10;Non
+Catalan;ID-GEO-LAN-000011;CA;ca;Andorre;Europe;Oui;11;Non
+Chamorro;ID-GEO-LAN-000012;CH;ch;Guam | Îles Mariannes du Nord;Océanie;Oui;12;Non
+Tchèque;ID-GEO-LAN-000013;CS;cs;Tchéquie;Europe;Oui;13;Non
+Danois;ID-GEO-LAN-000014;DA;da;Danemark;Europe;Oui;14;Non
+Allemand;ID-GEO-LAN-000015;DE;de;Allemagne | Autriche | Belgique | Liechtenstein | Luxembourg | Suisse;Europe;Oui;15;Non
+Maldivien;ID-GEO-LAN-000016;DV;dv;Maldives;Asie;Oui;16;Non
+Dzongkha;ID-GEO-LAN-000017;DZ;dz;Bhoutan;Asie;Oui;17;Non
+Grec;ID-GEO-LAN-000018;EL;el;Chypre | Grèce;Europe;Oui;18;Non
+Anglais;ID-GEO-LAN-000019;EN;en;Afrique du Sud | Anguilla | Antigua-et-Barbuda | Australie | Bahamas | Barbade | Belize | Bermudes | Botswana | Cameroun | Canada | Dominique | Fidji | Gambie | Ghana | Gibraltar | Grenade | Guam | Guernesey | Guyane | Géorgie du Sud-et-les Îles Sandwich du Sud | Hong Kong | Inde | Irlande | Jamaïque | Jersey | Kenya | Kiribati | Lesotho | Liberia | Malawi | Malte | Micronésie | Montserrat | Namibie | Nauru | Nigéria | Niue | Nouvelle-Zélande | Pakistan | Palaos | Papouasie-Nouvelle-Guinée | Philippines | Porto Rico | Royaume-Uni | Rwanda | Saint-Christophe-et-Niévès | Saint-Lucie | Saint-Vincent-et-les-Grenadines | Sainte-Hélène | Samoa | Samoa américaines | Seychelles | Sierra Leone | Singapour | Soudan | Soudan du Sud | Swaziland | Tanzanie | Territoire britannique de l'océan Indien | Tokelau | Tonga | Trinité et Tobago | Tuvalu | Uganda | Vanuatu | Zambie | Zimbabwe | Érythrée | États-Unis | Île Christmas | Île Maurice | Île de Man | Île de Norfolk | Îles Caïmans | Îles Cocos | Îles Cook | Îles Falkland (Malouines) | Îles Heard-et-MacDonald | Îles Mariannes du Nord | Îles Marshall | Îles Pitcairn | Îles Salomon | Îles Turques-et-Caïques | Îles Vierges britanniques | Îles Vierges des États-Unis | Îles mineures éloignées des États-Unis;Afrique | Amérique du Nord | Amérique du Sud | Asie | Europe | Océanie;Oui;19;Non
+Espagnol;ID-GEO-LAN-000020;ES;es;Argentine | Belize | Bolivie | Chili | Colombie | Costa Rica | Cuba | Espagne | Guam | Guatemala | Guinée-Équatoriale | Honduras | Mexique | Nicaragua | Panama | Paraguay | Porto Rico | Pérou | République dominicaine | Sahara Occidental | Salvador | Uruguay | Venezuela | Équateur;Afrique | Amérique du Nord | Amérique du Sud | Europe | Océanie;Oui;20;Non
+Estonien;ID-GEO-LAN-000021;ET;et;Estonie;Europe;Oui;21;Non
+Persan;ID-GEO-LAN-000022;FA;fa;Iran;Asie;Oui;22;Non
+Peul;ID-GEO-LAN-000023;FF;ff;Burkina Faso | Guinée;Afrique;Oui;23;Non
+Finnois;ID-GEO-LAN-000024;FI;fi;Finlande;Europe;Oui;24;Non
+Fidjien;ID-GEO-LAN-000025;FJ;fj;Fidji;Océanie;Oui;25;Non
+Féroïen;ID-GEO-LAN-000026;FO;fo;Îles Féroé;Europe;Oui;26;Non
+Français;ID-GEO-LAN-000027;FR;fr;Belgique | Burkina Faso | Burundi | Bénin | Cameroun | Canada | Comores | Congo | Côte d’Ivoire | Djibouti | France | Gabon | Guadeloupe | Guayane | Guernesey | Guinée | Guinée-Équatoriale | Haïti | Jersey | Liban | Luxembourg | Madagascar | Mali | Martinique | Mayotte | Monaco | Niger | Nouvelle-Calédonie | Polynésie française | Rwanda | République centrafricaine | République démocratique du Congo | Réunion | Saint-Barthélemy | Saint-Martin (partie française) | Saint-Pierre-et-Miquelon | Seychelles | Suisse | Sénégal | Tchad | Terres australes françaises | Togo | Vanuatu | Wallis-et-Futuna;Afrique | Amérique du Nord | Amérique du Sud | Asie | Europe | Océanie;Oui;27;Non
+Irlandais;ID-GEO-LAN-000028;GA;ga;Irlande;Europe;Oui;28;Non
+Guarani;ID-GEO-LAN-000029;GN;gn;Argentine | Paraguay;Amérique du Sud;Oui;29;Non
+Mannois;ID-GEO-LAN-000030;GV;gv;Île de Man;Europe;Oui;30;Non
+Hébreu;ID-GEO-LAN-000031;HE;he;Israël;Asie;Oui;31;Non
+Hindi;ID-GEO-LAN-000032;HI;hi;Fidji | Inde;Asie | Océanie;Oui;32;Non
+Croate;ID-GEO-LAN-000033;HR;hr;Bosnie-Herzégovine | Croatie;Europe;Oui;33;Non
+Créole haïtien;ID-GEO-LAN-000034;HT;ht;Haïti;Amérique du Nord;Oui;34;Non
+Hongrois;ID-GEO-LAN-000035;HU;hu;Hongrie;Europe;Oui;35;Non
+Arménien;ID-GEO-LAN-000036;HY;hy;Arménie | Azerbaïdjan | Chypre;Asie | Europe;Oui;36;Non
+Indonésien;ID-GEO-LAN-000037;ID;id;Indonésie;Asie;Oui;37;Non
+Islandais;ID-GEO-LAN-000038;IS;is;Islande;Europe;Oui;38;Non
+Italien;ID-GEO-LAN-000039;IT;it;Italie | Saint-Marin | Saint-Siège | Suisse;Europe;Oui;39;Non
+Japonais;ID-GEO-LAN-000040;JA;ja;Japon;Asie;Oui;40;Non
+Géorgien;ID-GEO-LAN-000041;KA;ka;Géorgie;Asie;Oui;41;Non
+Kikongo;ID-GEO-LAN-000042;KG;kg;République démocratique du Congo;Afrique;Oui;42;Non
+Kazakh;ID-GEO-LAN-000043;KK;kk;Kazakhstan;Asie;Oui;43;Non
+Groenlandais;ID-GEO-LAN-000044;KL;kl;Groenland;Amérique du Nord;Oui;44;Non
+Khmer;ID-GEO-LAN-000045;KM;km;Cambodge;Asie;Oui;45;Non
+Coréen;ID-GEO-LAN-000046;KO;ko;Corée du Nord | Corée du Sud;Asie;Oui;46;Non
+Kurde;ID-GEO-LAN-000047;KU;ku;Irak;Asie;Oui;47;Non
+Kirghize;ID-GEO-LAN-000048;KY;ky;Kirghizistan;Asie;Oui;48;Non
+Latin;ID-GEO-LAN-000049;LA;la;Saint-Siège;Europe;Oui;49;Non
+Luxembourgeois;ID-GEO-LAN-000050;LB;lb;Luxembourg;Europe;Oui;50;Non
+Lingala;ID-GEO-LAN-000051;LN;ln;Congo | République démocratique du Congo;Afrique;Oui;51;Non
+Lao;ID-GEO-LAN-000052;LO;lo;Laos;Asie;Oui;52;Non
+Lituanien;ID-GEO-LAN-000053;LT;lt;Lituanie;Europe;Oui;53;Non
+Tshiluba;ID-GEO-LAN-000054;LU;lu;République démocratique du Congo;Afrique;Oui;54;Non
+Letton;ID-GEO-LAN-000055;LV;lv;Lettonie;Europe;Oui;55;Non
+Malgache;ID-GEO-LAN-000056;MG;mg;Madagascar;Afrique;Oui;56;Non
+Marshallais;ID-GEO-LAN-000057;MH;mh;Îles Marshall;Océanie;Oui;57;Non
+Maori;ID-GEO-LAN-000058;MI;mi;Nouvelle-Zélande;Océanie;Oui;58;Non
+Macédonien;ID-GEO-LAN-000059;MK;mk;Macédoine;Europe;Oui;59;Non
+Mongol;ID-GEO-LAN-000060;MN;mn;Mongolie;Asie;Oui;60;Non
+Malais;ID-GEO-LAN-000061;MS;ms;Brunéi Darussalam | Singapour;Asie;Oui;61;Non
+Maltais;ID-GEO-LAN-000062;MT;mt;Malte;Europe;Oui;62;Non
+Birman;ID-GEO-LAN-000063;MY;my;Myanmar;Asie;Oui;63;Non
+Nauruan;ID-GEO-LAN-000064;NA;na;Nauru;Océanie;Oui;64;Non
+Norvégien bokmål;ID-GEO-LAN-000065;NB;nb;Norvège;Europe;Oui;65;Non
+Sindebele;ID-GEO-LAN-000066;ND;nd;Zimbabwe;Afrique;Oui;66;Non
+Népalais;ID-GEO-LAN-000067;NE;ne;Népal;Asie;Oui;67;Non
+Néerlandais;ID-GEO-LAN-000068;NL;nl;Aruba | Belgique | Bonaire, Saint-Eustache et Saba | Curaçao | Pays-Bas | Saint-Martin (partie néerlandaise) | Surinam;Amérique du Nord | Amérique du Sud | Europe;Oui;68;Non
+Norvégien nynorsk;ID-GEO-LAN-000069;NN;nn;Norvège;Europe;Oui;69;Non
+Norvégien;ID-GEO-LAN-000070;NO;no;Norvège | Svalbard et Jan Mayen | Île Bouvet;Antarctique | Europe;Oui;70;Non
+Ndébélé du Sud;ID-GEO-LAN-000071;NR;nr;Afrique du Sud;Afrique;Oui;71;Non
+Chichewa;ID-GEO-LAN-000072;NY;ny;Malawi;Afrique;Oui;72;Non
+Pendjabi;ID-GEO-LAN-000073;PA;pa;Aruba;Amérique du Nord;Oui;73;Non
+Polonais;ID-GEO-LAN-000074;PL;pl;Pologne;Europe;Oui;74;Non
+Pachto;ID-GEO-LAN-000075;PS;ps;Afghanistan;Asie;Oui;75;Non
+Portugais;ID-GEO-LAN-000076;PT;pt;Angola | Brésil | Cap-Vert | Guinée-Bissau | Macao | Mozambique | Portugal | Sao Tomé-et-Principe | Timor oriental;Afrique | Amérique du Sud | Asie | Europe;Oui;76;Non
+Quechua;ID-GEO-LAN-000077;QU;qu;Bolivie;Amérique du Sud;Oui;77;Non
+Kirundi;ID-GEO-LAN-000078;RN;rn;Burundi;Afrique;Oui;78;Non
+Roumain;ID-GEO-LAN-000079;RO;ro;Moldova | Roumanie;Europe;Oui;79;Non
+Serbe;ID-GEO-LAN-000080;RS;rs;Serbie;Europe;Oui;80;Non
+Russe;ID-GEO-LAN-000081;RU;ru;Arménie | Bélarus | Kazakhstan | Kirghizistan | Ouzbékistan | Russie | Tadjikistan | Turkménistan;Asie | Europe;Oui;81;Non
+Kinyarwanda;ID-GEO-LAN-000082;RW;rw;Rwanda;Afrique;Oui;82;Non
+Sango;ID-GEO-LAN-000083;SG;sg;République centrafricaine;Afrique;Oui;83;Non
+Singhalais;ID-GEO-LAN-000084;SI;si;Sri Lanka;Asie;Oui;84;Non
+Slovaque;ID-GEO-LAN-000085;SK;sk;Slovaquie | Tchéquie;Europe;Oui;85;Non
+Slovène;ID-GEO-LAN-000086;SL;sl;Slovénie;Europe;Oui;86;Non
+Samoan;ID-GEO-LAN-000087;SM;sm;Samoa | Samoa américaines;Océanie;Oui;87;Non
+Shona;ID-GEO-LAN-000088;SN;sn;Zimbabwe;Afrique;Oui;88;Non
+Somali;ID-GEO-LAN-000089;SO;so;Somalie;Afrique;Oui;89;Non
+Albanais;ID-GEO-LAN-000090;SQ;sq;Albanie;Europe;Oui;90;Non
+Serbe;ID-GEO-LAN-000091;SR;sr;Bosnie-Herzégovine | Monténégro;Europe;Oui;91;Non
+Swati;ID-GEO-LAN-000092;SS;ss;Afrique du Sud | Swaziland;Afrique;Oui;92;Non
+Sotho du Sud;ID-GEO-LAN-000093;ST;st;Afrique du Sud | Lesotho;Afrique;Oui;93;Non
+Suédois;ID-GEO-LAN-000094;SV;sv;Finlande | Suède | Îles Åland;Europe;Oui;94;Non
+Swahili;ID-GEO-LAN-000095;SW;sw;Kenya | République démocratique du Congo | Tanzanie | Uganda;Afrique;Oui;95;Non
+Tamoul;ID-GEO-LAN-000096;TA;ta;Singapour | Sri Lanka;Asie;Oui;96;Non
+Tadjik;ID-GEO-LAN-000097;TG;tg;Tadjikistan;Asie;Oui;97;Non
+Thaï;ID-GEO-LAN-000098;TH;th;Thaïlande;Asie;Oui;98;Non
+Tigrigna;ID-GEO-LAN-000099;TI;ti;Érythrée;Afrique;Oui;99;Non
+Turkmène;ID-GEO-LAN-000100;TK;tk;Afghanistan | Turkménistan;Asie;Oui;100;Non
+Tswana;ID-GEO-LAN-000101;TN;tn;Afrique du Sud | Botswana;Afrique;Oui;101;Non
+Tongien;ID-GEO-LAN-000102;TO;to;Tonga;Océanie;Oui;102;Non
+Turc;ID-GEO-LAN-000103;TR;tr;Chypre | Turquie;Asie | Europe;Oui;103;Non
+Tsonga;ID-GEO-LAN-000104;TS;ts;Afrique du Sud;Afrique;Oui;104;Non
+Ukrainien;ID-GEO-LAN-000105;UK;uk;Ukraine;Europe;Oui;105;Non
+Ourdou;ID-GEO-LAN-000106;UR;ur;Fidji | Pakistan;Asie | Océanie;Oui;106;Non
+Ouzbek;ID-GEO-LAN-000107;UZ;uz;Afghanistan | Ouzbékistan;Asie;Oui;107;Non
+Venda;ID-GEO-LAN-000108;VE;ve;Afrique du Sud;Afrique;Oui;108;Non
+Vietnamien;ID-GEO-LAN-000109;VI;vi;Viêt Nam;Asie;Oui;109;Non
+Xhosa;ID-GEO-LAN-000110;XH;xh;Afrique du Sud;Afrique;Oui;110;Non
+Chinois;ID-GEO-LAN-000111;ZH;zh;Chine | Hong Kong | Macao | Singapour | Taïwan;Asie;Oui;111;Non
+Zoulou;ID-GEO-LAN-000112;ZU;zu;Afrique du Sud;Afrique;Oui;112;Non
