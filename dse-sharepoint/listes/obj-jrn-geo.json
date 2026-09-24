@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0",
-  "moteurVersion": "1.0.1",
+  "moteurVersion": "1.0.4",
   "source": {
     "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
     "liste": "OBJ-JRN-GEO",
     "listeId": "f364ca33-23fd-4dc3-b70c-df71b2ab2cca"
   },
-  "exporteLe": "2026-09-24T10:37:54.3074118+02:00",
+  "exporteLe": "2026-09-24T11:01:35.1691505+02:00",
   "nombreElements": 74,
   "elements": [
     {
