@@ -1,0 +1,20 @@
+@echo off
+setlocal
+chcp 65001 >nul
+cd /d "%~dp0"
+title DemainSite - Audit Pays Monde V2.0
+
+echo ============================================================
+echo  DEMAINSITE ECOSYSTEME - AUDIT PAYS MONDE V2.0
+echo ============================================================
+echo.
+where pwsh >nul 2>nul
+if %errorlevel%==0 (
+    pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0RUN-IMPORT-PAYS-MONDE-V2.ps1" -Mode AuditOnly
+) else (
+    pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0RUN-IMPORT-PAYS-MONDE-V2.ps1" -Mode AuditOnly
+)
+
+echo.
+pause
+
