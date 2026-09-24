@@ -1,0 +1,19 @@
+﻿Liste;Champ interne;Nom affiché;Type;Obligatoire;Rôle
+Sites;Title;Nom_Site;Texte;Oui;Nom du site
+Sites;ID_Site;ID_Site;Texte;Non;ID automatique SIT-000001
+Sites;Relation_Associee;Relation_Associee;Recherche/texte;Oui;Relation propriétaire
+Sites;Type_Site;Type_Site;Choix;Oui;Type de site
+Sites;Statut;Statut;Choix;Oui;Statut du site
+Sites;URL_Principale;URL_Principale;URL;Non;Adresse principale
+Sites;Domaine_Principal;Domaine_Principal;Texte;Non;Domaine principal
+Sites;Score_Completude;Score_Completude;Nombre;Non;Score 0 à 100
+Sites;Journal;Journal;Texte long;Non;Historique
+Domaines;Title;Nom_Domaine;Texte;Oui;Nom de domaine
+Domaines;ID_Domaine;ID_Domaine;Texte;Non;ID automatique DOM-000001
+Domaines;Site_Associe;Site_Associe;Recherche/texte;Oui;Site lié
+Domaines;Relation_Associee;Relation_Associee;Recherche/texte;Oui;Relation liée
+Domaines;Type_Domaine;Type_Domaine;Choix;Oui;Principal, Alias...
+Domaines;Statut;Statut;Choix;Oui;Statut domaine
+Domaines;Date_Expiration;Date_Expiration;Date;Non;Date expiration
+Domaines;Fournisseur;Fournisseur;Texte;Non;Registrar ou fournisseur
+Domaines;Journal;Journal;Texte long;Non;Historique
