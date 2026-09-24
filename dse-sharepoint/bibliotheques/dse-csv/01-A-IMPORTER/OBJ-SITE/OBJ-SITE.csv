@@ -1,0 +1,10 @@
+﻿Titre - Site;ID OBJ Site;Code Site;Nom Site;Type Site;Rôle Site;URL Site;Environnement;Description Site;Site Maître;Public;Actif;Ordre Affichage;Validation DSE
+DemainSite Écosystème;ID-OBJ-SIT-000001;DSE;DemainSite Écosystème;SHAREPOINT;GOUVERNANCE;;PRODUCTION;Centre de gouvernance et source officielle de DemainSite Écosystème.;Oui;Non;Oui;10;Non
+DemainSite;ID-OBJ-SIT-000002;DEMAINSITE;DemainSite;SITE-METIER;SERVICES;;PRODUCTION;Site consacré aux services et activités DemainSite.;Non;Non;Oui;20;Non
+Éditions PascLaure;ID-OBJ-SIT-000003;PASCLAURE;Éditions PascLaure;SITE-METIER;EDITION-CREATION;;PRODUCTION;Site consacré aux éditions créations et collections PascLaure.;Non;Non;Oui;30;Non
+Blogs-Site;ID-OBJ-SIT-000004;BLOGS-SITE;Blogs-Site;SITE-METIER;CONTENU-DOCUMENTATION;;PRODUCTION;Site consacré aux contenus blogs guides et documentation.;Non;Non;Oui;40;Non
+Boutique DSE;ID-OBJ-SIT-000005;BOUTIQUE-DSE;Boutique DSE;SITE-METIER;CATALOGUE-DISTRIBUTION;;PREPARATION;Futur site de catalogue distribution et téléchargement des offres DSE.;Non;Non;Oui;50;Non
+DSE Power Pages;ID-OBJ-SIT-000006;DSE-POWER-PAGES;DSE Power Pages;POWER-PAGES;PORTAIL-PUBLIC;;ESSAI;Portail Power Pages DSE destiné à la future publication publique.;Non;Non;Oui;60;Non
+Media DemainSite Universal;ID-OBJ-SIT-000007;MDU;Media DemainSite Universal;SITE-PROJET;MEDIA; ;PREPARATION;Projet central de production classement protection et distribution des médias DSE.;Non;Non;Oui;70;Non
+Sites clients;ID-OBJ-SIT-000008;CLIENTS;Sites clients;GROUPE-SITES;CLIENTS;;FUTUR;Regroupement logique des futurs sites et portails clients DSE.;Non;Non;Oui;80;Non
+Intranets clients;ID-OBJ-SIT-000009;INTRANETS-CLIENTS;Intranets clients;GROUPE-SITES;INTRANET;;FUTUR;Regroupement logique des futurs intranets clients gérés dans DSE.;Non;Non;Oui;90;Non
