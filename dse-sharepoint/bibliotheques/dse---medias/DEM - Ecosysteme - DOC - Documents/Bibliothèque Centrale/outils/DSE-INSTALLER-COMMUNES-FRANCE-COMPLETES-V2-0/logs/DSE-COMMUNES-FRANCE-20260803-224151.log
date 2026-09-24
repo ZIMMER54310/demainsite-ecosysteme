@@ -1,0 +1,67 @@
+**********************
+PowerShell transcript start
+Start time: 20260803224151
+Username: AzureAD\PascalZIMMER_b9lyro1
+RunAs User: AzureAD\PascalZIMMER_b9lyro1
+Configuration Name: 
+Machine: ZENBOOK17 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES-V2-0\RUN-INSTALL-COMMUNES-FRANCE-COMPLETES.ps1 -Mode Update
+Process ID: 22032
+PSVersion: 7.6.3
+PSEdition: Core
+GitCommitId: 7.6.3
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+
+============================================================
+ DEMAINSITE - INSTALLATION COMMUNES FRANCE COMPLETES V2.0
+============================================================
+Mode : Update
+PS>TerminatingError(Get-PnPWeb): "You are not signed in. Please use Connect-PnPOnline to connect."
+Connexion SharePoint absente. Connexion DeviceLogin...
+Connexion SharePoint OK : https://blogssite.sharepoint.com/sites/Bibliotheque
+
+============================================================
+ PREPARATION DES LISTES ET COLONNES
+============================================================
+
+============================================================
+ TELECHARGEMENT AUTOMATIQUE DU CSV GEOGRAPHIQUE
+============================================================
+Interrogation : https://www.data.gouv.fr/api/1/datasets/communes-de-france-base-des-codes-postaux/
+Telechargement : regions-france.csv
+CSV utilise : C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES-V2-0\data\communes-departement-region-auto.csv
+Separateur detecte : ,
+Lignes source : 18
+ATTENTION : source inferieure a 30000 lignes. Verification conseillee.
+
+============================================================
+ LECTURE DES INDEX SHAREPOINT
+============================================================
+Index : Pays / CodePays
+Index Pays : 1
+Index : Regions / CodeRegion
+Index Regions : 18
+Index : Departements / CodeDepartement
+Index Departements : 104
+Index : Villes / CodeINSEE
+Index Villes : 92
+Index : CodesPostaux / CodePostal
+Index CodesPostaux : 6329
+Index : CodesPostauxVilles / CleCPVille
+Index CodesPostauxVilles : 161
+
+============================================================
+ IMPORT / MISE A JOUR DES COMMUNES
+============================================================
+PS>TerminatingError(Get-ItemProperty): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES-V2-0\@{code_region=01; nom_region=Guadeloupe}' because it does not exist."
+ERREUR : Cannot find path 'C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-INSTALLER-COMMUNES-FRANCE-COMPLETES-V2-0\@{code_region=01; nom_region=Guadeloupe}' because it does not exist.
+**********************
+PowerShell transcript end
+End time: 20260803224235
+**********************
