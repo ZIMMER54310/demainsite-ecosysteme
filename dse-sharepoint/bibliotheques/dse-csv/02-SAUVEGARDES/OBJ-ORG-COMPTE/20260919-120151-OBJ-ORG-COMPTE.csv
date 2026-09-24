@@ -1,0 +1,5 @@
+﻿"id";"Title";"IDCOMPTE";"NOMCOMPTE";"IDENTIFIANT";"URLCONNEXION";"ACTIF";"VERROUILLE";"COMMENTAIRES";"ORG";"CONTINENT";"ZONE";"PAYS";"REGION";"DEPARTEMENT";"TERRITOIRE";"FUSEAUHORAIRE";"OBJREF";"TYPECOMPTE";"Modified";"Created";"Author";"Editor"
+"1";"Microsoft 365";"COMPTE-000001";"Microsoft 365";"administrateur@demainsite.local";"";"Oui";"Non";"";"";"";"";"";"";"";"";"";"";"";"09/11/2026 13:30:53";"09/11/2026 13:30:53";"";""
+"2";"SharePoint";"COMPTE-000002";"SharePoint";"sharepoint-admin";"";"Oui";"Non";"";"";"";"";"";"";"";"";"";"";"";"09/11/2026 13:30:55";"09/11/2026 13:30:55";"";""
+"3";"WordPress";"COMPTE-000003";"WordPress";"wp-admin";"";"Oui";"Non";"";"";"";"";"";"";"";"";"";"";"";"09/11/2026 13:30:58";"09/11/2026 13:30:58";"";""
+"4";"OVH";"COMPTE-000004";"OVH";"ovh-admin";"";"Oui";"Non";"";"";"";"";"";"";"";"";"";"";"";"09/11/2026 13:31:00";"09/11/2026 13:31:00";"";""
