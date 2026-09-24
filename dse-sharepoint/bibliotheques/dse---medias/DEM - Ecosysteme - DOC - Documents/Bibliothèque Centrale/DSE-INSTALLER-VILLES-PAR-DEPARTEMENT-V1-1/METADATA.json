@@ -1,0 +1,14 @@
+{
+  "nom": "DSE-INSTALLER-VILLES-PAR-DEPARTEMENT",
+  "version": "1.1",
+  "projet": "DemainSite Ecosysteme",
+  "site_sharepoint": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+  "tenant": "demainsite.com",
+  "client_id": "5d607413-77c5-47b2-975a-eaca6827921c",
+  "methode_connexion": "DeviceLogin",
+  "source": "geo.api.gouv.fr/departements/{code}/communes",
+  "suppression_automatique": false,
+  "journalisation": true,
+  "mode": "STRUCTURE / departement / TOUS",
+  "correction": "OUI/YES/ALL/TOUT sont interpretes comme TOUS"
+}
