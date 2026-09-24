@@ -1,0 +1,10 @@
+Table;Nom;Code;CompteLie;Domaine;Statut;Type;Note
+DSE_Comptes;DemainSite;CLI-000001;;demainsite.fr;Actif;Interne;Compte pilote interne
+DSE_Comptes;Acti'Dem;CLI-000003;;actidem54.fr;Actif;Association;Client pilote association
+DSE_Comptes;Carottage Expert;CLI-000002;;carottagexpert.fr;Actif;Client;Client pilote professionnel
+DSE_Sites;DemainSite;SIT-000001;DemainSite;demainsite.fr;Actif;Vitrine;Site principal pilote
+DSE_Sites;Acti'Dem;SIT-000003;Acti'Dem;actidem54.fr;Maintenance;Vitrine;Site client pilote
+DSE_Sites;Carottage Expert;SIT-000002;Carottage Expert;carottagexpert.fr;Maintenance;Vitrine;Site client pilote
+DSE_Projets;Bibliotheque Centrale;PROJ-000001;DemainSite;;En cours;SharePoint;Fondation donnees
+DSE_Projets;Acti'Dem - Site;PROJ-000003;Acti'Dem;actidem54.fr;Preparation;Site internet;Prototype client
+DSE_Projets;Carottage Expert - Communication;PROJ-000004;Carottage Expert;carottagexpert.fr;En cours;Communication;Prototype client
