@@ -1,0 +1,357 @@
+RAPPORT DE CONCEPTION — OBJ-ACT
+
+Date d’analyse
+04/09/2026 19:10 — Europe/Paris (UTC+02:00)
+
+Périmètre
+Conception uniquement. Aucune liste, colonne ou donnée n’a été créée, modifiée ou supprimée. Seuls ce rapport et la copie du prompt ont été créés dans la bibliothèque documentaire.
+
+=================================================
+1. STRUCTURE PROPOSÉE
+=================================================
+
+Finalité
+OBJ-ACT constitue la table d’affectation des acteurs aux objets DSE :
+OBJ → ACTEUR → RÔLE → RESPONSABILITÉ.
+
+Granularité recommandée
+Une ligne représente une affectation unique d’un acteur à un objet pour un rôle et une responsabilité, sur une période donnée.
+
+Décision d’architecture
+Pour le pilote, utiliser un modèle hybride contrôlé :
+- ACTEUR-TYPE indique la famille d’acteur ;
+- ACTEUR-PERSONNE contient une personne Microsoft 365 ;
+- ACTEUR-ENTITE contient un acteur non humain enregistré dans OBJ ;
+- exactement l’une des deux colonnes ACTEUR-PERSONNE ou ACTEUR-ENTITE doit être renseignée.
+
+Pourquoi ce modèle
+SharePoint ne fournit pas de Lookup polymorphe unique capable de cibler à la fois l’annuaire Microsoft 365 et une liste métier. Deux colonnes typées, pilotées par ACTEUR-TYPE et une règle d’exclusivité, sont plus sûres qu’un champ texte universel.
+
+Cible idéale à moyen terme
+Créer ultérieurement un registre ACTEUR unique si le volume et les intégrations le justifient. Ce registre normaliserait personnes, entreprises, comptes, équipes, IA et autres acteurs autour d’un ID-ACTEUR stable. Pour le pilote, cette couche supplémentaire n’est pas indispensable si toutes les entités non humaines sont déjà représentées dans OBJ.
+
+=================================================
+2. COLONNES RECOMMANDÉES
+=================================================
+
+Colonnes obligatoires
+
+1. ID-ACT
+Type : Texte
+Obligatoire : Oui
+Unique : Oui
+Rôle : identifiant permanent de l’affectation, par exemple ACT-000001.
+
+2. OBJ
+Type : Lookup simple
+Source : OBJ
+Champ affiché : ID-OBJ, avec NOM-OBJ comme information complémentaire si possible
+Obligatoire : Oui
+Rôle : objet DSE concerné.
+
+3. ACTEUR-TYPE
+Type : Choix
+Valeurs recommandées : PERSONNE-M365, ENTREPRISE, COMPTE, EQUIPE, IA, AUTRE
+Obligatoire : Oui
+Rôle : pilote le type et la validation de l’acteur.
+
+4. ROLE
+Type : Lookup simple
+Source : OBJ-REF-50
+Champ affiché : NOM-REF ou CODE-REF selon l’usage applicatif
+Obligatoire : Oui
+Rôle : rôle fonctionnel de l’acteur sur l’objet.
+
+5. RESPONSABILITE
+Type : Lookup simple
+Source : OBJ-REF-50
+Champ affiché : NOM-REF ou CODE-REF selon l’usage applicatif
+Obligatoire : Oui pour le modèle cible ; éventuellement facultatif pendant une courte phase de reprise si le référentiel n’est pas complet.
+Rôle : responsabilité exercée dans le rôle.
+
+6. ACTIF
+Type : Oui/Non
+Défaut : Oui
+Obligatoire : Non techniquement, mais valeur par défaut imposée
+Rôle : permet la désactivation sans suppression.
+
+Colonnes conditionnellement obligatoires
+
+7. ACTEUR-PERSONNE
+Type : Personne ou groupe, personne seule
+Sélection multiple : Non
+Obligatoire : si ACTEUR-TYPE = PERSONNE-M365
+Vide dans les autres cas.
+
+8. ACTEUR-ENTITE
+Type : Lookup simple
+Source recommandée : OBJ
+Champ affiché : ID-OBJ ou NOM-OBJ
+Obligatoire : si ACTEUR-TYPE appartient à ENTREPRISE, COMPTE, EQUIPE, IA ou AUTRE
+Vide pour PERSONNE-M365.
+
+Colonnes facultatives recommandées
+
+9. RESPONSABLE-PRINCIPAL
+Type : Oui/Non
+Défaut : Non
+Rôle : identifie le responsable principal dans un périmètre défini.
+
+10. DATE-DEBUT
+Type : Date uniquement
+Rôle : début de validité de l’affectation.
+
+11. DATE-FIN
+Type : Date uniquement
+Rôle : fin de validité ; vide tant que l’affectation est ouverte.
+
+12. VERROUILLE
+Type : Oui/Non
+Défaut : Non
+Rôle : interdit les modifications ordinaires via l’application ou l’automatisation.
+
+13. CONTROLE-PASC-ARA
+Type : Oui/Non
+Défaut : Non
+Rôle : signale une affectation contrôlée selon la gouvernance DSE.
+
+14. SOURCE-AFFECTATION
+Type : Texte ou Choix
+Valeurs possibles : MANUEL, IMPORT, APPLICATION, IA, WORKFLOW
+Rôle : traçabilité de l’origine.
+
+15. ID-EXTERNE
+Type : Texte
+Rôle : clé d’un système source ou d’une synchronisation.
+
+16. DATE-DERNIER-CONTROLE
+Type : Date/heure
+Rôle : date du dernier contrôle métier ou automatique.
+
+17. ANOMALIE-DETECTEE
+Type : Oui/Non
+Défaut : Non
+Rôle : permet de filtrer les affectations nécessitant une correction.
+
+18. MOTIF-VERROUILLAGE
+Type : Texte multilignes
+Rôle : justification du verrouillage.
+
+19. NOTES
+Type : Texte multilignes, texte brut
+Rôle : commentaire métier sans donnée structurante.
+
+Colonnes techniques optionnelles
+
+20. CLE-AFFECTATION
+Type : Texte
+Rôle : clé normalisée générée par l’application, par exemple OBJ|ACTEUR|ROLE|RESPONSABILITE|DATE-DEBUT. Peut être rendue unique pour prévenir les doublons exacts.
+
+21. CLE-PRINCIPALE
+Type : Texte
+Rôle : clé gérée par l’application pour contrôler l’unicité du responsable principal dans le périmètre retenu. Ne doit être alimentée que pour les lignes actives et principales.
+
+=================================================
+3. LOOKUPS RECOMMANDÉS
+=================================================
+
+- OBJ → OBJ.ID-OBJ : obligatoire, simple.
+- ACTEUR-ENTITE → OBJ.ID-OBJ : conditionnel, simple. Les entreprises, comptes, équipes, IA et autres entités doivent être des objets DSE qualifiés.
+- ROLE → OBJ-REF-50 : obligatoire, simple.
+- RESPONSABILITE → OBJ-REF-50 : obligatoire dans la cible, simple.
+
+Précaution sur OBJ-REF-50
+ROLE et RESPONSABILITE pointent vers la même liste. Le schéma observé comporte notamment NOM-REF, CODE-REF, CODE-COURT et NIVEAU-REF, mais pas de colonne explicite TYPE-REF. Avant le pilote, il faut confirmer que NIVEAU-REF ou une convention de code distingue sans ambiguïté les rôles des responsabilités. Sinon, une colonne de classification dans le référentiel sera nécessaire ultérieurement, après décision séparée.
+
+Aucun Lookup direct vers OBJ-JRN n’est recommandé dans OBJ-ACT. Le journal doit porter plusieurs événements pour une affectation et devrait donc, dans son futur modèle, référencer ID-ACT et ID-OBJ. OBJ-JRN est actuellement minimal et ne contient que les colonnes système et Titre.
+
+Aucun Lookup obligatoire vers OBJ-REL n’est recommandé. OBJ-REL décrit les relations OBJ-vers-OBJ ; OBJ-ACT décrit les affectations acteur-vers-OBJ. Les deux listes sont complémentaires. Si ACTEUR-ENTITE est un OBJ, OBJ-REL peut décrire sa structure, sans dupliquer l’affectation de responsabilité.
+
+=================================================
+4. INDEX RECOMMANDÉS
+=================================================
+
+Priorité 1
+- ID-ACT : index unique.
+- OBJ : index.
+- ACTEUR-PERSONNE : index si le volume et SharePoint le permettent.
+- ACTEUR-ENTITE : index.
+- ROLE : index.
+- RESPONSABILITE : index.
+- ACTIF : index.
+
+Priorité 2
+- RESPONSABLE-PRINCIPAL : index.
+- DATE-DEBUT : index.
+- DATE-FIN : index.
+- VERROUILLE : index.
+- CONTROLE-PASC-ARA : index.
+- ANOMALIE-DETECTEE : index.
+- CLE-AFFECTATION : index unique si la règle anti-doublon est retenue.
+
+Attention
+SharePoint limite le nombre de Lookups et peut être sensible aux vues complexes. Les vues du pilote doivent filtrer d’abord sur les colonnes indexées et éviter d’afficher trop de Lookups simultanément.
+
+=================================================
+5. CONTRAINTES RECOMMANDÉES
+=================================================
+
+Contraintes de présence
+- ID-ACT, OBJ, ACTEUR-TYPE, ROLE et RESPONSABILITE obligatoires.
+- Si ACTEUR-TYPE = PERSONNE-M365 : ACTEUR-PERSONNE obligatoire et ACTEUR-ENTITE vide.
+- Sinon : ACTEUR-ENTITE obligatoire et ACTEUR-PERSONNE vide.
+
+Contraintes référentielles
+- OBJ doit exister dans OBJ.
+- ACTEUR-ENTITE doit exister dans OBJ.
+- ROLE et RESPONSABILITE doivent exister dans OBJ-REF-50 et être actifs.
+- ROLE doit appartenir à la classe « rôle » et RESPONSABILITE à la classe « responsabilité ».
+
+Contraintes temporelles
+- DATE-FIN doit être vide ou supérieure ou égale à DATE-DEBUT.
+- ACTIF devrait être Faux lorsque DATE-FIN est dépassée ; cette cohérence doit être gérée par l’application ou un workflow.
+
+Contraintes anti-doublon
+- Empêcher deux affectations strictement identiques pour OBJ + acteur + ROLE + RESPONSABILITE + période.
+- Une clé technique CLE-AFFECTATION unique est recommandée, car SharePoint ne sait pas imposer nativement une unicité composite.
+
+Responsable principal
+- Plusieurs acteurs doivent être permis sur un même objet : Oui.
+- Plusieurs acteurs peuvent partager le même rôle ou la même responsabilité : Oui, si le métier l’autorise.
+- RESPONSABLE-PRINCIPAL doit être prévu : Oui.
+- Plusieurs responsables principaux simultanés doivent être empêchés dans un périmètre explicite.
+
+Périmètre recommandé pour l’unicité principale
+Un seul responsable principal actif par OBJ + ROLE. Cette règle est plus souple et plus exacte qu’un seul principal global par OBJ, car un objet peut avoir un principal métier, sécurité, données ou exploitation distinct.
+
+Mise en œuvre
+La validation native de liste ne suffit pas pour contrôler l’unicité entre plusieurs lignes. Le contrôle doit être transactionnel dans Application DemainSite, complété par un workflow de détection ou une clé CLE-PRINCIPALE administrée. La règle doit ignorer les lignes inactives et les périodes non chevauchantes.
+
+Contraintes de verrouillage
+- Une ligne VERROUILLE=Oui ne doit être modifiable que par un rôle d’administration défini.
+- Toute modification importante doit produire un événement dans OBJ-JRN.
+- Ne jamais supprimer une affectation ayant servi au pilote ; la désactiver et renseigner DATE-FIN.
+
+=================================================
+6. RÉPONSES AUX QUESTIONS
+=================================================
+
+1. Types d’acteurs
+Prévoir PERSONNE-M365, ENTREPRISE, COMPTE, EQUIPE, IA et AUTRE. Les acteurs non humains doivent idéalement être enregistrés dans OBJ afin de conserver un identifiant DSE et d’être compatibles avec OBJ-REL.
+
+2. Deux colonnes ou modèle unique
+Pour le pilote : ACTEUR-PERSONNE + ACTEUR-ENTITE, avec ACTEUR-TYPE et exclusivité stricte. Un modèle unique n’est recommandé que si un registre ACTEUR commun est créé ultérieurement ou si toutes les personnes deviennent elles-mêmes des OBJ.
+
+3. Plusieurs responsables pour un objet
+Oui. Une affectation par ligne permet plusieurs acteurs, rôles et responsabilités.
+
+4. Responsable principal
+Oui, ajouter RESPONSABLE-PRINCIPAL avec défaut Non.
+
+5. Dates
+Oui, DATE-DEBUT et DATE-FIN sont nécessaires pour l’historique, les remplacements et les responsabilités temporaires.
+
+6. Gouvernance
+Oui, prévoir ACTIF, VERROUILLE et CONTROLE-PASC-ARA pour rester cohérent avec OBJ, OBJ-REF-50 et OBJ-REL.
+
+7. Plusieurs principaux simultanés
+Oui, les empêcher par OBJ + ROLE pour des périodes qui se chevauchent. Ce contrôle doit être applicatif ou automatisé, pas seulement déclaratif.
+
+=================================================
+7. COMPATIBILITÉ AVEC L’ÉCOSYSTÈME
+=================================================
+
+OBJ
+- OBJ-ACT référence l’objet concerné.
+- Les acteurs non humains peuvent aussi être des OBJ.
+- Le modèle conserve ID-OBJ comme clé fonctionnelle visible.
+
+OBJ-REF-50
+- Fournit ROLE et RESPONSABILITE.
+- Une classification explicite des deux catégories doit être confirmée avant le pilote.
+
+OBJ-JRN
+- Doit journaliser création, activation, désactivation, changement de rôle, changement de principal, verrouillage et contrôle.
+- Recommandation future : OBJ-JRN référence ID-ACT et ID-OBJ ; OBJ-ACT ne doit pas pointer vers une seule ligne de journal.
+
+OBJ-REL
+- Gère les liens structurels entre objets.
+- Ne doit pas remplacer OBJ-ACT, qui porte une sémantique d’affectation, de rôle, de responsabilité et de période.
+- Lorsqu’un acteur non humain est un OBJ, les deux modèles restent compatibles.
+
+=================================================
+8. RISQUES
+=================================================
+
+- Ambiguïté entre ROLE et RESPONSABILITE dans OBJ-REF-50 si aucune classification fiable n’existe.
+- Incohérence possible entre ACTEUR-TYPE et les deux colonnes d’acteur sans validation applicative.
+- Doublons d’affectation sans clé composite technique.
+- Plusieurs responsables principaux simultanés sans contrôle transactionnel.
+- Chevauchement de périodes ou DATE-FIN antérieure à DATE-DEBUT.
+- Acteurs Microsoft 365 supprimés ou désactivés, rendant l’historique moins lisible.
+- Acteurs non humains non enregistrés dans OBJ, entraînant des valeurs texte non gouvernées.
+- Trop de Lookups et de vues larges pouvant dégrader les performances SharePoint.
+- Confusion entre une relation OBJ-REL et une affectation OBJ-ACT.
+- OBJ-JRN n’a pas encore de structure métier permettant de tracer ID-ACT.
+
+=================================================
+9. AVANTAGES
+=================================================
+
+- Modèle normalisé : une ligne par affectation.
+- Support des acteurs humains et non humains.
+- Plusieurs responsables possibles sans colonnes répétitives.
+- Historisation par période sans suppression.
+- Compatibilité avec le registre OBJ et le graphe OBJ-REL.
+- Réutilisation de OBJ-REF-50 pour la gouvernance des rôles et responsabilités.
+- Préparation aux contrôles, au verrouillage et au journal OBJ-JRN.
+- Migration future possible vers un registre ACTEUR unifié sans changer la logique métier centrale.
+
+=================================================
+10. EXEMPLE CONCRET
+=================================================
+
+Affectation 1
+ID-ACT : ACT-000001
+OBJ : OBJ-APPLICATION-DEMAINSITE
+ACTEUR-TYPE : PERSONNE-M365
+ACTEUR-PERSONNE : Marie Dupont
+ACTEUR-ENTITE : vide
+ROLE : PRODUCT-OWNER
+RESPONSABILITE : VALIDATION-FONCTIONNELLE
+RESPONSABLE-PRINCIPAL : Oui
+DATE-DEBUT : 01/10/2026
+DATE-FIN : vide
+ACTIF : Oui
+VERROUILLE : Non
+CONTROLE-PASC-ARA : Non
+
+Affectation 2
+ID-ACT : ACT-000002
+OBJ : OBJ-APPLICATION-DEMAINSITE
+ACTEUR-TYPE : EQUIPE
+ACTEUR-PERSONNE : vide
+ACTEUR-ENTITE : OBJ-EQUIPE-SECURITE
+ROLE : CONTRIBUTEUR
+RESPONSABILITE : REVUE-SECURITE
+RESPONSABLE-PRINCIPAL : Non
+DATE-DEBUT : 01/10/2026
+DATE-FIN : 31/12/2026
+ACTIF : Oui
+
+Les deux lignes peuvent coexister. Une seconde ligne active et principale pour le rôle PRODUCT-OWNER sur le même objet et une période chevauchante doit être refusée.
+
+=================================================
+11. RECOMMANDATION FINALE
+=================================================
+
+Avant le pilote Application DemainSite, retenir un modèle hybride à deux colonnes d’acteur : ACTEUR-PERSONNE pour Microsoft 365 et ACTEUR-ENTITE vers OBJ pour les entreprises, comptes, équipes, IA et autres entités. Ajouter ACTEUR-TYPE pour imposer l’exclusivité.
+
+Créer une ligne par combinaison OBJ + acteur + ROLE + RESPONSABILITE + période. Autoriser plusieurs acteurs par objet. Ajouter RESPONSABLE-PRINCIPAL et garantir un seul principal actif par OBJ + ROLE sur une période donnée au niveau de l’application, avec un contrôle automatique complémentaire.
+
+Rendre ID-ACT unique, indexer les clés de recherche, conserver ACTIF, DATE-DEBUT, DATE-FIN, VERROUILLE et CONTROLE-PASC-ARA, et éviter toute suppression physique.
+
+Condition de lancement du pilote : confirmer dans OBJ-REF-50 la distinction technique fiable entre les valeurs de rôle et de responsabilité. Sans cette distinction, les deux Lookups seraient valides techniquement mais insuffisamment gouvernés fonctionnellement.
+
+Résultat de la mission
+Analyse terminée. Aucune liste, colonne ou donnée créée, modifiée ou supprimée. Aucun changement apporté à OBJ, OBJ-REF-50, OBJ-JRN ou OBJ-REL.
