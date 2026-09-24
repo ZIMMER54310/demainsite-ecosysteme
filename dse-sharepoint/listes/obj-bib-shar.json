@@ -1,0 +1,629 @@
+{
+  "schemaVersion": "1.0",
+  "moteurVersion": "1.0.1",
+  "source": {
+    "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+    "liste": "OBJ-BIB-SHAR",
+    "listeId": "e04cf7b9-2754-4763-b16c-e95bf8e440e7"
+  },
+  "exporteLe": "2026-09-24T10:35:38.0728121+02:00",
+  "nombreElements": 11,
+  "elements": [
+    {
+      "idSharePoint": 1,
+      "Title": "Bibliotheque DOC - Documents",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-DOC---Documents",
+      "NOMBIB": "DOC - Documents",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/Documents partages/Forms/DSE  Documents officiels.aspx",
+        "description": "/sites/Bibliotheque/Documents partages/Forms/DSE  Documents officiels.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : DOC - Documents",
+      "NBDOCUMENTS": 459.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:02.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:05.0000000Z",
+      "Created": "2026-09-19T07:23:05.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 2,
+      "Title": "Bibliotheque DSE - Coffre Ford",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-DSE---Coffre-Ford",
+      "NOMBIB": "DSE - Coffre Ford",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/DSE  Coffre ZIP/Forms/AllItems.aspx",
+        "description": "/sites/Bibliotheque/DSE  Coffre ZIP/Forms/AllItems.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : DSE - Coffre Ford",
+      "NBDOCUMENTS": 1063.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:04.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:06.0000000Z",
+      "Created": "2026-09-19T07:23:06.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 3,
+      "Title": "Bibliotheque DSE - MEDIAS",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-DSE---MEDIAS",
+      "NOMBIB": "DSE - MEDIAS",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/DSE  MEDIAS/Forms/AllItems.aspx",
+        "description": "/sites/Bibliotheque/DSE  MEDIAS/Forms/AllItems.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : DSE - MEDIAS",
+      "NBDOCUMENTS": 459.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:05.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:07.0000000Z",
+      "Created": "2026-09-19T07:23:07.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 4,
+      "Title": "Bibliotheque DSE-AUDITS",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-DSE-AUDITS",
+      "NOMBIB": "DSE-AUDITS",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/DSEAUDITS/Forms/Audits valids.aspx",
+        "description": "/sites/Bibliotheque/DSEAUDITS/Forms/Audits valids.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : DSE-AUDITS",
+      "NBDOCUMENTS": 21.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:06.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:08.0000000Z",
+      "Created": "2026-09-19T07:23:08.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 5,
+      "Title": "Bibliotheque DSE-CSV",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-DSE-CSV",
+      "NOMBIB": "DSE-CSV",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/DSECSV/Forms/AllItems.aspx",
+        "description": "/sites/Bibliotheque/DSECSV/Forms/AllItems.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : DSE-CSV",
+      "NBDOCUMENTS": 56.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:07.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:10.0000000Z",
+      "Created": "2026-09-19T07:23:10.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 6,
+      "Title": "Bibliotheque DSE-OUTILS",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-DSE-OUTILS",
+      "NOMBIB": "DSE-OUTILS",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/DSEOUTILS/Forms/AllItems.aspx",
+        "description": "/sites/Bibliotheque/DSEOUTILS/Forms/AllItems.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : DSE-OUTILS",
+      "NBDOCUMENTS": 377.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:08.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:11.0000000Z",
+      "Created": "2026-09-19T07:23:11.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 7,
+      "Title": "Bibliotheque DSE-RAPPORTS",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-DSE-RAPPORTS",
+      "NOMBIB": "DSE-RAPPORTS",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/DSERAPPORTS/Forms/AllItems.aspx",
+        "description": "/sites/Bibliotheque/DSERAPPORTS/Forms/AllItems.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : DSE-RAPPORTS",
+      "NBDOCUMENTS": 288.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:09.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:11.0000000Z",
+      "Created": "2026-09-19T07:23:11.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 8,
+      "Title": "Bibliotheque Pages",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-Pages",
+      "NOMBIB": "Pages",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SitePages/Forms/ByAuthor.aspx",
+        "description": "/sites/Bibliotheque/SitePages/Forms/ByAuthor.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : Pages",
+      "NBDOCUMENTS": 51.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:10.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:12.0000000Z",
+      "Created": "2026-09-19T07:23:12.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 9,
+      "Title": "Bibliotheque Pièces jointes",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-Pi-ces-jointes",
+      "NOMBIB": "Pièces jointes",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/SiteAssets/Forms/AllItems.aspx",
+        "description": "/sites/Bibliotheque/SiteAssets/Forms/AllItems.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : Pièces jointes",
+      "NBDOCUMENTS": 20.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:11.0000000Z",
+      "ACTIF": true,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:13.0000000Z",
+      "Created": "2026-09-19T07:23:13.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 10,
+      "Title": "Bibliotheque ZZ-ARCHIVE-DSE-Ressources d’assistant",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-ZZ-ARCHIVE-DSE-Ressources-d-assistant",
+      "NOMBIB": "ZZ-ARCHIVE-DSE-Ressources d’assistant",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/AgentAssets/Forms/AllItems.aspx",
+        "description": "/sites/Bibliotheque/AgentAssets/Forms/AllItems.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : ZZ-ARCHIVE-DSE-Ressources d’assistant",
+      "NBDOCUMENTS": 4.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:12.0000000Z",
+      "ACTIF": false,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:14.0000000Z",
+      "Created": "2026-09-19T07:23:14.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    },
+    {
+      "idSharePoint": 11,
+      "Title": "Bibliotheque zz-DSE-Rapport",
+      "_ColorTag": null,
+      "ComplianceAssetId": null,
+      "CODEBIB": "BIB-zz-DSE-Rapport",
+      "NOMBIB": "zz-DSE-Rapport",
+      "URLBIB": {
+        "url": "https://blogssite.sharepoint.com/sites/Bibliotheque/Style Library/Forms/AllItems.aspx",
+        "description": "/sites/Bibliotheque/Style Library/Forms/AllItems.aspx"
+      },
+      "EQUIPE": null,
+      "DESCRIPTION": "Bibliotheque de documents SharePoint : zz-DSE-Rapport",
+      "NBDOCUMENTS": 0.0,
+      "DATEDERNIERCONTROLE": "2026-09-19T09:23:13.0000000Z",
+      "ACTIF": false,
+      "VERROUILLE": false,
+      "TYPEBIB": null,
+      "USAGE": null,
+      "STATUTBIB": null,
+      "NOTES": null,
+      "NoteCourte": null,
+      "NoteLongue": null,
+      "VALIDER": null,
+      "Modified": "2026-09-19T07:23:15.0000000Z",
+      "Created": "2026-09-19T07:23:15.0000000Z",
+      "Author": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "Editor": {
+        "id": 11,
+        "valeur": "Pascal ZIMMER",
+        "courriel": "pascal.zimmer@pasclaure.fr"
+      },
+      "_UIVersionString": "1.0",
+      "LinkTitleNoMenu": null,
+      "LinkTitle": null,
+      "DocIcon": null,
+      "ItemChildCount": "0",
+      "FolderChildCount": "0",
+      "_ComplianceFlags": "",
+      "_ComplianceTag": "",
+      "_ComplianceTagWrittenTime": "",
+      "_ComplianceTagUserId": "",
+      "_IsRecord": null,
+      "AppAuthor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      },
+      "AppEditor": {
+        "id": 15,
+        "valeur": "DemainSite-PnP-PowerShell"
+      }
+    }
+  ]
+}
