@@ -1,0 +1,260 @@
+RAPPORT D’AUDIT OBJ — ANTI-SAISIE MANUELLE
+Liste : OBJ
+Périmètre : schéma complet et 201 éléments
+Mode : analyse uniquement — aucune colonne ni donnée modifiée ou supprimée
+
+1. SYNTHÈSE
+La liste viole partiellement le modèle DSE V1 : les 10 colonnes OBJ-REF sont des lookups conformes, mais un bloc de colonnes PAY duplique des classifications, des relations de provenance et des acteurs sous forme de texte éditable.
+Colonnes devant être remplacées par OBJ-REL, OBJ-ACT ou des lookups REF : 27.
+Autres colonnes manuelles à sécuriser sans relation/lookup : Titre, ID-OBJ, Date import PAY origine, Créé source, Modifié source.
+
+2. ANALYSE PAR COLONNE
+Format : Colonne | Type actuel | Usage constaté | Conforme
+- Titre | Text | Libellé SharePoint, duplique NOM-OBJ (201/201 renseignés ; 201 valeurs distinctes) | NON
+- Balise de couleur | Text (lecture seule) | Métadonnée système SharePoint | OUI
+- ID de ressource de conformité | Text (lecture seule) | Métadonnée de conformité SharePoint | OUI
+- ID-OBJ | Text unique obligatoire | Identifiant maître de l’objet (201/201 renseignés ; 201 valeurs distinctes) | NON
+- NOM-OBJ | Text obligatoire | Nom métier de l’objet maître (201/201 renseignés ; 201 valeurs distinctes) | OUI
+- DESCRIPTION-OBJ | Note | Description libre nécessaire (201/201 renseignés ; 201 valeurs distinctes) | OUI
+- OBJ-REF-00 | Lookup multiple | Classification REF-00 (196/201 renseignés ; 2 valeurs distinctes) | OUI
+- OBJ-REF-10 | Lookup multiple | Classification REF-10 (196/201 renseignés ; 1 valeurs distinctes) | OUI
+- OBJ-REF-20 | Lookup multiple | Classification REF-20 (196/201 renseignés ; 2 valeurs distinctes) | OUI
+- OBJ-REF-30 | Lookup multiple | Criticité / classification REF-30 (196/201 renseignés ; 2 valeurs distinctes) | OUI
+- OBJ-REF-40 | Lookup multiple | Usage / classification REF-40 (196/201 renseignés ; 2 valeurs distinctes) | OUI
+- OBJ-REF-50 | Lookup multiple | Classification REF-50 | OUI
+- OBJ-REF-60 | Lookup multiple | Mode / classification REF-60 (196/201 renseignés ; 2 valeurs distinctes) | OUI
+- OBJ-REF-70 | Lookup multiple | Classification REF-70 | OUI
+- OBJ-REF-80 | Lookup multiple | Temporalité / classification REF-80 (196/201 renseignés ; 2 valeurs distinctes) | OUI
+- OBJ-REF-90 | Lookup multiple | Qualité / classification REF-90 (196/201 renseignés ; 2 valeurs distinctes) | OUI
+- VERROUILLE | Booléen | Indicateur de verrouillage (201/201 renseignés ; 1 valeurs distinctes) | OUI
+- CONTROLE-PASC-ARA | Booléen | Indicateur de contrôle (201/201 renseignés ; 2 valeurs distinctes) | OUI
+- ID Pays origine | Text unique | Identifiant libre d’un objet/source PAY (195/201 renseignés ; 195 valeurs distinctes) | NON
+- Code Pays | Text | Code pays contrôlé mais saisi en texte (195/201 renseignés ; 195 valeurs distinctes) | NON
+- Nom officiel pays | Text | Nom de pays dupliqué dans OBJ (195/201 renseignés ; 195 valeurs distinctes) | NON
+- Nom pays source | Text | Libellé provenant de la source PAY (195/201 renseignés ; 195 valeurs distinctes) | NON
+- Code ISO2 | Text unique | Code normalisé ISO (195/201 renseignés ; 195 valeurs distinctes) | NON
+- Code ISO3 | Text unique | Code normalisé ISO (195/201 renseignés ; 195 valeurs distinctes) | NON
+- Code numérique | Text | Code normalisé / valeur ND (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Code ISO 3166-2 | Text | Code normalisé ISO (195/201 renseignés ; 195 valeurs distinctes) | NON
+- Continent pays origine | Text | Classification géographique | NON
+- Sous-région | Text | Classification géographique (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Région intermédiaire | Text | Classification géographique (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Code région ONU | Text | Code de référentiel ONU (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Code sous-région ONU | Text | Code de référentiel ONU (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Code téléphone | Text | Code pays normalisé (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Nationalité | Text | Valeur de référentiel pays (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Devise | Text | Valeur de référentiel devise (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Code devise ISO | Text | Code normalisé de devise (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Langue principale | Text | Valeur de référentiel langue (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Drapeau | Text | Code/ressource dérivable du pays (195/201 renseignés ; 195 valeurs distinctes) | NON
+- Actif PAY | Booléen | Indicateur binaire importé (195/201 renseignés ; 1 valeurs distinctes) | OUI
+- Ordre affichage PAY | Nombre | Ordre d’affichage importé (195/201 renseignés ; 195 valeurs distinctes) | OUI
+- Statut géographique | Text | État/classification géographique (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Source donnée PAY | Text | Source/provenance saisie en clair (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Date import PAY origine | Text | Date de migration stockée en texte | NON
+- Notes PAY | Note | Notes libres de migration | OUI
+- ID liste source | Text | Identifiant technique de source (195/201 renseignés ; 1 valeurs distinctes) | NON
+- ID élément source | Text | Identifiant technique de source (195/201 renseignés ; 195 valeurs distinctes) | NON
+- GUID élément source | Text unique | Identifiant technique de source (195/201 renseignés ; 195 valeurs distinctes) | NON
+- Créé source | Text | Horodatage source stocké en texte (195/201 renseignés ; 4 valeurs distinctes) | NON
+- Modifié source | Text | Horodatage source stocké en texte (195/201 renseignés ; 4 valeurs distinctes) | NON
+- Auteur source | Text | Nom de personne saisi/importé en texte (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Éditeur source | Text | Nom de personne saisi/importé en texte (195/201 renseignés ; 1 valeurs distinctes) | NON
+- Lot de migration | Text | Classification/lot de migration (195/201 renseignés ; 1 valeurs distinctes) | NON
+- ID | Compteur (lecture seule) | Identifiant système SharePoint (201/201 renseignés ; 201 valeurs distinctes) | OUI
+- Type de contenu | Calculé | Métadonnée système | OUI
+- Modifié | Date/heure (lecture seule) | Horodatage système | OUI
+- Créé | Date/heure (lecture seule) | Horodatage système | OUI
+- Créé par | Personne (lecture seule) | Acteur système de création | OUI
+- Modifié par | Personne (lecture seule) | Acteur système de modification | OUI
+- Version | Text (lecture seule) | Version système | OUI
+- Pièces jointes | Pièces jointes | Fonction système de la liste | OUI
+- Modifier | Calculé (lecture seule) | Commande système | OUI
+- Titre (sans menu) | Calculé (lecture seule) | Affichage système du titre | OUI
+- Titre (avec menu) | Calculé (lecture seule) | Affichage système du titre | OUI
+- Type | Calculé (lecture seule) | Icône/type système, pas une classification métier | OUI
+- Nombre d'éléments enfants | Lookup système (lecture seule) | Compteur système | OUI
+- Nombre d’enfants du dossier | Lookup système (lecture seule) | Compteur système | OUI
+- Paramètres de l’étiquette | Lookup système (lecture seule) | Conformité Microsoft 365 | OUI
+- Étiquette de rétention | Lookup système (lecture seule) | Rétention Microsoft 365 | OUI
+- Étiquette de rétention appliquée | Lookup système (lecture seule) | Rétention Microsoft 365 | OUI
+- Étiquette appliquée par | Lookup système (lecture seule) | Rétention Microsoft 365 | OUI
+- L’élément est un enregistrement | Calculé (lecture seule) | Conformité Microsoft 365 | OUI
+- Application créée par | Lookup système (lecture seule) | Application créatrice | OUI
+- Application modifiée par | Lookup système (lecture seule) | Application modificatrice | OUI
+
+3. ANOMALIES ET RECOMMANDATIONS
+
+Colonne : Titre
+Risque : Doublon éditable de NOM-OBJ : divergence possible entre deux libellés.
+Niveau : Moyen
+Solution recommandée : Rendre la valeur calculée/synchronisée depuis NOM-OBJ ou masquer la saisie manuelle.
+
+Colonne : ID-OBJ
+Risque : Identifiant maître encore saisissable manuellement malgré l’unicité.
+Niveau : Fort
+Solution recommandée : Générer automatiquement ID-OBJ et empêcher la saisie libre.
+
+Colonne : ID Pays origine
+Risque : Lien vers PAY représenté par une chaîne.
+Niveau : Fort
+Solution recommandée : Remplacer par une relation OBJ-REL vers l’objet source PAY.
+
+Colonne : Code Pays
+Risque : Code contrôlé stocké en texte libre.
+Niveau : Fort
+Solution recommandée : Remplacer par lookup REF pays ou dériver du pays lié.
+
+Colonne : Nom officiel pays
+Risque : Nom du pays dupliqué, exposé aux variantes.
+Niveau : Fort
+Solution recommandée : Dériver du lookup pays/objet géographique.
+
+Colonne : Nom pays source
+Risque : Libellé source dupliqué et variable.
+Niveau : Moyen
+Solution recommandée : Porter la provenance dans OBJ-REL et dériver le nom de la cible.
+
+Colonne : Code ISO2
+Risque : Code normatif éditable en texte.
+Niveau : Fort
+Solution recommandée : Lookup REF ISO/pays ou valeur dérivée.
+
+Colonne : Code ISO3
+Risque : Code normatif éditable en texte.
+Niveau : Fort
+Solution recommandée : Lookup REF ISO/pays ou valeur dérivée.
+
+Colonne : Code numérique
+Risque : Code normatif éditable ; ND mélange absence et valeur.
+Niveau : Fort
+Solution recommandée : Lookup REF ISO/pays avec valeur nulle explicite.
+
+Colonne : Code ISO 3166-2
+Risque : Code normatif éditable en texte.
+Niveau : Fort
+Solution recommandée : Lookup REF ISO/pays ou valeur dérivée.
+
+Colonne : Continent pays origine
+Risque : Classification géographique libre.
+Niveau : Fort
+Solution recommandée : Lookup REF géographie.
+
+Colonne : Sous-région
+Risque : Classification géographique libre.
+Niveau : Fort
+Solution recommandée : Lookup REF géographie.
+
+Colonne : Région intermédiaire
+Risque : Classification géographique libre.
+Niveau : Fort
+Solution recommandée : Lookup REF géographie.
+
+Colonne : Code région ONU
+Risque : Code ONU libre.
+Niveau : Fort
+Solution recommandée : Lookup REF géographie/ONU.
+
+Colonne : Code sous-région ONU
+Risque : Code ONU libre.
+Niveau : Fort
+Solution recommandée : Lookup REF géographie/ONU.
+
+Colonne : Code téléphone
+Risque : Code contrôlé libre.
+Niveau : Moyen
+Solution recommandée : Lookup REF pays/téléphonie ou valeur dérivée.
+
+Colonne : Nationalité
+Risque : Valeur linguistique variable.
+Niveau : Moyen
+Solution recommandée : Lookup REF nationalité/pays.
+
+Colonne : Devise
+Risque : Valeur de classification libre.
+Niveau : Fort
+Solution recommandée : Lookup REF devise.
+
+Colonne : Code devise ISO
+Risque : Code normatif libre.
+Niveau : Fort
+Solution recommandée : Lookup REF devise.
+
+Colonne : Langue principale
+Risque : Valeur de classification libre.
+Niveau : Fort
+Solution recommandée : Lookup REF langue.
+
+Colonne : Drapeau
+Risque : Code/ressource redondant avec le pays.
+Niveau : Moyen
+Solution recommandée : Dériver du lookup pays/REF.
+
+Colonne : Statut géographique
+Risque : État métier saisi en texte.
+Niveau : Fort
+Solution recommandée : Lookup REF état géographique.
+
+Colonne : Source donnée PAY
+Risque : Relation de provenance exprimée en texte.
+Niveau : Fort
+Solution recommandée : Créer/porter la relation de provenance dans OBJ-REL.
+
+Colonne : Date import PAY origine
+Risque : Date stockée en texte, format et tri non garantis.
+Niveau : Moyen
+Solution recommandée : Utiliser Date/heure alimentée automatiquement et non éditable.
+
+Colonne : ID liste source
+Risque : Source technique exprimée en texte libre.
+Niveau : Fort
+Solution recommandée : Porter la source dans OBJ-REL ou une traçabilité technique non éditable.
+
+Colonne : ID élément source
+Risque : Source technique exprimée en texte libre.
+Niveau : Fort
+Solution recommandée : Porter la source dans OBJ-REL ou une traçabilité technique non éditable.
+
+Colonne : GUID élément source
+Risque : Source technique exprimée en texte libre.
+Niveau : Fort
+Solution recommandée : Porter la source dans OBJ-REL ou une traçabilité technique non éditable.
+
+Colonne : Créé source
+Risque : Date source stockée en texte.
+Niveau : Moyen
+Solution recommandée : Date/heure automatique, en lecture seule.
+
+Colonne : Modifié source
+Risque : Date source stockée en texte.
+Niveau : Moyen
+Solution recommandée : Date/heure automatique, en lecture seule.
+
+Colonne : Auteur source
+Risque : Nom de personne stocké en texte.
+Niveau : Fort
+Solution recommandée : Gérer l’acteur dans OBJ-ACT ; conserver au besoin un identifiant d’audit non éditable.
+
+Colonne : Éditeur source
+Risque : Nom de personne stocké en texte.
+Niveau : Fort
+Solution recommandée : Gérer l’acteur dans OBJ-ACT ; conserver au besoin un identifiant d’audit non éditable.
+
+Colonne : Lot de migration
+Risque : Lot saisi en texte : variantes et lots orphelins possibles.
+Niveau : Moyen
+Solution recommandée : Lookup REF/registre de migrations.
+
+4. RISQUES TRANSVERSAUX
+- Doublons et divergences : Titre/NOM-OBJ, noms pays et codes pays sont stockés plusieurs fois.
+- Orthographes différentes : nationalité, langue, devise, régions, statut et source sont des textes libres.
+- Valeurs incohérentes : la chaîne « ND » est utilisée comme valeur métier dans plusieurs champs contrôlés.
+- Acteurs : Auteur source et Éditeur source contiennent des noms de personnes hors OBJ-ACT.
+- Relations : les identifiants et libellés de source PAY sont hors OBJ-REL.
+
+5. CONCLUSION OBLIGATOIRE
+⚠️ Partiellement conforme
+
+Oui, OBJ contient plusieurs colonnes qui violent DSE V1 en permettant une saisie manuelle inutile.
+27 colonnes manuelles devraient être remplacées par des relations OBJ-REL/OBJ-ACT ou des lookups REF.
+Les 10 colonnes OBJ-REF-00 à OBJ-REF-90 sont conformes et ne doivent pas être corrigées dans le cadre de cet audit.
