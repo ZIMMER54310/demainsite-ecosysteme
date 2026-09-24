@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0",
-  "moteurVersion": "1.0.1",
+  "moteurVersion": "1.0.4",
   "source": {
     "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
     "liste": "OBJ-NOM DE DOMAINE",
     "listeId": "75873d46-9e57-4b80-bfd0-1895354407bd"
   },
-  "exporteLe": "2026-09-24T10:38:08.3049974+02:00",
+  "exporteLe": "2026-09-24T11:01:49.8643894+02:00",
   "nombreElements": 12,
   "elements": [
     {
