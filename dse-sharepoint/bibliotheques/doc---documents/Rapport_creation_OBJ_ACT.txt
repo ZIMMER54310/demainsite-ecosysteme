@@ -1,0 +1,123 @@
+RAPPORT DE CREATION — OBJ-ACT
+
+Date
+04/09/2026 19:17 — Europe/Paris (UTC+02:00)
+
+Liste créée
+OBJ-ACT
+Identifiant : a02ecfef-518a-4ba2-b22f-c29ca28ffc8f
+Chemin : /sites/Bibliotheque/Lists/OBJACT
+Nombre de lignes : 0
+Aucune affectation ni donnée créée.
+Aucune autre liste modifiée.
+
+Contrôles préalables
+- OBJ : existe.
+- OBJ-REF-50 : existe.
+- OBJ-REL : existe.
+- OBJ-JRN : existe.
+- OBJ-ACT : n’existait pas avant la création.
+
+Colonnes créées
+1. ID-ACT — Texte, obligatoire, unique (colonne SharePoint interne Title).
+2. OBJ — Lookup vers OBJ.ID-OBJ, obligatoire.
+3. ACTEUR-TYPE — Choix obligatoire : PERSONNE-M365, ENTREPRISE, COMPTE, EQUIPE, IA, AUTRE.
+4. ACTEUR-PERSONNE — Personne ou Groupe, valeur unique.
+5. ACTEUR-ENTITE — Lookup vers OBJ.ID-OBJ.
+6. ROLE — Lookup vers OBJ-REF-50.NOM-REF, obligatoire.
+7. RESPONSABILITE — Lookup vers OBJ-REF-50.NOM-REF, obligatoire.
+8. ACTIF — Oui/Non, défaut Oui.
+9. RESPONSABLE-PRINCIPAL — Oui/Non, défaut Non.
+10. DATE-DEBUT — Date.
+11. DATE-FIN — Date.
+12. VERROUILLE — Oui/Non, défaut Non.
+13. CONTROLE-PASC-ARA — Oui/Non, défaut Non.
+14. SOURCE-AFFECTATION — Choix : MANUEL, IMPORT, APPLICATION, IA, WORKFLOW.
+15. ID-EXTERNE — Texte.
+16. DATE-DERNIER-CONTROLE — Date et heure.
+17. ANOMALIE-DETECTEE — Oui/Non, défaut Non.
+18. MOTIF-VERROUILLAGE — Texte multilignes, texte brut.
+19. NOTES — Texte multilignes, texte brut.
+
+Lookups créés
+- OBJ → liste OBJ, champ interne IDOBJ, affichage ID-OBJ.
+- ACTEUR-ENTITE → liste OBJ, champ interne IDOBJ, affichage ID-OBJ.
+- ROLE → liste OBJ-REF-50, champ interne Title, affichage NOM-REF.
+- RESPONSABILITE → liste OBJ-REF-50, champ interne Title, affichage NOM-REF.
+
+Index créés et confirmés
+- ID-ACT
+- OBJ
+- ACTEUR-ENTITE
+- ROLE
+- RESPONSABILITE
+- DATE-DEBUT
+- DATE-FIN
+
+Index demandés non confirmés
+- ACTIF
+- RESPONSABLE-PRINCIPAL
+- VERROUILLE
+- CONTROLE-PASC-ARA
+- ANOMALIE-DETECTEE
+Le connecteur disponible remplace l’attribut Indexed lors de l’application séparée d’une valeur par défaut Oui/Non. Les valeurs par défaut demandées ont été conservées en priorité. Aucun contournement non supporté n’a été appliqué.
+
+Contraintes appliquées
+- ID-ACT : obligatoire et unique.
+- OBJ : obligatoire.
+- ROLE : obligatoire.
+- RESPONSABILITE : obligatoire.
+- ACTEUR-TYPE : obligatoire.
+- ACTIF : Oui par défaut.
+- RESPONSABLE-PRINCIPAL : Non par défaut.
+- VERROUILLE : Non par défaut.
+- CONTROLE-PASC-ARA : Non par défaut.
+- ANOMALIE-DETECTEE : Non par défaut.
+- ACTEUR-PERSONNE : une seule valeur, personnes et groupes autorisés.
+
+Conseils IA SharePoint
+Structure
+- Modèle cohérent pour représenter une affectation temporelle OBJ → ACTEUR → ROLE → RESPONSABILITE → PERIODE.
+- Séparation correcte entre acteur M365 et entité métier stockée dans OBJ.
+
+Risques
+- Aucune validation conditionnelle ne force ACTEUR-PERSONNE lorsque ACTEUR-TYPE = PERSONNE-M365, ni ACTEUR-ENTITE pour les types d’entité.
+- Aucune validation ne garantit DATE-FIN >= DATE-DEBUT.
+- L’unicité ne couvre que ID-ACT ; des doublons fonctionnels OBJ + acteur + rôle + responsabilité + période restent possibles.
+- ROLE et RESPONSABILITE utilisent le même référentiel OBJ-REF-50 sans filtre de catégorie ; la distinction dépend donc de la qualité du référentiel et de l’application.
+- OBJ-JRN n’a actuellement que sa colonne Titre ; aucune interface de journalisation structurée n’est disponible.
+
+Colonnes potentiellement manquantes, non créées
+- Une clé canonique d’acteur indépendante de son type, utile pour les contrôles de doublons et l’intégration applicative.
+- Un statut de validation ou une date de validation si le cycle métier l’exige.
+- Un identifiant de lot/import pour tracer les imports massifs.
+- Une référence de journal vers OBJ-JRN lorsque son schéma sera défini.
+Ces suggestions n’ont entraîné aucune modification.
+
+Compatibilité
+- OBJ : compatible ; les deux lookups utilisent ID-OBJ (interne IDOBJ), obligatoire et unique dans OBJ.
+- OBJ-REL : compatible sur les conventions OBJ, ACTIF, période, verrouillage et contrôle ; OBJ-ACT complète les relations en décrivant les acteurs responsables.
+- OBJ-JRN : compatibilité technique limitée ; la liste existe mais son schéma actuel ne permet pas une intégration structurée.
+- Pilote Application DemainSite : structure globalement compatible pour CRUD et synchronisation grâce à ID-ACT, ID-EXTERNE, SOURCE-AFFECTATION, dates de contrôle, verrouillage et anomalie. Confirmation complète impossible sans contrat d’API, règles de mapping et règles conditionnelles du pilote.
+
+Automatisation disponible, non créée
+- Déclencheurs vérifiés : création ou modification d’un élément SharePoint.
+- Suggestions : contrôle des incohérences à la création/modification ; notification ou journalisation lors d’une anomalie.
+Aucun workflow, règle, approbation ou Quick Step n’a été créé.
+
+Mise en forme
+Aucune mise en forme de colonne n’a été appliquée aux champs Choice, Lookup, Personne et Date, conformément à la consigne de ne rien modifier après l’analyse et afin de préserver le schéma strict demandé.
+
+Limitations détectées
+- 7 index sur 12 sont confirmés ; les 5 index Oui/Non ne sont pas confirmés avec le connecteur disponible tout en conservant leurs valeurs par défaut.
+- Pas de contrainte conditionnelle acteur/type.
+- Pas de contrainte native de cohérence de période.
+- Pas de validation de compatibilité applicative de bout en bout sans spécification du pilote.
+
+Erreurs éventuelles
+- Lors du premier passage, l’ajout simultané d’index XML a temporairement supprimé des attributs de lookup, d’obligation, d’unicité et de défaut. Le contrôle de schéma l’a détecté et ces attributs ont été corrigés dans OBJ-ACT uniquement.
+- Aucune erreur résiduelle sur les lookups, les obligations, l’unicité, les choix, les formats de date ou les valeurs par défaut.
+
+Résultat final
+SUCCES PARTIEL.
+OBJ-ACT est créée, vide, avec les 19 colonnes, les 4 lookups et les contraintes métier demandées. Sept index sont confirmés. Cinq index Oui/Non demandés restent non confirmés en raison de la limitation décrite. Aucune autre liste n’a été modifiée et aucune donnée n’a été créée.
