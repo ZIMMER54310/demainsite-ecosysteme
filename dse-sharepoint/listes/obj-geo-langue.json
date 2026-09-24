@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0",
-  "moteurVersion": "1.0.1",
+  "moteurVersion": "1.0.4",
   "source": {
     "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
     "liste": "OBJ-GEO-LANGUE",
     "listeId": "de1a3582-158d-46df-b725-e2900b93f648"
   },
-  "exporteLe": "2026-09-24T10:36:14.1754632+02:00",
+  "exporteLe": "2026-09-24T10:59:11.8041563+02:00",
   "nombreElements": 112,
   "elements": [
     {
