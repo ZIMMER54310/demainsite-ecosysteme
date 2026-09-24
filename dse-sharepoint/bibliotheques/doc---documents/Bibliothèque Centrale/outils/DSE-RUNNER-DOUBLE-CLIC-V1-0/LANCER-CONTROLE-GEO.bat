@@ -1,0 +1,21 @@
+@echo off
+setlocal
+chcp 65001 >nul
+cd /d "%~dp0"
+title DemainSite - Controle Geo
+
+echo ============================================================
+echo  DEMAINSITE ECOSYSTEME - CONTROLE GEOGRAPHIE
+echo ============================================================
+echo.
+
+where pwsh >nul 2>nul
+if %errorlevel%==0 (
+    pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\RUN-CONTROLE-GEO.ps1" -Mode AuditOnly
+) else (
+    pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\RUN-CONTROLE-GEO.ps1" -Mode AuditOnly
+)
+
+echo.
+pause
+
