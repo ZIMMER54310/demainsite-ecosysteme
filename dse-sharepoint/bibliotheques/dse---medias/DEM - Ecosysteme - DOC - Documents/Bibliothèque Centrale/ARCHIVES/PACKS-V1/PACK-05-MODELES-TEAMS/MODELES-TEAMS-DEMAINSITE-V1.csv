@@ -1,0 +1,9 @@
+﻿Modèle;Équipe;Canal;Type canal;Usage;Visible client
+Interne;DemainSite Écosystème;Général;Standard;Annonces générales;Non
+Interne;DemainSite Écosystème;Bibliothèque Centrale;Standard;Source unique de vérité;Non
+Interne;DemainSite Écosystème;Architecture DemainSite;Standard;Architecture et procédures;Non
+Client;Équipe - {Client};Général;Standard;Informations client;Oui
+Client;Équipe - {Client};Communication;Standard;Emails et supports;Oui
+Client;Équipe - {Client};Documents;Standard;Documents client;Oui
+Client;Équipe - {Client};Site Internet;Standard;Suivi site;Oui
+Client;Équipe - {Client};Archives;Standard;Archivage;Oui
