@@ -1,0 +1,364 @@
+**********************
+PowerShell transcript start
+Start time: 20260803221044
+Username: AzureAD\PascalZIMMER_b9lyro1
+RunAs User: AzureAD\PascalZIMMER_b9lyro1
+Configuration Name: 
+Machine: ZENBOOK17 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-RUNNER-DOUBLE-CLIC-V1-0\scripts\DSE-GEO-MOTEUR-LIAISONS-V1-0.ps1 -Mode AuditOnly
+Process ID: 22972
+PSVersion: 7.6.3
+PSEdition: Core
+GitCommitId: 7.6.3
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+
+============================================================
+ DEMAINSITE - MOTEUR DE LIAISONS GEOGRAPHIQUES V1.0
+============================================================
+Site : https://blogssite.sharepoint.com/sites/Bibliotheque
+Mode : AuditOnly
+PS>TerminatingError(Get-PnPWeb): "You are not signed in. Please use Connect-PnPOnline to connect."
+Connexion SharePoint absente. Connexion DeviceLogin...
+Connexion SharePoint OK : https://blogssite.sharepoint.com/sites/Bibliotheque
+
+============================================================
+ PREPARATION DES COLONNES DE LIAISON
+============================================================
+AUDIT : colonne Lookup a creer : Regions / Pays lie -> Pays
+AUDIT : colonne texte a creer : Regions / Statut liaison Geo
+AUDIT : colonne Lookup a creer : Departements / Region liee -> Regions
+AUDIT : colonne Lookup a creer : Departements / Pays lie -> Pays
+AUDIT : colonne texte a creer : Departements / Statut liaison Geo
+AUDIT : colonne Lookup a creer : Villes / Departement lie -> Departements
+AUDIT : colonne Lookup a creer : Villes / Region liee -> Regions
+AUDIT : colonne Lookup a creer : Villes / Pays lie -> Pays
+AUDIT : colonne texte a creer : Villes / Statut liaison Geo
+AUDIT : colonne Lookup a creer : CodesPostaux / Pays lie -> Pays
+AUDIT : colonne Lookup a creer : CodesPostaux / Region principale liee -> Regions
+AUDIT : colonne Lookup a creer : CodesPostaux / Departement principal lie -> Departements
+AUDIT : colonne Lookup a creer : CodesPostaux / Ville principale liee -> Villes
+AUDIT : colonne texte a creer : CodesPostaux / Statut liaison Geo
+AUDIT : colonne Lookup a creer : CodesPostauxVilles / Code postal lie -> CodesPostaux
+AUDIT : colonne Lookup a creer : CodesPostauxVilles / Ville liee -> Villes
+AUDIT : colonne Lookup a creer : CodesPostauxVilles / Departement lie -> Departements
+AUDIT : colonne Lookup a creer : CodesPostauxVilles / Region liee -> Regions
+AUDIT : colonne Lookup a creer : CodesPostauxVilles / Pays lie -> Pays
+AUDIT : colonne texte a creer : CodesPostauxVilles / Statut liaison Geo
+
+============================================================
+ LECTURE DES INDEX
+============================================================
+Lecture : Pays
+Lecture : Regions
+Lecture : Departements
+Lecture : Villes
+Lecture : CodesPostaux
+Lecture : CodesPostauxVilles
+Index Pays : 1 pays principal ID 1
+Index Regions : 18 codes region
+Index Departements : 104 codes departement
+Index Villes : 92 codes INSEE
+Index Codes postaux : 6329 codes postaux
+
+============================================================
+ LIAISON REGIONS -> PAYS
+============================================================
+Regions traitees : 18
+
+============================================================
+ LIAISON DEPARTEMENTS -> REGIONS -> PAYS
+============================================================
+Departement non relie a une region : ID=7, CodeRegion=, NomRegion=
+Departement non relie a une region : ID=61, CodeRegion=, NomRegion=
+Departement non relie a une region : ID=68, CodeRegion=, NomRegion=
+Departements relies : 101
+
+============================================================
+ LIAISON VILLES -> DEPARTEMENTS -> REGIONS -> PAYS
+============================================================
+Ville non reliee completement : ID=1, INSEE=98817, Dep=, Reg=
+Ville non reliee completement : ID=2, INSEE=98823, Dep=98, Reg=
+Ville non reliee completement : ID=3, INSEE=98737, Dep=98, Reg=
+Ville non reliee completement : ID=4, INSEE=98730, Dep=98, Reg=
+Ville non reliee completement : ID=5, INSEE=98724, Dep=98, Reg=
+Ville non reliee completement : ID=6, INSEE=98820, Dep=98, Reg=
+Ville non reliee completement : ID=7, INSEE=98821, Dep=98, Reg=
+Ville non reliee completement : ID=8, INSEE=98716, Dep=98, Reg=
+Ville non reliee completement : ID=9, INSEE=98755, Dep=98, Reg=
+Ville non reliee completement : ID=10, INSEE=98827, Dep=98, Reg=
+Ville non reliee completement : ID=11, INSEE=98732, Dep=98, Reg=
+Ville non reliee completement : ID=12, INSEE=98613, Dep=98, Reg=
+Ville non reliee completement : ID=13, INSEE=98744, Dep=98, Reg=
+Ville non reliee completement : ID=14, INSEE=98740, Dep=98, Reg=
+Ville non reliee completement : ID=15, INSEE=98717, Dep=98, Reg=
+Ville non reliee completement : ID=16, INSEE=97502, Dep=97, Reg=
+Ville non reliee completement : ID=17, INSEE=97801, Dep=97, Reg=
+Ville non reliee completement : ID=18, INSEE=98809, Dep=, Reg=
+Ville non reliee completement : ID=19, INSEE=98719, Dep=98, Reg=
+Ville non reliee completement : ID=20, INSEE=98757, Dep=98, Reg=
+Ville non reliee completement : ID=21, INSEE=98733, Dep=98, Reg=
+Ville non reliee completement : ID=22, INSEE=98805, Dep=98, Reg=
+Ville non reliee completement : ID=23, INSEE=98831, Dep=98, Reg=
+Ville non reliee completement : ID=24, INSEE=98756, Dep=98, Reg=
+Ville non reliee completement : ID=25, INSEE=98808, Dep=98, Reg=
+Ville non reliee completement : ID=26, INSEE=98753, Dep=98, Reg=
+Ville non reliee completement : ID=27, INSEE=98745, Dep=98, Reg=
+Ville non reliee completement : ID=28, INSEE=98731, Dep=98, Reg=
+Ville non reliee completement : ID=29, INSEE=98803, Dep=98, Reg=
+Ville non reliee completement : ID=30, INSEE=98822, Dep=98, Reg=
+Ville non reliee completement : ID=31, INSEE=98715, Dep=98, Reg=
+Ville non reliee completement : ID=32, INSEE=98726, Dep=98, Reg=
+Ville non reliee completement : ID=33, INSEE=98711, Dep=98, Reg=
+Ville non reliee completement : ID=34, INSEE=98825, Dep=98, Reg=
+Ville non reliee completement : ID=35, INSEE=98713, Dep=98, Reg=
+Ville non reliee completement : ID=36, INSEE=98826, Dep=98, Reg=
+Ville non reliee completement : ID=37, INSEE=98739, Dep=98, Reg=
+Ville non reliee completement : ID=38, INSEE=98812, Dep=98, Reg=
+Ville non reliee completement : ID=39, INSEE=98824, Dep=98, Reg=
+Ville non reliee completement : ID=40, INSEE=98813, Dep=, Reg=
+Ville non reliee completement : ID=41, INSEE=98802, Dep=98, Reg=
+Ville non reliee completement : ID=42, INSEE=98721, Dep=98, Reg=
+Ville non reliee completement : ID=43, INSEE=98743, Dep=98, Reg=
+Ville non reliee completement : ID=44, INSEE=98751, Dep=98, Reg=
+Ville non reliee completement : ID=45, INSEE=98833, Dep=98, Reg=
+Ville non reliee completement : ID=46, INSEE=97701, Dep=97, Reg=
+Ville non reliee completement : ID=47, INSEE=98738, Dep=98, Reg=
+Ville non reliee completement : ID=48, INSEE=98718, Dep=98, Reg=
+Ville non reliee completement : ID=49, INSEE=98741, Dep=98, Reg=
+Ville non reliee completement : ID=50, INSEE=98612, Dep=98, Reg=
+Ville non reliee completement : ID=51, INSEE=99138, Dep=99, Reg=
+Ville non reliee completement : ID=52, INSEE=98804, Dep=98, Reg=
+Ville non reliee completement : ID=53, INSEE=98749, Dep=98, Reg=
+Ville non reliee completement : ID=54, INSEE=98742, Dep=98, Reg=
+Ville non reliee completement : ID=55, INSEE=98818, Dep=98, Reg=
+Ville non reliee completement : ID=56, INSEE=98754, Dep=98, Reg=
+Ville non reliee completement : ID=57, INSEE=98727, Dep=98, Reg=
+Ville non reliee completement : ID=58, INSEE=97501, Dep=97, Reg=
+Ville non reliee completement : ID=59, INSEE=98723, Dep=98, Reg=
+Ville non reliee completement : ID=60, INSEE=98830, Dep=98, Reg=
+Ville non reliee completement : ID=62, INSEE=98901, Dep=98, Reg=
+Ville non reliee completement : ID=63, INSEE=98748, Dep=98, Reg=
+Ville non reliee completement : ID=64, INSEE=98725, Dep=98, Reg=
+Ville non reliee completement : ID=65, INSEE=98734, Dep=98, Reg=
+Ville non reliee completement : ID=66, INSEE=98712, Dep=98, Reg=
+Ville non reliee completement : ID=67, INSEE=98735, Dep=98, Reg=
+Ville non reliee completement : ID=68, INSEE=98736, Dep=98, Reg=
+Ville non reliee completement : ID=69, INSEE=98611, Dep=98, Reg=
+Ville non reliee completement : ID=70, INSEE=98746, Dep=98, Reg=
+Ville non reliee completement : ID=71, INSEE=98816, Dep=98, Reg=
+Ville non reliee completement : ID=72, INSEE=98758, Dep=98, Reg=
+Ville non reliee completement : ID=73, INSEE=98752, Dep=98, Reg=
+Ville non reliee completement : ID=74, INSEE=98806, Dep=98, Reg=
+Ville non reliee completement : ID=75, INSEE=98814, Dep=98, Reg=
+Ville non reliee completement : ID=77, INSEE=98750, Dep=98, Reg=
+Ville non reliee completement : ID=78, INSEE=98819, Dep=98, Reg=
+Ville non reliee completement : ID=79, INSEE=98811, Dep=98, Reg=
+Ville non reliee completement : ID=80, INSEE=98801, Dep=98, Reg=
+Ville non reliee completement : ID=81, INSEE=98829, Dep=98, Reg=
+Ville non reliee completement : ID=82, INSEE=98714, Dep=98, Reg=
+Ville non reliee completement : ID=83, INSEE=98729, Dep=98, Reg=
+Ville non reliee completement : ID=84, INSEE=98747, Dep=98, Reg=
+Ville non reliee completement : ID=85, INSEE=98807, Dep=98, Reg=
+Ville non reliee completement : ID=86, INSEE=98720, Dep=98, Reg=
+Ville non reliee completement : ID=87, INSEE=98828, Dep=98, Reg=
+Ville non reliee completement : ID=88, INSEE=98810, Dep=98, Reg=
+Ville non reliee completement : ID=89, INSEE=98832, Dep=98, Reg=
+Ville non reliee completement : ID=90, INSEE=98722, Dep=98, Reg=
+Ville non reliee completement : ID=91, INSEE=98728, Dep=98, Reg=
+Ville non reliee completement : ID=92, INSEE=98815, Dep=98, Reg=
+Villes reliees : 2
+
+============================================================
+ LIAISON CODESPOSTAUXVILLES -> CP + VILLE + DEP + REGION + PAYS
+============================================================
+Relation CP/Ville incomplete : ID=2, CP=98764, INSEE=98716, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=3, CP=98707, INSEE=98722, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=4, CP=98721, INSEE=98747, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=5, CP=98881, INSEE=98806, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=6, CP=98746, INSEE=98757, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=7, CP=98790, INSEE=98740, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=8, CP=98755, INSEE=98719, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=9, CP=98824, INSEE=98824, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=10, CP=98725, INSEE=98748, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=11, CP=98620, INSEE=98612, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=12, CP=98706, INSEE=98722, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=13, CP=98733, INSEE=98745, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=14, CP=98714, INSEE=98735, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=15, CP=98835, INSEE=98805, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=16, CP=98790, INSEE=98711, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=17, CP=98724, INSEE=98748, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=18, CP=98799, INSEE=98901, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=19, CP=98747, INSEE=98756, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=20, CP=98813, INSEE=98804, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=21, CP=98820, INSEE=98814, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=22, CP=98834, INSEE=98832, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=23, CP=98794, INSEE=98741, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=24, CP=98735, INSEE=98754, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=25, CP=98740, INSEE=98718, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=26, CP=98743, INSEE=98746, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=27, CP=98732, INSEE=98728, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=28, CP=98754, INSEE=98753, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=29, CP=98885, INSEE=98814, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=30, CP=98839, INSEE=98805, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=31, CP=98784, INSEE=98755, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=32, CP=98790, INSEE=98726, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=33, CP=98766, INSEE=98717, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=34, CP=98777, INSEE=98740, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=35, CP=98790, INSEE=98721, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=36, CP=98749, INSEE=98723, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=37, CP=98733, INSEE=98745, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=38, CP=98832, INSEE=98809, Dep=, Reg=
+Relation CP/Ville incomplete : ID=39, CP=98889, INSEE=98821, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=40, CP=98796, INSEE=98723, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=41, CP=98726, INSEE=98752, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=42, CP=98875, INSEE=98817, Dep=, Reg=
+Relation CP/Ville incomplete : ID=43, CP=98773, INSEE=98732, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=44, CP=98836, INSEE=98805, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=45, CP=98782, INSEE=98749, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=46, CP=98732, INSEE=98724, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=47, CP=98850, INSEE=98812, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=48, CP=97500, INSEE=97501, Dep=97, Reg=
+Relation CP/Ville incomplete : ID=49, CP=98703, INSEE=98738, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=50, CP=98610, INSEE=98611, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=51, CP=98767, INSEE=98720, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=52, CP=98750, INSEE=98739, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=53, CP=98769, INSEE=98726, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=54, CP=98720, INSEE=98747, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=55, CP=98831, INSEE=98830, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=56, CP=98878, INSEE=98815, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=57, CP=98701, INSEE=98712, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=58, CP=98837, INSEE=98805, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=59, CP=98768, INSEE=98721, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=60, CP=98883, INSEE=98831, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=61, CP=98765, INSEE=98717, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=62, CP=98783, INSEE=98751, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=63, CP=98859, INSEE=98811, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=64, CP=98761, INSEE=98713, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=65, CP=98809, INSEE=98817, Dep=, Reg=
+Relation CP/Ville incomplete : ID=66, CP=98776, INSEE=98740, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=67, CP=98710, INSEE=98725, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=68, CP=98741, INSEE=98723, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=69, CP=98781, INSEE=98749, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=70, CP=98840, INSEE=98821, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=71, CP=98790, INSEE=98749, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=72, CP=98828, INSEE=98815, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=73, CP=98812, INSEE=98802, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=74, CP=98811, INSEE=98801, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=75, CP=98772, INSEE=98730, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=76, CP=98770, INSEE=98727, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=77, CP=98882, INSEE=98828, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=78, CP=98735, INSEE=98754, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=79, CP=98708, INSEE=98722, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=80, CP=98760, INSEE=98711, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=81, CP=98880, INSEE=98813, Dep=, Reg=
+Relation CP/Ville incomplete : ID=82, CP=98815, INSEE=98807, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=83, CP=98874, INSEE=98817, Dep=, Reg=
+Relation CP/Ville incomplete : ID=84, CP=98742, INSEE=98731, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=85, CP=98745, INSEE=98757, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=86, CP=98730, INSEE=98714, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=87, CP=98732, INSEE=98728, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=88, CP=98827, INSEE=98827, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=89, CP=98817, INSEE=98810, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=90, CP=98728, INSEE=98729, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=91, CP=98829, INSEE=98829, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=92, CP=98785, INSEE=98713, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=93, CP=98000, INSEE=99138, Dep=99, Reg=
+Relation CP/Ville incomplete : ID=94, CP=98751, INSEE=98741, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=95, CP=98816, INSEE=98808, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=96, CP=98753, INSEE=98744, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=97, CP=98790, INSEE=98720, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=98, CP=98830, INSEE=98805, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=99, CP=98833, INSEE=98831, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=100, CP=98712, INSEE=98734, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=101, CP=98810, INSEE=98817, Dep=, Reg=
+Relation CP/Ville incomplete : ID=102, CP=98709, INSEE=98725, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=103, CP=98771, INSEE=98727, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=104, CP=97133, INSEE=97701, Dep=97, Reg=
+Relation CP/Ville incomplete : ID=105, CP=98600, INSEE=98613, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=106, CP=97500, INSEE=97502, Dep=97, Reg=
+Relation CP/Ville incomplete : ID=107, CP=98735, INSEE=98750, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=108, CP=98735, INSEE=98758, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=109, CP=98819, INSEE=98816, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=110, CP=98734, INSEE=98745, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=111, CP=98822, INSEE=98822, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=112, CP=98838, INSEE=98808, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=113, CP=98796, INSEE=98731, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=114, CP=98825, INSEE=98825, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=115, CP=98711, INSEE=98733, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=116, CP=98795, INSEE=98743, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=117, CP=98775, INSEE=98740, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=118, CP=98722, INSEE=98747, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=119, CP=98705, INSEE=98722, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=120, CP=98790, INSEE=98716, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=121, CP=98752, INSEE=98743, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=122, CP=98744, INSEE=98756, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=124, CP=98729, INSEE=98729, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=125, CP=98780, INSEE=98742, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=126, CP=98778, INSEE=98740, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=127, CP=98814, INSEE=98820, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=128, CP=98884, INSEE=98814, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=129, CP=98716, INSEE=98736, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=130, CP=98731, INSEE=98724, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=131, CP=98877, INSEE=98827, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=132, CP=98860, INSEE=98811, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=133, CP=97150, INSEE=97801, Dep=97, Reg=
+Relation CP/Ville incomplete : ID=134, CP=98870, INSEE=98803, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=135, CP=98792, INSEE=98719, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=136, CP=98731, INSEE=98724, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=137, CP=98727, INSEE=98752, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=138, CP=98779, INSEE=98742, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=139, CP=98823, INSEE=98823, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=140, CP=98826, INSEE=98826, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=141, CP=98704, INSEE=98715, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=142, CP=98793, INSEE=98719, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=143, CP=98786, INSEE=98711, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=144, CP=97500, INSEE=97501, Dep=97, Reg=
+Relation CP/Ville incomplete : ID=145, CP=98719, INSEE=98747, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=146, CP=98821, INSEE=98819, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=147, CP=98876, INSEE=98817, Dep=, Reg=
+Relation CP/Ville incomplete : ID=148, CP=98735, INSEE=98750, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=149, CP=98763, INSEE=98716, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=150, CP=98748, INSEE=98731, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=151, CP=98789, INSEE=98726, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=152, CP=98788, INSEE=98732, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=153, CP=98762, INSEE=98713, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=154, CP=98718, INSEE=98738, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=155, CP=98818, INSEE=98833, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=156, CP=98787, INSEE=98716, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=157, CP=98723, INSEE=98748, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=158, CP=98800, INSEE=98818, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=159, CP=98774, INSEE=98737, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=160, CP=98752, INSEE=98743, Dep=98, Reg=
+Relation CP/Ville incomplete : ID=161, CP=98890, INSEE=98821, Dep=98, Reg=
+Relations CP/Villes reliees : 2
+
+============================================================
+ LIAISON CODESPOSTAUX -> PAYS + PRINCIPAUX SI UNIQUES
+============================================================
+Codes postaux traites : 6329
+
+============================================================
+ RAPPORT FINAL
+============================================================
+
+Name                   Value
+----                   -----
+RegionsLiees           18
+DepartementsLies       101
+VillesLiees            2
+CodesPostauxVillesLies 2
+CodesPostauxLies       6329
+Anomalies              6579
+
+Log local : C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-RUNNER-DOUBLE-CLIC-V1-0\DSE-GEO-MOTEUR-LIAISONS-20260803-221044.log
+Moteur termine.
+**********************
+PowerShell transcript end
+End time: 20260803221117
+**********************
