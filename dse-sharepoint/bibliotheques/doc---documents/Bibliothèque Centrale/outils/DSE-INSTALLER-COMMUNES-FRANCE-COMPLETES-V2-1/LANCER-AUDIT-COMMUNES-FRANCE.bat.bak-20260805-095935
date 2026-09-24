@@ -1,0 +1,19 @@
+@echo off
+setlocal
+chcp 65001 >nul
+cd /d "%~dp0"
+title DemainSite - Audit Communes France
+
+echo ============================================================
+echo  DEMAINSITE ECOSYSTEME - AUDIT COMMUNES FRANCE V2.1
+echo ============================================================
+echo.
+where pwsh >nul 2>nul
+if %errorlevel%==0 (
+    pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0RUN-INSTALL-COMMUNES-FRANCE-COMPLETES.ps1" -Mode AuditOnly
+) else (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0RUN-INSTALL-COMMUNES-FRANCE-COMPLETES.ps1" -Mode AuditOnly
+)
+
+echo.
+pause
