@@ -1,0 +1,3 @@
+﻿Objet;Nom;ID;Type;Statut;Contact;Telephone;Email;Code_Postal;Ville;Pays;Domaine;Responsable
+Relation;ActiDem;REL-ACT-001;Association;Actif;Denis / ActiDem;A_COMPLETER;A_COMPLETER;A_COMPLETER;A_COMPLETER;France;actidem54.fr;Pascal ZIMMER
+Relation;Carottagexpress;REL-CAR-001;Client;Actif;Fayçal SRIDI;07 84 93 80 56;A_COMPLETER;54580;AUBOUÉ;France;carottagexpress.fr;Pascal ZIMMER
