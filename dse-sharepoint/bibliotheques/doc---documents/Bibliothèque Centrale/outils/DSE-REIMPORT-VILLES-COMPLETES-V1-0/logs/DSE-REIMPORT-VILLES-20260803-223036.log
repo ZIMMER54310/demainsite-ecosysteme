@@ -1,0 +1,37 @@
+**********************
+PowerShell transcript start
+Start time: 20260803223036
+Username: AzureAD\PascalZIMMER_b9lyro1
+RunAs User: AzureAD\PascalZIMMER_b9lyro1
+Configuration Name: 
+Machine: ZENBOOK17 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\Users\PascalZIMMER_b9lyro1\DemainSite\DemainSite écosystème - Bibliothèque Centrale\DSE-REIMPORT-VILLES-COMPLETES-V1-0\RUN-REIMPORT-VILLES-COMPLETES.ps1
+Process ID: 23484
+PSVersion: 7.6.3
+PSEdition: Core
+GitCommitId: 7.6.3
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+
+============================================================
+ DEMAINSITE - REIMPORT VILLES COMPLETES V1.0
+============================================================
+Mode : Update
+PS>TerminatingError(Get-PnPWeb): "You are not signed in. Please use Connect-PnPOnline to connect."
+Connexion SharePoint absente. Connexion DeviceLogin...
+Connexion SharePoint OK : https://blogssite.sharepoint.com/sites/Bibliotheque
+
+============================================================
+ PREPARATION DES LISTES ET COLONNES
+============================================================
+PS>TerminatingError(): "Aucun CSV trouve. Depose le fichier CSV dans le dossier data puis relance le BAT."
+ERREUR : Aucun CSV trouve. Depose le fichier CSV dans le dossier data puis relance le BAT.
+**********************
+PowerShell transcript end
+End time: 20260803223105
+**********************
