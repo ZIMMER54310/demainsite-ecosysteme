@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0",
-  "moteurVersion": "1.0.1",
+  "moteurVersion": "1.0.4",
   "source": {
     "site": "https://blogssite.sharepoint.com/sites/Bibliotheque",
     "liste": "OBJ-JRN",
     "listeId": "e41a1b77-39c6-402c-b5ba-6a531668f007"
   },
-  "exporteLe": "2026-09-24T10:37:46.0412052+02:00",
+  "exporteLe": "2026-09-24T11:01:26.5373699+02:00",
   "nombreElements": 1212,
   "elements": [
     {
