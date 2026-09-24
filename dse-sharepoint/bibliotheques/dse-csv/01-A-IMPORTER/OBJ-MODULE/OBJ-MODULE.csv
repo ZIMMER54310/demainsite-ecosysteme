@@ -1,0 +1,28 @@
+﻿Titre - Module;ID OBJ Module;Code Module;Famille Module;Description Module;Site Principal;Dépendance Module;Critique;Actif;Ordre Affichage;Validation DSE
+Gouvernance DSE;ID-OBJ-MOD-000001;GOUVERNANCE-DSE;GOUVERNANCE;Pilotage des règles décisions validations et normes de DemainSite Écosystème.;DemainSite Écosystème;;Oui;Oui;10;Non
+Référentiels OBJ;ID-OBJ-MOD-000002;REFERENTIELS-OBJ;REFERENTIEL;Gestion des référentiels universels OBJ et de leurs relations.;DemainSite Écosystème;GOUVERNANCE-DSE;Oui;Oui;20;Non
+Référentiels GEO;ID-OBJ-MOD-000003;REFERENTIELS-GEO;REFERENTIEL;Gestion des continents pays langues devises capitales villes régions départements et territoires.;DemainSite Écosystème;REFERENTIELS-OBJ;Oui;Oui;30;Non
+OBJ-LISTE;ID-OBJ-MOD-000004;OBJ-LISTE;ARCHITECTURE;Registre maître des listes bibliothèques catalogues et journaux DSE.;DemainSite Écosystème;GOUVERNANCE-DSE;Oui;Oui;40;Non
+Journalisation DSE;ID-OBJ-MOD-000005;JOURNALISATION-DSE;JOURNAL;Journalisation du début des actions erreurs corrections validations et fins de traitement.;DemainSite Écosystème;GOUVERNANCE-DSE;Oui;Oui;50;Non
+Audit DSE;ID-OBJ-MOD-000006;AUDIT-DSE;CONTROLE;Contrôle automatique des structures données références doublons statuts et anomalies.;DemainSite Écosystème;JOURNALISATION-DSE;Oui;Oui;60;Non
+Sécurité DSE;ID-OBJ-MOD-000007;SECURITE-DSE;SECURITE;Gestion des rôles permissions opérations critiques et protections de l’architecture.;DemainSite Écosystème;GOUVERNANCE-DSE;Oui;Oui;70;Non
+DSE-SUPER-ADMIN;ID-OBJ-MOD-000008;DSE-SUPER-ADMIN;SECURITE;Gestion des autorisations exceptionnelles réservées aux Super Administrateurs DSE.;DemainSite Écosystème;SECURITE-DSE;Oui;Oui;80;Non
+Synchronisation CSV SharePoint;ID-OBJ-MOD-000009;SYNC-CSV-SHAREPOINT;SYNCHRONISATION;Synchronisation bidirectionnelle contrôlée CSV et SharePoint avec détection des conflits.;DemainSite Écosystème;JOURNALISATION-DSE;Oui;Oui;90;Non
+Cockpit DSE;ID-OBJ-MOD-000010;COCKPIT-DSE;PILOTAGE;Tableau de bord global des référentiels médias automates contrôles alertes et indicateurs.;DemainSite Écosystème;AUDIT-DSE;Oui;Oui;100;Non
+Knowledge DSE;ID-OBJ-MOD-000011;KNOWLEDGE-DSE;CONNAISSANCE;Gestion universelle des règnes collections galeries et domaines de connaissance.;DemainSite Écosystème;REFERENTIELS-OBJ;Oui;Oui;110;Non
+Media Universal;ID-OBJ-MOD-000012;MEDIA-UNIVERSAL;MEDIA;Gestion du coffre-fort officiel des images vidéos audios documents CSV ZIP et autres médias.;Media DemainSite Universal;KNOWLEDGE-DSE;Oui;Oui;120;Non
+Catalogue OBJ-MEDIA;ID-OBJ-MOD-000013;CATALOGUE-OBJ-MEDIA;MEDIA;Catalogue des métadonnées classements versions licences et liens des médias DSE.;Media DemainSite Universal;MEDIA-UNIVERSAL;Oui;Oui;130;Non
+Prompts IA;ID-OBJ-MOD-000014;PROMPTS-IA;IA;Bibliothèque des prompts maîtres réutilisables pour les productions Azure IA.;Media DemainSite Universal;KNOWLEDGE-DSE;Oui;Oui;140;Non
+Production Azure IA;ID-OBJ-MOD-000015;PRODUCTION-AZURE-IA;IA;Production contrôlée des médias et contenus par les services IA Azure autorisés.;Media DemainSite Universal;PROMPTS-IA;Oui;Oui;150;Non
+Galeries automatiques;ID-OBJ-MOD-000016;GALERIES-AUTOMATIQUES;MEDIA;Création automatique de galeries par règne collection sujet et usage.;Media DemainSite Universal;PRODUCTION-AZURE-IA;Non;Oui;160;Non
+Versions médias;ID-OBJ-MOD-000017;VERSIONS-MEDIA;MEDIA;Gestion des versions originales aperçus signées non signées et personnalisées client.;Media DemainSite Universal;CATALOGUE-OBJ-MEDIA;Oui;Oui;170;Non
+Filigranes médias;ID-OBJ-MOD-000018;FILIGRANES-MEDIA;PROTECTION;Création et gestion des filigranes publics DSE et clients.;Media DemainSite Universal;VERSIONS-MEDIA;Oui;Oui;180;Non
+Licences médias;ID-OBJ-MOD-000019;LICENCES-MEDIA;LICENCE;Gestion des droits d’utilisation modification redistribution signature et personnalisation.;Media DemainSite Universal;CATALOGUE-OBJ-MEDIA;Oui;Oui;190;Non
+Commandes et téléchargements;ID-OBJ-MOD-000020;COMMANDES-TELECHARGEMENTS;COMMERCE;Gestion des commandes paiements droits d’accès et téléchargements sécurisés.;Boutique DSE;LICENCES-MEDIA;Oui;Oui;200;Non
+Publication Power Pages;ID-OBJ-MOD-000021;PUBLICATION-POWER-PAGES;PUBLICATION;Publication contrôlée des catalogues contenus et aperçus sur les futurs portails publics.;DSE Power Pages;CATALOGUE-OBJ-MEDIA;Oui;Oui;210;Non
+Portails publics spécialisés;ID-OBJ-MOD-000022;PORTAILS-PUBLICS;PUBLICATION;Gestion des futurs portails animaux végétaux minéraux géographie astronomie histoire et patrimoine.;DSE Power Pages;PUBLICATION-POWER-PAGES;Non;Oui;220;Non
+Gestion clients;ID-OBJ-MOD-000023;GESTION-CLIENTS;RELATION;Gestion des clients comptes accès projets commandes et personnalisations.;DemainSite Écosystème;SECURITE-DSE;Oui;Oui;230;Non
+Gestion sites;ID-OBJ-MOD-000024;GESTION-SITES;SITE;Gestion du catalogue des sites DSE clients intranets et portails.;DemainSite Écosystème;OBJ-LISTE;Oui;Oui;240;Non
+Gestion documents;ID-OBJ-MOD-000025;GESTION-DOCUMENTS;DOCUMENT;Gestion des documents procédures rapports modèles et livrables DSE.;DemainSite Écosystème;REFERENTIELS-OBJ;Non;Oui;250;Non
+Rapports Copilot;ID-OBJ-MOD-000026;RAPPORTS-COPILOT;IA;Préparation des rapports synthèses contrôles et recommandations Copilot fondés sur les sources DSE.;DemainSite Écosystème;AUDIT-DSE;Non;Oui;260;Non
+Notifications Teams;ID-OBJ-MOD-000027;NOTIFICATIONS-TEAMS;COLLABORATION;Notifications contrôlées des validations alertes erreurs et actions DSE dans Microsoft Teams.;DemainSite Écosystème;JOURNALISATION-DSE;Non;Oui;270;Non
