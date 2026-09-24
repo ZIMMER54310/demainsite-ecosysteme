@@ -1,0 +1,9 @@
+{
+  "nom": "DSE-RUNNER-DOUBLE-CLIC",
+  "version": "1.0",
+  "projet": "DemainSite Ecosysteme",
+  "fonction": "Lanceur Windows double-clic pour procedures, controle et liaisons geographiques",
+  "site_sharepoint": "https://blogssite.sharepoint.com/sites/Bibliotheque",
+  "suppression_automatique": false,
+  "validation_pascal_requise_actions_sensibles": true
+}
