@@ -1,4 +1,0 @@
-Deposer ici le CSV des codes postaux / communes.
-Le script lit automatiquement le plus recent fichier .csv present dans ce dossier.
-Colonnes attendues, selon la source La Poste/data.gouv :
-code_commune_INSEE, nom_commune, code_postal, libelle_acheminement, ligne_5, latitude, longitude, code_departement, nom_departement, code_region, nom_region.

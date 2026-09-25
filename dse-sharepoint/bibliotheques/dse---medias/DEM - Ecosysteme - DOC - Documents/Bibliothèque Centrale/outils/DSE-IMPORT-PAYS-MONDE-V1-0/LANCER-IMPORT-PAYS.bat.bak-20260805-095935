@@ -1,3 +1,0 @@
-@echo off
-powershell -ExecutionPolicy Bypass -File "%~dp0RUN-IMPORT-PAYS-MONDE.ps1"
-pause

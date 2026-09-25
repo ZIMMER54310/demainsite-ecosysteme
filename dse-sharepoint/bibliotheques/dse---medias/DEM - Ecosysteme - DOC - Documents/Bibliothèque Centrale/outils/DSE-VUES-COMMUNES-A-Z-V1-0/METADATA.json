@@ -1,9 +1,0 @@
-{
-  "nom": "DSE-VUES-COMMUNES-A-Z",
-  "version": "1.0",
-  "projet": "DemainSite Ecosysteme",
-  "fonction": "Creer des vues SharePoint des communes classees alphabetiquement de A a Z",
-  "liste_cible": "Villes",
-  "suppression_automatique": false,
-  "journalisation": true
-}

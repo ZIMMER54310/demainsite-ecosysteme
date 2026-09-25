@@ -1,7 +1,0 @@
-"DateControle","Liste","Nombre","MinimumAttendu","Statut"
-"2026-08-03 22:09:37","Pays","1","1","OK"
-"2026-08-03 22:09:37","Regions","18","18","OK"
-"2026-08-03 22:09:38","Departements","104","100","OK"
-"2026-08-03 22:09:38","Villes","92","30000","ALERTE_VOLUME"
-"2026-08-03 22:09:40","CodesPostaux","6329","5000","OK"
-"2026-08-03 22:09:40","CodesPostauxVilles","161","30000","ALERTE_VOLUME"

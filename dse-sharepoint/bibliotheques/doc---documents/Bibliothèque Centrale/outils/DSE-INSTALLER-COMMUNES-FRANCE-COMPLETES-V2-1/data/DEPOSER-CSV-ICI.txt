@@ -1,2 +1,0 @@
-Optionnel : deposer ici un CSV geographique complet si le telechargement automatique ne marche pas.
-Le script peut aussi telecharger automatiquement une source data.gouv/data.europa compatible.
