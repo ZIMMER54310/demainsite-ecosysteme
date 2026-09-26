@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+
+  <title>Cockpit | DemainSite Écosystème</title>
+
+  <link rel="stylesheet" href="../assets/css/dse.css">
+</head>
+
+<body class="cockpit">
+
+  <header class="barre-haute">
+
+    ./
+      <span class="marque petite">DS</span>
+      <span>DemainSite Écosystème</span>
+    </a>
+
+    <div class="contexte">
+
+      <span id="client-actif">
+        Client DSE
+      </span>
+
+      <span id="role-actif">
+        Rôle DSE
+      </span>
+
+      <button id="deconnexion" class="secondaire">
+        Déconnexion
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <aside class="navigation">
+
+    <nav aria-label="Navigation principale">
+      <ul id="menu-dynamique"></ul>
+    </nav>
+
+  </aside>
+
+
+  <main class="contenu">
+
+    <section class="entete-page">
+
+      <p class="surtitre">
+        Cockpit dynamique
+      </p>
+
+      <h1 id="bienvenue">
+        Bienvenue
+      </h1>
+
+      <p
+        id="resume-contexte"
+        class="texte-secondaire">
+        Chargement de votre environnement...
+      </p>
+
+    </section>
+
+
+    <section
+      id="indicateurs"
+      class="grille"
+      aria-label="Indicateurs">
+    </section>
+
+
+    <section class="panneau">
+
+      <h2>Mes sites autorisés</h2>
+
+      <div
+        id="sites-autorises"
+        class="liste-cartes">
+      </div>
+
+    </section>
+
+
+    <section class="panneau">
+
+      <h2>Actions disponibles</h2>
+
+      <div
+        id="actions-autorisees"
+        class="actions">
+      </div>
+
+    </section>
+
+
+    <p
+      id="message-cockpit"
+      class="message"
+      role="status"
+      aria-live="polite">
+    </p>
+
+  </main>
+
+  <script type="module" src="../assets/js/cockpit.js"></script>
+
+</body>
+</html>

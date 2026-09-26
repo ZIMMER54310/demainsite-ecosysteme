@@ -1,0 +1,270 @@
+:root {
+  --bleu: #0b5cab;
+  --bleu-fonce: #073d73;
+  --bleu-clair: #eaf2fb;
+  --fond: #f4f7fb;
+  --texte: #162033;
+  --secondaire: #59677a;
+  --bord: #d9e2ef;
+  --blanc: #ffffff;
+  --vert: #14804a;
+  --rouge: #b42318;
+  --ombre: 0 12px 36px rgba(11,43,77,.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: var(--texte);
+  background: var(--fond);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.page-connexion {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg,#eaf2fb,#f9fbfe);
+}
+
+.connexion-carte {
+  width: min(440px,100%);
+  background: var(--blanc);
+  padding: 36px;
+  border: 1px solid var(--bord);
+  border-radius: 20px;
+  box-shadow: var(--ombre);
+}
+
+.marque {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--bleu);
+  color: white;
+  font-weight: 800;
+}
+
+.marque.petite {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.surtitre {
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .75rem;
+  color: var(--bleu);
+  font-weight: 700;
+}
+
+label {
+  display: block;
+  font-weight: 650;
+  margin: 18px 0 7px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  background: var(--bleu);
+  color: white;
+  padding: 12px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.connexion-carte button[type="submit"] {
+  width: 100%;
+  margin-top: 22px;
+}
+
+.secondaire {
+  background: var(--bleu-clair);
+  color: var(--bleu-fonce);
+}
+
+.texte-secondaire {
+  color: var(--secondaire);
+}
+
+.message {
+  min-height: 24px;
+  color: #9a3412;
+}
+
+.etat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--bord);
+  margin-top: 20px;
+  padding-top: 18px;
+  color: var(--secondaire);
+}
+
+.voyant {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #9aa5b1;
+}
+
+.voyant.ok {
+  background: var(--vert);
+}
+
+.voyant.erreur {
+  background: var(--rouge);
+}
+
+.barre-haute {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 68px;
+  background: var(--blanc);
+  border-bottom: 1px solid var(--bord);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  z-index: 3;
+}
+
+.identite,
+.contexte {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.identite {
+  text-decoration: none;
+  color: var(--texte);
+  font-weight: 750;
+}
+
+.navigation {
+  position: fixed;
+  inset: 68px auto 0 0;
+  width: 230px;
+  background: var(--bleu-fonce);
+  padding: 22px 12px;
+}
+
+.navigation ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navigation a {
+  display: block;
+  color: white;
+  text-decoration: none;
+  padding: 12px;
+  border-radius: 9px;
+}
+
+.navigation a:hover {
+  background: rgba(255,255,255,.12);
+}
+
+.contenu {
+  margin-left: 230px;
+  padding: 100px 32px 40px;
+}
+
+.entete-page,
+.panneau {
+  background: var(--blanc);
+  border: 1px solid var(--bord);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.grille {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit,minmax(170px,1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.indicateur,
+.carte {
+  background: var(--blanc);
+  border: 1px solid var(--bord);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.indicateur strong {
+  display: block;
+  font-size: 1.7rem;
+  color: var(--bleu);
+}
+
+.indicateur span {
+  color: #657186;
+}
+
+.liste-cartes {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit,minmax(220px,1fr));
+  gap: 14px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .contexte span {
+    display: none;
+  }
+
+  .navigation {
+    position: static;
+    width: auto;
+    margin-top: 68px;
+  }
+
+  .navigation ul {
+    display: flex;
+    overflow: auto;
+  }
+
+  .contenu {
+    margin-left: 0;
+    padding: 24px;
+  }
+}
