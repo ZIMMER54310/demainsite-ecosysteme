@@ -1,0 +1,1 @@
+<!doctype html><html lang="fr"><meta charset="utf-8"><title>Diagnostic DSE</title><body><h1>Diagnostic DSE</h1><pre id="o">Test...</pre><script type="module">import{api}from'../js/api.js';const o=document.querySelector('#o');try{o.textContent='dseEtat : OK\n'+JSON.stringify(await api.etat(),null,2)}catch(e){o.textContent='dseEtat : ECHEC\n'+e.message}</script></body></html>

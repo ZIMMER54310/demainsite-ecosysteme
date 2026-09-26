@@ -1,0 +1,1 @@
+export async function renderDashboard(el,api){el.innerHTML='<div class="card"><h2>État DSE</h2><div id="out">Connexion...</div></div>';try{const x=await api.etat();const o=el.querySelector('#out');o.className='ok';o.textContent=JSON.stringify(x,null,2);o.style.whiteSpace='pre-wrap'}catch(e){const o=el.querySelector('#out');o.className='err';o.textContent=e.message}}
