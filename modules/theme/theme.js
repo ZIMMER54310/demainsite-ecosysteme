@@ -1,0 +1,1 @@
+export const renderThemeModule=data=>`<div class="module card"><h3>Thème</h3><p class="muted">${data?"Thème disponible.":"Aucune donnée associée."}</p></div>`;

@@ -1,0 +1,1 @@
+export const renderEnteteModule=data=>`<div class="module card"><h3>En-tête</h3><p class="muted">${data?"En-tête disponible.":"Aucune donnée associée."}</p></div>`;

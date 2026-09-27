@@ -1,0 +1,1 @@
+export function renderBreadcrumb(items=["Cockpit"]){ return `<nav class="breadcrumb" aria-label="Fil d’Ariane">${items.map((x,i)=>`<span>${i?"/ ":""}${x}</span>`).join("")}</nav>`; }

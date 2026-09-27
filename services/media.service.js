@@ -1,0 +1,1 @@
+export function mediaFromSite(site){ return Array.isArray(site?.medias?.donnees)?site.medias.donnees:[]; }

@@ -1,0 +1,2 @@
+import { CONFIG } from "../js/config.js"; import { navigate } from "../js/router.js";
+export function sitesPage(){ setTimeout(()=>document.querySelector("#quick-open")?.addEventListener("click",()=>navigate(`/domaines?domaine=${encodeURIComponent(CONFIG.DEFAULT_DOMAIN)}`)),0); return `<h1 class="page-title">Sites</h1><div class="card"><p>La V1 retrouve un site depuis son domaine, puis charge sa configuration complète.</p><button id="quick-open" class="btn btn-primary">Rechercher ${CONFIG.DEFAULT_DOMAIN}</button></div>`; }

@@ -1,0 +1,1 @@
+export function modulesFromSite(site){ return ["menu","logo","entete","theme","seo"].map(key=>({key,...(site?.[key]||{})})); }

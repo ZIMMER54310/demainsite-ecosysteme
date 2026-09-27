@@ -1,0 +1,1 @@
+import { apiGet } from "../js/api.js"; export const getSite=id=>apiGet(`/site/${encodeURIComponent(id)}`); export const getSiteFull=id=>apiGet(`/site-complet/${encodeURIComponent(id)}`);

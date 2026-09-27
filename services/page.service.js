@@ -1,0 +1,1 @@
+export function pagesFromSite(site){ return Array.isArray(site?.pages?.donnees)?site.pages.donnees:[]; }

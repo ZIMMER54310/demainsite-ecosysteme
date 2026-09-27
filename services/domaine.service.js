@@ -1,0 +1,1 @@
+import { apiGet } from "../js/api.js"; export const getSiteByDomain=domaine=>apiGet("/sites/par-domaine",{domaine});

@@ -1,0 +1,1 @@
+import { apiGet } from "../js/api.js"; export const getHealth=()=>apiGet("/etat");

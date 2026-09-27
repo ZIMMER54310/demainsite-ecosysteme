@@ -1,0 +1,1 @@
+export const renderSeoModule=data=>`<div class="module card"><h3>SEO</h3><p class="muted">${data?"Informations SEO disponibles.":"Aucune donnée associée."}</p></div>`;

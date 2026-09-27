@@ -1,0 +1,2 @@
+const links=[["/","🏠","Accueil"],["/sites","🌐","Sites"],["/domaines","🔗","Domaines"],["/pages","📄","Pages"],["/modules","🧩","Modules"],["/medias","🖼️","Médias"],["/seo","🔎","SEO"],["/parametres","⚙️","Paramètres"],["/journal","📜","Journal"]];
+export function renderSidebar(){ const current=(location.hash.slice(1)||"/").split("?")[0]; return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${links.map(([p,i,l])=>`<a class="nav-link ${current===p?"active":""}" href="#${p}"><span>${i}</span><span>${l}</span></a>`).join("")}</div></nav>`; }

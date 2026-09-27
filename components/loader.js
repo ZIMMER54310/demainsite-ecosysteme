@@ -1,0 +1,1 @@
+export function renderLoader(label="Chargement…"){ return `<div class="loader" role="status"><span class="spinner"></span><span>${label}</span></div>`; }

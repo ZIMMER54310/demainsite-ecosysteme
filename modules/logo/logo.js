@@ -1,0 +1,1 @@
+export const renderLogoModule=data=>`<div class="module card"><h3>Logo</h3><p class="muted">${data?"Logo disponible.":"Aucune donnée associée."}</p></div>`;

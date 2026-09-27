@@ -1,0 +1,1 @@
+export function seoFromSite(site){ return site?.seo?.donnees || null; }
