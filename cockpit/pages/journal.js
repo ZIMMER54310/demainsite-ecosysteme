@@ -1,1 +1,0 @@
-export function renderJournal(){return null;}
