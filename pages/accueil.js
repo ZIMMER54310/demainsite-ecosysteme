@@ -2,25 +2,113 @@ import { getSiteByDomain } from "../services/domaine.service.js";
 import { getSiteFull } from "../services/site.service.js";
 import { setState } from "../js/state.js";
 
-function messagePage(titre, message) {
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function normaliserDomaine(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .split("/")[0];
+}
+
+function pagePublique({
+  titre,
+  message,
+  etat = "indisponible"
+}) {
+  const icone = etat === "maintenance" ? "🚧" : "🌐";
+
   return `
-    <section class="page">
-      <div class="card">
-        <h1 class="page-title">${titre}</h1>
-        <p>${message}</p>
-      </div>
-    </section>
+    <div class="dse-public-page">
+
+      <div class="dse-public-overlay"></div>
+
+      <main class="dse-public-centre">
+
+        <section class="dse-public-card">
+
+          <div class="dse-public-marque">
+            <div class="dse-public-logo">DS</div>
+            <span>DemainSite Ecosystème</span>
+          </div>
+
+          <div class="dse-public-icone">
+            ${icone}
+          </div>
+
+          <h1>${escapeHtml(titre)}</h1>
+
+          <p class="dse-public-message">
+            ${escapeHtml(message)}
+          </p>
+
+          <form
+            class="dse-domain-search"
+            id="dse-domain-search"
+            autocomplete="off"
+          >
+            <label for="dse-domain-input">
+              Vous recherchez un site ?
+            </label>
+
+            <div class="dse-domain-search-line">
+              <input
+                id="dse-domain-input"
+                name="domaine"
+                type="text"
+                inputmode="url"
+                placeholder="Tapez le nom du site recherché"
+                aria-label="Nom de domaine recherché"
+              >
+
+              <button type="submit">
+                Rechercher
+              </button>
+            </div>
+
+            <p class="dse-domain-example">
+              Exemple : <strong>dseco.fr</strong>
+            </p>
+
+            <p
+              class="dse-domain-result"
+              id="dse-domain-result"
+              aria-live="polite"
+            ></p>
+          </form>
+
+          <div class="dse-public-separateur"></div>
+
+          <div class="dse-public-signature">
+            DemainSite Ecosystème
+          </div>
+
+        </section>
+
+      </main>
+
+    </div>
   `;
 }
 
 function trouverAccueil(data) {
-  const pages = Array.isArray(data?.pages)
-    ? data.pages
-    : Array.isArray(data?.pages?.donnees)
-      ? data.pages.donnees
-      : Array.isArray(data?.site?.pages)
-        ? data.site.pages
-        : [];
+  const pages =
+    Array.isArray(data?.pages)
+      ? data.pages
+      : Array.isArray(data?.pages?.donnees)
+        ? data.pages.donnees
+        : Array.isArray(data?.site?.pages)
+          ? data.site.pages
+          : [];
 
   return pages.find((page) => {
     const nom = String(
@@ -36,21 +124,34 @@ function trouverAccueil(data) {
   });
 }
 
-export async function accueilPage(domaine) {
-  const domaineCourant = String(domaine ?? "")
-    .trim()
-    .toLowerCase();
+async function verifierDomaine(domaine) {
+  const resultat =
+    document.querySelector("#dse-domain-result");
 
-  if (!domaineCourant) {
-    return messagePage(
-      "Site indisponible",
-      "Aucun domaine valide n'a été détecté."
-    );
+  const domaineNormalise =
+    normaliserDomaine(domaine);
+
+  if (!domaineNormalise) {
+    if (resultat) {
+      resultat.textContent =
+        "Saisissez un nom de domaine.";
+    }
+
+    return;
+  }
+
+  if (resultat) {
+    resultat.textContent =
+      "Recherche en cours...";
   }
 
   try {
-    const reponseSite = await getSiteByDomain(domaineCourant);
-    const site = reponseSite?.donnees ?? reponseSite;
+    const response =
+      await getSiteByDomain(domaineNormalise);
+
+    const site =
+      response?.donnees ??
+      response;
 
     const siteId =
       site?.id ??
@@ -59,22 +160,101 @@ export async function accueilPage(domaine) {
       site?.siteID;
 
     if (!siteId) {
-      return messagePage(
-        "Site indisponible",
-        "Aucun site n'est configuré pour ce domaine."
-      );
+      if (resultat) {
+        resultat.textContent =
+          "Aucun site actif trouvé pour ce domaine.";
+      }
+
+      return;
     }
 
-    const reponseComplete = await getSiteFull(siteId);
+    window.location.href =
+      `https://${domaineNormalise}`;
+
+  } catch (error) {
+    console.error(
+      "[DSE] Recherche domaine impossible",
+      error
+    );
+
+    if (resultat) {
+      resultat.textContent =
+        "Aucun site actif trouvé pour ce domaine.";
+    }
+  }
+}
+
+export function activerRecherchePublique() {
+  const formulaire =
+    document.querySelector("#dse-domain-search");
+
+  const champ =
+    document.querySelector("#dse-domain-input");
+
+  if (!formulaire || !champ) {
+    return;
+  }
+
+  formulaire.addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+
+      await verifierDomaine(champ.value);
+    }
+  );
+}
+
+export async function accueilPage(domaine) {
+  document.body.classList.add("dse-public");
+
+  const domaineCourant =
+    normaliserDomaine(domaine);
+
+  if (!domaineCourant) {
+    return pagePublique({
+      titre: "Domaine non disponible",
+      message:
+        "Aucun site actif n'est associé à cette adresse."
+    });
+  }
+
+  try {
+    const reponseSite =
+      await getSiteByDomain(domaineCourant);
+
+    const site =
+      reponseSite?.donnees ??
+      reponseSite;
+
+    const siteId =
+      site?.id ??
+      site?.ID ??
+      site?.siteId ??
+      site?.siteID;
+
+    if (!siteId) {
+      return pagePublique({
+        titre: "Domaine non disponible",
+        message:
+          "Aucun site actif n'est associé à cette adresse."
+      });
+    }
+
+    const reponseComplete =
+      await getSiteFull(siteId);
+
     const siteComplet =
       reponseComplete?.donnees ??
       reponseComplete;
 
     if (!siteComplet) {
-      return messagePage(
-        "Site en construction",
-        "Ce site est actuellement en préparation ou en maintenance."
-      );
+      return pagePublique({
+        titre: "Bientôt en ligne",
+        message:
+          "Ce site est actuellement en préparation.",
+        etat: "maintenance"
+      });
     }
 
     setState({
@@ -83,28 +263,39 @@ export async function accueilPage(domaine) {
       currentSiteFull: siteComplet
     });
 
-    const accueil = trouverAccueil(siteComplet);
+    const accueil =
+      trouverAccueil(siteComplet);
 
     if (!accueil) {
-      return messagePage(
-        "Site en construction",
-        "Ce site est actuellement en préparation ou en maintenance."
-      );
+      return pagePublique({
+        titre: "Bientôt en ligne",
+        message:
+          "Ce site est actuellement en préparation.",
+        etat: "maintenance"
+      });
     }
 
     const titre =
       accueil?.titre ??
       accueil?.title ??
       accueil?.nom ??
-      "Accueil";
+      "Bienvenue";
 
-    return messagePage(titre, "");
+    return pagePublique({
+      titre,
+      message: ""
+    });
+
   } catch (error) {
-    console.error("[DSE] Accueil indisponible", error);
-
-    return messagePage(
-      "Site indisponible",
-      "Le site correspondant à ce domaine n'est pas disponible."
+    console.error(
+      "[DSE] Accueil public indisponible",
+      error
     );
+
+    return pagePublique({
+      titre: "Domaine non disponible",
+      message:
+        "Aucun site actif n'est associé à cette adresse."
+    });
   }
 }

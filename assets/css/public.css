@@ -1,0 +1,457 @@
+/* =========================================================
+   DemainSite Ecosystème
+   Interface publique
+   ========================================================= */
+
+body.dse-public {
+  margin: 0 !important;
+  min-height: 100vh !important;
+  overflow-x: hidden;
+  background: #071b2b;
+}
+
+/* =========================================================
+   AUCUNE INTERFACE D'ADMINISTRATION EN PUBLIC
+   ========================================================= */
+
+body.dse-public header,
+body.dse-public aside,
+body.dse-public nav,
+body.dse-public footer,
+body.dse-public .sidebar,
+body.dse-public .app-sidebar,
+body.dse-public .breadcrumb,
+body.dse-public .api-status,
+body.dse-public .status-api,
+body.dse-public .app-footer {
+  display: none !important;
+}
+
+/* Suppression de l'espace réservé au menu */
+
+body.dse-public .layout,
+body.dse-public .app-layout,
+body.dse-public .main-layout,
+body.dse-public #app {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.dse-public main,
+body.dse-public .main,
+body.dse-public .app-main,
+body.dse-public #app-main {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* =========================================================
+   PAGE PUBLIQUE
+   ========================================================= */
+
+.dse-public-page {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  width: 100%;
+  min-height: 100vh;
+
+  padding: 32px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(4, 20, 34, 0.88),
+      rgba(8, 59, 73, 0.74)
+    ),
+    radial-gradient(
+      circle at 20% 15%,
+      rgba(21, 179, 157, 0.45),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 80% 85%,
+      rgba(38, 112, 184, 0.42),
+      transparent 38%
+    ),
+    #071b2b;
+}
+
+/* Effet réseau moderne en arrière-plan */
+
+.dse-public-page::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  opacity: 0.38;
+
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px
+    );
+
+  background-size: 55px 55px;
+
+  pointer-events: none;
+}
+
+.dse-public-overlay {
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at center,
+      transparent 0,
+      rgba(3, 16, 28, 0.25) 100%
+    );
+
+  pointer-events: none;
+}
+
+.dse-public-centre {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 100vh;
+
+  padding: 0 !important;
+}
+
+/* =========================================================
+   CARTE
+   ========================================================= */
+
+.dse-public-card {
+  box-sizing: border-box;
+
+  width: min(640px, 100%);
+
+  padding: 48px;
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 30px;
+
+  background: rgba(255, 255, 255, 0.95);
+
+  box-shadow:
+    0 35px 90px rgba(0, 0, 0, 0.30);
+
+  backdrop-filter: blur(18px);
+
+  text-align: center;
+}
+
+/* =========================================================
+   DEMAINSITE ECOSYSTEME
+   ========================================================= */
+
+.dse-public-marque {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 14px;
+
+  margin-bottom: 34px;
+
+  color: #153550;
+
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.dse-public-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 52px;
+  height: 52px;
+
+  border-radius: 16px;
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  background:
+    linear-gradient(
+      135deg,
+      #07877f,
+      #147597
+    );
+
+  box-shadow:
+    0 12px 28px rgba(5, 125, 120, 0.27);
+}
+
+/* =========================================================
+   MESSAGE
+   ========================================================= */
+
+.dse-public-icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 86px;
+  height: 86px;
+
+  margin: 0 auto 25px;
+
+  border-radius: 28px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #e7f8f5,
+      #e9f1fb
+    );
+
+  font-size: 38px;
+}
+
+.dse-public-card h1 {
+  margin: 0;
+
+  color: #102940;
+
+  font-size: clamp(32px, 5vw, 46px);
+  line-height: 1.08;
+
+  letter-spacing: -0.04em;
+}
+
+.dse-public-message {
+  max-width: 470px;
+
+  margin: 20px auto 32px;
+
+  color: #596d80;
+
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   RECHERCHE DE SITE
+   ========================================================= */
+
+.dse-domain-search {
+  margin-top: 30px;
+  padding-top: 28px;
+
+  border-top: 1px solid #e1e9ef;
+}
+
+.dse-domain-search label {
+  display: block;
+
+  margin-bottom: 15px;
+
+  color: #18364f;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dse-domain-search-line {
+  display: flex;
+  gap: 10px;
+}
+
+.dse-domain-search input {
+  flex: 1;
+
+  box-sizing: border-box;
+
+  min-width: 0;
+
+  padding: 16px 18px;
+
+  border: 1px solid #cbd8e2;
+  border-radius: 14px;
+
+  outline: none;
+
+  background: #ffffff;
+  color: #143047;
+
+  font: inherit;
+}
+
+.dse-domain-search input:focus {
+  border-color: #0d9188;
+
+  box-shadow:
+    0 0 0 4px rgba(13, 145, 136, 0.12);
+}
+
+.dse-domain-search button {
+  padding: 15px 23px;
+
+  border: 0;
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #07877f,
+      #126f92
+    );
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  font: inherit;
+  font-weight: 700;
+}
+
+.dse-domain-search button:hover {
+  filter: brightness(1.06);
+}
+
+.dse-domain-example {
+  margin: 13px 0 0;
+
+  color: #7a8c9c;
+
+  font-size: 13px;
+}
+
+.dse-domain-result {
+  min-height: 20px;
+
+  margin: 14px 0 0;
+
+  color: #416176;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   SIGNATURE
+   ========================================================= */
+
+.dse-public-separateur {
+  width: 55px;
+  height: 3px;
+
+  margin: 34px auto 18px;
+
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #0b9188,
+      #2579a5
+    );
+}
+
+.dse-public-signature {
+  color: #718496;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+  .dse-public-page {
+    padding: 14px;
+  }
+
+  .dse-public-card {
+    padding: 34px 22px;
+    border-radius: 24px;
+  }
+
+  .dse-public-marque {
+    font-size: 17px;
+  }
+
+  .dse-domain-search-line {
+    flex-direction: column;
+  }
+
+  .dse-domain-search button {
+    width: 100%;
+  }
+}
+/* =========================================================
+   CENTRAGE FINAL PAGE PUBLIQUE
+   ========================================================= */
+
+body.dse-public #app-main {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 100vw !important;
+  min-height: 100vh !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.dse-public .dse-public-page {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 100vw !important;
+  min-height: 100vh !important;
+
+  margin: 0 !important;
+}
+
+body.dse-public .dse-public-centre {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 100% !important;
+  min-height: 100vh !important;
+
+  margin: 0 !important;
+  padding: 32px !important;
+  box-sizing: border-box !important;
+}
+
+body.dse-public .dse-public-card {
+  margin: auto !important;
+}
