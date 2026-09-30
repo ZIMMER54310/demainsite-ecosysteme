@@ -1,5 +1,7 @@
 "use strict";
 
+const { obtenirJetonGraph } = require("../auth/graph");
+
 const http = require("http");
 const https = require("https");
 
@@ -156,59 +158,6 @@ function creerErreur(
 /* =========================================================
    MICROSOFT GRAPH
    ========================================================= */
-
-async function obtenirJetonGraph() {
-  const endpoint =
-    process.env.IDENTITY_ENDPOINT;
-
-  const header =
-    process.env.IDENTITY_HEADER;
-
-  if (!endpoint || !header) {
-    throw creerErreur(
-      "DSE-IDENTITE-GEREE-INDISPONIBLE",
-      500,
-      "Identite geree indisponible"
-    );
-  }
-
-  const url = new URL(endpoint);
-
-  url.searchParams.set(
-    "api-version",
-    "2019-08-01"
-  );
-
-  url.searchParams.set(
-    "resource",
-    "https://graph.microsoft.com/"
-  );
-
-  const resultat =
-    await requete(
-      url,
-      {
-        method: "GET",
-        headers: {
-          "X-IDENTITY-HEADER": header
-        }
-      }
-    );
-
-  if (
-    resultat.status !== 200 ||
-    !resultat.body ||
-    !resultat.body.access_token
-  ) {
-    throw creerErreur(
-      "DSE-JETON-GRAPH-REFUSE",
-      503,
-      "Jeton Microsoft Graph refuse"
-    );
-  }
-
-  return resultat.body.access_token;
-}
 
 async function graph(
   token,

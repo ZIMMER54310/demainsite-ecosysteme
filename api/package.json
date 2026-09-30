@@ -1,11 +1,19 @@
 {
-  "name": "dse-api-azure-function",
-  "version": "0.9.0",
+  "name": "dse-api-ovh",
+  "version": "1.0.0",
   "private": true,
-  "description": "API DSE V0.9 - agregation site complet depuis SharePoint",
-  "main": "dseEtat/index.js",
+  "description": "API DSE native OVH avec SharePoint comme source officielle",
+  "main": "server.js",
   "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check auth/graph.js && node --check shared/dse.js"
+  },
   "engines": {
     "node": ">=22"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0"
   }
 }
