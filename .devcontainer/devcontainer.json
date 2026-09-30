@@ -1,0 +1,14 @@
+{
+  "name": "DSE - DemainSite Ecosysteme",
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "ZIMMER54310/dse-api": {
+          "permissions": {
+            "contents": "read"
+          }
+        }
+      }
+    }
+  }
+}
