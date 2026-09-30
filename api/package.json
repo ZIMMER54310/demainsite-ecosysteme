@@ -1,0 +1,11 @@
+{
+  "name": "dse-api-azure-function",
+  "version": "0.9.0",
+  "private": true,
+  "description": "API DSE V0.9 - agregation site complet depuis SharePoint",
+  "main": "dseEtat/index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22"
+  }
+}
