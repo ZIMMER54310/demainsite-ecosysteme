@@ -5,6 +5,8 @@ const { obtenirJetonGraph } = require("../auth/graph");
 const http = require("http");
 const https = require("https");
 
+const TAILLE_LOT_GRAPH = 10;
+
 /* =========================================================
    REQUETES HTTP
    ========================================================= */
@@ -530,12 +532,15 @@ async function chargerElementsParIds(
   for (
     let debut = 0;
     debut < ids.length;
-    debut += 10
+    debut += TAILLE_LOT_GRAPH
   ) {
     const lot =
       await Promise.all(
         ids
-          .slice(debut, debut + 10)
+          .slice(
+            debut,
+            debut + TAILLE_LOT_GRAPH
+          )
           .map(
             async (id) => {
               try {

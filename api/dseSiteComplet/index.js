@@ -389,7 +389,7 @@ async function hydraterMediasHero(
     new Map(
       medias.map(
         (media) => [
-          media.id,
+          idTexte(media.id),
           media
         ]
       )
@@ -409,11 +409,15 @@ async function hydraterMediasHero(
           : Array.isArray(relation)
             ? ids.map(
                 (id) =>
-                  mediasParId.get(id) ||
-                  null
-              )
-            : mediasParId.get(ids[0]) ||
-              null;
+                mediasParId.get(
+                  idTexte(id)
+                ) ||
+                null
+            )
+            : mediasParId.get(
+              idTexte(ids[0])
+            ) ||
+            null;
 
       return {
         ...contenu,
