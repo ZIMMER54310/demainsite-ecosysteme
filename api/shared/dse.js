@@ -5,6 +5,8 @@ const { obtenirJetonGraph } = require("../auth/graph");
 const http = require("http");
 const https = require("https");
 
+const TAILLE_LOT_GRAPH = 10;
+
 /* =========================================================
    REQUETES HTTP
    ========================================================= */
@@ -487,6 +489,85 @@ async function chargerItemsListe(
     "/items" +
     "?$expand=fields&$top=200"
   );
+}
+
+/**
+ * Charge des éléments par leurs IDs SharePoint natifs numériques.
+ * `itemIds` accepte un ID ou un tableau d'IDs; les valeurs non numériques sont ignorées.
+ * `onError(erreur, id)` est appelé pour chaque élément qui échoue; ces éléments sont omis du résultat.
+ */
+async function chargerElementsParIds(
+  token,
+  siteGraphId,
+  listeId,
+  itemIds,
+  onError
+) {
+  const ids =
+    [...new Set(
+      convertirIdsLookup(itemIds)
+    )];
+
+  if (!ids.length) {
+    return [];
+  }
+
+  const colonnes =
+    await chargerColonnesListe(
+      token,
+      siteGraphId,
+      listeId
+    );
+
+  const elements = [];
+
+  for (
+    let debut = 0;
+    debut < ids.length;
+    debut += TAILLE_LOT_GRAPH
+  ) {
+    const lot =
+      await Promise.all(
+        ids
+          .slice(
+            debut,
+            debut + TAILLE_LOT_GRAPH
+          )
+          .map(
+            async (id) => {
+              try {
+                const item =
+                  await graph(
+                    token,
+                    `/sites/${siteGraphId}` +
+                    `/lists/${listeId}` +
+                    `/items/${id}` +
+                    "?$expand=fields"
+                  );
+
+                return await construireElementPublic(
+                  token,
+                  siteGraphId,
+                  item,
+                  colonnes
+                );
+              } catch (erreur) {
+                if (typeof onError === "function") {
+                  onError(erreur, id);
+                }
+
+                return null;
+              }
+            }
+          )
+      );
+
+    elements.push(
+      ...lot.filter(Boolean)
+    );
+  }
+
+  return elements;
 }
 
 /* =========================================================
@@ -1369,6 +1450,7 @@ module.exports = {
   trouverListe,
   chargerColonnesListe,
   chargerItemsListe,
+  chargerElementsParIds,
 
   convertirIdsLookup,
   idsLookupColonne,

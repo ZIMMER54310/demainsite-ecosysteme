@@ -7,7 +7,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check auth/graph.js && node --check shared/dse.js"
+    "check": "node --check server.js && node --check auth/graph.js && node --check shared/dse.js && node --check dseSiteComplet/index.js"
   },
   "engines": {
     "node": ">=22"

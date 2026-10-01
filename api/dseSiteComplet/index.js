@@ -224,7 +224,8 @@ async function chargerContenusSpecialises(
   token,
   siteGraphId,
   listes,
-  modules
+  modules,
+  context
 ) {
   const moduleIds =
     idsElements(modules);
@@ -287,9 +288,156 @@ async function chargerContenusSpecialises(
       donnees:
         resultat.elements
     };
+
+    if (cle === "hero") {
+      resultats[cle].donnees =
+        await hydraterMediasHero(
+          token,
+          siteGraphId,
+          listes,
+          resultat.elements,
+          context
+        );
+    }
   }
 
   return resultats;
+}
+
+async function hydraterMediasHero(
+  token,
+  siteGraphId,
+  listes,
+  contenusHero,
+  context
+) {
+  const listeMedia =
+    dse.trouverListe(
+      listes,
+      ["OBJ-MEDIA"]
+    );
+
+  const relationsMedia =
+    (Array.isArray(contenusHero)
+      ? contenusHero
+      : []
+    ).map(
+      (contenu) => {
+        const nomRelation =
+          Object.keys(
+            contenu?.relations || {}
+          ).find(
+            (nom) =>
+              nom
+                .toUpperCase()
+                .replace(/[^A-Z0-9]/g, "") ===
+              "OBJMEDIA"
+          );
+
+        const relation =
+          nomRelation
+            ? contenu.relations[nomRelation]
+            : null;
+
+        return {
+          relation,
+          ids: idsRelation(
+            contenu,
+            nomRelation
+          )
+        };
+      }
+    );
+
+  const idsMedia =
+    dse.convertirIdsLookup(
+      relationsMedia.flatMap(
+        (relation) => relation.ids
+      )
+    );
+
+  let medias = [];
+
+  if (listeMedia && idsMedia.length) {
+    try {
+      medias =
+        await dse.chargerElementsParIds(
+          token,
+          siteGraphId,
+          listeMedia.id,
+          idsMedia,
+          (erreur, id) =>
+            context.log.error(
+              `OBJ-MEDIA ${id} non charge: ` +
+              `${
+                erreur.codeDse ||
+                erreur.message
+              }`
+            )
+        );
+    } catch (erreur) {
+      medias = [];
+      context.log.error(
+        "OBJ-MEDIA indisponible: " +
+        `${
+          erreur.codeDse ||
+          erreur.message
+        }`
+      );
+    }
+  }
+
+  const mediasParId =
+    new Map(
+      medias.map(
+        (media) => [
+          dse.convertirIdsLookup(
+            media.id
+          )[0] || null,
+          media
+        ]
+      )
+    );
+
+  return (Array.isArray(contenusHero)
+    ? contenusHero
+    : []
+  ).map(
+    (contenu, index) => {
+      const { relation, ids } =
+        relationsMedia[index];
+
+      let media = null;
+
+      if (ids.length) {
+        if (Array.isArray(relation)) {
+          media =
+            ids.map(
+              (id) =>
+                mediasParId.get(
+                  dse.convertirIdsLookup(
+                    id
+                  )[0]
+                ) ||
+                null
+            );
+        } else {
+          media =
+            mediasParId.get(
+              dse.convertirIdsLookup(
+                ids[0]
+              )[0]
+            ) ||
+            null;
+        }
+      }
+
+      return {
+        ...contenu,
+        media
+      };
+    }
+  );
 }
 
 /* =========================================================
@@ -608,7 +756,8 @@ module.exports =
           token,
           siteGraph.id,
           listes,
-          modules
+          modules,
+          context
         );
 
       const modulesAvecContenus =
