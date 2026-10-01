@@ -352,7 +352,9 @@ async function hydraterMediasHero(
   const idsMedia =
     relationsMedia.flatMap(
       (relation) => relation.ids
-    );
+    )
+      .map(idTexte)
+      .filter(Boolean);
 
   let medias = [];
 
@@ -409,16 +411,16 @@ async function hydraterMediasHero(
         if (Array.isArray(relation)) {
           media =
             ids.map(
-            (id) =>
-              mediasParId.get(
-                idTexte(id)
-              ) ||
-              null
+              (id) =>
+                mediasParId.get(
+                  idTexte(id)
+                ) ||
+                null
             );
         } else {
           media =
             mediasParId.get(
-            idTexte(ids[0])
+              idTexte(ids[0])
             ) ||
             null;
         }

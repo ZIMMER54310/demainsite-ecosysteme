@@ -491,6 +491,11 @@ async function chargerItemsListe(
   );
 }
 
+/**
+ * Charge des éléments par leurs IDs SharePoint natifs numériques.
+ * `itemIds` accepte un ID ou un tableau d'IDs; les valeurs non numériques sont ignorées.
+ * `onError(erreur, id)` est appelé pour chaque élément qui échoue; ces éléments sont omis du résultat.
+ */
 async function chargerElementsParIds(
   token,
   siteGraphId,
