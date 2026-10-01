@@ -525,38 +525,52 @@ async function chargerElementsParIds(
       listeId
     );
 
-  const elements =
-    await Promise.all(
-      ids.map(
-        async (id) => {
-          try {
-            const item =
-              await graph(
-                token,
-                `/sites/${siteGraphId}` +
-                `/lists/${listeId}` +
-                `/items/${id}` +
-                "?$expand=fields"
-              );
+  const elements = [];
 
-            return await construireElementPublic(
-              token,
-              siteGraphId,
-              item,
-              colonnes
-            );
-          } catch (erreur) {
-            if (typeof onError === "function") {
-              onError(erreur, id);
+  for (
+    let debut = 0;
+    debut < ids.length;
+    debut += 10
+  ) {
+    const lot =
+      await Promise.all(
+        ids
+          .slice(debut, debut + 10)
+          .map(
+            async (id) => {
+              try {
+                const item =
+                  await graph(
+                    token,
+                    `/sites/${siteGraphId}` +
+                    `/lists/${listeId}` +
+                    `/items/${id}` +
+                    "?$expand=fields"
+                  );
+
+                return await construireElementPublic(
+                  token,
+                  siteGraphId,
+                  item,
+                  colonnes
+                );
+              } catch (erreur) {
+                if (typeof onError === "function") {
+                  onError(erreur, id);
+                }
+
+                return null;
+              }
             }
+          )
+      );
 
-            return null;
-          }
-        }
-      )
+    elements.push(
+      ...lot.filter(Boolean)
     );
+  }
 
-  return elements.filter(Boolean);
+  return elements;
 }
 
 /* =========================================================
