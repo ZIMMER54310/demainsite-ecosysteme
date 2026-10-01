@@ -224,7 +224,8 @@ async function chargerContenusSpecialises(
   token,
   siteGraphId,
   listes,
-  modules
+  modules,
+  context
 ) {
   const moduleIds =
     idsElements(modules);
@@ -294,7 +295,8 @@ async function chargerContenusSpecialises(
           token,
           siteGraphId,
           listes,
-          resultat.elements
+          resultat.elements,
+          context
         );
     }
   }
@@ -306,7 +308,8 @@ async function hydraterMediasHero(
   token,
   siteGraphId,
   listes,
-  contenusHero
+  contenusHero,
+  context
 ) {
   const listeMedia =
     dse.trouverListe(
@@ -360,10 +363,25 @@ async function hydraterMediasHero(
           token,
           siteGraphId,
           listeMedia.id,
-          idsMedia
+          idsMedia,
+          (erreur, id) =>
+            context.log(
+              `OBJ-MEDIA ${id} non charge: ` +
+              `${
+                erreur.codeDse ||
+                erreur.message
+              }`
+            )
         );
-    } catch (_) {
+    } catch (erreur) {
       medias = [];
+      context.log(
+        "OBJ-MEDIA indisponible: " +
+        `${
+          erreur.codeDse ||
+          erreur.message
+        }`
+      );
     }
   }
 
@@ -721,7 +739,8 @@ module.exports =
           token,
           siteGraph.id,
           listes,
-          modules
+          modules,
+          context
         );
 
       const modulesAvecContenus =

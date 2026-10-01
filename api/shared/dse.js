@@ -544,7 +544,8 @@ async function chargerElementsParIds(
   token,
   siteGraphId,
   listeId,
-  itemIds
+  itemIds,
+  onError
 ) {
   const ids =
     [...new Set(
@@ -595,7 +596,11 @@ async function chargerElementsParIds(
               item,
               colonnes
             );
-          } catch (_) {
+          } catch (erreur) {
+            if (typeof onError === "function") {
+              onError(erreur, id);
+            }
+
             return null;
           }
         }
