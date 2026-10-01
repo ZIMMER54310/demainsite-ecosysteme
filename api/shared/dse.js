@@ -505,20 +505,7 @@ async function chargerElementsParIds(
 ) {
   const ids =
     [...new Set(
-      (
-        Array.isArray(itemIds)
-          ? itemIds
-          : [itemIds]
-      )
-        .map(
-          (id) =>
-            String(id || "")
-              .trim()
-        )
-        .filter(
-          (id) =>
-            /^\d+$/.test(id)
-        )
+      convertirIdsLookup(itemIds)
     )];
 
   if (!ids.length) {

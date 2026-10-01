@@ -350,11 +350,11 @@ async function hydraterMediasHero(
     );
 
   const idsMedia =
-    relationsMedia.flatMap(
-      (relation) => relation.ids
-    )
-      .map(idTexte)
-      .filter(Boolean);
+    dse.convertirIdsLookup(
+      relationsMedia.flatMap(
+        (relation) => relation.ids
+      )
+    );
 
   let medias = [];
 
@@ -391,7 +391,9 @@ async function hydraterMediasHero(
     new Map(
       medias.map(
         (media) => [
-          idTexte(media.id),
+          dse.convertirIdsLookup(
+            media.id
+          )[0] || null,
           media
         ]
       )
@@ -413,14 +415,18 @@ async function hydraterMediasHero(
             ids.map(
               (id) =>
                 mediasParId.get(
-                  idTexte(id)
+                  dse.convertirIdsLookup(
+                    id
+                  )[0]
                 ) ||
                 null
             );
         } else {
           media =
             mediasParId.get(
-              idTexte(ids[0])
+              dse.convertirIdsLookup(
+                ids[0]
+              )[0]
             ) ||
             null;
         }
