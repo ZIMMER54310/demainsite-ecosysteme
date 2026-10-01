@@ -403,21 +403,26 @@ async function hydraterMediasHero(
       const { relation, ids } =
         relationsMedia[index];
 
-      const media =
-        !ids.length
-          ? null
-          : Array.isArray(relation)
-            ? ids.map(
-                (id) =>
-                mediasParId.get(
-                  idTexte(id)
-                ) ||
-                null
-            )
-            : mediasParId.get(
-              idTexte(ids[0])
+      let media = null;
+
+      if (ids.length) {
+        if (Array.isArray(relation)) {
+          media =
+            ids.map(
+            (id) =>
+              mediasParId.get(
+                idTexte(id)
+              ) ||
+              null
+            );
+        } else {
+          media =
+            mediasParId.get(
+            idTexte(ids[0])
             ) ||
             null;
+        }
+      }
 
       return {
         ...contenu,
