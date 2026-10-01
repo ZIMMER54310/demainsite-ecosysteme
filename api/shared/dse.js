@@ -14,6 +14,11 @@ function requete(url, options = {}) {
         ? url
         : new URL(url);
 
+    const {
+      body,
+      ...optionsRequete
+    } = options;
+
     const client =
       cible.protocol === "http:"
         ? http
@@ -21,7 +26,7 @@ function requete(url, options = {}) {
 
     const req = client.request(
       cible,
-      options,
+      optionsRequete,
       (res) => {
         let data = "";
 
@@ -67,7 +72,7 @@ function requete(url, options = {}) {
     );
 
     req.on("error", reject);
-    req.end();
+    req.end(body);
   });
 }
 
@@ -212,7 +217,8 @@ async function obtenirJetonGraph() {
 
 async function graph(
   token,
-  pathOuUrl
+  pathOuUrl,
+  options = {}
 ) {
   const url =
     pathOuUrl.startsWith("https://")
@@ -225,12 +231,25 @@ async function graph(
     await requete(
       url,
       {
-        method: "GET",
+        method:
+          options.method ||
+          "GET",
         headers: {
           Authorization:
             `Bearer ${token}`,
-          Accept: "application/json"
-        }
+          Accept: "application/json",
+          ...(options.body === undefined
+            ? {}
+            : {
+                "Content-Type":
+                  "application/json"
+              })
+        },
+        ...(options.body === undefined
+          ? {}
+          : {
+              body: options.body
+            })
       }
     );
 
@@ -246,6 +265,67 @@ async function graph(
   }
 
   return resultat.body;
+}
+
+async function graphBatch(
+  token,
+  chemins
+) {
+  const reponses = [];
+
+  for (
+    let debut = 0;
+    debut < chemins.length;
+    debut += 20
+  ) {
+    const demandes =
+      chemins
+        .slice(debut, debut + 20)
+        .map(
+          (url, index) => ({
+            id: String(debut + index),
+            method: "GET",
+            url
+          })
+        );
+
+    const resultat =
+      await graph(
+        token,
+        "/$batch",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            requests: demandes
+          })
+        }
+      );
+
+    const parId =
+      new Map(
+        (
+          Array.isArray(resultat.responses)
+            ? resultat.responses
+            : []
+        ).map(
+          (reponse) => [
+            reponse.id,
+            reponse
+          ]
+        )
+      );
+
+    for (const demande of demandes) {
+      reponses.push(
+        parId.get(demande.id) || {
+          status: 500,
+          body: null
+        }
+      );
+    }
+  }
+
+  return reponses;
 }
 
 async function obtenirSiteGraph(token) {
@@ -576,24 +656,45 @@ async function chargerElementsParIds(
       listeId
     );
 
+  const reponses =
+    await graphBatch(
+      token,
+      ids.map(
+        (id) =>
+          `/sites/${siteGraphId}` +
+          `/lists/${listeId}` +
+          `/items/${id}` +
+          "?$expand=fields"
+      )
+    );
+
   const elements =
     await Promise.all(
       ids.map(
-        async (id) => {
+        async (id, index) => {
           try {
-            const item =
-              await graph(
-                token,
-                `/sites/${siteGraphId}` +
-                `/lists/${listeId}` +
-                `/items/${id}` +
-                "?$expand=fields"
+            const reponse =
+              reponses[index];
+
+            if (
+              !reponse ||
+              reponse.status < 200 ||
+              reponse.status >= 300 ||
+              !reponse.body
+            ) {
+              throw creerErreur(
+                "DSE-GRAPH-REFUSE",
+                reponse?.status || 500,
+                `Microsoft Graph HTTP ${
+                  reponse?.status || 500
+                }`
               );
+            }
 
             return await construireElementPublic(
               token,
               siteGraphId,
-              item,
+              reponse.body,
               colonnes
             );
           } catch (erreur) {
