@@ -287,9 +287,122 @@ async function chargerContenusSpecialises(
       donnees:
         resultat.elements
     };
+
+    if (cle === "hero") {
+      resultats[cle].donnees =
+        await hydraterMediasHero(
+          token,
+          siteGraphId,
+          listes,
+          resultat.elements
+        );
+    }
   }
 
   return resultats;
+}
+
+async function hydraterMediasHero(
+  token,
+  siteGraphId,
+  listes,
+  contenusHero
+) {
+  const listeMedia =
+    dse.trouverListe(
+      listes,
+      ["OBJ-MEDIA"]
+    );
+
+  const relationsMedia =
+    (Array.isArray(contenusHero)
+      ? contenusHero
+      : []
+    ).map(
+      (contenu) => {
+        const nomRelation =
+          Object.keys(
+            contenu?.relations || {}
+          ).find(
+            (nom) =>
+              nom
+                .toUpperCase()
+                .replace(/[^A-Z0-9]/g, "") ===
+              "OBJMEDIA"
+          );
+
+        const relation =
+          nomRelation
+            ? contenu.relations[nomRelation]
+            : null;
+
+        return {
+          relation,
+          ids: idsRelation(
+            contenu,
+            nomRelation
+          )
+        };
+      }
+    );
+
+  const idsMedia =
+    relationsMedia.flatMap(
+      (relation) => relation.ids
+    );
+
+  let medias = [];
+
+  if (listeMedia && idsMedia.length) {
+    try {
+      medias =
+        await dse.chargerElementsParIds(
+          token,
+          siteGraphId,
+          listeMedia.id,
+          idsMedia
+        );
+    } catch (_) {
+      medias = [];
+    }
+  }
+
+  const mediasParId =
+    new Map(
+      medias.map(
+        (media) => [
+          media.id,
+          media
+        ]
+      )
+    );
+
+  return (Array.isArray(contenusHero)
+    ? contenusHero
+    : []
+  ).map(
+    (contenu, index) => {
+      const { relation, ids } =
+        relationsMedia[index];
+
+      const media =
+        !ids.length
+          ? null
+          : Array.isArray(relation)
+            ? ids.map(
+                (id) =>
+                  mediasParId.get(id) ||
+                  null
+              )
+            : mediasParId.get(ids[0]) ||
+              null;
+
+      return {
+        ...contenu,
+        media
+      };
+    }
+  );
 }
 
 /* =========================================================

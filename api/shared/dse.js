@@ -540,6 +540,71 @@ async function chargerItemsListe(
   );
 }
 
+async function chargerElementsParIds(
+  token,
+  siteGraphId,
+  listeId,
+  itemIds
+) {
+  const ids =
+    [...new Set(
+      (
+        Array.isArray(itemIds)
+          ? itemIds
+          : [itemIds]
+      )
+        .map(
+          (id) =>
+            String(id || "")
+              .trim()
+        )
+        .filter(
+          (id) =>
+            /^\d+$/.test(id)
+        )
+    )];
+
+  if (!ids.length) {
+    return [];
+  }
+
+  const colonnes =
+    await chargerColonnesListe(
+      token,
+      siteGraphId,
+      listeId
+    );
+
+  const elements =
+    await Promise.all(
+      ids.map(
+        async (id) => {
+          try {
+            const item =
+              await graph(
+                token,
+                `/sites/${siteGraphId}` +
+                `/lists/${listeId}` +
+                `/items/${id}` +
+                "?$expand=fields"
+              );
+
+            return await construireElementPublic(
+              token,
+              siteGraphId,
+              item,
+              colonnes
+            );
+          } catch (_) {
+            return null;
+          }
+        }
+      )
+    );
+
+  return elements.filter(Boolean);
+}
+
 /* =========================================================
    LOOKUPS SHAREPOINT
    ========================================================= */
@@ -1420,6 +1485,7 @@ module.exports = {
   trouverListe,
   chargerColonnesListe,
   chargerItemsListe,
+  chargerElementsParIds,
 
   convertirIdsLookup,
   idsLookupColonne,
