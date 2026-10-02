@@ -41,3 +41,19 @@ curl -s http://127.0.0.1:3000/api/v1/etat                                    # A
 
 Variables : `DSE_API_BASE`, `DSE_VPS_IP`, `DSE_NGINX_DIR`, `DSE_AUDIT_RESEAU=0`.
 Code de sortie 1 si une erreur est detectee. Aucune ecriture SharePoint.
+
+## Ajout automatique d'un domaine (sans modifier le code)
+
+1. Declarer le domaine dans SharePoint (`OBJ-NOM DE DOMAINE`, actif + valide) et le relier a son site (`OBJ-SITE-PUBLIC`).
+2. `cd api && node tools/sync-domaines.js` : plan (DNS OVH, Nginx, HTTPS), rien n'est modifie.
+3. Appliquer : `sudo node tools/sync-domaines.js --nginx` puis, quand le DNS pointe vers le VPS, `sudo node tools/sync-domaines.js --https`.
+   Le DNS peut etre automatise avec `--dns` si `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY` (et `OVH_ENDPOINT`, defaut `ovh-eu`)
+   sont definis dans `api/.env` (droits OVH : GET/POST/DELETE `/domain/zone/*`). Sans eux, le plan indique les enregistrements a creer.
+4. `npm run audit:domaines` verifie le resultat.
+
+Etats par domaine (`/api/v1/sites/par-domaine`, champ `etat`) :
+- domaine connu + site actif/valide + page d'accueil active/validee -> `normal` (site public) ;
+- domaine connu mais site ou page non pret -> `construction` (page "Site en construction") ;
+- domaine inconnu -> 404, aucun site.
+
+Statuts de l'audit : OK, CONSTRUCTION, ERREUR DNS, ERREUR NGINX, ERREUR HTTPS, ERREUR SHAREPOINT, DOMAINE INCONNU.

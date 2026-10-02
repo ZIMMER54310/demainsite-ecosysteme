@@ -23,7 +23,36 @@ module.exports = async function (context, req) {
       if (dse.contientDomaine(item.fields || {}, domaine)) { trouve = item; break; }
       if (await dse.resoudreLookupDomaine(token, siteGraph.id, item, colonnes, domaine)) { trouve = item; break; }
     }
-    if (!trouve) throw dse.creerErreur("DSE-API-SITE-ININTROUVABLE", 404, "Aucun site public pour ce domaine");
+    const lookupOui = (f, re) => {
+      const k = Object.keys(f).find((x) => re.test(x) && x.endsWith("LookupId"));
+      return k ? String(f[k]) === "1" : false;
+    };
+
+    if (!trouve) {
+      // Domaine enregistre dans SharePoint mais sans site : "en construction".
+      const ld = listes.find((l) => String(l.displayName || l.name).toUpperCase() === "OBJ-NOM DE DOMAINE");
+      const doms = ld ? await dse.collecter(token, `/sites/${siteGraph.id}/lists/${ld.id}/items?$expand=fields&$top=200`) : [];
+      const connu = doms.some((d) => dse.normaliserDomaine(d.fields && d.fields.Title) === domaine);
+      if (!connu) throw dse.creerErreur("DSE-API-SITE-ININTROUVABLE", 404, "Domaine inconnu");
+      return dse.reponseJson(context, req, 200, {
+        succes: true,
+        donnees: { id: null, nom: domaine, domaines: [domaine], langue: null, etat: "construction", publication: { actif: false, valide: false } },
+        meta: { versionApi: "0.9", correlationId: id, genereLe: new Date().toISOString() }
+      }, id);
+    }
+
+    // Une page d'accueil active et validee est necessaire pour le mode normal.
+    const lp = listes.find((l) => String(l.displayName || l.name).toUpperCase() === "OBJ-PAGES-SITE");
+    const pagesSite = lp ? await dse.collecter(token, `/sites/${siteGraph.id}/lists/${lp.id}/items?$expand=fields&$top=200`) : [];
+    const pageAccueilPrete = pagesSite.some((p) => {
+      const f = p.fields || {};
+      const k = Object.keys(f).find((x) => /^OBJ_x002d_SITE/.test(x) && x.endsWith("LookupId"));
+      return k && String(f[k]) === String(trouve.id) && String(f.URL || "/").trim() === "/" &&
+        lookupOui(f, /^OBJ_x002d_ACTIF/) && lookupOui(f, /^OBJ_x002d_VALIDE/);
+    });
+    const tf = trouve.fields || {};
+    const siteOui = lookupOui(tf, /^(OBJ_x002d_)?ACTIF/) && lookupOui(tf, /^OBJ_x002d_VALIDE/);
+    const etat = siteOui && pageAccueilPrete ? "normal" : "construction";
 
     const fields = trouve.fields || {};
     const idSite = dse.trouverChamp(fields, colonnes, ["IDOBJSITEPUBLIC", "IDSITEPUBLIC", "CODESITE"]) || trouve.id;
@@ -38,6 +67,7 @@ module.exports = async function (context, req) {
         id: String(idSite),
         nom: nom === null ? null : String(nom),
         domaines: [domaine],
+        etat,
         langue: langue === null ? null : String(langue),
         publication: {
           actif: actifBrut === null ? null : dse.booleenPublic(actifBrut),

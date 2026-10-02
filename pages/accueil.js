@@ -182,13 +182,28 @@ function estValide(element) {
    PAGE PUBLIQUE PAR DEFAUT
    ========================================================= */
 
+function pageConstruction(site) {
+  const nom = String(site?.nom || "").trim();
+
+  return pagePublique({
+    titre: "Site en construction",
+    message:
+      (nom && nom !== String(site?.domaines?.[0] || "") ? `${nom} sera prochainement disponible.` : "Ce site sera prochainement disponible."),
+    etat: "construction",
+    marque: nom || String(site?.domaines?.[0] || "").trim() || "Site en construction",
+    recherche: false
+  });
+}
+
 function pagePublique({
   titre,
   message,
-  etat = "indisponible"
+  etat = "indisponible",
+  marque = "DemainSite Ecosystème",
+  recherche = true
 }) {
   const icone =
-    etat === "maintenance"
+    etat === "maintenance" || etat === "construction"
       ? "🚧"
       : "🌐";
 
@@ -203,7 +218,7 @@ function pagePublique({
 
           <div class="dse-public-marque">
             <div class="dse-public-logo">DS</div>
-            <span>DemainSite Ecosystème</span>
+            <span>${escapeHtml(marque)}</span>
           </div>
 
           <div class="dse-public-icone">
@@ -218,7 +233,7 @@ function pagePublique({
             ${escapeHtml(message)}
           </p>
 
-          <form
+          ${recherche ? `<form
             class="dse-domain-search"
             id="dse-domain-search"
             autocomplete="off"
@@ -255,12 +270,12 @@ function pagePublique({
               aria-live="polite"
             ></p>
 
-          </form>
+          </form>` : ""}
 
           <div class="dse-public-separateur"></div>
 
           <div class="dse-public-signature">
-            DemainSite Ecosystème
+            ${escapeHtml(marque)}
           </div>
 
         </section>
@@ -867,13 +882,11 @@ export async function accueilPage(domaine) {
       site?.siteId ??
       site?.siteID;
 
-    const publication = site?.publication;
+    if (site?.etat === "construction") {
+      return pageConstruction(site);
+    }
 
-    if (
-      !siteId ||
-      publication?.actif === false ||
-      publication?.valide === false
-    ) {
+    if (!siteId) {
       return pagePublique({
         titre: "Domaine non disponible",
         message:
@@ -893,12 +906,7 @@ export async function accueilPage(domaine) {
       reponseComplete;
 
     if (!siteComplet) {
-      return pagePublique({
-        titre: "Bientôt en ligne",
-        message:
-          "Ce site est actuellement en préparation.",
-        etat: "maintenance"
-      });
+      return pageConstruction(site);
     }
 
     /* -----------------------------------------------------
@@ -933,12 +941,7 @@ export async function accueilPage(domaine) {
         : null;
 
     if (!page) {
-      return pagePublique({
-        titre: "Bientôt en ligne",
-        message:
-          "Ce site est actuellement en préparation.",
-        etat: "maintenance"
-      });
+      return pageConstruction(site);
     }
 
     /* -----------------------------------------------------
