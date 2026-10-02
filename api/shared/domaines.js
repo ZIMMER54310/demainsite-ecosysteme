@@ -5,6 +5,8 @@ const fs = require("fs");
 const path = require("path");
 const dse = require("./dse");
 
+const WEBROOT = process.env.DSE_WEBROOT || "/var/www/html";
+const DOMAINE_VALIDE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
 const NGINX_DIRS = (process.env.DSE_NGINX_DIRS || "/etc/nginx/conf.d,/etc/nginx/sites-enabled").split(",");
 
 async function lireDomainesSharePoint() {
@@ -53,4 +55,57 @@ function lireNginx() {
   return { lu, noms, fichiers };
 }
 
-module.exports = { lireDomainesSharePoint, lireNginx, NGINX_DIRS };
+function confHttp(d) {
+  return `# Genere par DSE (tools/sync-domaines.js). Ne pas modifier a la main.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${d} www.${d};
+
+    location /api/v1/ {
+        limit_req zone=dse_api burst=20 nodelay;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header x-ms-client-principal "";
+        proxy_set_header x-ms-client-principal-id "";
+        proxy_set_header x-ms-client-principal-name "";
+        proxy_set_header x-ms-client-principal-idp "";
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 60s;
+    }
+
+    if ($host = www.${d}) {
+        return 301 http://${d}$request_uri;
+    }
+
+    location / {
+        root ${WEBROOT};
+        index index.html;
+        try_files $uri $uri/ =404;
+    }
+}
+`;
+}
+
+
+// Selection des domaines a traiter. Les modes qui MODIFIENT exigent une cible explicite
+// (--domaine=x) ; traiter tout le parc exige --tous ET un --domaine absent.
+// Retourne { domaines } ou { erreur }.
+function selectionner(domaines, { filtre, ecriture, tous }) {
+  if (filtre !== undefined && filtre !== null) {
+    const f = String(filtre).trim().toLowerCase();
+    if (!DOMAINE_VALIDE.test(f)) return { erreur: `--domaine invalide : "${f}"` };
+    const trouves = domaines.filter((d) => d.domaine === f);
+    if (!trouves.length) return { erreur: `--domaine=${f} absent des domaines SharePoint actifs/valides` };
+    if (tous) return { erreur: "--tous et --domaine sont incompatibles" };
+    return { domaines: trouves };
+  }
+  if (ecriture && !tous) return { erreur: "Mode modification : --domaine=exemple.fr obligatoire (ou --tous explicite)" };
+  return { domaines };
+}
+
+module.exports = { DOMAINE_VALIDE, confHttp, selectionner, WEBROOT, lireDomainesSharePoint, lireNginx, NGINX_DIRS };

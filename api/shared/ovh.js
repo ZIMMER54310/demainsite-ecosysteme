@@ -12,7 +12,10 @@ function configure() {
   return Boolean(process.env.OVH_APP_KEY && process.env.OVH_APP_SECRET && process.env.OVH_CONSUMER_KEY);
 }
 
+const ZONE_VALIDE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+
 async function appel(methode, chemin, corps) {
+  if (/\/domain\/zone\/([^/]+)/.test(chemin) && !ZONE_VALIDE.test(chemin.match(/\/domain\/zone\/([^/?]+)/)[1])) throw new Error("zone DNS invalide");
   if (!configure()) throw new Error("API OVH non configuree (OVH_APP_KEY / OVH_APP_SECRET / OVH_CONSUMER_KEY)");
   const base = ENDPOINTS[process.env.OVH_ENDPOINT || "ovh-eu"];
   if (!base) throw new Error("OVH_ENDPOINT inconnu");
@@ -60,26 +63,44 @@ async function enregistrements(zone, type, sousDomaine) {
   return recs;
 }
 
-// Plan DNS : A apex -> ip ; www CNAME -> apex. Ne modifie rien.
-async function planDns(zone, ip) {
+// Calcul PUR du plan DNS (testable). Seuls les A (apex), A/CNAME (www) sont concernes.
+// MX, TXT, SPF, DKIM, DMARC, NS, SRV, AAAA, autres sous-domaines : jamais touches.
+function calculerPlanDns(zone, ip, apexA, wwwRecs) {
   const actions = [];
-  const apexA = await enregistrements(zone, "A", "");
-  if (!apexA.length) actions.push({ op: "creer", type: "A", sousDomaine: "", cible: ip });
-  else if (!(apexA.length === 1 && apexA[0].target === ip)) actions.push({ op: "remplacer", type: "A", sousDomaine: "", cible: ip, ids: apexA.map((r) => r.id) });
-  const www = [...(await enregistrements(zone, "CNAME", "www")), ...(await enregistrements(zone, "A", "www"))];
+  const apexOk = apexA.length === 1 && apexA[0].fieldType === "A" && apexA[0].target === ip;
+  if (!apexA.length) actions.push({ op: "creer", type: "A", sousDomaine: "", cible: ip, ids: [] });
+  else if (!apexOk) actions.push({ op: "remplacer", type: "A", sousDomaine: "", cible: ip, ids: apexA.map((r) => r.id) });
   const cibleWww = `${zone}.`;
-  if (!www.length) actions.push({ op: "creer", type: "CNAME", sousDomaine: "www", cible: cibleWww });
-  else if (!(www.length === 1 && www[0].fieldType === "CNAME" && www[0].target === cibleWww)) actions.push({ op: "remplacer", type: "CNAME", sousDomaine: "www", cible: cibleWww, ids: www.map((r) => r.id) });
+  const wwwOk = wwwRecs.length === 1 && wwwRecs[0].fieldType === "CNAME" && wwwRecs[0].target === cibleWww;
+  if (!wwwRecs.length) actions.push({ op: "creer", type: "CNAME", sousDomaine: "www", cible: cibleWww, ids: [] });
+  else if (!wwwOk) actions.push({ op: "remplacer", type: "CNAME", sousDomaine: "www", cible: cibleWww, ids: wwwRecs.map((r) => r.id) });
   return actions;
 }
 
-// Applique le plan. "remplacer" supprime UNIQUEMENT les anciens enregistrements A/CNAME de ce sous-domaine.
-async function appliquerDns(zone, actions) {
-  for (const a of actions) {
-    for (const id of a.ids || []) await appel("DELETE", `/domain/zone/${zone}/record/${id}`);
-    await appel("POST", `/domain/zone/${zone}/record`, { fieldType: a.type, subDomain: a.sousDomaine, target: a.cible, ttl: 300 });
-  }
-  if (actions.length) await appel("POST", `/domain/zone/${zone}/refresh`);
+async function planDns(zone, ip) {
+  const apexA = await enregistrements(zone, "A", "");
+  const www = [...(await enregistrements(zone, "CNAME", "www")), ...(await enregistrements(zone, "A", "www"))];
+  return { actions: calculerPlanDns(zone, ip, apexA, www), existants: [...apexA, ...www] };
 }
 
-module.exports = { configure, zoneExiste, planDns, appliquerDns };
+// Applique le plan. Sauvegarde (rollback) des enregistrements supprimes, puis cree le nouvel
+// enregistrement AVANT de supprimer les anciens quand le type est identique.
+async function appliquerDns(zone, plan, dossierSauvegarde) {
+  const { actions, existants } = plan;
+  if (!actions.length) return null;
+  const fs = require("fs");
+  const path = require("path");
+  fs.mkdirSync(dossierSauvegarde, { recursive: true, mode: 0o700 });
+  const fichier = path.join(dossierSauvegarde, `dns-${zone}-${Date.now()}.json`);
+  const concernes = new Set(actions.flatMap((a) => a.ids));
+  fs.writeFileSync(fichier, JSON.stringify(existants.filter((r) => concernes.has(r.id)), null, 2), { mode: 0o600 });
+  for (const a of actions) {
+    // Un CNAME ne peut coexister avec un A : on supprime d'abord les anciens.
+    for (const id of a.ids) await appel("DELETE", `/domain/zone/${zone}/record/${id}`);
+    await appel("POST", `/domain/zone/${zone}/record`, { fieldType: a.type, subDomain: a.sousDomaine, target: a.cible, ttl: 300 });
+  }
+  await appel("POST", `/domain/zone/${zone}/refresh`);
+  return fichier;
+}
+
+module.exports = { configure, zoneExiste, planDns, appliquerDns, calculerPlanDns };

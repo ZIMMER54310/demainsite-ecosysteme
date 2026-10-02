@@ -11,3 +11,7 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Sauvegardes DNS (rollback), jamais commitees
+api/backups/
+*.backup-*

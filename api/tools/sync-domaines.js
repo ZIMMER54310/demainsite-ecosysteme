@@ -7,56 +7,26 @@
 //   sudo node tools/sync-domaines.js --nginx       ecrit /etc/nginx/conf.d/dse-<domaine>.conf + reload
 //   sudo node tools/sync-domaines.js --https       obtient les certificats (si DNS OK) via certbot
 //   node tools/sync-domaines.js --dns              applique le DNS OVH (necessite OVH_APP_KEY/OVH_APP_SECRET/OVH_CONSUMER_KEY)
-//   --domaine=exemple.fr                           limite a un domaine
+//   --domaine=exemple.fr                           limite STRICTEMENT a ce domaine (doit exister dans SharePoint)
+//   --tous                                         requis pour modifier plusieurs domaines d'un coup (sans --domaine)
+// Les modes --dns/--nginx/--https exigent --domaine=x ou --tous. Options inconnues : refus.
 require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") });
 const fs = require("fs");
 const dns = require("dns").promises;
 const { execFileSync } = require("child_process");
-const { lireDomainesSharePoint, lireNginx } = require("../shared/domaines");
+const { lireDomainesSharePoint, lireNginx, DOMAINE_VALIDE, confHttp, selectionner } = require("../shared/domaines");
 const ovh = require("../shared/ovh");
 
 const VPS_IP = process.env.DSE_VPS_IP || "57.129.164.243";
-const WEBROOT = process.env.DSE_WEBROOT || "/var/www/html";
-const arg = (n) => process.argv.includes(n);
-const filtre = (process.argv.find((a) => a.startsWith("--domaine=")) || "").split("=")[1];
-const DOMAINE_VALIDE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+const BACKUPS = process.env.DSE_BACKUP_DIR || require("path").join(__dirname, "..", "backups");
+const CONNUS = new Set(["--dns", "--nginx", "--https"]);
+const argsBrutes = process.argv.slice(2);
+const arg = (n) => argsBrutes.includes(n);
+const argDomaine = argsBrutes.find((a) => a.startsWith("--domaine"));
+const filtre = argDomaine === undefined ? undefined : (argDomaine.startsWith("--domaine=") ? argDomaine.slice(10) : "");
+const inconnus = argsBrutes.filter((a) => !CONNUS.has(a) && !a.startsWith("--domaine") && a !== "--tous");
+const log = (m) => console.log(`[${new Date().toISOString()}] ${m}`);
 const fichierConf = (d) => `/etc/nginx/conf.d/dse-${d}.conf`;
-
-function confHttp(d) {
-  return `# Genere par DSE (tools/sync-domaines.js). Ne pas modifier a la main.
-server {
-    listen 80;
-    listen [::]:80;
-    server_name ${d} www.${d};
-
-    location /api/v1/ {
-        limit_req zone=dse_api burst=20 nodelay;
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header x-ms-client-principal "";
-        proxy_set_header x-ms-client-principal-id "";
-        proxy_set_header x-ms-client-principal-name "";
-        proxy_set_header x-ms-client-principal-idp "";
-        proxy_connect_timeout 5s;
-        proxy_read_timeout 60s;
-    }
-
-    if ($host = www.${d}) {
-        return 301 http://${d}$request_uri;
-    }
-
-    location / {
-        root ${WEBROOT};
-        index index.html;
-        try_files $uri $uri/ =404;
-    }
-}
-`;
-}
 
 async function dnsPointeVersVps(d) {
   try {
@@ -72,7 +42,14 @@ const certificatExiste = (d, nginx) =>
   [...(nginx.fichiers[d] || [])].some((f) => { try { return /ssl_certificate\s/.test(fs.readFileSync(f, "utf8")); } catch (_) { return false; } });
 
 (async () => {
-  const sp = (await lireDomainesSharePoint()).filter((d) => d.actif && d.valide && (!filtre || d.domaine === filtre));
+  log("DEBUT sync-domaines");
+  if (inconnus.length) throw new Error(`Option(s) inconnue(s) : ${inconnus.join(" ")} (options : --domaine=x --dns --nginx --https --tous)`);
+  const ecriture = [...CONNUS].some(arg);
+  const actifs = (await lireDomainesSharePoint()).filter((d) => d.actif && d.valide);
+  const sel = selectionner(actifs, { filtre, ecriture, tous: arg("--tous") });
+  if (sel.erreur) throw new Error(sel.erreur);
+  const sp = sel.domaines;
+  log(`AUDIT ${sp.length} domaine(s) actif(s)/valide(s) selectionne(s) ; mode ${ecriture ? "MODIFICATION" : "PLAN"}`);
   const nginx = lireNginx();
   const rapport = [];
   let rechargerNginx = false;
@@ -91,8 +68,12 @@ const certificatExiste = (d, nginx) =>
           if (!(await ovh.zoneExiste(d))) r.actions.push("DNS: zone absente du compte OVH (domaine gere ailleurs)");
           else {
             const plan = await ovh.planDns(d, VPS_IP);
-            plan.forEach((a) => r.actions.push(`DNS OVH: ${a.op} ${a.type} ${a.sousDomaine || "@"} -> ${a.cible}`));
-            if (arg("--dns") && plan.length) { await ovh.appliquerDns(d, plan); r.actions.push("DNS OVH: applique"); }
+            plan.actions.forEach((a) => r.actions.push(`DNS OVH: ${a.op} ${a.type} ${a.sousDomaine || "@"} -> ${a.cible}`));
+            if (arg("--dns") && plan.actions.length) {
+              const sauv = await ovh.appliquerDns(d, plan, BACKUPS);
+              r.actions.push(`DNS OVH: applique (sauvegarde rollback : ${sauv})`);
+              log(`ACTION DNS applique pour ${d}`);
+            }
           }
         } catch (e) { r.actions.push(`DNS OVH: ${e.message}`); }
       }
@@ -106,9 +87,18 @@ const certificatExiste = (d, nginx) =>
       r.nginx = "A CREER";
       r.actions.push(`Nginx: creer ${fichierConf(d)}`);
       if (arg("--nginx")) {
-        fs.writeFileSync(fichierConf(d), confHttp(d), { mode: 0o644 });
-        rechargerNginx = true;
-        r.nginx = "CREE";
+        const f = fichierConf(d);
+        fs.writeFileSync(f, confHttp(d), { mode: 0o644, flag: "wx" });
+        try {
+          execFileSync("nginx", ["-t"], { stdio: "pipe" });
+          rechargerNginx = true;
+          r.nginx = "CREE";
+          log(`ACTION Nginx ${f} cree`);
+        } catch (e) {
+          fs.unlinkSync(f);
+          r.nginx = "ECHEC (annule)";
+          log(`ERREUR Nginx invalide pour ${d} ; ${f} retire (CORRECTION)`);
+        }
       }
     }
 
@@ -124,8 +114,8 @@ const certificatExiste = (d, nginx) =>
   }
 
   if (rechargerNginx) {
-    execFileSync("nginx", ["-t"], { stdio: "inherit" });
     execFileSync("systemctl", ["reload", "nginx"], { stdio: "inherit" });
+    log("ACTION nginx recharge");
   }
 
   if (arg("--https")) {
@@ -143,5 +133,6 @@ const certificatExiste = (d, nginx) =>
   for (const r of rapport) console.log(`${c(r.domaine, 24)}| ${c(r.dns, 14)}| ${c(r.nginx, 9)}| ${r.https}`);
   console.log("");
   for (const r of rapport) r.actions.forEach((a) => console.log(`[${r.domaine}] ${a}`));
-  if (!arg("--dns") && !arg("--nginx") && !arg("--https")) console.log("\nMode PLAN : rien n'a ete modifie.");
+  if (!ecriture) console.log("\nMode PLAN : rien n'a ete modifie.");
+  log("FIN sync-domaines - TERMINE");
 })().catch((e) => { console.error("ECHEC sync :", e.message); process.exit(2); });
