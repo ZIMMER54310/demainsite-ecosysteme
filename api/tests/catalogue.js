@@ -275,6 +275,21 @@ test("lecture des sites : domaines et portail par variable de repli", () => {
   assert.deepEqual(sites[0], { id: "4", titre: "DemainSite Ecosystème", domaines: ["dseco.fr"], actif: true, valide: true, portail: true });
 });
 
+/* ---------- Provisionneur (planification pure) ---------- */
+
+test("provisionneur : plan idempotent, sans doublon, sans suppression", () => {
+  const prov = require("../tools/provision-sharepoint-production");
+  const vide = { ids: { "OBJ-CATALOGUE": "c", "OBJ-SITE-PUBLIC": "s" }, colonnes: { "OBJ-CATALOGUE": [{ name: "ACTIF", displayName: "ACTIF" }, { name: "VALIDER", displayName: "VALIDER" }, { name: "PRIX", displayName: "PRIX" }, { name: "DEVISE", displayName: "DEVISE" }, { name: "NOTE_x002d_COURTE", displayName: "NOTE-COURTE" }, { name: "DESCRIPTION", displayName: "DESCRIPTION" }], "OBJ-SITE-PUBLIC": [] } };
+  const actions = prov.planifier(vide);
+  const listes = actions.filter((a) => a.type === "liste").map((a) => a.liste);
+  assert.ok(["OBJ-ARTICLE", "OBJ-SERVICE", "OBJ-THEME", "OBJ-FORMAT", "OBJ-MODULE-FOOTER"].every((l) => listes.includes(l)));
+  assert.ok(!listes.includes("OBJ-CATALOGUE"));
+  const cat = actions.filter((a) => a.liste === "OBJ-CATALOGUE").map((a) => a.colonne?.name);
+  assert.ok(!["OBJ-ACTIF", "OBJ-VALIDE", "PRIX", "OBJ-DEVISE", "NOTE-COURTE", "DESCRIPTION"].some((c) => cat.includes(c)));
+  assert.ok(cat.includes("OBJ-SITE-PUBLIC") && cat.includes("OBJ-THEME") && cat.includes("URL"));
+  assert.ok(prov.LISTES.every((l) => l.colonnes.every((c) => c.type !== "choice")));
+});
+
 /* ---------- Rendu front (modules purs) ---------- */
 
 (async () => {

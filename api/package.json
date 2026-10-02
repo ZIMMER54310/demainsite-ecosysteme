@@ -13,7 +13,8 @@
     "test:rendu-domaines": "node tests/domaines-rendu.js",
     "test:sharepoint-access": "node tools/test-sharepoint-access.js",
     "audit:domaines": "node tests/audit-domaines.js",
-    "test:catalogue": "node tests/catalogue.js"
+    "test:catalogue": "node tests/catalogue.js",
+    "provision:sharepoint-production": "node tools/provision-sharepoint-production.js"
   },
   "engines": {
     "node": ">=22"

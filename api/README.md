@@ -102,3 +102,9 @@ Règles : contenu actif ET validé, public, rattaché au site par ID natif (`OBJ
 Structure SharePoint attendue (lecture seule côté API) : `OBJ-ARTICLE`, `OBJ-SERVICE`, `OBJ-CATALOGUE` (produits), référentiels `OBJ-CATALOGUE-THEME/-CATEGORIE/-COLLECTION`, avec Lookups plateformes/thème/catégorie/collection/média/liens, `FORMAT`, `VISIBILITE`, `DISPONIBILITE`, `OBJ-ACTIF`, `OBJ-VALIDE`. Une structure absente donne un catalogue vide (section masquée).
 
 Tests : `npm run test:catalogue`.
+
+## Provisionnement SharePoint de production
+
+`npm run provision:sharepoint-production -- --plan | --apply | --seed | --verify` (idempotent, aucune suppression).
+`--plan` et `--verify` sont en lecture seule. `--apply` crée listes et colonnes (référentiels `OBJ-THEME/-CATEGORIE/-COLLECTION/-FORMAT/-VISIBILITE/-DISPONIBILITE`, `OBJ-ARTICLE`, `OBJ-SERVICE`, `OBJ-MODULE-FOOTER`, colonnes de `OBJ-CATALOGUE`, `PORTAIL-CATALOGUE`). `--seed` ajoute référentiels, type FOOTER, un pilote par type (actif, non validé), pages racines des sites 2 et 3 (non validées).
+`--apply` et `--seed` exigent `Sites.Manage.All` (temporaire, à révoquer ensuite) ; sans lui, ils s'arrêtent sans rien écrire. Sauvegarde du schéma dans `api/.sauvegardes/` (ignoré par Git).
