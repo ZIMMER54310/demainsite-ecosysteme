@@ -55,6 +55,13 @@ const CONTENUS_MODULES = {
     noms: [
       "OBJ-MODULE-HERO"
     ]
+  },
+
+  // Liste a creer dans SharePoint (voir README) ; absente = footer simplement non configure.
+  footer: {
+    noms: [
+      "OBJ-MODULE-FOOTER"
+    ]
   }
 };
 

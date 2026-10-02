@@ -483,3 +483,80 @@ body.dse-public .dse-public-card {
   justify-content: center;
   text-decoration: none;
 }
+
+/* =========================================================
+   FOOTER PUBLIC (moteur generique)
+   ========================================================= */
+
+.dse-site-public {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.dse-site-public-main {
+  flex: 1 0 auto;
+}
+
+.dse-footer {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 32px 24px;
+  color: #e8edf5;
+  background: #0f1b2d;
+  text-align: center;
+}
+
+.dse-footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.dse-footer p {
+  margin: 0;
+}
+
+.dse-footer-marque {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.dse-footer-texte,
+.dse-footer-mentions {
+  max-width: 640px;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.dse-footer-liens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  justify-content: center;
+}
+
+.dse-footer-lien,
+.dse-footer-boutique {
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dse-footer-boutique {
+  font-weight: 700;
+}
+
+.dse-footer--minimal {
+  padding: 16px 24px;
+}
+
+@media (max-width: 600px) {
+  .dse-footer {
+    padding: 24px 16px;
+  }
+}

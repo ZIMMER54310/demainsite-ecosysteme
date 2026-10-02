@@ -8,8 +8,9 @@
   "scripts": {
     "start": "node server.js",
     "check": "node tests/check-syntax.js",
-    "test": "node tests/unit.js",
+    "test": "node tests/unit.js && node tests/rendu.js",
     "smoke": "node tests/smoke.js",
+    "test:rendu-domaines": "node tests/domaines-rendu.js",
     "test:sharepoint-access": "node tools/test-sharepoint-access.js",
     "audit:domaines": "node tests/audit-domaines.js"
   },

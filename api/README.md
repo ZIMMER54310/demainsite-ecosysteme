@@ -79,3 +79,13 @@ Flux : SharePoint (domaines actifs/valides, lecture seule) → DNS OVH → Nginx
 `npm run test:sharepoint-access` : obtient un jeton avec l'identité applicative API DSE (variables `DSE_*`), vérifie le Client ID, lit le site et les listes. **Lecture seule**, ne montre ni secret ni jeton. Code de sortie 1 en cas d'échec.
 
 **Nouveaux domaines** : `node tools/sync-domaines.js --nouveaux` (lecture seule) liste ce qui reste à configurer et les commandes par domaine.
+
+## Moteur public HERO + FOOTER (multi-domaines)
+
+Chaîne unique pour tous les domaines : Host → `par-domaine` → site (ID natif) → page racine active/validée → `OBJ-MODULE-SITE-PUBLIC` → contenu spécialisé (`OBJ-MODULE-HERO`, `OBJ-MODULE-FOOTER`) → rendu. Aucun contenu métier dans le code.
+
+- Code : `modules/public/outils.js` (outils purs), `modules/footer/footer.js` (rendu footer), `pages/accueil.js` (HERO + assemblage), `api/dseSiteComplet/index.js` (`CONTENUS_MODULES` : ajouter une entrée = nouveau type de module).
+- Robustesse : aucun HERO → « page en préparation » ; aucun FOOTER → signature minimale (nom du site) ; liste `OBJ-MODULE-FOOTER` absente → ignorée sans erreur ; liens non sûrs et valeurs `ND` jamais affichés.
+- **Liste SharePoint à créer (validation Pascal)** : `OBJ-MODULE-FOOTER`, mêmes colonnes que `OBJ-MODULE-HERO` (Lookup `OBJ-MODULE-SITE-PUBLIC`, `OBJ-ACTIF`, `OBJ-VALIDE`, `OBJ-VEROUILLE`, `ORDRE-AFFICHAGE`) + `TITRE-PRINCIPAL` (marque), `TEXTE`, `MENTIONS`, `LIEN-1..4-TEXTE/URL`, `BOUTIQUE-TEXTE`, `BOUTIQUE-URL`. Type `FOOTER` à ajouter dans `OBJ-MODULE-SITE-PUBLIC-TYPE`.
+- Boutique commune (demainsite.fr, pasclaure.fr, blogs-site.fr) : chaque site garde son propre footer/identité ; le lien boutique est porté par `BOUTIQUE-TEXTE/URL` d'un footer par site, tous pointant vers l'URL unique de la boutique (aucune copie de contenu).
+- Contrôle : `npm test` (pur), `npm run test:rendu-domaines` (lecture seule, 4 domaines prioritaires ou `-- dom1 dom2`).
