@@ -28,3 +28,16 @@ par OVH ; ils sont conserves sans effet jusqu'a un nettoyage dedie.
 npm run check
 npm run smoke
 ```
+
+## Audit multi-domaines (lecture seule)
+
+```bash
+cd api
+npm run audit:domaines            # tableau DOMAINE | OVH | DNS | HTTP | HTTPS | SHAREPOINT | SITE | PAGE | RESULTAT
+node tests/audit-domaines.js --json
+curl -s "http://127.0.0.1:3000/api/v1/sites/par-domaine?domaine=dseco.fr"   # un domaine
+curl -s http://127.0.0.1:3000/api/v1/etat                                    # API + connexion SharePoint
+```
+
+Variables : `DSE_API_BASE`, `DSE_VPS_IP`, `DSE_NGINX_DIR`, `DSE_AUDIT_RESEAU=0`.
+Code de sortie 1 si une erreur est detectee. Aucune ecriture SharePoint.

@@ -9,3 +9,11 @@
 #     ssl_certificate_key /etc/letsencrypt/live/dseco.fr/privkey.pem;
 #     # reprendre les blocs "location" de dse.conf
 # }
+
+# Hotes inconnus en HTTPS : handshake refuse (aucun site par defaut)
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name _;
+    ssl_reject_handshake on;
+}

@@ -8,7 +8,8 @@
   "scripts": {
     "start": "node server.js",
     "check": "node tests/check-syntax.js",
-    "smoke": "node tests/smoke.js"
+    "smoke": "node tests/smoke.js",
+    "audit:domaines": "node tests/audit-domaines.js"
   },
   "engines": {
     "node": ">=22"

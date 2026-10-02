@@ -53,7 +53,10 @@ module.exports = async function (context, req) {
       "DSE-API-LISTE-SITE-PUBLIC-ININTROUVABLE": "La source des sites publics est indisponible.",
       "DSE-API-SITE-ININTROUVABLE": "Aucun site public ne correspond au domaine demandé."
     };
-    context.log.error(`[DSE ${id}] ${e.codeDse || e.message}`);
+    const inconnu = e.codeDse === "DSE-API-SITE-ININTROUVABLE"
+      ? ` domaine=${String(req.query.domaine || "").replace(/[^a-z0-9.\-]/gi, "").slice(0, 100)}`
+      : "";
+    context.log.error(`[DSE ${id}] ${e.codeDse || e.message}${inconnu}`);
     dse.reponseJson(context, req, status, {
       succes: false,
       erreur: { code: e.codeDse || "DSE-API-ERREUR-INTERNE", message: messages[e.codeDse] || "Le service DSE est indisponible." },

@@ -867,7 +867,13 @@ export async function accueilPage(domaine) {
       site?.siteId ??
       site?.siteID;
 
-    if (!siteId) {
+    const publication = site?.publication;
+
+    if (
+      !siteId ||
+      publication?.actif === false ||
+      publication?.valide === false
+    ) {
       return pagePublique({
         titre: "Domaine non disponible",
         message:
