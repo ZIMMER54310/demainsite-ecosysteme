@@ -16,6 +16,9 @@ const controleurSiteParId =
 const controleurSiteComplet =
   require("./dseSiteComplet");
 
+const routeMedia =
+  require("./media");
+
 const application = express();
 
 application.disable("x-powered-by");
@@ -250,6 +253,11 @@ application.get(
   adapterControleur(
     controleurSiteComplet
   )
+);
+
+application.get(
+  "/api/v1/media/:mediaId",
+  routeMedia
 );
 
 application.use(

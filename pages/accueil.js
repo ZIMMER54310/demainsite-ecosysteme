@@ -1,6 +1,7 @@
 import { getSiteByDomain } from "../services/domaine.service.js";
 import { getSiteFull } from "../services/site.service.js";
 import { setState } from "../js/state.js";
+import { CONFIG } from "../js/config.js";
 
 /* =========================================================
    OUTILS
@@ -425,6 +426,7 @@ function imageHero(contenu) {
       continue;
     }
 
+    // Le fichier est servi par l'API a partir de l'ID natif OBJ-MEDIA.
     const candidats = [
       media.url,
       ...CHAMPS_URL_MEDIA.map((champ) =>
@@ -432,7 +434,8 @@ function imageHero(contenu) {
           media.configuration,
           champ
         )
-      )
+      ),
+      `${CONFIG.API_BASE_URL}/media/${encodeURIComponent(media.id)}`
     ];
 
     for (const candidat of candidats) {

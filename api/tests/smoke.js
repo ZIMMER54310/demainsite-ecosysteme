@@ -50,6 +50,13 @@ function exiger(condition, message) {
     exiger(Array.isArray(c.donnees?.pages?.donnees), "pages absentes");
   });
 
+  const rep = await fetch(`${base}/api/v1/media/1`).catch(() => null);
+  const ct = rep?.headers.get("content-type") || "";
+  if (rep?.status === 200 && ct.startsWith("image/")) console.log("OK    GET /media/1 (image)");
+  else { echecs++; console.error(`ECHEC GET /media/1 : ${rep?.status} ${ct}`); }
+  await test("GET /media/abc refuse", "/api/v1/media/abc", (s) => exiger(s === 400, `statut ${s}`));
+  await test("GET /media/999999 inexistant", "/api/v1/media/999999", (s) => exiger(s === 404, `statut ${s}`));
+
   // Les anciens en-tetes Azure ne doivent JAMAIS authentifier.
   const faux = {
     "x-ms-client-principal-id": "00000000-0000-0000-0000-000000000000",

@@ -81,6 +81,7 @@ npm run smoke     # tests de fumee GET uniquement (DSE_SMOKE_BASE pour changer l
 - `GET /api/v1/sites/par-domaine?domaine=...`
 - `GET /api/v1/site/{siteId}`
 - `GET /api/v1/site-complet/{siteId}`
+- `GET /api/v1/media/{id}` : image d'un OBJ-MEDIA (lecture seule, `DSE - MEDIAS/SITE-PUBLIC/`)
 - `GET /api/v1/moi` : **desactivee** (HTTP 501, voir ci-dessous)
 
 ## AUTHENTIFICATION UTILISATEUR DSE

@@ -5,6 +5,9 @@ API de **lecture seule** vers SharePoint via Microsoft Graph. Ecoute `127.0.0.1:
 deploiement et la verification.
 
 Routes : `GET /api/v1/etat`, `/sites/par-domaine`, `/site/{id}`, `/site-complet/{id}`.
+`GET /api/v1/media/{id}` sert l'image d'un element OBJ-MEDIA (ID natif) en lecture seule : fichier lu
+uniquement dans la bibliotheque `DSE - MEDIAS` (`DSE_MEDIA_LIBRARY`), sous `SITE-PUBLIC/`, element actif et valide,
+types image, 15 Mo max. Le chemin `MEDIA-PATH` prime ; le drive stocke dans l'element est ignore.
 `/api/v1/moi` est desactivee (HTTP 501) tant qu'une authentification Entra native n'existe pas.
 
 `site-complet` agrege OBJ-SITE-PUBLIC avec menu, logo, entete, theme, SEO, pages, modules, contenus
