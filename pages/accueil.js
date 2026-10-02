@@ -30,7 +30,12 @@ function valeurConfiguration(configuration, nom) {
     return null;
   }
 
-  return configuration[nom] ?? null;
+  const valeur = configuration[nom] ?? null;
+
+  // "ND" = non defini dans SharePoint : jamais affiche publiquement.
+  return typeof valeur === "string" && valeur.trim().toUpperCase() === "ND"
+    ? null
+    : valeur;
 }
 
 function valeurUrl(value) {
@@ -328,6 +333,10 @@ function trouverHero(page) {
     modulesPage(page);
 
   for (const module of modules) {
+    if (!estActif(module) || !estValide(module)) {
+      continue;
+    }
+
     const contenus =
       module?.contenus?.hero;
 
@@ -521,6 +530,14 @@ function rendreHero(hero) {
   const configuration =
     hero.contenu.configuration ?? {};
 
+  const altImage =
+    String(
+      valeurConfiguration(
+        configuration,
+        "IMAGE-ALT"
+      ) ?? ""
+    ).trim();
+
   const titre =
     valeurConfiguration(
       configuration,
@@ -603,7 +620,7 @@ function rendreHero(hero) {
               <img
                 class="dse-hero-image"
                 src="${escapeHtml(image.url)}"
-                alt=""
+                alt="${escapeHtml(altImage === "ND" ? "" : altImage)}"
                 decoding="async"
                 fetchpriority="high"
               >
@@ -897,10 +914,17 @@ export async function accueilPage(domaine) {
        SITE → PAGE RACINE
        ----------------------------------------------------- */
 
-    const page =
+    const pageRacine =
       trouverPageRacine(
         siteComplet
       );
+
+    const page =
+      pageRacine &&
+      estActif(pageRacine) &&
+      estValide(pageRacine)
+        ? pageRacine
+        : null;
 
     if (!page) {
       return pagePublique({
@@ -917,6 +941,18 @@ export async function accueilPage(domaine) {
 
     const hero =
       trouverHero(page);
+
+    const nomPublic = String(
+      siteComplet.site?.nom ?? site?.nom ?? ""
+    ).trim();
+
+    if (nomPublic) {
+      document.title = nomPublic;
+    }
+
+    document
+      .querySelector('meta[name="description"]')
+      ?.remove();
 
     /* -----------------------------------------------------
        RENDU

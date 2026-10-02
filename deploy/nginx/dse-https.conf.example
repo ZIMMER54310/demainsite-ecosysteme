@@ -1,0 +1,11 @@
+# Modele HTTPS pour dseco.fr, a activer APRES la bascule DNS vers le VPS.
+# Certificat : sudo certbot --nginx -d dseco.fr -d www.dseco.fr
+# (certbot ajoute lui-meme le bloc 443 et la redirection ; ce fichier sert de reference).
+#
+# server {
+#     listen 443 ssl;
+#     server_name dseco.fr www.dseco.fr;
+#     ssl_certificate     /etc/letsencrypt/live/dseco.fr/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/dseco.fr/privkey.pem;
+#     # reprendre les blocs "location" de dse.conf
+# }
