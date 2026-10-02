@@ -82,6 +82,15 @@ function requeteJeton(url, corps) {
       }
     );
 
+    requete.setTimeout(
+      15000,
+      () => {
+        requete.destroy(
+          new Error("Delai Microsoft Entra depasse.")
+        );
+      }
+    );
+
     requete.on(
       "error",
       (erreur) => {

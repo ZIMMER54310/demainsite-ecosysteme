@@ -6,6 +6,8 @@ const http = require("http");
 const https = require("https");
 
 const TAILLE_LOT_GRAPH = 10;
+const GRAPH_REESSAIS_MAX = 2;
+const GRAPH_ATTENTE_MAX_MS = 5000;
 
 /* =========================================================
    REQUETES HTTP
@@ -172,18 +174,46 @@ async function graph(
         `https://graph.microsoft.com/v1.0${pathOuUrl}`
       );
 
-  const resultat =
-    await requete(
-      url,
-      {
-        method: "GET",
-        headers: {
-          Authorization:
-            `Bearer ${token}`,
-          Accept: "application/json"
-        }
-      }
+  const options = {
+    method: "GET",
+    headers: {
+      Authorization:
+        `Bearer ${token}`,
+      Accept: "application/json"
+    }
+  };
+
+  let resultat =
+    await requete(url, options);
+
+  // Reessais limites sur 429/503 : Retry-After respecte, plafonne.
+  for (
+    let tentative = 0;
+    tentative < GRAPH_REESSAIS_MAX &&
+    (resultat.status === 429 ||
+      resultat.status === 503);
+    tentative++
+  ) {
+    const attenteSecondes =
+      Number(resultat.headers["retry-after"]);
+
+    const attenteMs =
+      Number.isFinite(attenteSecondes) &&
+      attenteSecondes >= 0
+        ? Math.min(
+          attenteSecondes * 1000,
+          GRAPH_ATTENTE_MAX_MS
+        )
+        : 1000 * (tentative + 1);
+
+    await new Promise(
+      (resume) =>
+        setTimeout(resume, attenteMs)
     );
+
+    resultat =
+      await requete(url, options);
+  }
 
   if (
     resultat.status < 200 ||

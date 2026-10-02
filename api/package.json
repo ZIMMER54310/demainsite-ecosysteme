@@ -7,7 +7,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check auth/graph.js && node --check shared/dse.js && node --check dseSiteComplet/index.js"
+    "check": "node tests/check-syntax.js",
+    "smoke": "node tests/smoke.js"
   },
   "engines": {
     "node": ">=22"

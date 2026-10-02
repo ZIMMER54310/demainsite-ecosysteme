@@ -7,9 +7,6 @@ const express = require("express");
 const controleurEtat =
   require("./dseEtat");
 
-const controleurMoi =
-  require("./dseMoi");
-
 const controleurSiteParDomaine =
   require("./dseSiteParDomaine");
 
@@ -201,11 +198,37 @@ application.get(
   )
 );
 
-application.get(
+/*
+ * AUTHENTIFICATION UTILISATEUR DSE : desactivee temporairement.
+ * Les en-tetes x-ms-client-principal* provenaient d'Azure App Service
+ * Authentication et ne prouvent aucune identite sur OVH.
+ * dseMoi/ n'est volontairement plus charge tant qu'une authentification
+ * Entra native (validation JWT) n'est pas implementee.
+ */
+application.all(
   "/api/v1/moi",
-  adapterControleur(
-    controleurMoi
-  )
+  (req, res) => {
+    res
+      .status(501)
+      .set("Cache-Control", "no-store")
+      .json({
+        succes: false,
+
+        erreur: {
+          code:
+            "DSE-AUTHENTIFICATION-DESACTIVEE",
+
+          message:
+            "L'authentification utilisateur est temporairement desactivee."
+        },
+
+        meta: {
+          genereLe:
+            new Date()
+              .toISOString()
+        }
+      });
+  }
 );
 
 application.get(
