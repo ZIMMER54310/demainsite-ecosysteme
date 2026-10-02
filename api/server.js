@@ -16,6 +16,9 @@ const controleurSiteParId =
 const controleurSiteComplet =
   require("./dseSiteComplet");
 
+const controleurCatalogue =
+  require("./dseCatalogue");
+
 const routeMedia =
   require("./media");
 
@@ -252,6 +255,37 @@ application.get(
   "/api/v1/site-complet/:siteId",
   adapterControleur(
     controleurSiteComplet
+  )
+);
+
+/*
+ * CATALOGUE MULTIPLATEFORME (articles, produits, services).
+ * Le site est deduit du parametre ?domaine= ; la boutique commune
+ * est la route produits (un produit existe une seule fois dans SharePoint).
+ */
+for (
+  const [chemin, nom] of [
+    ["catalogue", "catalogue"],
+    ["articles", "articles"],
+    ["produits", "produits"],
+    ["boutique", "produits"],
+    ["services", "services"],
+    ["themes", "themes"],
+    ["recherche", "recherche"]
+  ]
+) {
+  application.get(
+    `/api/v1/${chemin}`,
+    adapterControleur(
+      controleurCatalogue[nom]
+    )
+  );
+}
+
+application.get(
+  "/api/v1/catalogue/element/:cle",
+  adapterControleur(
+    controleurCatalogue.element
   )
 );
 

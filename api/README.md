@@ -89,3 +89,16 @@ Chaîne unique pour tous les domaines : Host → `par-domaine` → site (ID nati
 - **Liste SharePoint à créer (validation Pascal)** : `OBJ-MODULE-FOOTER`, mêmes colonnes que `OBJ-MODULE-HERO` (Lookup `OBJ-MODULE-SITE-PUBLIC`, `OBJ-ACTIF`, `OBJ-VALIDE`, `OBJ-VEROUILLE`, `ORDRE-AFFICHAGE`) + `TITRE-PRINCIPAL` (marque), `TEXTE`, `MENTIONS`, `LIEN-1..4-TEXTE/URL`, `BOUTIQUE-TEXTE`, `BOUTIQUE-URL`. Type `FOOTER` à ajouter dans `OBJ-MODULE-SITE-PUBLIC-TYPE`.
 - Boutique commune (demainsite.fr, pasclaure.fr, blogs-site.fr) : chaque site garde son propre footer/identité ; le lien boutique est porté par `BOUTIQUE-TEXTE/URL` d'un footer par site, tous pointant vers l'URL unique de la boutique (aucune copie de contenu).
 - Contrôle : `npm test` (pur), `npm run test:rendu-domaines` (lecture seule, 4 domaines prioritaires ou `-- dom1 dom2`).
+
+## Catalogue multiplateforme
+
+Routes publiques (GET, `?domaine=` obligatoire, site déduit du domaine) :
+`/api/v1/catalogue`, `/articles`, `/produits` (alias `/boutique`), `/services`, `/themes`, `/recherche?q=`, `/catalogue/element/:cle`.
+Filtres combinables : `plateforme` (portail seulement), `type`, `theme`, `categorie`, `collection`, `format`, `visibilite`, `disponibilite`, `q`, `page`, `limite`.
+Les options de filtres sont calculées depuis les données ; la recherche ignore casse et accents.
+
+Règles : contenu actif ET validé, public, rattaché au site par ID natif (`OBJ-SITE-PUBLIC`). Un produit existe une seule fois et est rattaché à plusieurs sites. Le portail (dseco.fr) n'agrège que les contenus marqués `AGREGATION-PORTAIL`. Portail : colonne `PORTAIL-CATALOGUE` de `OBJ-SITE-PUBLIC`, ou variable `DSE_CATALOGUE_PORTAIL_SITE_IDS` (IDs natifs séparés par des virgules). Cache : `DSE_CATALOGUE_CACHE_SECONDES` (60).
+
+Structure SharePoint attendue (lecture seule côté API) : `OBJ-ARTICLE`, `OBJ-SERVICE`, `OBJ-CATALOGUE` (produits), référentiels `OBJ-CATALOGUE-THEME/-CATEGORIE/-COLLECTION`, avec Lookups plateformes/thème/catégorie/collection/média/liens, `FORMAT`, `VISIBILITE`, `DISPONIBILITE`, `OBJ-ACTIF`, `OBJ-VALIDE`. Une structure absente donne un catalogue vide (section masquée).
+
+Tests : `npm run test:catalogue`.

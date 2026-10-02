@@ -8,7 +8,16 @@ registerRoute("/", async () => {
   const page = await accueilPage(domaine);
 
   mount(page, ["Accueil"]);
+
+  const racineCatalogue = document.querySelector("[data-dse-catalogue]");
+
+  if (racineCatalogue) {
+    monterCatalogue(racineCatalogue, { domaine }).catch(() => {
+      racineCatalogue.hidden = true;
+    });
+  }
 }); registerRoute("/sites",()=>mount(sitesPage(),["Cockpit","Sites"])); registerRoute("/site/:id",p=>mount(sitePage(p),["Cockpit","Sites",`Site ${p.id}`])); registerRoute("/domaines",()=>mount(domainesPage(),["Cockpit","Domaines"])); registerRoute("/pages",()=>mount(pagesPage(),["Cockpit","Pages"])); registerRoute("/modules",()=>mount(modulesPage(),["Cockpit","Modules"])); registerRoute("/medias",()=>mount(mediasPage(),["Cockpit","Médias"])); registerRoute("/seo",()=>mount(seoPage(),["Cockpit","SEO"])); registerRoute("/parametres",()=>mount(parametresPage(),["Cockpit","Paramètres"])); registerRoute("/journal",()=>mount(journalPage(),["Cockpit","Journal"])); registerRoute("/404",()=>mount(notFoundPage(),["Cockpit","Erreur"]));
 async function boot(){ const user=await initializeAuth(); setState({user}); try{const status=await getHealth();setState({apiStatus:status});}catch(err){showAlert(err.message,"error");} document.querySelector("#app-header").innerHTML=renderHeader(getState().apiStatus); document.querySelector("#app").setAttribute("aria-busy","false"); const redirect=sessionStorage.getItem("dseRedirect");if(redirect){sessionStorage.removeItem("dseRedirect");location.hash=redirect.includes("#")?redirect.split("#")[1]:"/";} await startRouter(); }
 boot();
 import { accueilPage } from "../pages/accueil.js";
+import { monterCatalogue } from "../modules/catalogue/catalogue.js";

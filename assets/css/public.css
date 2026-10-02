@@ -560,3 +560,222 @@ body.dse-public .dse-public-card {
     padding: 24px 16px;
   }
 }
+
+/* =========================================================
+   CATALOGUE MULTIPLATEFORME
+   ========================================================= */
+
+.dse-catalogue {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  color: #153550;
+}
+
+.dse-catalogue[hidden] {
+  display: none;
+}
+
+.dse-catalogue-titre {
+  margin: 0 0 24px;
+  font-size: 1.6rem;
+}
+
+.dse-catalogue-outils {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dse-recherche-label,
+.dse-filtre label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dse-recherche-champ,
+.dse-filtre select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #b9c7d3;
+  border-radius: 8px;
+}
+
+.dse-recherche-champ:focus-visible,
+.dse-filtre select:focus-visible,
+.dse-catalogue button:focus-visible,
+.dse-catalogue a:focus-visible {
+  outline: 3px solid #0d9188;
+  outline-offset: 2px;
+}
+
+.dse-filtres {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.dse-bouton-secondaire,
+.dse-pagination button,
+.dse-carte-lies {
+  padding: 10px 14px;
+  font: inherit;
+  color: #153550;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #b9c7d3;
+  border-radius: 8px;
+}
+
+.dse-bouton-secondaire:disabled,
+.dse-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dse-catalogue-compteur {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: #596d80;
+}
+
+.dse-cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.dse-carte {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #dbe4ec;
+  border-radius: 12px;
+}
+
+.dse-carte-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  background: #eaf2f6;
+}
+
+.dse-carte-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dse-carte-sans-media {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #0d9188;
+}
+
+.dse-carte-corps {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+  padding: 16px;
+}
+
+.dse-carte-corps p,
+.dse-carte-corps ul {
+  margin: 0;
+}
+
+.dse-carte-type {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #0d9188;
+}
+
+.dse-carte-titre {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.dse-carte-titre a,
+.dse-carte-lien {
+  color: inherit;
+}
+
+.dse-carte-resume {
+  font-size: 0.92rem;
+  color: #416176;
+}
+
+.dse-carte-etiquettes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.dse-carte-etiquettes li {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  background: #eaf2f6;
+  border-radius: 999px;
+}
+
+.dse-carte-prix {
+  font-weight: 700;
+}
+
+.dse-carte-disponibilite,
+.dse-carte-plateformes {
+  font-size: 0.85rem;
+  color: #596d80;
+}
+
+.dse-carte-lies {
+  align-self: flex-start;
+  margin-top: auto;
+  font-size: 0.85rem;
+}
+
+.dse-carte-liste-lies {
+  padding-left: 18px;
+  font-size: 0.88rem;
+}
+
+.dse-catalogue-vide,
+.dse-catalogue-chargement {
+  padding: 32px 0;
+  text-align: center;
+  color: #596d80;
+}
+
+.dse-pagination {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+@media (max-width: 600px) {
+  .dse-catalogue {
+    padding: 24px 16px;
+  }
+
+  .dse-cartes {
+    grid-template-columns: 1fr;
+  }
+}

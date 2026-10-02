@@ -555,6 +555,13 @@ function rendreSitePublic({
             `
         }
 
+        <section
+          class="dse-catalogue"
+          data-dse-catalogue
+          aria-label="Catalogue"
+          hidden
+        ></section>
+
       </main>
 
     </div>
