@@ -272,7 +272,7 @@ test("lecture des sites : domaines et portail par variable de repli", () => {
 
   delete process.env.DSE_CATALOGUE_PORTAIL_SITE_IDS;
 
-  assert.deepEqual(sites[0], { id: "4", titre: "DemainSite Ecosystème", domaines: ["dseco.fr"], actif: true, valide: true, portail: true });
+  assert.deepEqual(sites[0], { id: "4", titre: "DemainSite Ecosystème", domaines: ["dseco.fr"], actif: true, valide: true, statutColonne: false, statutId: null, portail: true });
 });
 
 /* ---------- Provisionneur (planification pure) ---------- */

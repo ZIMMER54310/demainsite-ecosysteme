@@ -1,5 +1,6 @@
 "use strict";
 const dse = require("../shared/dse");
+const statutsSite = require("../shared/statuts-site");
 const resoudreur = require("../shared/resolveur-domaine");
 const builderSource = require("../shared/builder-source");
 
@@ -35,13 +36,13 @@ module.exports = async function (context, req) {
       return k && String(f[k]) === String(r.site.id) && String(f.URL || "/").trim() === "/" &&
         lookupOui(f, /^OBJ_x002d_ACTIF/) && lookupOui(f, /^OBJ_x002d_VALIDE/);
     });
-    const etat = pageAccueilPrete ? "normal" : "construction";
+    const etat = statutsSite.etatPublic(r.statut.rendu, pageAccueilPrete);
     const nom = r.site.titre || null;
 
     return dse.reponseJson(context, req, 200, {
       succes: true,
       donnees: {
-        id: String(r.site.id),
+        id: etat === "normal" ? String(r.site.id) : null,
         nom,
         domaines: [domaine],
         etat,

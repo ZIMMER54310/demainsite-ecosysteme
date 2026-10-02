@@ -779,3 +779,13 @@ body.dse-public .dse-public-card {
     grid-template-columns: 1fr;
   }
 }
+
+.dse-public-soustitre {
+  margin: 14px auto 0;
+  max-width: 470px;
+  color: #34495e;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.dse-public-soustitre + .dse-public-message { margin-top: 14px; }

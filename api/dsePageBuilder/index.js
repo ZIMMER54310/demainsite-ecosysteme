@@ -22,6 +22,8 @@ async function contexteDomaine(req) {
   const r = await resoudreur.resoudreDomaine(domaine);
   if (r.type === "construction") return { site: null, construction: true };
   if (r.type !== "site") throw dse.creerErreur("DSE-API-SITE-ININTROUVABLE", 404, "Domaine inconnu");
+  // Le vrai contenu n'est jamais servi hors statut Actif (ou transition avant provisionnement des statuts).
+  if (!["actif", "transition"].includes(r.statut.rendu)) return { site: null, mode: r.statut.rendu };
   return { site: { id: String(r.site.id) } };
 }
 
@@ -29,8 +31,8 @@ function fabrique(construire) {
   return async function (context, req) {
     const id = dse.correlationId(req);
     try {
-      const { site, construction } = await contexteDomaine(req);
-      const donnees = construction ? { mode: "construction", sections: [] } : construire({ donnees: await source.obtenirDonnees(), site, req });
+      const { site, construction, mode } = await contexteDomaine(req);
+      const donnees = construction || mode ? { mode: mode || "construction", sections: [] } : construire({ donnees: await source.obtenirDonnees(), site, req });
       dse.reponseJson(context, req, 200, { succes: true, donnees, meta: meta(id) }, id);
     } catch (e) {
       context.log.error(`[DSE ${id}] ${e.codeDse || e.message}`);

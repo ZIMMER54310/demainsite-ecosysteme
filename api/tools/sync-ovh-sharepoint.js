@@ -84,7 +84,16 @@ const parTitre = (liste, titre) => liste.items.find((i) => String(i.fields.Title
     const dejaLie = sitesFrais.find((i) => (i.fields[nomDom] || []).some((v) => String(v.LookupId) === domId));
     if (dejaLie) { console.log(`SKIP site deja lie a ${s.domaine} (ID ${dejaLie.id})`); continue; }
     const client = s.clientId || (dom.fields && lien(dom.fields, /^OBJ_x002d_CLIENT$/)) || defauts.client;
+    // Statut initial Construction (ID natif) quand OBJ-SITES-STATUT est provisionnee ; sinon le moteur traite le site en construction.
+    const champsStatut = {};
+    const listeStatut = listes.find((x) => x.displayName === "OBJ-SITES-STATUT");
+    if (listeStatut) {
+      const sts = await dse.collecter(token, `/sites/${site.id}/lists/${listeStatut.id}/items?$expand=fields&$top=100`);
+      const construction = sts.find((i) => String(i.fields.CODE || "").toUpperCase() === "CONSTRUCTION");
+      if (construction) champsStatut.OBJ_x002d_SITES_x002d_STATUTLookupId = String(construction.id);
+    }
     const nouveau = await ecrire(L["OBJ-SITE-PUBLIC"], {
+      ...champsStatut,
       Title: s.domaine,
       OBJ_x002d_CLIENTLookupId: client,
       [`${nomDom}@odata.type`]: "Collection(Edm.Int32)",

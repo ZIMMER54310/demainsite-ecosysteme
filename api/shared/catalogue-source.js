@@ -11,6 +11,7 @@
  */
 
 const dse = require("./dse");
+const statutsSite = require("./statuts-site");
 const catalogue = require("./catalogue");
 
 const LISTES_CONTENU = {
@@ -108,6 +109,10 @@ function lireSites(elements) {
       .filter(Boolean);
 
     const marque = catalogue.champ(el, ["PORTAILCATALOGUE", "PORTAIL"]);
+    const colonneStatut = (el._colonnes || []).find(
+      (c) => c.lookup && catalogue.cleChamp(c.displayName || c.name).includes("SITESSTATUT")
+    );
+    const lienStatut = colonneStatut ? el.relations?.[colonneStatut.displayName || colonneStatut.name] : null;
 
     return {
       id: el.id,
@@ -115,6 +120,8 @@ function lireSites(elements) {
       domaines,
       actif: catalogue.etatOui(el, catalogue.ALIAS.actif),
       valide: catalogue.etatOui(el, catalogue.ALIAS.valide),
+      statutColonne: Boolean(colonneStatut),
+      statutId: lienStatut?.id ?? null,
       portail: marque !== null ? catalogue.vrai(marque) : portailsEnvironnement().includes(el.id)
     };
   });
@@ -157,6 +164,21 @@ async function chargerDonnees() {
     elements[type] = liste ? nettoyer(await lireElements(token, siteGraph.id, liste, cacheTitres)) : [];
   }
 
+  let statuts = null;
+  const listeStatuts = dse.trouverListe(listes, statutsSite.LISTE_STATUTS);
+  if (listeStatuts) {
+    statuts = new Map();
+    for (const el of await lireElements(token, siteGraph.id, listeStatuts, cacheTitres)) {
+      statuts.set(el.id, {
+        id: el.id,
+        titre: catalogue.titreElement(el) || null,
+        code: catalogue.champ(el, ["CODE"]),
+        actif: catalogue.etatOui(el, catalogue.ALIAS.actif),
+        valide: catalogue.etatOui(el, catalogue.ALIAS.valide)
+      });
+    }
+  }
+
   const referentiels = {};
 
   for (const [kind, noms] of Object.entries(LISTES_REFERENTIEL)) {
@@ -166,7 +188,7 @@ async function chargerDonnees() {
       : null;
   }
 
-  return { sites, elements, referentiels, disponibles };
+  return { sites, elements, referentiels, disponibles, statuts };
 }
 
 /* Cache memoire court : evite de relire SharePoint a chaque frappe de recherche. */
@@ -186,6 +208,7 @@ async function obtenirIndex() {
       .then((donnees) => {
         const index = catalogue.construireIndex(donnees);
         index.disponibles = donnees.disponibles;
+        index.statuts = donnees.statuts;
         cache = { le: Date.now(), index };
         return index;
       })

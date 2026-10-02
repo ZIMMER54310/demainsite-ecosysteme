@@ -5,6 +5,7 @@
 const dse = require("./dse");
 const catalogue = require("./catalogue");
 const catalogueSource = require("./catalogue-source");
+const statutsSite = require("./statuts-site");
 const { lireDomainesSharePoint } = require("./domaines");
 
 let cacheDomaines = null;
@@ -21,13 +22,18 @@ async function domainesDeclares() {
   try { return await enCours; } catch (e) { if (cacheDomaines) return cacheDomaines.liste; throw e; }
 }
 
-// -> { type: "site", site } | { type: "construction", domaine } | { type: "inconnu" }
+// -> { type: "site", site, statut } | { type: "construction", domaine } | { type: "inconnu" }
 async function resoudreDomaine(brut) {
   const domaine = dse.normaliserDomaine(brut);
   if (!domaine || !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domaine)) return { type: "invalide" };
 
-  const site = catalogue.siteDuDomaine(await catalogueSource.obtenirIndex(), domaine);
-  if (site) return { type: "site", site, domaine };
+  const index = await catalogueSource.obtenirIndex();
+  const site = catalogue.siteDuDomaine(index, domaine);
+  if (site) {
+    const statut = statutsSite.decider(site, index.statuts);
+    if (statut.anomalie) console.warn(`[DSE] anomalie statut site ${site.id} : ${statut.anomalie}`);
+    return { type: "site", site, domaine, statut };
+  }
 
   const declare = (await domainesDeclares()).some((d) => d.domaine === domaine && d.actif && d.valide);
   return declare ? { type: "construction", domaine } : { type: "inconnu", domaine };

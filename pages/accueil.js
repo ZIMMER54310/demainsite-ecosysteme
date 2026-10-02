@@ -14,6 +14,7 @@ import {
 import { rendreFooter } from "../modules/footer/footer.js";
 import { rendreBuilder, STYLES_BUILDER } from "../modules/builder/rendu.js";
 import { apiGet } from "../js/api.js";
+import { pageStatut } from "../modules/statut/statuts.js";
 
 /* =========================================================
    OUTILS
@@ -68,24 +69,31 @@ function texteSharePoint(value) {
    PAGE PUBLIQUE PAR DEFAUT
    ========================================================= */
 
-function pageConstruction(site) {
+function pageStatutSite(etat, site) {
   const nom = String(site?.nom || "").trim();
+  const domaine = String(site?.domaines?.[0] || "").trim();
+  const page = pageStatut(etat);
 
   return pagePublique({
-    titre: "Site en construction",
-    message:
-      (nom && nom !== String(site?.domaines?.[0] || "") ? `${nom} sera prochainement disponible.` : "Ce site sera prochainement disponible."),
-    etat: "construction",
-    marque: nom || String(site?.domaines?.[0] || "").trim() || "Site en construction",
+    titre: page.titre,
+    sousTitre: page.sousTitre,
+    message: page.message,
+    etat,
+    marque: nom && nom !== domaine ? nom : "",
     recherche: false
   });
 }
 
+function pageConstruction(site) {
+  return pageStatutSite("construction", site);
+}
+
 function pagePublique({
   titre,
+  sousTitre = "",
   message,
   etat = "indisponible",
-  marque = "DemainSite Ecosystème",
+  marque = "",
   recherche = true
 }) {
   const icone =
@@ -103,8 +111,7 @@ function pagePublique({
         <section class="dse-public-card">
 
           <div class="dse-public-marque">
-            <div class="dse-public-logo">DS</div>
-            <span>${escapeHtml(marque)}</span>
+            ${marque ? `<span>${escapeHtml(marque)}</span>` : ""}
           </div>
 
           <div class="dse-public-icone">
@@ -115,9 +122,8 @@ function pagePublique({
             ${escapeHtml(titre)}
           </h1>
 
-          <p class="dse-public-message">
-            ${escapeHtml(message)}
-          </p>
+          ${sousTitre ? `<p class="dse-public-soustitre">${escapeHtml(sousTitre)}</p>` : ""}
+          ${message ? `<p class="dse-public-message">${escapeHtml(message)}</p>` : ""}
 
           ${recherche ? `<form
             class="dse-domain-search"
@@ -700,11 +706,7 @@ export async function accueilPage(domaine) {
     normaliserDomaine(domaine);
 
   if (!domaineCourant) {
-    return pagePublique({
-      titre: "Domaine non disponible",
-      message:
-        "Aucun site actif n'est associé à cette adresse."
-    });
+    return pageStatutSite("inconnu");
   }
 
   try {
@@ -727,16 +729,12 @@ export async function accueilPage(domaine) {
       site?.siteId ??
       site?.siteID;
 
-    if (site?.etat === "construction") {
-      return pageConstruction(site);
+    if (site?.etat && site.etat !== "normal") {
+      return pageStatutSite(site.etat, site);
     }
 
     if (!siteId) {
-      return pagePublique({
-        titre: "Domaine non disponible",
-        message:
-          "Aucun site actif n'est associé à cette adresse."
-      });
+      return pageStatutSite("inconnu");
     }
 
     /* -----------------------------------------------------
@@ -836,10 +834,6 @@ export async function accueilPage(domaine) {
       error
     );
 
-    return pagePublique({
-      titre: "Domaine non disponible",
-      message:
-        "Aucun site actif n'est associé à cette adresse."
-    });
+    return pageStatutSite("inconnu");
   }
 }
