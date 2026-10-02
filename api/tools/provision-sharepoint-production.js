@@ -249,19 +249,20 @@ async function semer(token, siteId) {
 
   for (const [type, p] of Object.entries(PILOTES)) {
     const existants = await elementsDe(token, siteId, etat.ids[p.liste]);
-    const champs = { NOTE_x002d_COURTE: "Contenu initial DSE, à compléter avant publication." };
+    const note = "Contenu initial DSE, à compléter avant publication.";
+    const champs = p.liste === "OBJ-CATALOGUE" ? { NOTES: note } : { NOTE_x002d_COURTE: note };
     const nomPlateformes = champLookup(etat, p.liste, "OBJ-SITE-PUBLIC");
 
     if (p.liste === "OBJ-CATALOGUE") {
       champs.ACTIF = true;
       champs.VALIDER = false;
-      champs.NOM_x002d_PRODUIT = p.titre;
+      champs.NOMPRODUIT = p.titre;
     } else {
       champs[`${champLookup(etat, p.liste, "OBJ-ACTIF")}LookupId`] = 1;
       champs[`${champLookup(etat, p.liste, "OBJ-VALIDE")}LookupId`] = 2;
     }
 
-    champs[`${nomPlateformes}@odata.type`] = "Collection(Edm.Int32)";
+    champs[`${nomPlateformes}LookupId@odata.type`] = "Collection(Edm.Int32)";
     champs[`${nomPlateformes}LookupId`] = p.sites.map(Number);
 
     const dispo = await reference("OBJ-DISPONIBILITE", "Disponible");
@@ -272,11 +273,11 @@ async function semer(token, siteId) {
     if (vis) champs[`${champLookup(etat, p.liste, "OBJ-VISIBILITE")}LookupId`] = Number(vis);
     if (cat) {
       const n = champLookup(etat, p.liste, "OBJ-CATEGORIE");
-      champs[`${n}@odata.type`] = "Collection(Edm.Int32)"; champs[`${n}LookupId`] = [Number(cat)];
+      champs[`${n}LookupId@odata.type`] = "Collection(Edm.Int32)"; champs[`${n}LookupId`] = [Number(cat)];
     }
     if (th) {
       const n = champLookup(etat, p.liste, "OBJ-THEME");
-      champs[`${n}@odata.type`] = "Collection(Edm.Int32)"; champs[`${n}LookupId`] = [Number(th)];
+      champs[`${n}LookupId@odata.type`] = "Collection(Edm.Int32)"; champs[`${n}LookupId`] = [Number(th)];
     }
 
     const avant = existants.length;
