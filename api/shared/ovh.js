@@ -38,7 +38,7 @@ async function appel(methode, chemin, corps) {
     signal: AbortSignal.timeout(20000)
   });
   const texte = await r.text();
-  if (!r.ok) throw new Error(`OVH ${methode} ${chemin} -> ${r.status}`);
+  if (!r.ok) throw new Error(`OVH ${methode} ${chemin} -> ${r.status}${r.status === 400 ? " " + texte.slice(0, 160) : ""}`);
   return texte ? JSON.parse(texte) : null;
 }
 
@@ -80,7 +80,7 @@ function calculerPlanDns(zone, ip, apexA, wwwRecs) {
 async function planDns(zone, ip) {
   const apexA = await enregistrements(zone, "A", "");
   const www = [...(await enregistrements(zone, "CNAME", "www")), ...(await enregistrements(zone, "A", "www"))];
-  return { actions: calculerPlanDns(zone, ip, apexA, www), existants: [...apexA, ...www] };
+  return { actions: calculerPlanDns(zone, ip, apexA, www), existants: [...apexA, ...www], ip };
 }
 
 // Applique le plan. Sauvegarde (rollback) des enregistrements supprimes, puis cree le nouvel
@@ -97,10 +97,16 @@ async function appliquerDns(zone, plan, dossierSauvegarde) {
   for (const a of actions) {
     // Un CNAME ne peut coexister avec un A : on supprime d'abord les anciens.
     for (const id of a.ids) await appel("DELETE", `/domain/zone/${zone}/record/${id}`);
-    await appel("POST", `/domain/zone/${zone}/record`, { fieldType: a.type, subDomain: a.sousDomaine, target: a.cible, ttl: 300 });
+    try {
+      await appel("POST", `/domain/zone/${zone}/record`, { fieldType: a.type, subDomain: a.sousDomaine, target: a.cible, ttl: 300 });
+    } catch (e) {
+      // Un CNAME est refuse si le sous-domaine porte deja d'autres donnees (TXT) : repli sur un A.
+      if (a.type !== "CNAME" || !plan.ip || !/CNAME and other data/.test(e.message)) throw e;
+      await appel("POST", `/domain/zone/${zone}/record`, { fieldType: "A", subDomain: a.sousDomaine, target: plan.ip, ttl: 300 });
+    }
   }
   await appel("POST", `/domain/zone/${zone}/refresh`);
   return fichier;
 }
 
-module.exports = { configure, zoneExiste, planDns, appliquerDns, calculerPlanDns };
+module.exports = { appel, configure, zoneExiste, planDns, appliquerDns, calculerPlanDns };

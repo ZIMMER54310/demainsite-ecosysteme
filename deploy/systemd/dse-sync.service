@@ -1,0 +1,8 @@
+[Unit]
+Description=DSE synchronisation domaines SharePoint -> DNS/Nginx/HTTPS
+After=network-online.target dse-api.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ubuntu/dse/demainsite-ecosysteme/api
+ExecStart=/usr/bin/node tools/sync-domaines.js --nginx --https --tous

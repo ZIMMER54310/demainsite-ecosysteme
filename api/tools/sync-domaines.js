@@ -29,11 +29,22 @@ const inconnus = argsBrutes.filter((a) => !CONNUS.has(a) && a !== "--nouveaux" &
 const log = (m) => console.log(`[${new Date().toISOString()}] ${m}`);
 const fichierConf = (d) => `/etc/nginx/conf.d/dse-${d}.conf`;
 
+// Interroge les serveurs faisant autorite (evite les caches de propagation) ; repli sur le resolveur systeme.
+async function resolveur(d) {
+  try {
+    const ns = await dns.resolveNs(d);
+    const ips = (await Promise.all(ns.map((n) => dns.resolve4(n).catch(() => [])))).flat();
+    if (ips.length) { const r = new dns.Resolver({ timeout: 4000, tries: 2 }); r.setServers(ips); return r; }
+  } catch (_) { /* repli */ }
+  return dns;
+}
+
 async function dnsPointeVersVps(d) {
   try {
-    const a = await dns.resolve4(d);
+    const r = await resolveur(d);
+    const a = await r.resolve4(d);
     if (!a.includes(VPS_IP)) return false;
-    const w = await dns.resolve4("www." + d).catch(() => []);
+    const w = await r.resolve4("www." + d).catch(() => []);
     return w.includes(VPS_IP);
   } catch (_) { return false; }
 }

@@ -1,8 +1,7 @@
 "use strict";
 
 const dse = require("../shared/dse");
-const catalogue = require("../shared/catalogue");
-const catalogueSource = require("../shared/catalogue-source");
+const resoudreur = require("../shared/resolveur-domaine");
 const builder = require("../shared/builder");
 const source = require("../shared/builder-source");
 
@@ -20,18 +19,18 @@ async function contexteDomaine(req) {
     throw dse.creerErreur("DSE-API-DOMAINE-INVALIDE", 400, "Domaine invalide");
   }
 
-  const index = await catalogueSource.obtenirIndex();
-  const site = catalogue.siteDuDomaine(index, domaine);
-  if (!site) throw dse.creerErreur("DSE-API-SITE-ININTROUVABLE", 404, "Domaine inconnu");
-  return { site: { id: String(site.id) } };
+  const r = await resoudreur.resoudreDomaine(domaine);
+  if (r.type === "construction") return { site: null, construction: true };
+  if (r.type !== "site") throw dse.creerErreur("DSE-API-SITE-ININTROUVABLE", 404, "Domaine inconnu");
+  return { site: { id: String(r.site.id) } };
 }
 
 function fabrique(construire) {
   return async function (context, req) {
     const id = dse.correlationId(req);
     try {
-      const { site } = await contexteDomaine(req);
-      const donnees = construire({ donnees: await source.obtenirDonnees(), site, req });
+      const { site, construction } = await contexteDomaine(req);
+      const donnees = construction ? { mode: "construction", sections: [] } : construire({ donnees: await source.obtenirDonnees(), site, req });
       dse.reponseJson(context, req, 200, { succes: true, donnees, meta: meta(id) }, id);
     } catch (e) {
       context.log.error(`[DSE ${id}] ${e.codeDse || e.message}`);

@@ -79,7 +79,7 @@ server {
     }
 
     if ($host = www.${d}) {
-        return 301 http://${d}$request_uri;
+        return 301 https://${d}$request_uri;
     }
 
     location / {
