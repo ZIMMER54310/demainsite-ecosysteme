@@ -77,3 +77,5 @@ Flux : SharePoint (domaines actifs/valides, lecture seule) → DNS OVH → Nginx
 ## Test d'accès SharePoint app-only
 
 `npm run test:sharepoint-access` : obtient un jeton avec l'identité applicative API DSE (variables `DSE_*`), vérifie le Client ID, lit le site et les listes. **Lecture seule**, ne montre ni secret ni jeton. Code de sortie 1 en cas d'échec.
+
+**Nouveaux domaines** : `node tools/sync-domaines.js --nouveaux` (lecture seule) liste ce qui reste à configurer et les commandes par domaine.

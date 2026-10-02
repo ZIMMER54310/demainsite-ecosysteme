@@ -8,6 +8,7 @@
 //   sudo node tools/sync-domaines.js --https       obtient les certificats (si DNS OK) via certbot
 //   node tools/sync-domaines.js --dns              applique le DNS OVH (necessite OVH_APP_KEY/OVH_APP_SECRET/OVH_CONSUMER_KEY)
 //   --domaine=exemple.fr                           limite STRICTEMENT a ce domaine (doit exister dans SharePoint)
+//   --nouveaux                                     liste (lecture seule) les domaines restant a configurer
 //   --tous                                         requis pour modifier plusieurs domaines d'un coup (sans --domaine)
 // Les modes --dns/--nginx/--https exigent --domaine=x ou --tous. Options inconnues : refus.
 require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") });
@@ -24,7 +25,7 @@ const argsBrutes = process.argv.slice(2);
 const arg = (n) => argsBrutes.includes(n);
 const argDomaine = argsBrutes.find((a) => a.startsWith("--domaine"));
 const filtre = argDomaine === undefined ? undefined : (argDomaine.startsWith("--domaine=") ? argDomaine.slice(10) : "");
-const inconnus = argsBrutes.filter((a) => !CONNUS.has(a) && !a.startsWith("--domaine") && a !== "--tous");
+const inconnus = argsBrutes.filter((a) => !CONNUS.has(a) && a !== "--nouveaux" && !a.startsWith("--domaine") && a !== "--tous");
 const log = (m) => console.log(`[${new Date().toISOString()}] ${m}`);
 const fichierConf = (d) => `/etc/nginx/conf.d/dse-${d}.conf`;
 
@@ -43,7 +44,7 @@ const certificatExiste = (d, nginx) =>
 
 (async () => {
   log("DEBUT sync-domaines");
-  if (inconnus.length) throw new Error(`Option(s) inconnue(s) : ${inconnus.join(" ")} (options : --domaine=x --dns --nginx --https --tous)`);
+  if (inconnus.length) throw new Error(`Option(s) inconnue(s) : ${inconnus.join(" ")} (options : --nouveaux --domaine=x --dns --nginx --https --tous)`);
   const ecriture = [...CONNUS].some(arg);
   const actifs = (await lireDomainesSharePoint()).filter((d) => d.actif && d.valide);
   const sel = selectionner(actifs, { filtre, ecriture, tous: arg("--tous") });
@@ -133,6 +134,12 @@ const certificatExiste = (d, nginx) =>
   for (const r of rapport) console.log(`${c(r.domaine, 24)}| ${c(r.dns, 14)}| ${c(r.nginx, 9)}| ${r.https}`);
   console.log("");
   for (const r of rapport) r.actions.forEach((a) => console.log(`[${r.domaine}] ${a}`));
+  if (arg("--nouveaux")) {
+    const aFaire = rapport.filter((x) => [x.dns, x.nginx, x.https].some((v) => !/^OK/.test(v)));
+    console.log("\nNOUVEAUX DOMAINES (a traiter un par un, jamais en bloc) :");
+    if (!aFaire.length) console.log("  aucun : tout est a jour");
+    for (const x of aFaire) console.log(`  ${x.domaine} : sync-domaines.js --domaine=${x.domaine} --dns ; sudo ... --nginx ; (apres propagation DNS) sudo ... --https`);
+  }
   if (!ecriture) console.log("\nMode PLAN : rien n'a ete modifie.");
   log("FIN sync-domaines - TERMINE");
 })().catch((e) => { console.error("ECHEC sync :", e.message); process.exit(2); });
