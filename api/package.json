@@ -10,6 +10,7 @@
     "check": "node tests/check-syntax.js",
     "test": "node tests/unit.js",
     "smoke": "node tests/smoke.js",
+    "test:sharepoint-access": "node tools/test-sharepoint-access.js",
     "audit:domaines": "node tests/audit-domaines.js"
   },
   "engines": {
