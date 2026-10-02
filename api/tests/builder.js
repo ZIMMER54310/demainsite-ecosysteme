@@ -1,0 +1,154 @@
+"use strict";
+
+const assert = require("node:assert/strict");
+const path = require("node:path");
+const { pathToFileURL } = require("node:url");
+const B = require("../shared/builder");
+
+const front = (f) => import(pathToFileURL(path.join(__dirname, "..", "..", "modules", f)).href);
+const OUI = { id: "1", titre: "OUI" };
+const NON = { id: "2", titre: "NON" };
+const el = (id, configuration = {}, relations = {}, etat = [1, 1]) => ({
+  id: String(id), configuration, relations: { "OBJ-ACTIF": etat[0] === 1 ? OUI : NON, "OBJ-VALIDE": etat[1] === 1 ? OUI : NON, ...relations }
+});
+const lien = (id, titre = null) => ({ id: String(id), titre });
+
+function donneesBase(extra = {}) {
+  return {
+    pages: [el(10, { URL: "/" }, { "OBJ-SITE-PUBLIC": lien(1) }), el(20, { URL: "/" }, { "OBJ-SITE-PUBLIC": lien(2) })],
+    sections: [el(100, { "ORDRE-AFFICHAGE": 20 }, { "OBJ-PAGES-SITE": lien(10) }), el(101, { "ORDRE-AFFICHAGE": 10 }, { "OBJ-PAGES-SITE": lien(10) }),
+      el(102, {}, { "OBJ-PAGES-SITE": lien(10) }, [1, 2]), el(200, {}, { "OBJ-PAGES-SITE": lien(20) })],
+    lignes: [el(1000, {}, { "OBJ-SECTION-SITE": lien(100), "OBJ-LIGNE-STRUCTURE": lien(1, "50-50") }),
+      el(1001, {}, { "OBJ-SECTION-SITE": lien(101), "OBJ-LIGNE-STRUCTURE": lien(1, "100") }),
+      el(1002, {}, { "OBJ-SECTION-SITE": lien(101) }, [2, 1]), el(1200, {}, { "OBJ-SECTION-SITE": lien(200) })],
+    colonnes: [el(5000, {}, { "OBJ-LIGNE-SITE": lien(1000) }), el(5001, {}, { "OBJ-LIGNE-SITE": lien(1000) }),
+      el(5002, {}, { "OBJ-LIGNE-SITE": lien(1001) }), el(5003, {}, { "OBJ-LIGNE-SITE": lien(1001) }), el(5200, {}, { "OBJ-LIGNE-SITE": lien(1200) })],
+    types: ["TITRE", "TEXTE", "HERO", "IMAGE", "CATALOGUE"].map((t, i) => el(i + 1, { Title: t })),
+    modules: [
+      el(7000, { "ORDRE-AFFICHAGE": 1 }, { "OBJ-COLONNE-SITE": lien(5002), OBJMODULESITEPUBLICTYPE: lien(1, "TITRE") }),
+      el(7001, {}, { "OBJ-COLONNE-SITE": lien(5000), OBJMODULESITEPUBLICTYPE: lien(2, "TEXTE") }),
+      el(7002, {}, { "OBJ-COLONNE-SITE": lien(5003), OBJMODULESITEPUBLICTYPE: lien(4, "IMAGE") }),
+      el(7003, { "VISIBLE-MOBILE": false }, { "OBJ-COLONNE-SITE": lien(5001), OBJMODULESITEPUBLICTYPE: lien(1, "TITRE") }),
+      el(7200, {}, { "OBJ-COLONNE-SITE": lien(5200), OBJMODULESITEPUBLICTYPE: lien(1, "TITRE") })
+    ],
+    modeles: [], presets: [], responsifs: [], medias: [], couleurs: [], polices: [],
+    contenus: {
+      "OBJ-MODULE-TITRE": [el(1, { TEXTE: "Bonjour", "ORDRE-AFFICHAGE": 1 }, { "OBJ-MODULE-SITE-PUBLIC": lien(7000) }),
+        el(2, { TEXTE: "Mobile" }, { "OBJ-MODULE-SITE-PUBLIC": lien(7003) }), el(3, { TEXTE: "AUTRE SITE" }, { "OBJ-MODULE-SITE-PUBLIC": lien(7200) })],
+      "OBJ-MODULE-TEXTE": [el(4, { "TEXTE-ENRICHI": '<p onclick="x()">Salut <script>alert(1)</script><a href="javascript:alert(1)">m</a></p>' }, { "OBJ-MODULE-SITE-PUBLIC": lien(7001) })],
+      "OBJ-MODULE-IMAGE": []
+    },
+    ...extra
+  };
+}
+const site1 = { id: "1" };
+const site2 = { id: "2" };
+const aplatir = (c) => c.sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((k) => k.modules)));
+
+async function main() {
+  // Hierarchie, ordre, elements non valides ou inactifs, colonne vide, module sans contenu.
+  const c = B.composerPage(donneesBase(), site1);
+  assert.equal(c.mode, "builder");
+  assert.equal(c.sections.length, 2, "section non validee ignoree");
+  assert.equal(c.sections[0].lignes.length, 1, "ligne inactive ignoree");
+  assert.deepEqual(c.sections[1].lignes[0].colonnes.map((k) => k.largeur), [50, 50], "largeurs deduites de la structure");
+  assert.equal(c.sections[0].lignes[0].colonnes[0].modules[0].contenu[0].champs.TEXTE, "Bonjour");
+  assert.equal(c.sections[0].lignes[0].colonnes[1].modules.length, 1, "module sans contenu conserve cote donnees");
+
+  // Isolation entre domaines.
+  const autre = B.composerPage(donneesBase(), site2);
+  assert.equal(aplatir(autre).every((m) => m.contenu.every((x) => x.champs.TEXTE !== "Bonjour")), true);
+  assert.equal(B.composerPage(donneesBase(), site2, { pageId: "10" }).mode, "historique", "page d'un autre site refusee");
+  assert.equal(B.composerPage(donneesBase(), { id: "99" }).mode, "historique");
+
+  // Compatibilite ancien mode : composition non validee => historique.
+  const d = donneesBase();
+  d.sections.forEach((s) => { s.relations["OBJ-VALIDE"] = NON; });
+  assert.equal(B.composerPage(d, site1).mode, "historique");
+  const page = donneesBase();
+  page.pages[0].relations["OBJ-VALIDE"] = NON;
+  assert.equal(B.composerPage(page, site1).mode, "historique");
+
+  // Visibilite par appareil.
+  const mobile = B.composerPage(donneesBase(), site1, { appareil: "mobile" });
+  assert.equal(aplatir(mobile).length, aplatir(c).length - 1);
+
+  // Styles : liste blanche uniquement, couleur validee, jamais de CSS arbitraire.
+  const presets = [el(300, { "TAILLE-TEXTE": 18, "PADDING-HAUT": 12, "MARGE-BAS": 9999, "POIDS-POLICE": 700 }, { "OBJ-COULEUR-TEXTE": lien(40), "OBJ-COULEUR-FOND": lien(41), "OBJ-POLICE": lien(50) })];
+  const couleurs = [el(40, { "VALEUR-HEX": "#112233" }), el(41, { "VALEUR-HEX": "red;background:url(x)" })];
+  const polices = [el(50, { FAMILLE: "SERIF" })];
+  const dStyle = donneesBase({ presets, couleurs, polices });
+  dStyle.modules[1].relations["OBJ-STYLE-PRESET"] = lien(300);
+  const styleModule = aplatir(B.composerPage(dStyle, site1)).find((m) => m.style.tailleTexte);
+  assert.equal(styleModule.style.couleurTexte, "#112233");
+  assert.equal(styleModule.style.couleurFond, undefined, "couleur invalide refusee");
+  assert.equal(styleModule.style.marge.bas, 400, "valeur bornee");
+  assert.equal(styleModule.style.police, "SERIF");
+
+  // Responsive.
+  dStyle.responsifs = [el(400, { "TAILLE-TEXTE": 12, MASQUE: false }, { "OBJ-STYLE-PRESET": lien(300), "OBJ-APPAREIL": lien(3, "MOBILE") })];
+  assert.equal(aplatir(B.composerPage(dStyle, site1)).find((m) => m.style.tailleTexte).responsive.MOBILE.tailleTexte, 12);
+
+  // Modeles globaux : synchronisation selective, surcharge locale, modele non valide jamais applique.
+  const modeles = [el(900, { "SYNCHRONISE-CONTENU": true, "SYNCHRONISE-DESIGN": false }, { "OBJ-MODULE-SITE-PUBLIC": lien(7000), "OBJ-SITE-PUBLIC": [lien(1)] })];
+  const dMod = donneesBase({ modeles });
+  dMod.modules[1].relations["OBJ-MODELE-BUILDER"] = lien(900);
+  dMod.modules[1].configuration["SYNCHRONISE-CONTENU"] = true;
+  dMod.modules[1].relations.OBJMODULESITEPUBLICTYPE = lien(1, "TITRE");
+  const sync = aplatir(B.composerPage(dMod, site1)).find((m) => m.global);
+  assert.ok(sync && sync.contenu[0].champs.TEXTE === "Bonjour", "contenu synchronise depuis le modele");
+  dMod.modules[1].configuration["SYNCHRONISE-CONTENU"] = false;
+  assert.equal(aplatir(B.composerPage(dMod, site1)).some((m) => m.global), false, "surcharge locale");
+  dMod.modules[1].configuration["SYNCHRONISE-CONTENU"] = true;
+  dMod.modeles[0].relations["OBJ-VALIDE"] = NON;
+  assert.equal(aplatir(B.composerPage(dMod, site1)).some((m) => m.global), false, "modele non valide ignore");
+  assert.equal(B.listerModeles(dMod, site1).length, 0);
+  assert.deepEqual(B.listerTypes(donneesBase()).sort(), ["CATALOGUE", "HERO", "IMAGE", "TEXTE", "TITRE"]);
+
+  // Media absent / invalide : aucun media expose.
+  const dMedia = donneesBase({ medias: [el(60, { Title: "x" }, {}, [1, 2])] });
+  dMedia.contenus["OBJ-MODULE-IMAGE"] = [el(9, {}, { "OBJ-MODULE-SITE-PUBLIC": lien(7002), "OBJ-MEDIA": lien(60) })];
+  assert.deepEqual(aplatir(B.composerPage(dMedia, site1)).find((m) => m.type === "IMAGE").contenu[0].media, []);
+
+  /* ---------- Front ---------- */
+  const rendu = await front("builder/rendu.js");
+  const styles = await front("builder/styles.js");
+  const { nettoyerHtml } = await front("texte/nettoyer.js");
+
+  const html = rendu.rendreBuilder(c, { apiBase: "/api/v1" });
+  assert.match(html, /Bonjour/);
+  assert.doesNotMatch(html, /<script|onclick|javascript:/i);
+  assert.doesNotMatch(html, /OBJ-|SharePoint|data-id|7000/);
+
+  assert.equal(rendu.rendreBuilder({ mode: "historique", sections: [] }), "", "fallback historique");
+  assert.equal(rendu.rendreBuilder(null), "");
+  assert.equal(rendu.rendreModule({ type: "IMAGE", contenu: [{ champs: {}, media: [] }] }), "", "image sans media");
+  assert.equal(rendu.rendreModule({ type: "INCONNU" }), "");
+
+  // Adaptateurs HERO / FOOTER / CATALOGUE.
+  const mono = (type) => ({ mode: "builder", sections: [{ type: "STANDARD", lignes: [{ colonnes: [{ largeur: 100, modules: [{ type, contenu: [], visibilite: {}, responsive: {}, style: {}, avance: {} }] }] }] }] });
+  const adapteurs = { HERO: () => "<section>HERO-X</section>", FOOTER: () => "<footer>FOOT-X</footer>" };
+  assert.match(rendu.rendreBuilder(mono("HERO"), { adapteurs }), /HERO-X/);
+  assert.match(rendu.rendreBuilder(mono("FOOTER"), { adapteurs }), /FOOT-X/);
+  assert.equal(rendu.rendreBuilder(mono("HERO"), {}), "", "HERO sans donnees => rien");
+  assert.match(rendu.rendreBuilder(mono("PRODUITS"), {}), /data-dse-catalogue-builder="produits"/);
+
+  // Securite : texte enrichi et liens.
+  const propre = nettoyerHtml('<p>a<img src=x onerror=alert(1)></p><a href="javascript:alert(1)">l</a><a href="https://ok.fr/x">ok</a>');
+  assert.doesNotMatch(propre, /img|onerror|javascript:/i);
+  assert.match(propre, /href="https:\/\/ok\.fr\/x"/);
+  const bouton = await front("bouton/bouton.js");
+  assert.equal(bouton.rendreBouton([{ champs: { LIBELLE: "Go", URL: "javascript:alert(1)" } }]), "");
+  assert.match(bouton.rendreBouton([{ champs: { LIBELLE: "Go", URL: "https://ok.fr" } }]), /href="https:\/\/ok\.fr"/);
+  const titre = await front("titre/titre.js");
+  assert.match(titre.rendreTitre([{ champs: { TEXTE: "<b>x</b>" } }]), /&lt;b&gt;/);
+
+  // Styles autorises seulement.
+  const decl = styles.declarations({ couleurTexte: "#fff", couleurFond: "url(x)", tailleTexte: 500, police: "EVIL", position: "fixed" });
+  assert.deepEqual(decl, ["color:#fff", "font-size:96px"]);
+  assert.equal(styles.attributStyle({}), "");
+
+  console.log("OK tests builder");
+}
+
+main().catch((e) => { console.error(e); process.exit(1); });

@@ -8,20 +8,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const dse = require("../shared/dse");
 
-const cle = (n) => String(n ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-const SAUVEGARDES = path.join(__dirname, "..", ".sauvegardes");
-
-/* ---------- Schema cible (declaratif) ---------- */
-
-const T = (name) => ({ name, type: "text" });
-const TL = (name) => ({ name, type: "note" });
-const N = (name) => ({ name, type: "number" });
-const B = (name) => ({ name, type: "bool" });
-const U = (name) => ({ name, type: "text" });
-const L = (name, liste, multiple = false) => ({ name, type: "lookup", liste, multiple });
-
-const ETAT = () => [L("OBJ-ACTIF", "OBJ-ACTIF"), L("OBJ-VALIDE", "OBJ-VALIDE")];
-const ETAT_VEROUILLE = () => [...ETAT(), L("OBJ-VEROUILLE", "OBJ-VEROUILLE")];
+const {
+  cle, T, TL, N, B, U, L, ETAT, ETAT_VEROUILLE, colonneExiste, colonneGraph, lireEtat: lireEtatGenerique,
+  planifierListes, afficherPlan, rolesDuJeton, appliquerPlan, appel, elementsDe, creerSiAbsent, champLookup, sauvegarder, lancer
+} = require("../shared/provisionnement");
 
 const REFERENTIELS = ["OBJ-THEME", "OBJ-CATEGORIE", "OBJ-COLLECTION", "OBJ-FORMAT", "OBJ-VISIBILITE", "OBJ-DISPONIBILITE"];
 
@@ -36,9 +26,6 @@ const CLASSIFS = (extra = {}) => [
   L("OBJ-MEDIA", "OBJ-MEDIA"),
   B("AGREGATION-PORTAIL")
 ];
-
-// Colonnes equivalentes deja utilisees dans DSE : pas de doublon sous un autre nom.
-const EQUIVALENTS = { "OBJ-ACTIF": ["ACTIF"], "OBJ-VALIDE": ["VALIDER", "VALIDE"], "OBJ-DEVISE": ["DEVISE"] };
 
 const LISTES = [
   ...REFERENTIELS.map((nom) => ({ nom, creer: true, colonnes: [...ETAT(), N("ORDRE-AFFICHAGE"), T("NOTE-COURTE")] })),
@@ -75,114 +62,9 @@ const REFERENTIELS_VALEURS = {
   "OBJ-DISPONIBILITE": ["Disponible", "Indisponible"]
 };
 
-/* ---------- Acces Graph (ecriture) ---------- */
-
-async function appel(token, methode, chemin, corps) {
-  const reponse = await fetch(`https://graph.microsoft.com/v1.0${chemin}`, {
-    method: methode,
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
-    body: corps ? JSON.stringify(corps) : undefined
-  });
-  const texte = await reponse.text();
-  let json = null;
-  try { json = texte ? JSON.parse(texte) : null; } catch (_) { /* corps non JSON */ }
-
-  if (!reponse.ok) {
-    const e = new Error(`HTTP ${reponse.status} ${json?.error?.code || ""}`.trim());
-    e.status = reponse.status;
-    throw e;
-  }
-  return json;
-}
-
-function colonneGraph(c, ids) {
-  const base = { name: c.name, indexed: false };
-  switch (c.type) {
-    case "text": return { ...base, text: {} };
-    case "note": return { ...base, text: { allowMultipleLines: true, textType: "plain" } };
-    case "number": return { ...base, number: {} };
-    case "bool": return { ...base, boolean: {}, defaultValue: { value: "false" } };
-    case "lookup": return { ...base, lookup: { listId: ids[c.liste], columnName: "Title", allowMultipleValues: Boolean(c.multiple) } };
-    default: throw new Error(`Type inconnu ${c.type}`);
-  }
-}
-
-/* ---------- Etat existant + plan ---------- */
-
-async function lireEtat(token, siteId) {
-  const listes = await dse.collecter(token, `/sites/${siteId}/lists?$select=id,displayName`);
-  const ids = Object.fromEntries(listes.map((l) => [l.displayName, l.id]));
-  const colonnes = {};
-
-  for (const def of LISTES) {
-    if (ids[def.nom]) {
-      const c = await dse.chargerColonnesListe(token, siteId, ids[def.nom]);
-      colonnes[def.nom] = c.map((x) => ({ name: x.name, displayName: x.displayName, lookup: x.lookup?.listId || null }));
-    }
-  }
-  return { listes, ids, colonnes };
-}
-
-function colonneExiste(etat, liste, c) {
-  const noms = [c.name, ...(EQUIVALENTS[c.name] || [])].map(cle);
-  return (etat.colonnes[liste] || []).some((x) => noms.includes(cle(x.displayName)) || noms.includes(cle(x.name)));
-}
-
-function planifier(etat) {
-  const actions = [];
-  for (const def of LISTES) {
-    const existe = Boolean(etat.ids[def.nom]);
-    if (!existe && def.creer) actions.push({ type: "liste", liste: def.nom });
-    if (!existe && !def.creer) actions.push({ type: "erreur", liste: def.nom, message: "liste requise absente" });
-  }
-  for (const def of LISTES) {
-    for (const c of def.colonnes) {
-      if (!colonneExiste(etat, def.nom, c)) actions.push({ type: "colonne", liste: def.nom, colonne: c });
-    }
-  }
-  return actions;
-}
-
-function afficherPlan(actions) {
-  for (const a of actions) {
-    if (a.type === "liste") console.log(`PLAN creer liste ${a.liste}`);
-    else if (a.type === "colonne") console.log(`PLAN ${a.liste} + ${a.colonne.name} (${a.colonne.type}${a.colonne.liste ? "->" + a.colonne.liste : ""}${a.colonne.multiple ? ", multiple" : ""})`);
-    else console.log(`ERREUR ${a.liste} : ${a.message}`);
-  }
-  console.log(`PLAN total : ${actions.length} action(s)`);
-}
-
-function rolesDuJeton(token) {
-  try { return JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString()).roles || []; } catch (_) { return []; }
-}
-
-/* ---------- Application ---------- */
-
-async function appliquer(token, siteId, etat) {
-  const ids = { ...etat.ids };
-  const actions = planifier(etat);
-  let creees = 0, colonnes = 0;
-
-  for (const a of actions.filter((x) => x.type === "liste")) {
-    console.log(`ACTION creer liste ${a.liste}`);
-    const l = await appel(token, "POST", `/sites/${siteId}/lists`, { displayName: a.liste, list: { template: "genericList" } });
-    ids[a.liste] = l.id;
-    creees++;
-  }
-
-  // Une fois toutes les listes presentes, les lookups croises (article <-> produit <-> service) sont possibles.
-  for (const a of actions.filter((x) => x.type === "colonne")) {
-    console.log(`ACTION ${a.liste} + ${a.colonne.name}`);
-    try {
-      await appel(token, "POST", `/sites/${siteId}/lists/${ids[a.liste]}/columns`, colonneGraph(a.colonne, ids));
-      colonnes++;
-    } catch (e) {
-      console.log(`ERREUR ${a.liste}.${a.colonne.name} : ${e.message}`);
-      throw e;
-    }
-  }
-  return { listes: creees, colonnes };
-}
+const lireEtat = (token, siteId) => lireEtatGenerique(token, siteId, LISTES);
+const planifier = (etat) => planifierListes(etat, LISTES);
+const appliquer = (token, siteId, etat) => appliquerPlan(token, siteId, etat, LISTES);
 
 /* ---------- Donnees pilotes ---------- */
 
@@ -191,23 +73,6 @@ const PILOTES = {
   produit: { liste: "OBJ-CATALOGUE", titre: "Produit initial DSE — contenu de démarrage", sites: ["1", "2", "3"] },
   service: { liste: "OBJ-SERVICE", titre: "Service initial DSE — contenu de démarrage", sites: ["1"] }
 };
-
-async function elementsDe(token, siteId, listId) {
-  return dse.collecter(token, `/sites/${siteId}/lists/${listId}/items?$expand=fields&$top=500`);
-}
-
-async function creerSiAbsent(token, siteId, listId, titre, champs, existants) {
-  const trouve = existants.find((i) => cle(i.fields?.Title) === cle(titre));
-  if (trouve) return trouve.id;
-  console.log(`ACTION creer element « ${titre} »`);
-  const r = await appel(token, "POST", `/sites/${siteId}/lists/${listId}/items`, { fields: { Title: titre, ...champs } });
-  return r.id;
-}
-
-function champLookup(etat, liste, nom) {
-  const c = (etat.colonnes[liste] || []).find((x) => cle(x.displayName) === cle(nom));
-  return c?.name;
-}
 
 async function semer(token, siteId) {
   const etat = await lireEtat(token, siteId);
@@ -331,13 +196,6 @@ async function lireEtatPages(token, siteId) {
 
 /* ---------- Principal ---------- */
 
-function sauvegarder(etat) {
-  fs.mkdirSync(SAUVEGARDES, { recursive: true });
-  const fichier = path.join(SAUVEGARDES, `schema-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
-  fs.writeFileSync(fichier, JSON.stringify({ ids: etat.ids, colonnes: etat.colonnes }, null, 2));
-  return path.relative(path.join(__dirname, ".."), fichier);
-}
-
 async function principal(mode) {
   console.log(`DEBUT provisionnement SharePoint (${mode})`);
   const token = await dse.obtenirJetonGraph();
@@ -385,11 +243,4 @@ async function principal(mode) {
 
 module.exports = { LISTES, REFERENTIELS_VALEURS, PILOTES, planifier, colonneExiste, colonneGraph };
 
-if (require.main === module) {
-  const mode = ["plan", "apply", "seed", "verify"].find((m) => process.argv.includes(`--${m}`));
-  if (!mode) { console.log("Usage : --plan | --apply | --seed | --verify"); process.exit(1); }
-
-  principal(mode)
-    .then((code) => { console.log("FIN\nTERMINÉ"); process.exit(code); })
-    .catch((e) => { console.log(`ERREUR ${e.message}\nFIN\nTERMINÉ (ECHEC)`); process.exit(1); });
-}
+if (require.main === module) lancer(principal, ["plan", "apply", "seed", "verify"]);

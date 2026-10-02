@@ -204,6 +204,7 @@ module.exports = {
   LISTES_REFERENTIEL,
   obtenirIndex,
   viderCache,
+  lireElements,
   lireSites,
   idsReferentielValides
 };

@@ -12,6 +12,8 @@ import {
   trouverContenuModule
 } from "../modules/public/outils.js";
 import { rendreFooter } from "../modules/footer/footer.js";
+import { rendreBuilder, STYLES_BUILDER } from "../modules/builder/rendu.js";
+import { apiGet } from "../js/api.js";
 
 /* =========================================================
    OUTILS
@@ -517,7 +519,8 @@ function rendreSitePublic({
   site,
   page,
   hero,
-  footer
+  footer,
+  composition
 }) {
   const nomSite =
     site?.nom ??
@@ -525,6 +528,23 @@ function rendreSitePublic({
       "Titre OBJ-PAGE-SITE-PUBLIC"
     ] ??
     "DemainSite Ecosystème";
+
+  // Mode Builder : prioritaire uniquement si une composition validee existe ; sinon rendu historique.
+  const builder = rendreBuilder(composition, {
+    apiBase: CONFIG.API_BASE_URL,
+    adapteurs: {
+      HERO: () => (hero ? rendreHero(hero) : ""),
+      FOOTER: () => rendreFooter(footer, { nomSite, nettoyerTexte: texteSharePoint })
+    }
+  });
+
+  if (builder) {
+    return `
+    <div class="dse-site-public" data-site-id="${escapeHtml(site?.id ?? "")}" data-page-id="${escapeHtml(page?.id ?? "")}">
+      <style>${STYLES_BUILDER}</style>
+      <main class="dse-site-public-main">${builder}</main>
+    </div>`;
+  }
 
   return `
     <div
@@ -795,6 +815,10 @@ export async function accueilPage(domaine) {
        RENDU
        ----------------------------------------------------- */
 
+    const composition = await apiGet("/builder/page", { domaine: domaineCourant })
+      .then((r) => r?.donnees ?? null)
+      .catch(() => null);
+
     return rendreSitePublic({
       site:
         siteComplet.site ??
@@ -802,7 +826,8 @@ export async function accueilPage(domaine) {
 
       page,
       hero,
-      footer
+      footer,
+      composition
     });
 
   } catch (error) {

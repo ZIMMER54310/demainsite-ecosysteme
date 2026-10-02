@@ -9,9 +9,7 @@ registerRoute("/", async () => {
 
   mount(page, ["Accueil"]);
 
-  const racineCatalogue = document.querySelector("[data-dse-catalogue]");
-
-  if (racineCatalogue) {
+  for (const racineCatalogue of document.querySelectorAll("[data-dse-catalogue], [data-dse-catalogue-builder]")) {
     monterCatalogue(racineCatalogue, { domaine }).catch(() => {
       racineCatalogue.hidden = true;
     });

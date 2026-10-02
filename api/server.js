@@ -16,6 +16,8 @@ const controleurSiteParId =
 const controleurSiteComplet =
   require("./dseSiteComplet");
 
+const controleurBuilder = require("./dsePageBuilder");
+
 const controleurCatalogue =
   require("./dseCatalogue");
 
@@ -288,6 +290,11 @@ application.get(
     controleurCatalogue.element
   )
 );
+
+application.get("/api/v1/builder/page", adapterControleur(controleurBuilder.page));
+application.get("/api/v1/builder/page/:pageId", adapterControleur(controleurBuilder.pageParId));
+application.get("/api/v1/builder/modeles", adapterControleur(controleurBuilder.modeles));
+application.get("/api/v1/builder/types-modules", adapterControleur(controleurBuilder.typesModules));
 
 application.get(
   "/api/v1/media/:mediaId",

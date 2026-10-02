@@ -8,13 +8,15 @@
   "scripts": {
     "start": "node server.js",
     "check": "node tests/check-syntax.js",
-    "test": "node tests/unit.js && node tests/rendu.js && node tests/catalogue.js",
+    "test": "node tests/unit.js && node tests/rendu.js && node tests/catalogue.js && npm run test:builder",
     "smoke": "node tests/smoke.js",
     "test:rendu-domaines": "node tests/domaines-rendu.js",
     "test:sharepoint-access": "node tools/test-sharepoint-access.js",
     "audit:domaines": "node tests/audit-domaines.js",
     "test:catalogue": "node tests/catalogue.js",
-    "provision:sharepoint-production": "node tools/provision-sharepoint-production.js"
+    "provision:sharepoint-production": "node tools/provision-sharepoint-production.js",
+    "provision:dse-builder": "node tools/provision-dse-builder.js",
+    "test:builder": "node tests/builder.js"
   },
   "engines": {
     "node": ">=22"
