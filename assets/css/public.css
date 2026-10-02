@@ -455,3 +455,31 @@ body.dse-public .dse-public-centre {
 body.dse-public .dse-public-card {
   margin: auto !important;
 }
+/* =========================================================
+   HERO : IMAGE ET BOUTONS
+   ========================================================= */
+
+.dse-hero-media {
+  margin: 0 0 24px;
+}
+
+.dse-hero-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
+.dse-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dse-hero-actions .dse-hero-bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}

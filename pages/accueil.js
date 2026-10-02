@@ -54,6 +54,48 @@ function valeurUrl(value) {
   return "";
 }
 
+/*
+ * N'accepte que les URL navigables sûres :
+ * http(s), mailto, tel, ou chemin relatif au site.
+ * Toute autre forme (javascript:, data:, //hote…) est ignorée.
+ */
+function urlSure(value, { lien = true } = {}) {
+  // Les listes SharePoint ajoutent parfois un libellé d'interface après l'URL.
+  const url =
+    valeurUrl(value).split(/\s+/)[0];
+
+  if (!url) {
+    return "";
+  }
+
+  if (
+    url.startsWith("/") &&
+    !url.startsWith("//")
+  ) {
+    return url;
+  }
+
+  if (lien && url.startsWith("#")) {
+    return url;
+  }
+
+  try {
+    const protocole =
+      new URL(url).protocol;
+
+    const autorises =
+      lien
+        ? ["http:", "https:", "mailto:", "tel:"]
+        : ["http:", "https:"];
+
+    return autorises.includes(protocole)
+      ? url
+      : "";
+  } catch {
+    return "";
+  }
+}
+
 /* =========================================================
    NETTOYAGE DU TEXTE SHAREPOINT
    ========================================================= */
@@ -335,6 +377,136 @@ function trouverHero(page) {
 }
 
 /* =========================================================
+   IMAGE HERO
+   ========================================================= */
+
+const CHAMPS_URL_MEDIA = [
+  "MEDIA-URL",
+  "URL"
+];
+
+function idsRelation(element, relation) {
+  const valeur =
+    element?.relations?.[relation];
+
+  if (!valeur) {
+    return [];
+  }
+
+  return (
+    Array.isArray(valeur)
+      ? valeur
+      : [valeur]
+  )
+    .map((item) => String(item?.id ?? ""))
+    .filter(Boolean);
+}
+
+/*
+ * Priorité 1 : média OBJ-MEDIA hydraté par l'API, retenu
+ * uniquement si son ID natif SharePoint correspond à la
+ * relation OBJ-MEDIA du contenu et s'il expose une URL
+ * exploitable par le navigateur.
+ * Priorité 2 : IMAGE-URL historique, en repli.
+ */
+function imageHero(contenu) {
+  const idsMedia =
+    idsRelation(contenu, "OBJ-MEDIA");
+
+  const medias =
+    (
+      Array.isArray(contenu?.media)
+        ? contenu.media
+        : [contenu?.media]
+    ).filter(Boolean);
+
+  for (const media of medias) {
+    if (!idsMedia.includes(String(media?.id ?? ""))) {
+      continue;
+    }
+
+    const candidats = [
+      media.url,
+      ...CHAMPS_URL_MEDIA.map((champ) =>
+        valeurConfiguration(
+          media.configuration,
+          champ
+        )
+      )
+    ];
+
+    for (const candidat of candidats) {
+      const url =
+        urlSure(candidat, { lien: false });
+
+      if (url) {
+        return {
+          url,
+          source: "OBJ-MEDIA",
+          mediaId: String(media.id)
+        };
+      }
+    }
+  }
+
+  const repli =
+    urlSure(
+      valeurConfiguration(
+        contenu?.configuration,
+        "IMAGE-URL"
+      ),
+      { lien: false }
+    );
+
+  return repli
+    ? { url: repli, source: "IMAGE-URL", mediaId: "" }
+    : null;
+}
+
+/*
+ * Une image inaccessible (ex. lien SharePoint non public)
+ * est retirée proprement au lieu d'afficher une image cassée.
+ */
+document.addEventListener(
+  "error",
+  (event) => {
+    const cible = event.target;
+
+    if (
+      cible instanceof HTMLImageElement &&
+      cible.classList.contains("dse-hero-image")
+    ) {
+      cible
+        .closest(".dse-hero")
+        ?.classList.remove("dse-hero--avec-image");
+
+      cible
+        .closest(".dse-hero-media")
+        ?.remove();
+    }
+  },
+  true
+);
+
+function rendreBoutonHero(texte, url, variante) {
+  const href =
+    urlSure(url);
+
+  if (!texte || !href) {
+    return "";
+  }
+
+  return `
+      <a
+        class="btn ${variante} dse-hero-bouton"
+        href="${escapeHtml(href)}"
+      >
+        ${escapeHtml(texte)}
+      </a>
+    `;
+}
+
+/* =========================================================
    RENDU HERO
    ========================================================= */
 
@@ -394,37 +566,48 @@ function rendreHero(hero) {
       )
     );
 
-  const boutons = [];
+  const boutons = [
+    rendreBoutonHero(
+      bouton1Texte,
+      bouton1Url,
+      "btn-primary"
+    ),
+    rendreBoutonHero(
+      bouton2Texte,
+      bouton2Url,
+      "btn-secondary"
+    )
+  ].filter(Boolean);
 
-  if (
-    bouton1Texte &&
-    bouton1Url
-  ) {
-    boutons.push(`
-      ${escapeHtml(bouton1Url)}
-        ${escapeHtml(bouton1Texte)}
-      </a>
-    `);
-  }
-
-  if (
-    bouton2Texte &&
-    bouton2Url
-  ) {
-    boutons.push(`
-      "
-      >
-        ${escapeHtml(bouton2Texte)}
-      </a>
-    `);
-  }
+  const image =
+    imageHero(hero.contenu);
 
   return `
     <section
-      class="dse-hero"
+      class="dse-hero${image ? " dse-hero--avec-image" : ""}"
       data-module-id="${escapeHtml(hero.module?.id ?? "")}"
       data-contenu-id="${escapeHtml(hero.contenu?.id ?? "")}"
     >
+
+      ${
+        image
+          ? `
+            <figure
+              class="dse-hero-media"
+              data-image-source="${escapeHtml(image.source)}"
+              data-media-id="${escapeHtml(image.mediaId)}"
+            >
+              <img
+                class="dse-hero-image"
+                src="${escapeHtml(image.url)}"
+                alt=""
+                decoding="async"
+                fetchpriority="high"
+              >
+            </figure>
+          `
+          : ""
+      }
 
       <div class="dse-hero-inner">
 

@@ -5,7 +5,7 @@ export class ApiError extends Error {
 }
 
 function buildUrl(path, query = {}) {
-  const url = new URL(`${CONFIG.API_BASE_URL}${path}`);
+  const url = new URL(`${CONFIG.API_BASE_URL}${path}`, window.location.origin);
   Object.entries(query).forEach(([key, value]) => { if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, value); });
   return url;
 }
