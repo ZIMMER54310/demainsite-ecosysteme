@@ -451,6 +451,14 @@ async function collecter(
     page++;
   }
 
+  if (suivant) {
+    throw creerErreur(
+      "DSE-GRAPH-PAGINATION-LIMITE",
+      502,
+      `Microsoft Graph pagination exceeded ${maximumPages} pages`
+    );
+  }
+
   return elements;
 }
 

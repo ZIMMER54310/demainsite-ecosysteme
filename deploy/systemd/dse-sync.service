@@ -5,5 +5,8 @@ After=network-online.target dse-api.service
 [Service]
 Type=oneshot
 WorkingDirectory=/home/ubuntu/dse/demainsite-ecosysteme/api
-ExecStartPre=-/usr/bin/node tools/sync-ovh-sharepoint.js --apply
-ExecStart=/usr/bin/node tools/sync-domaines.js --dns --nginx --https --tous
+EnvironmentFile=-/etc/dse/domain-sync.env
+LogsDirectory=dse
+LogsDirectoryMode=0750
+ExecStart=/usr/bin/node tools/sync-ovh-sharepoint.js --sync
+ExecStartPost=/usr/bin/node tools/sync-domaines.js --dns --nginx --https --tous
