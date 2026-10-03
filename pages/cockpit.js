@@ -2,7 +2,8 @@ import { initializeAuth } from "../js/auth.js";
 import { setState } from "../js/state.js";
 import { getSitesCockpit, getSiteCockpit } from "../services/cockpit.service.js";
 import {
-  rendreConnexion, rendreSansAcces, rendreAccueil, rendreListeSites, rendreVueSite, rendreAssistant
+  rendreConnexion, rendreSansAcces, rendreAccueil, rendreListeSites, rendreVueSite, rendreAssistant,
+  CRITERES_SITES, lienSites
 } from "../modules/cockpit/cockpit.js";
 
 const CLE_ASSISTANT = "dseAssistantSite";
@@ -44,8 +45,9 @@ export async function cockpitSitesPage(params) {
   try {
     const c = await contexte(params);
     if (c.html) return c.html;
-    const sites = (await getSitesCockpit().catch(() => null))?.donnees || [];
-    return rendreListeSites(c.moi, sites);
+    const criteres = Object.fromEntries(CRITERES_SITES.filter((k) => params?.[k]).map((k) => [k, params[k]]));
+    const resultat = (await getSitesCockpit(criteres).catch(() => null))?.donnees || null;
+    return rendreListeSites(c.moi, resultat);
   } catch { return indisponible; }
 }
 
@@ -73,6 +75,15 @@ export async function cockpitAssistantPage(params) {
 }
 
 // Saisies conservees uniquement dans la session du navigateur : aucune ecriture serveur.
+// Filtres de « Mes sites » : l'adresse porte les criteres, l'API applique le filtrage.
+export function activerFiltresSites(racine = document) {
+  const form = racine.querySelector("[data-filtres-sites]");
+  if (!form) return;
+  const appliquer = () => { location.hash = lienSites(Object.fromEntries(new FormData(form))); };
+  form.addEventListener("submit", (ev) => { ev.preventDefault(); appliquer(); });
+  form.addEventListener("change", (ev) => { if (ev.target.tagName === "SELECT") appliquer(); });
+}
+
 export function activerAssistant(racine = document) {
   const form = racine.querySelector("[data-assistant]");
   if (!form) return;

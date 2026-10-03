@@ -1026,3 +1026,7 @@ module.exports =
       );
     }
   };
+// Reutilises par le resume leger du cockpit (meme definition des composants et des pages retenues).
+module.exports.COMPOSANTS_SITE = COMPOSANTS_SITE;
+module.exports.CONTENUS_MODULES = CONTENUS_MODULES;
+module.exports.pagesPourStatut = pagesPourStatut;

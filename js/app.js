@@ -1,4 +1,4 @@
-import { getHealth } from "../services/health.service.js"; import { initializeAuth } from "./auth.js"; import { setState,getState } from "./state.js"; import { registerRoute,startRouter } from "./router.js"; import { renderHeader } from "../components/header.js"; import { renderSidebar } from "../components/sidebar.js"; import { renderBreadcrumb } from "../components/breadcrumb.js"; import { renderFooter } from "../components/footer.js"; import { showAlert,clearAlert } from "../components/alert.js"; import { notFoundPage } from "../pages/generic.js"; import { cockpitAccueilPage,cockpitSitesPage,cockpitSitePage,cockpitAssistantPage,activerAssistant } from "../pages/cockpit.js";
+import { getHealth } from "../services/health.service.js"; import { initializeAuth } from "./auth.js"; import { setState,getState } from "./state.js"; import { registerRoute,startRouter } from "./router.js"; import { renderHeader } from "../components/header.js"; import { renderSidebar } from "../components/sidebar.js"; import { renderBreadcrumb } from "../components/breadcrumb.js"; import { renderFooter } from "../components/footer.js"; import { showAlert,clearAlert } from "../components/alert.js"; import { notFoundPage } from "../pages/generic.js"; import { cockpitAccueilPage,cockpitSitesPage,cockpitSitePage,cockpitAssistantPage,activerAssistant,activerFiltresSites } from "../pages/cockpit.js";
 function mount(page,breadcrumb){ clearAlert(); document.querySelector("#app-sidebar").innerHTML=renderSidebar(); document.querySelector("#app-breadcrumb").innerHTML=renderBreadcrumb(breadcrumb); document.querySelector("#app-page").innerHTML=page; document.querySelector("#app-page").insertAdjacentHTML("beforeend",renderFooter()); document.querySelector("#main").focus(); }
 registerRoute("/", async () => {
   const domaine = window.location.hostname
@@ -16,7 +16,7 @@ registerRoute("/", async () => {
   }
 }); // Cockpit unique : l'interface s'adapte aux droits renvoyes par le serveur.
 registerRoute("/cockpit",async p=>mount(await cockpitAccueilPage(p),["Cockpit"]));
-registerRoute("/cockpit/sites",async p=>mount(await cockpitSitesPage(p),["Cockpit","Mes sites"]));
+registerRoute("/cockpit/sites",async p=>{ mount(await cockpitSitesPage(p),["Cockpit","Mes sites"]); activerFiltresSites(document.querySelector("#app-page")); });
 registerRoute("/cockpit/site/:domaine",async p=>mount(await cockpitSitePage(p),["Cockpit","Mes sites",p.domaine]));
 registerRoute("/cockpit/creer",async p=>{ mount(await cockpitAssistantPage(p),["Cockpit","Créer un site"]); activerAssistant(document.querySelector("#app-page")); });
 // Anciennes entrees : redirigees vers le cockpit unique.

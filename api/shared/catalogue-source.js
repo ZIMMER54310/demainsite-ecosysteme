@@ -107,17 +107,30 @@ function lireSites(elements, mediaListId = null) {
       (c) => c.lookup && catalogue.cleChamp(c.displayName || c.name).includes("NOMDEDOMAINE") &&
         !catalogue.cleChamp(c.displayName || c.name).includes("PRINCIPAL")
     );
-    // Evolution prevue : domaine principal designe explicitement (Lookup ou texte).
+    // Domaine principal designe explicitement : Lookup (ID natif + titre resolu) ou texte.
     const colonnePrincipal = colonnes.find((c) => catalogue.cleChamp(c.displayName || c.name).includes("DOMAINEPRINCIPAL"));
+    const lienPrincipal = colonnePrincipal ? el.relations?.[colonnePrincipal.displayName || colonnePrincipal.name] : null;
     const brutPrincipal = colonnePrincipal ? fields[colonnePrincipal.name] : null;
+    const relationPrincipal = Array.isArray(lienPrincipal) ? lienPrincipal[0] : lienPrincipal;
     const domainePrincipal = dse.normaliserDomaine(
-      Array.isArray(brutPrincipal) ? brutPrincipal[0]?.LookupValue : (brutPrincipal?.LookupValue ?? brutPrincipal)
+      relationPrincipal?.titre ??
+      (Array.isArray(brutPrincipal) ? brutPrincipal[0]?.LookupValue : (brutPrincipal?.LookupValue ?? brutPrincipal))
     ) || null;
+    const domainePrincipalId = colonnePrincipal?.lookup
+      ? (relationPrincipal?.id ?? dse.idsLookupColonne(fields, colonnePrincipal)[0] ?? null)
+      : null;
 
     const valeurs = colonneDomaine ? fields[colonneDomaine.name] : [];
-    const domaines = (Array.isArray(valeurs) ? valeurs : [])
-      .map((v) => dse.normaliserDomaine(v?.LookupValue))
-      .filter(Boolean);
+    const entreesDomaines = (Array.isArray(valeurs) ? valeurs : [])
+      .map((v) => ({ id: v?.LookupId != null ? String(v.LookupId) : null, domaine: dse.normaliserDomaine(v?.LookupValue) }))
+      .filter((v) => v.domaine);
+    const domaines = entreesDomaines.map((v) => v.domaine);
+
+    const colonneClient = colonnes.find(
+      (c) => c.lookup && catalogue.cleChamp(c.displayName || c.name) === "OBJCLIENT"
+    );
+    const lienClient = colonneClient ? el.relations?.[colonneClient.displayName || colonneClient.name] : null;
+    const client = Array.isArray(lienClient) ? lienClient[0] : lienClient;
 
     const marque = catalogue.champ(el, ["PORTAILCATALOGUE", "PORTAIL"]);
     const colonneStatut = colonnes.find(
@@ -142,7 +155,11 @@ function lireSites(elements, mediaListId = null) {
       id: el.id,
       titre: catalogue.titreElement(el) || null,
       domaines,
+      domaineIds: entreesDomaines.map((v) => v.id).filter(Boolean),
       domainePrincipal,
+      domainePrincipalId: domainePrincipalId != null ? String(domainePrincipalId) : null,
+      clientId: client?.id != null ? String(client.id) : null,
+      client: client?.titre || null,
       actif: catalogue.etatOui(el, catalogue.ALIAS.actif),
       valide: catalogue.etatOui(el, catalogue.ALIAS.valide),
       statutColonne: Boolean(colonneStatut),

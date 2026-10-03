@@ -37,3 +37,22 @@
   .cockpit-entete { flex-direction: column; align-items: flex-start; }
 }
 @media (max-width: 400px) { .cockpit-cartes { grid-template-columns: 1fr; } }
+
+/* Mes sites : liste filtrable pour un grand nombre de sites */
+.cockpit-filtres { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .75rem; align-items: end; }
+.cockpit-filtres .cockpit-recherche { grid-column: 1 / -1; }
+.cockpit-champ select { width: 100%; padding: .5rem .6rem; border: 1px solid #cfd8e3; border-radius: 8px; font: inherit; background: #fff; }
+.cockpit-tableau { overflow-x: auto; }
+.cockpit-tableau table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; }
+.cockpit-tableau th, .cockpit-tableau td { padding: .6rem .75rem; text-align: left; border-bottom: 1px solid #e3e8ef; vertical-align: middle; }
+.cockpit-tableau th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted, #5b6b7f); }
+.cockpit-mini-jauge { display: inline-flex; align-items: center; gap: .4rem; min-width: 7rem; }
+.cockpit-mini-jauge .cockpit-jauge { flex: 1; height: .45rem; }
+.cockpit-pagination { display: flex; gap: .75rem; align-items: center; justify-content: center; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 700px) {
+  .cockpit-tableau thead { display: none; }
+  .cockpit-tableau tr { display: grid; gap: .3rem; padding: .6rem 0; border-bottom: 1px solid #e3e8ef; }
+  .cockpit-tableau td { border: 0; padding: .15rem .75rem; }
+  .cockpit-tableau td[data-label]::before { content: attr(data-label) " : "; color: var(--muted, #5b6b7f); font-size: .85rem; }
+}

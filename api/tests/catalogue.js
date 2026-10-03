@@ -273,7 +273,8 @@ test("lecture des sites : domaines et portail par variable de repli", () => {
   delete process.env.DSE_CATALOGUE_PORTAIL_SITE_IDS;
 
   assert.deepEqual(sites[0], {
-    id: "4", titre: "DemainSite Ecosystème", domaines: ["dseco.fr"], domainePrincipal: null, actif: true, valide: true,
+    id: "4", titre: "DemainSite Ecosystème", domaines: ["dseco.fr"], domaineIds: ["9"], domainePrincipal: null, domainePrincipalId: null,
+    clientId: null, client: null, actif: true, valide: true,
     statutColonne: false, statutId: null, pagePubliqueId: null, dateDebut: null, dateFin: null, mediaSituation: null, portail: true
   });
 });
@@ -291,6 +292,26 @@ test("lecture des sites : domaine principal explicite distinct de la colonne dom
   }]);
   assert.deepEqual(sites[0].domaines, ["a.fr", "b.fr"]);
   assert.equal(sites[0].domainePrincipal, "b.fr");
+});
+
+test("lecture des sites : Lookup DOMAINE-PRINCIPAL renvoye par ID seul, client par relation", () => {
+  // Graph ne renvoie qu'un LookupId pour un Lookup simple : le titre vient de la relation resolue.
+  const sites = source.lireSites([{
+    id: "3",
+    configuration: {},
+    relations: { "DOMAINE-PRINCIPAL": { id: "10", titre: "blogs-site.fr" }, "OBJ-CLIENT": { id: "2", titre: "Client X" } },
+    _colonnes: [
+      { name: "D", displayName: "OBJ-NOM DE DOMAINE", lookup: {} },
+      { name: "DOMAINEPRINCIPAL", displayName: "DOMAINE-PRINCIPAL", lookup: {} },
+      { name: "OBJ_x002d_CLIENT", displayName: "OBJ-CLIENT", lookup: {} }
+    ],
+    _fields: { D: [{ LookupId: 10, LookupValue: "blogs-site.fr" }], DOMAINEPRINCIPALLookupId: "10" }
+  }]);
+  assert.equal(sites[0].domainePrincipal, "blogs-site.fr");
+  assert.equal(sites[0].domainePrincipalId, "10");
+  assert.deepEqual(sites[0].domaineIds, ["10"]);
+  assert.equal(sites[0].client, "Client X");
+  assert.equal(sites[0].clientId, "2");
 });
 
 /* ---------- Provisionneur (planification pure) ---------- */

@@ -114,14 +114,76 @@ export function rendreAccueil({ moi, vueCourante = null, domaineCourant = "" }) 
   </section>`;
 }
 
-export function rendreListeSites(moi, sites = []) {
+// Parametres de « Mes sites » transmis par l'adresse ; l'API refait tout le controle.
+export const CRITERES_SITES = Object.freeze(["q", "statut", "client", "progression", "aCompleter", "tri", "sens", "page", "parPage"]);
+
+export function lienSites(criteres = {}, changements = {}) {
+  const p = new URLSearchParams();
+  const tout = { ...criteres, ...changements };
+  for (const cle of CRITERES_SITES) if (tout[cle] !== undefined && tout[cle] !== null && tout[cle] !== "") p.set(cle, tout[cle]);
+  const qs = p.toString();
+  return `#/cockpit/sites${qs ? `?${qs}` : ""}`;
+}
+
+const LIBELLES_TRI = { nom: "Nom", domaine: "Domaine", statut: "Statut", client: "Client", progression: "Progression" };
+const option = (valeur, libelle, choisi) => `<option value="${e(valeur)}"${String(choisi) === String(valeur) ? " selected" : ""}>${e(libelle)}</option>`;
+
+function choix(nom, libelle, tous, valeurs, choisi) {
+  return `<label class="cockpit-champ"><span>${e(libelle)}</span><select name="${nom}">${option("", tous, choisi)}${valeurs.map((v) => typeof v === "string" ? option(v, v, choisi) : option(v.valeur, v.libelle, choisi)).join("")}</select></label>`;
+}
+
+function jaugeCourte(valeur) {
+  if (typeof valeur !== "number") return `<span class="muted">—</span>`;
+  return `<span class="cockpit-mini-jauge" title="${valeur} %"><span class="cockpit-jauge"><span style="width:${Math.max(0, Math.min(100, valeur))}%"></span></span><small>${valeur} %</small></span>`;
+}
+
+export function rendreListeSites(moi, resultat) {
+  const r = Array.isArray(resultat)
+    ? { elements: resultat, total: resultat.length, totalSites: resultat.length, page: 1, pages: 1, compteurs: [], options: {}, criteres: {} }
+    : (resultat || { elements: [], total: 0, totalSites: 0, page: 1, pages: 1, compteurs: [], options: {}, criteres: {} });
+  const c = r.criteres || {};
+  const o = r.options || {};
+  const elements = r.elements || [];
+  const filtre = ["q", "statut", "client", "progression", "aCompleter"].some((k) => c[k]);
+
+  const compteurs = (r.compteurs || []).length ? `<ul class="cockpit-fil cockpit-compteurs">
+    <li class="${c.statut ? "" : "active"}"><a href="${e(lienSites(c, { statut: "", page: "" }))}">Tous · ${Number(r.totalSites) || 0}</a></li>
+    ${r.compteurs.map((x) => `<li class="${c.statut === x.valeur ? "active" : ""}"><a href="${e(lienSites(c, { statut: x.valeur, page: "" }))}">${e(x.valeur)} · ${Number(x.nombre) || 0}</a></li>`).join("")}</ul>` : "";
+
+  const filtres = `<form class="card cockpit-filtres" data-filtres-sites role="search">
+    <label class="cockpit-champ cockpit-recherche"><span>Rechercher</span><input type="search" name="q" value="${e(c.q || "")}" placeholder="Nom du site ou domaine"></label>
+    ${choix("statut", "Statut", "Tous les statuts", o.statuts || [], c.statut)}
+    ${(o.clients || []).length > 1 ? choix("client", "Client", "Tous les clients", o.clients, c.client) : ""}
+    ${choix("progression", "Progression", "Toutes", o.progressions || [], c.progression)}
+    ${choix("aCompleter", "À compléter", "Indifférent", [{ valeur: "tout", libelle: "Au moins une étape" }, ...(o.aCompleter || [])], c.aCompleter)}
+    <label class="cockpit-champ"><span>Trier par</span><select name="tri">${(o.tris || Object.keys(LIBELLES_TRI)).map((t) => option(t, LIBELLES_TRI[t] || t, c.tri || "nom")).join("")}</select></label>
+    <label class="cockpit-champ"><span>Ordre</span><select name="sens">${option("asc", "Croissant", c.sens || "asc")}${option("desc", "Décroissant", c.sens)}</select></label>
+    <div class="cockpit-actions"><button class="btn btn-primary" type="submit">Appliquer</button>${filtre ? `<a class="btn btn-secondary" href="#/cockpit/sites">Réinitialiser</a>` : ""}</div>
+  </form>`;
+
+  const lignes = elements.length ? `<div class="cockpit-tableau"><table>
+    <thead><tr><th>Site</th><th>Domaine principal</th><th>Statut</th><th>Progression</th>${(o.clients || []).length > 1 ? "<th>Client</th>" : ""}<th><span class="sr-only">Action</span></th></tr></thead>
+    <tbody>${elements.map((s) => `<tr>
+      <td data-label="Site"><strong>${e(s.nom || s.domaine || s.acces)}</strong>${(s.alias || []).length ? `<br><small class="muted" title="${e((s.alias || []).join(", "))}">${(s.alias || []).length} alias</small>` : ""}</td>
+      <td data-label="Domaine principal">${s.domaine ? e(s.domaine) : `<span class="cockpit-alerte">Domaine principal à préciser</span>`}</td>
+      <td data-label="Statut">${badgeStatut(s.statut)}</td>
+      <td data-label="Progression">${jaugeCourte(s.progression)}${(s.aCompleter || []).some((x) => x.etat === "attention") ? ` <span title="Un point demande votre attention">⚠</span>` : ""}</td>
+      ${(o.clients || []).length > 1 ? `<td data-label="Client">${e(s.client || "Non renseigné")}</td>` : ""}
+      <td><a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}">Ouvrir</a></td></tr>`).join("")}</tbody></table></div>`
+    : `<div class="empty">${filtre ? "Aucun site ne correspond à votre recherche." : "Aucun site dans votre espace pour le moment."}</div>`;
+
+  const pagination = (r.pages || 1) > 1 ? `<nav class="cockpit-pagination" aria-label="Pages de résultats">
+    ${r.page > 1 ? `<a class="btn btn-secondary" href="${e(lienSites(c, { page: r.page - 1 }))}">← Précédent</a>` : ""}
+    <span>Page ${Number(r.page)} sur ${Number(r.pages)}</span>
+    ${r.page < r.pages ? `<a class="btn btn-secondary" href="${e(lienSites(c, { page: r.page + 1 }))}">Suivant →</a>` : ""}</nav>` : "";
+
   return `<section class="cockpit">
     ${rendreEnteteCockpit(moi)}
-    <h2>Mes sites</h2>
-    ${sites.length ? `<ul class="list">${sites.map((s) => `<li class="list-item cockpit-site">
-      <a href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}"><strong>${e(s.nom || s.domaine || s.acces)}</strong></a>
-      <span class="muted">${e(s.domaine || "Domaine principal à préciser")}</span>${(s.alias || []).length ? ` <span class="muted">· ${(s.alias || []).length} alias</span>` : ""} ${badgeStatut(s.statut)}</li>`).join("")}</ul>`
-      : `<div class="empty">Aucun site dans votre espace pour le moment.</div>`}
+    <h2>Mes sites <span class="muted">(${Number(r.total) || 0}${filtre ? ` sur ${Number(r.totalSites) || 0}` : ""})</span></h2>
+    ${compteurs}
+    ${filtres}
+    ${lignes}
+    ${pagination}
   </section>`;
 }
 

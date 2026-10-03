@@ -38,4 +38,60 @@ function domaineAcces(info, demande = null) {
   return d.principal || [...d.tous].sort()[0] || null;
 }
 
-module.exports = { normaliser, domainesDuSite, sitePrincipal, domaineAcces };
+/*
+ * Regroupe les fiches de sites en veritables sites principaux, par ID SharePoint natifs :
+ * une fiche dont le DOMAINE-PRINCIPAL appartient aux domaines d'UNE autre fiche est un alias
+ * de cette fiche. Une fiche qui porte elle-meme son domaine principal, ou dont le rattachement
+ * est absent ou ambigu, reste un site a part entiere. Rien n'est deduit d'un nom ou d'un ordre.
+ */
+function regrouperSites(sites = []) {
+  const liste = [...sites].filter(Boolean);
+  const parId = new Map(liste.map((s) => [String(s.id), s]));
+  const proprietaires = new Map();
+  for (const s of liste) {
+    for (const d of s.domaineIds || []) {
+      const cle = String(d);
+      if (!proprietaires.has(cle)) proprietaires.set(cle, new Set());
+      proprietaires.get(cle).add(String(s.id));
+    }
+  }
+  const parent = (s) => {
+    if (!s.domainePrincipalId) return null;
+    const ids = [...(proprietaires.get(String(s.domainePrincipalId)) || [])];
+    if (ids.includes(String(s.id)) || ids.length !== 1) return null;
+    return ids[0];
+  };
+  const racine = (s) => {
+    const vus = new Set([String(s.id)]);
+    let courant = s;
+    for (let p = parent(courant); p; p = parent(courant)) {
+      if (vus.has(p) || !parId.has(p)) return s; // cycle ou cible absente : aucune supposition
+      vus.add(p);
+      courant = parId.get(p);
+    }
+    return courant;
+  };
+
+  const groupes = new Map();
+  for (const s of liste) {
+    const r = racine(s);
+    const cle = String(r.id);
+    if (!groupes.has(cle)) groupes.set(cle, { site: r, membres: [] });
+    if (r !== s) groupes.get(cle).membres.push(s);
+  }
+
+  return [...groupes.values()].map(({ site, membres }) => {
+    const domaines = [...new Set([...(site.domaines || []), ...membres.flatMap((m) => m.domaines || [])])];
+    return { ...site, domaines, fiches: [String(site.id), ...membres.map((m) => String(m.id))] };
+  });
+}
+
+// Site principal (groupe) contenant un domaine donne, principal ou alias.
+function groupeParDomaine(groupes, domaine) {
+  const n = normaliser(domaine);
+  if (!n) return null;
+  const trouves = groupes.filter((g) => domainesDuSite(g).tous.includes(n));
+  return trouves.length === 1 ? trouves[0] : null; // domaine ambigu : aucun choix arbitraire
+}
+
+module.exports = { normaliser, domainesDuSite, sitePrincipal, domaineAcces, regrouperSites, groupeParDomaine };

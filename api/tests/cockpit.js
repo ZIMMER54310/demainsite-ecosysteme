@@ -7,7 +7,7 @@ const url = (f) => require("url").pathToFileURL(path.join(__dirname, "..", "..",
 const { calculerDroits } = require("../auth/droits");
 const session = require("../auth/session");
 const entra = require("../auth/fournisseurs/entra");
-const { vueSite, resumeSite } = require("../shared/cockpit");
+const { vueSite, resumeSite, filtrerSites } = require("../shared/cockpit");
 const politique = require("../config/politique-roles.json");
 const perimetre = require("../shared/perimetre");
 
@@ -89,7 +89,12 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   // Filtrage par fonctions
   vue = vueSite({ siteComplet, info, statut: actif, fonctions: politique.roles["6"].fonctions });
   assert.ok(!vue.etapes.some((x) => ["seo", "menu", "footer"].includes(x.cle)));
-  assert.deepStrictEqual(Object.keys(resumeSite(info, actif)).sort(), ["acces", "alias", "domaine", "domaineAPreciser", "nom", "statut"]);
+  assert.deepStrictEqual(Object.keys(resumeSite(info, actif)).sort(), ["acces", "alias", "client", "domaine", "domaineAPreciser", "nom", "statut"]);
+  // Resume avec contenus : meme moteur que la fiche site (progression et etapes identiques)
+  const rProg = resumeSite(info, actif, siteComplet);
+  const vProg = vueSite({ siteComplet, info, statut: actif });
+  assert.strictEqual(rProg.progression, vProg.progression);
+  assert.deepStrictEqual(rProg.aCompleter.map((x) => x.cle), vProg.etapes.filter((x) => x.etat !== "termine").map((x) => x.cle));
 
   // --- Rendu frontend -----------------------------------------------------
   const ui = await import(url("modules/cockpit/cockpit.js"));
@@ -99,7 +104,8 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   vue = vueSite({ siteComplet, info, statut: actif, fonctions: toutes });
   const pages = [
     ui.rendreConnexion({ fournisseurs: [{ id: "entra", libelle: "Compte Microsoft", disponible: true }, { id: "externe", libelle: "Accès sans compte Microsoft", disponible: false }] }),
-    ui.rendreSansAcces(moi), ui.rendreAccueil({ moi, vueCourante: vue }), ui.rendreListeSites(moi, [resumeSite(info, actif)]),
+    ui.rendreSansAcces(moi), ui.rendreAccueil({ moi, vueCourante: vue }),
+    ui.rendreListeSites(moi, filtrerSites([resumeSite(info, actif, siteComplet), { ...resumeSite(info, null), nom: "Autre <b>", client: "Client <b>" }], { statut: "Actif" })),
     ui.rendreVueSite(moi, vue, "menu"),
     ...ui.ETAPES_ASSISTANT.map((_, i) => ui.rendreAssistant({ moi, numero: i + 1, valeurs: { nom: "Test", domaine: "pas un domaine" } }))
   ];
@@ -145,6 +151,57 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.ok(ui.rendreVueSite(moi, vMulti, null).includes("Domaine principal à préciser"));
   const rMulti = resumeSite({ titre: "M", domaines: ["b.fr", "a.fr"], domainePrincipal: "b.fr" }, null);
   assert.strictEqual(rMulti.domaine, "b.fr"); assert.deepStrictEqual(rMulti.alias, ["a.fr"]);
+
+  // --- Mes sites : sites principaux, alias, filtres, pagination ----------
+  // Donnees modelisees sur OBJ-SITE-PUBLIC (IDs natifs) : fiches alias rattachees par DOMAINE-PRINCIPAL.
+  const fiches = [
+    { id: "1", titre: "DemainSite", domaines: ["demainsite.com", "demainsite.fr"], domaineIds: ["2", "1"], domainePrincipal: "demainsite.fr", domainePrincipalId: "1", statutId: "1", client: "C1" },
+    { id: "3", titre: "Blogs-Site", domaines: ["blogs-site.fr"], domaineIds: ["10"], domainePrincipal: "blogs-site.fr", domainePrincipalId: "10", statutId: "1", client: "C1" },
+    { id: "5", titre: "blogs-site.com", domaines: ["blogs-site.com"], domaineIds: ["12"], domainePrincipal: "blogs-site.fr", domainePrincipalId: "10", client: "C1" },
+    { id: "6", titre: "blogs-site.pro", domaines: ["blogs-site.pro"], domaineIds: ["11"], domainePrincipal: "blogs-site.fr", domainePrincipalId: "10", client: "C1" },
+    { id: "8", titre: "carottagexpert.fr", domaines: ["carottagexpert.fr"], domaineIds: ["7"], domainePrincipal: "carottagexpert.fr", domainePrincipalId: "7", statutId: "1", client: "C2" },
+    { id: "7", titre: "carottagexpert.com", domaines: ["carottagexpert.com"], domaineIds: ["8"], domainePrincipal: "carottagexpert.fr", domainePrincipalId: "7", client: "C2" },
+    { id: "20", titre: "Orphelin", domaines: ["orphelin.fr"], domaineIds: ["30"], domainePrincipal: "inconnu.fr", domainePrincipalId: "99" },
+    { id: "21", titre: "Cycle A", domaines: ["a.fr"], domaineIds: ["41"], domainePrincipalId: "42" },
+    { id: "22", titre: "Cycle B", domaines: ["b.fr"], domaineIds: ["42"], domainePrincipalId: "41" }
+  ];
+  const groupes = perimetre.regrouperSites(fiches);
+  const parTitre = Object.fromEntries(groupes.map((g) => [g.titre, g]));
+  assert.ok(!parTitre["blogs-site.com"] && !parTitre["blogs-site.pro"] && !parTitre["carottagexpert.com"], "alias non comptes comme sites");
+  assert.deepStrictEqual(parTitre["Blogs-Site"].fiches, ["3", "5", "6"]);
+  const domBlogs = perimetre.domainesDuSite(parTitre["Blogs-Site"]);
+  assert.strictEqual(domBlogs.principal, "blogs-site.fr"); assert.deepStrictEqual(domBlogs.alias, ["blogs-site.com", "blogs-site.pro"]);
+  assert.strictEqual(perimetre.domainesDuSite(parTitre.DemainSite).principal, "demainsite.fr");
+  assert.ok(parTitre.Orphelin && parTitre["Cycle A"] && parTitre["Cycle B"], "rattachement absent ou cycle : aucune supposition");
+  assert.strictEqual(perimetre.groupeParDomaine(groupes, "blogs-site.pro").titre, "Blogs-Site", "un alias ouvre son site principal");
+  assert.strictEqual(perimetre.groupeParDomaine(groupes, "www.carottagexpert.com").id, "8");
+  assert.strictEqual(perimetre.groupeParDomaine(groupes, "absent.fr"), null);
+
+  const statutsTest = { 1: { titre: "Construction", code: "CONSTRUCTION" }, 2: { titre: "Actif", code: "ACTIF" } };
+  const nombreux = Array.from({ length: 230 }, (_, i) => resumeSite(
+    { titre: `Site ${String(i).padStart(3, "0")}`, domaines: [`site${i}.fr`], domainePrincipal: `site${i}.fr`, client: i % 2 ? "Client B" : "Client A" },
+    i % 10 === 0 ? statutsTest[2] : (i % 7 === 0 ? null : statutsTest[1]),
+    i % 3 ? null : siteComplet));
+  let r = filtrerSites(nombreux, {});
+  assert.strictEqual(r.total, 230); assert.strictEqual(r.elements.length, 25); assert.strictEqual(r.pages, 10);
+  assert.deepStrictEqual(r.options.statuts, ["Actif", "Construction", "Non renseigné"], "statuts issus des donnees");
+  assert.strictEqual(r.compteurs.reduce((n, c) => n + c.nombre, 0), 230);
+  r = filtrerSites(nombreux, { page: "10" }); assert.strictEqual(r.elements.length, 5); assert.strictEqual(r.elements[4].nom, "Site 229");
+  assert.strictEqual(filtrerSites(nombreux, { page: "999" }).page, 10);
+  assert.strictEqual(filtrerSites(nombreux, { parPage: "5000" }).parPage, 100);
+  r = filtrerSites(nombreux, { statut: "Actif" }); assert.strictEqual(r.total, 23); assert.ok(r.elements.every((s) => s.statut.titre === "Actif"));
+  assert.strictEqual(filtrerSites(nombreux, { statut: "Statut futur" }).total, 0);
+  assert.strictEqual(filtrerSites(nombreux, { q: "SITE12" }).total, 11, "recherche insensible a la casse");
+  assert.strictEqual(filtrerSites(nombreux, { client: "Client A" }).total, 115);
+  assert.ok(filtrerSites(nombreux, { aCompleter: "tout" }).elements.every((s) => s.aCompleter.length));
+  assert.ok(filtrerSites(nombreux, { progression: "0-49" }).elements.every((s) => s.progression < 50));
+  r = filtrerSites(nombreux, { tri: "nom", sens: "desc" }); assert.strictEqual(r.elements[0].nom, "Site 229");
+  const alias = filtrerSites([resumeSite(parTitre["Blogs-Site"], statutsTest[1])], { q: "blogs-site.pro" });
+  assert.strictEqual(alias.total, 1, "recherche par alias"); assert.strictEqual(alias.elements[0].domaine, "blogs-site.fr");
+  const htmlListe = ui.rendreListeSites(moi, filtrerSites(nombreux, { page: "2", statut: "Construction" }));
+  assert.ok(htmlListe.includes("Page 2 sur") && htmlListe.includes("Précédent") && htmlListe.includes("data-filtres-sites"));
+  assert.ok(!TERMES_TECHNIQUES.test(htmlListe), "aucun terme technique dans Mes sites");
+  assert.strictEqual(ui.lienSites({ q: "a b", statut: "Actif" }, { page: 3 }), "#/cockpit/sites?q=a+b&statut=Actif&page=3");
 
   console.log("Tests cockpit OK");
 })().catch((e) => { console.error(e); process.exit(1); });

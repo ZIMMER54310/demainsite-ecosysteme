@@ -12,6 +12,7 @@ const droits = require("../auth/droits");
 const cockpit = require("../shared/cockpit");
 const perimetre = require("../shared/perimetre");
 const controleurSiteComplet = require("../dseSiteComplet");
+const resumeSites = require("../shared/resume-sites");
 
 const meta = () => ({ genereLe: new Date().toISOString() });
 
@@ -43,17 +44,26 @@ function normaliserDomaine(valeur) {
 }
 
 /*
+ * Veritables sites principaux visibles : les fiches alias sont regroupees sous leur site
+ * (par ID natifs), et un groupe n'est visible que si son site principal est dans le perimetre.
+ */
+async function groupesAutorises(ctx) {
+  const { sites: index, statuts } = await droits.sitesIndex();
+  const autorises = new Set(ctx.droits.siteIds);
+  const groupes = perimetre.regrouperSites([...index.values()]).filter((g) => autorises.has(String(g.id)));
+  return { groupes, statuts };
+}
+
+/*
  * Domaine d'accueil calcule cote serveur : le domaine utilise s'il appartient au perimetre,
  * sinon le site principal designe ; sinon null (l'utilisateur choisit dans sa liste).
  */
 async function domaineAccueil(req, ctx) {
   if (!ctx.droits.reconnu || !ctx.droits.siteIds.length) return null;
-  const { sites: index } = await droits.sitesIndex();
-  const autorises = [...index.values()].filter((s) => ctx.droits.siteIds.includes(String(s.id)));
+  const { groupes: autorises } = await groupesAutorises(ctx);
   const demande = normaliserDomaine(req.query.domaine || req.get("x-forwarded-host") || req.hostname);
-  const courant = demande && autorises.find((s) => perimetre.domainesDuSite(s).tous.includes(demande));
-  if (courant) return demande;
-  const principal = ctx.droits.sitePrincipalId && autorises.find((s) => String(s.id) === ctx.droits.sitePrincipalId);
+  if (demande && perimetre.groupeParDomaine(autorises, demande)) return demande;
+  const principal = ctx.droits.sitePrincipalId && autorises.find((g) => g.fiches.includes(String(ctx.droits.sitePrincipalId)));
   return principal ? perimetre.domaineAcces(principal) : null;
 }
 
@@ -71,7 +81,7 @@ async function moi(req, res) {
         reconnu: ctx.droits.reconnu,
         role: ctx.droits.role,
         fonctions: ctx.droits.fonctions,
-        nombreSites: ctx.droits.siteIds.length,
+        nombreSites: ctx.droits.reconnu ? (await groupesAutorises(ctx)).groupes.length : 0,
         domaineAccueil: await domaineAccueil(req, ctx),
         fournisseurs: fournisseurs.lister()
       },
@@ -88,13 +98,12 @@ async function sites(req, res) {
     const ctx = await contexteUtilisateur(req);
     if (!ctx) return refuser(res, 401, "Connexion requise.");
     if (!ctx.droits.fonctions.includes("sites")) return refuser(res, 403, "Accès non autorisé.");
-    const { sites: index, statuts } = await droits.sitesIndex();
-    const autorises = new Set(ctx.droits.siteIds);
-    const liste = [...index.values()]
-      .filter((s) => autorises.has(String(s.id)))
-      .map((s) => cockpit.resumeSite(s, statuts.get(String(s.statutId)) || null))
-      .filter((s) => s.acces)
-      .sort((a, b) => String(a.nom).localeCompare(String(b.nom), "fr"));
+    const { groupes, statuts } = await groupesAutorises(ctx);
+    // Resume leger : chaque liste est lue une seule fois pour tous les sites.
+    const resumes = await resumeSites.obtenirResumes();
+    const liste = cockpit.filtrerSites(groupes
+      .map((g) => cockpit.resumeSite(g, statuts.get(String(g.statutId)) || null, resumes.get(String(g.id))))
+      .filter((s) => s.acces), req.query);
     repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] sites", e.message);
@@ -108,7 +117,8 @@ async function site(req, res) {
     if (!ctx) return refuser(res, 401, "Connexion requise.");
     const domaine = normaliserDomaine(req.query.domaine);
     const { sites: index, statuts } = await droits.sitesIndex();
-    const info = domaine ? [...index.values()].find((s) => perimetre.domainesDuSite(s).tous.includes(domaine)) : null;
+    // Un alias ouvre son site principal ; le controle porte sur l'ID natif du site principal.
+    const info = domaine ? perimetre.groupeParDomaine(perimetre.regrouperSites([...index.values()]), domaine) : null;
     // Meme reponse pour un site inexistant ou hors perimetre : rien n'est divulgue.
     if (!info || !ctx.droits.siteIds.includes(String(info.id)) || !ctx.droits.fonctions.includes("sites")) {
       return refuser(res, 404, "Ce site n'est pas disponible dans votre espace.");

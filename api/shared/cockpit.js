@@ -108,16 +108,109 @@ function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT, dom
   };
 }
 
-function resumeSite(info, statut) {
+const NON_RENSEIGNE = "Non renseigné";
+const TRANCHES_PROGRESSION = [
+  { valeur: "0-49", libelle: "Moins de 50 %", min: 0, max: 49 },
+  { valeur: "50-99", libelle: "De 50 à 99 %", min: 50, max: 99 },
+  { valeur: "100", libelle: "Terminé (100 %)", min: 100, max: 100 }
+];
+const TRIS = ["nom", "domaine", "statut", "client", "progression"];
+
+/*
+ * Resume d'un site pour « Mes sites ». Si un resume de contenus est fourni, la progression
+ * est calculee par vueSite : exactement le meme moteur que la fiche site.
+ */
+function resumeSite(info, statut, siteComplet = null) {
   const dom = perimetre.domainesDuSite(info);
-  return {
+  const resume = {
     nom: info?.titre || null,
     domaine: dom.principal,
     alias: dom.alias,
     domaineAPreciser: dom.aPreciser,
     acces: perimetre.domaineAcces(info),
-    statut: statut ? { titre: statut.titre || null, actif: String(statut.code || "").toUpperCase() === "ACTIF" } : null
+    statut: statut ? { titre: statut.titre || null, actif: String(statut.code || "").toUpperCase() === "ACTIF" } : null,
+    client: String(info?.client || "").trim() || null
+  };
+  if (siteComplet) {
+    const vue = vueSite({ siteComplet, info, statut });
+    resume.progression = vue.progression;
+    resume.aCompleter = vue.etapes.filter((e) => e.etat !== ETATS.termine).map((e) => ({ cle: e.cle, libelle: e.libelle, etat: e.etat }));
+  }
+  return resume;
+}
+
+const sansAccent = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+const statutTitre = (s) => s.statut?.titre || NON_RENSEIGNE;
+const clientTitre = (s) => s.client || NON_RENSEIGNE;
+
+function compter(elements, cle) {
+  const m = new Map();
+  for (const e of elements) m.set(cle(e), (m.get(cle(e)) || 0) + 1);
+  return [...m.entries()].map(([valeur, nombre]) => ({ valeur, nombre }))
+    .sort((a, b) => a.valeur.localeCompare(b.valeur, "fr"));
+}
+
+/*
+ * Recherche, filtres, tri et pagination de « Mes sites », cote serveur.
+ * Les choix de statut et de client sont produits a partir des donnees elles-memes.
+ */
+function filtrerSites(resumes, query = {}) {
+  const q = sansAccent(query.q);
+  const statut = String(query.statut || "").trim();
+  const client = String(query.client || "").trim();
+  const tranche = TRANCHES_PROGRESSION.find((t) => t.valeur === String(query.progression || ""));
+  const aCompleter = String(query.aCompleter || "").trim();
+  const tri = TRIS.includes(query.tri) ? query.tri : "nom";
+  const sens = query.sens === "desc" ? -1 : 1;
+  const parPage = Math.min(100, Math.max(1, parseInt(query.parPage, 10) || 25));
+
+  const recherches = resumes.filter((s) => !q ||
+    [s.nom, s.domaine, ...(s.alias || [])].some((v) => sansAccent(v).includes(q)));
+  const etapesDispo = new Map();
+  for (const s of resumes) for (const e of s.aCompleter || []) etapesDispo.set(e.cle, e.libelle);
+
+  const filtres = recherches.filter((s) =>
+    (!statut || statutTitre(s) === statut) &&
+    (!client || clientTitre(s) === client) &&
+    (!tranche || (typeof s.progression === "number" && s.progression >= tranche.min && s.progression <= tranche.max)) &&
+    (!aCompleter || (aCompleter === "tout"
+      ? (s.aCompleter || []).length > 0
+      : (s.aCompleter || []).some((e) => e.cle === aCompleter))));
+
+  const valeur = {
+    nom: (s) => sansAccent(s.nom),
+    domaine: (s) => sansAccent(s.domaine),
+    statut: (s) => sansAccent(statutTitre(s)),
+    client: (s) => sansAccent(clientTitre(s)),
+    progression: (s) => s.progression ?? -1
+  }[tri];
+  filtres.sort((a, b) => {
+    const va = valeur(a);
+    const vb = valeur(b);
+    const c = typeof va === "number" ? va - vb : va.localeCompare(vb, "fr");
+    return c * sens || sansAccent(a.nom).localeCompare(sansAccent(b.nom), "fr");
+  });
+
+  const total = filtres.length;
+  const pages = Math.max(1, Math.ceil(total / parPage));
+  const page = Math.min(pages, Math.max(1, parseInt(query.page, 10) || 1));
+  return {
+    elements: filtres.slice((page - 1) * parPage, page * parPage),
+    total,
+    totalSites: resumes.length,
+    page,
+    pages,
+    parPage,
+    compteurs: compter(resumes, statutTitre),
+    options: {
+      statuts: compter(resumes, statutTitre).map((c) => c.valeur),
+      clients: compter(resumes, clientTitre).map((c) => c.valeur),
+      progressions: TRANCHES_PROGRESSION.map(({ valeur: v, libelle }) => ({ valeur: v, libelle })),
+      aCompleter: [...etapesDispo.entries()].map(([v, libelle]) => ({ valeur: v, libelle })),
+      tris: TRIS
+    },
+    criteres: { q: query.q || "", statut, client, progression: tranche?.valeur || "", aCompleter, tri, sens: sens < 0 ? "desc" : "asc" }
   };
 }
 
-module.exports = { FONCTIONS_COCKPIT, ETATS, vueSite, resumeSite, _test: { publie, lienInterne, titreElement } };
+module.exports = { FONCTIONS_COCKPIT, ETATS, vueSite, resumeSite, filtrerSites, _test: { publie, lienInterne, titreElement } };
