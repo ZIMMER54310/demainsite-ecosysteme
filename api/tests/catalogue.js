@@ -273,9 +273,24 @@ test("lecture des sites : domaines et portail par variable de repli", () => {
   delete process.env.DSE_CATALOGUE_PORTAIL_SITE_IDS;
 
   assert.deepEqual(sites[0], {
-    id: "4", titre: "DemainSite Ecosystème", domaines: ["dseco.fr"], actif: true, valide: true,
+    id: "4", titre: "DemainSite Ecosystème", domaines: ["dseco.fr"], domainePrincipal: null, actif: true, valide: true,
     statutColonne: false, statutId: null, pagePubliqueId: null, dateDebut: null, dateFin: null, mediaSituation: null, portail: true
   });
+});
+
+test("lecture des sites : domaine principal explicite distinct de la colonne domaines", () => {
+  const sites = source.lireSites([{
+    id: "7",
+    configuration: {},
+    relations: {},
+    _colonnes: [
+      { name: "D", displayName: "OBJ-NOM DE DOMAINE", lookup: {} },
+      { name: "P", displayName: "OBJ-NOM DE DOMAINE-PRINCIPAL", lookup: {} }
+    ],
+    _fields: { D: [{ LookupValue: "a.fr" }, { LookupValue: "b.fr" }], P: { LookupValue: "b.fr" } }
+  }]);
+  assert.deepEqual(sites[0].domaines, ["a.fr", "b.fr"]);
+  assert.equal(sites[0].domainePrincipal, "b.fr");
 });
 
 /* ---------- Provisionneur (planification pure) ---------- */

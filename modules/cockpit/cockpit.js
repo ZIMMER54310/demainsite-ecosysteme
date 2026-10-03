@@ -97,13 +97,13 @@ export function rendreEnteteCockpit(moi) {
 }
 
 export function rendreAccueil({ moi, vueCourante = null, domaineCourant = "" }) {
-  const domaine = vueCourante?.domaine || null;
+  const domaine = vueCourante?.acces || vueCourante?.domaine || null;
   return `<section class="cockpit">
     ${rendreEnteteCockpit(moi)}
     <div class="grid cockpit-resume">
       <div class="card"><h2>Site actuel</h2>${vueCourante
         ? `<p class="metric">${e(vueCourante.nom || domaine)}</p><p>${e(domaine)} ${badgeStatut(vueCourante.statut)}</p>`
-        : `<p class="muted">${domaineCourant ? `Le domaine ${e(domaineCourant)} ne fait pas partie de votre espace.` : "Aucun site sélectionné."}</p>`}</div>
+        : `<p class="muted">${domaineCourant ? `Le domaine ${e(domaineCourant)} ne fait pas partie de votre espace. ` : ""}Choisissez un site dans <a href="#/cockpit/sites">Mes sites</a>.</p>`}</div>
       <div class="card"><h2>Configuration</h2>${vueCourante
         ? `<p class="metric">${Number(vueCourante.progression) || 0} %</p><p class="muted">de la configuration terminée</p>`
         : `<p class="muted">Choisissez un site pour suivre sa progression.</p>`}</div>
@@ -119,8 +119,8 @@ export function rendreListeSites(moi, sites = []) {
     ${rendreEnteteCockpit(moi)}
     <h2>Mes sites</h2>
     ${sites.length ? `<ul class="list">${sites.map((s) => `<li class="list-item cockpit-site">
-      <a href="#/cockpit/site/${encodeURIComponent(s.domaine)}"><strong>${e(s.nom || s.domaine)}</strong></a>
-      <span class="muted">${e(s.domaine)}</span> ${badgeStatut(s.statut)}</li>`).join("")}</ul>`
+      <a href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}"><strong>${e(s.nom || s.domaine || s.acces)}</strong></a>
+      <span class="muted">${e(s.domaine || "Domaine principal à préciser")}</span>${(s.alias || []).length ? ` <span class="muted">· ${(s.alias || []).length} alias</span>` : ""} ${badgeStatut(s.statut)}</li>`).join("")}</ul>`
       : `<div class="empty">Aucun site dans votre espace pour le moment.</div>`}
   </section>`;
 }
@@ -129,14 +129,15 @@ export function rendreVueSite(moi, vue, section) {
   return `<section class="cockpit">
     ${rendreEnteteCockpit(moi)}
     <div class="card cockpit-site-titre">
-      <h2>${e(vue.nom || vue.domaine)}</h2>
-      <p>${e(vue.domaine || "")} ${badgeStatut(vue.statut)}</p>
+      <h2>${e(vue.nom || vue.domaine || vue.acces)}</h2>
+      <p>${e(vue.domaine || "Domaine principal à préciser")} ${badgeStatut(vue.statut)}</p>
+      ${(vue.alias || []).length ? `<p class="muted">Alias : ${(vue.alias || []).map(e).join(", ")}</p>` : ""}
       ${vue.statut?.message ? `<p class="muted">${e(vue.statut.message)}</p>` : ""}
     </div>
     <h2>Progression</h2>
     ${rendreProgression(vue, section)}
     <h2>Accès rapides</h2>
-    ${rendreCartes(vue.fonctions, vue.domaine)}
+    ${rendreCartes(vue.fonctions, vue.acces || vue.domaine)}
   </section>`;
 }
 

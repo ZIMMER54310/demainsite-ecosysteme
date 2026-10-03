@@ -33,12 +33,9 @@ export async function cockpitAccueilPage(params) {
   try {
     const c = await contexte(params);
     if (c.html) return c.html;
-    let vueCourante = await vue(domaineCourant());
-    // Hors domaine d'un site du perimetre : premier site autorise.
-    if (!vueCourante && c.moi.fonctions.includes("sites")) {
-      const sites = (await getSitesCockpit().catch(() => null))?.donnees || [];
-      if (sites[0]?.domaine) vueCourante = await vue(sites[0].domaine);
-    }
+    // Domaine d'accueil decide par le serveur (domaine courant du perimetre, sinon site principal).
+    // Aucun choix par ordre : sans site principal designe, l'utilisateur choisit dans sa liste.
+    const vueCourante = c.moi.fonctions.includes("sites") ? await vue(c.moi.domaineAccueil) : null;
     return rendreAccueil({ moi: c.moi, vueCourante, domaineCourant: domaineCourant() });
   } catch { return indisponible; }
 }

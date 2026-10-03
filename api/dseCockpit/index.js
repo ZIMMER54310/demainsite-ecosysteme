@@ -10,6 +10,7 @@ const session = require("../auth/session");
 const fournisseurs = require("../auth/fournisseurs");
 const droits = require("../auth/droits");
 const cockpit = require("../shared/cockpit");
+const perimetre = require("../shared/perimetre");
 const controleurSiteComplet = require("../dseSiteComplet");
 
 const meta = () => ({ genereLe: new Date().toISOString() });
@@ -41,6 +42,21 @@ function normaliserDomaine(valeur) {
   return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d) ? d : null;
 }
 
+/*
+ * Domaine d'accueil calcule cote serveur : le domaine utilise s'il appartient au perimetre,
+ * sinon le site principal designe ; sinon null (l'utilisateur choisit dans sa liste).
+ */
+async function domaineAccueil(req, ctx) {
+  if (!ctx.droits.reconnu || !ctx.droits.siteIds.length) return null;
+  const { sites: index } = await droits.sitesIndex();
+  const autorises = [...index.values()].filter((s) => ctx.droits.siteIds.includes(String(s.id)));
+  const demande = normaliserDomaine(req.query.domaine || req.get("x-forwarded-host") || req.hostname);
+  const courant = demande && autorises.find((s) => perimetre.domainesDuSite(s).tous.includes(demande));
+  if (courant) return demande;
+  const principal = ctx.droits.sitePrincipalId && autorises.find((s) => String(s.id) === ctx.droits.sitePrincipalId);
+  return principal ? perimetre.domaineAcces(principal) : null;
+}
+
 async function moi(req, res) {
   try {
     const ctx = await contexteUtilisateur(req);
@@ -56,6 +72,7 @@ async function moi(req, res) {
         role: ctx.droits.role,
         fonctions: ctx.droits.fonctions,
         nombreSites: ctx.droits.siteIds.length,
+        domaineAccueil: await domaineAccueil(req, ctx),
         fournisseurs: fournisseurs.lister()
       },
       meta: meta()
@@ -76,7 +93,7 @@ async function sites(req, res) {
     const liste = [...index.values()]
       .filter((s) => autorises.has(String(s.id)))
       .map((s) => cockpit.resumeSite(s, statuts.get(String(s.statutId)) || null))
-      .filter((s) => s.domaine)
+      .filter((s) => s.acces)
       .sort((a, b) => String(a.nom).localeCompare(String(b.nom), "fr"));
     repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
   } catch (e) {
@@ -91,7 +108,7 @@ async function site(req, res) {
     if (!ctx) return refuser(res, 401, "Connexion requise.");
     const domaine = normaliserDomaine(req.query.domaine);
     const { sites: index, statuts } = await droits.sitesIndex();
-    const info = domaine ? [...index.values()].find((s) => (s.domaines || []).includes(domaine)) : null;
+    const info = domaine ? [...index.values()].find((s) => perimetre.domainesDuSite(s).tous.includes(domaine)) : null;
     // Meme reponse pour un site inexistant ou hors perimetre : rien n'est divulgue.
     if (!info || !ctx.droits.siteIds.includes(String(info.id)) || !ctx.droits.fonctions.includes("sites")) {
       return refuser(res, 404, "Ce site n'est pas disponible dans votre espace.");
@@ -101,7 +118,8 @@ async function site(req, res) {
       siteComplet,
       info,
       statut: statuts.get(String(info.statutId)) || null,
-      fonctions: ctx.droits.fonctions
+      fonctions: ctx.droits.fonctions,
+      domaineDemande: domaine
     });
     repondre(res, 200, { succes: true, donnees: vue, meta: meta() });
   } catch (e) {

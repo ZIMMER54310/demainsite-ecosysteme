@@ -9,6 +9,7 @@ const session = require("../auth/session");
 const entra = require("../auth/fournisseurs/entra");
 const { vueSite, resumeSite } = require("../shared/cockpit");
 const politique = require("../config/politique-roles.json");
+const perimetre = require("../shared/perimetre");
 
 const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|sharepoint\.com|\bAPI\b/;
 
@@ -88,7 +89,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   // Filtrage par fonctions
   vue = vueSite({ siteComplet, info, statut: actif, fonctions: politique.roles["6"].fonctions });
   assert.ok(!vue.etapes.some((x) => ["seo", "menu", "footer"].includes(x.cle)));
-  assert.deepStrictEqual(Object.keys(resumeSite(info, actif)).sort(), ["domaine", "nom", "statut"]);
+  assert.deepStrictEqual(Object.keys(resumeSite(info, actif)).sort(), ["acces", "alias", "domaine", "domaineAPreciser", "nom", "statut"]);
 
   // --- Rendu frontend -----------------------------------------------------
   const ui = await import(url("modules/cockpit/cockpit.js"));
@@ -120,6 +121,30 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[0], { nom: "X" }), "encours");
   assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[0], { description: "X" }), "attention");
   assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[2], {}), "afaire");
+
+  // --- Client -> site principal -> domaine principal -> alias ------------
+  // Jamais deduit de l'ordre : plusieurs domaines sans designation => a preciser.
+  let dom = perimetre.domainesDuSite({ domaines: ["b.fr", "a.fr"] });
+  assert.strictEqual(dom.principal, null); assert.ok(dom.aPreciser);
+  assert.deepStrictEqual(perimetre.domainesDuSite({ domaines: ["a.fr", "b.fr"] }).principal, null);
+  dom = perimetre.domainesDuSite({ domaines: ["b.fr", "a.fr", "c.fr"], domainePrincipal: "c.fr" });
+  assert.strictEqual(dom.principal, "c.fr"); assert.deepStrictEqual(dom.alias, ["a.fr", "b.fr"]); assert.ok(!dom.aPreciser);
+  assert.strictEqual(perimetre.domainesDuSite({ domaines: ["WWW.Seul.fr"] }).principal, "seul.fr");
+  assert.strictEqual(perimetre.domaineAcces({ domaines: ["b.fr", "a.fr"] }, "b.fr"), "b.fr");
+  assert.strictEqual(perimetre.sitePrincipal({ siteIds: ["4", "9"] }), null);
+  assert.strictEqual(perimetre.sitePrincipal({ siteIds: ["9", "4"], explicite: "9" }), "9");
+  assert.strictEqual(perimetre.sitePrincipal({ siteIds: ["4"], explicite: "99" }), "4");
+  assert.strictEqual(perimetre.sitePrincipal({ siteIds: ["4", "9"], explicite: "99" }), null);
+  d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "admin@ex.fr" }, utilisateurs: [u("1", "admin@ex.fr", "1")] });
+  assert.strictEqual(d.sitePrincipalId, null, "plusieurs sites sans designation");
+  d = calculerDroits({ ...base, clients: [{ id: "2", sitePrincipalId: "11" }], identite: { fournisseur: "entra", sujet: "s", email: "admin@ex.fr" }, utilisateurs: [u("1", "admin@ex.fr", "1")] });
+  assert.strictEqual(d.sitePrincipalId, "11");
+  const vMulti = vueSite({ siteComplet: null, info: { titre: "M", domaines: ["b.fr", "a.fr"] }, statut: null });
+  assert.strictEqual(vMulti.domaine, null);
+  assert.strictEqual(vMulti.etapes.find((x) => x.cle === "domaine").etat, "attention");
+  assert.ok(ui.rendreVueSite(moi, vMulti, null).includes("Domaine principal à préciser"));
+  const rMulti = resumeSite({ titre: "M", domaines: ["b.fr", "a.fr"], domainePrincipal: "b.fr" }, null);
+  assert.strictEqual(rMulti.domaine, "b.fr"); assert.deepStrictEqual(rMulti.alias, ["a.fr"]);
 
   console.log("Tests cockpit OK");
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -11,6 +11,7 @@ const dse = require("../shared/dse");
 const catalogueSource = require("../shared/catalogue-source");
 const politiqueParDefaut = require("../config/politique-roles.json");
 const { FONCTIONS_COCKPIT } = require("../shared/cockpit");
+const perimetre = require("../shared/perimetre");
 
 const DUREE_CACHE_MS = 120000;
 let cache = { valeur: null, expiration: 0, promesse: null };
@@ -18,7 +19,7 @@ let cache = { valeur: null, expiration: 0, promesse: null };
 const minuscule = (v) => String(v || "").trim().toLowerCase();
 
 function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [], sites = [], politique = politiqueParDefaut }) {
-  const aucun = { reconnu: false, role: null, fonctions: [], siteIds: [] };
+  const aucun = { reconnu: false, role: null, fonctions: [], siteIds: [], sitePrincipalId: null };
   if (!identite || !identite.sujet) return aucun;
   const email = minuscule(identite.email);
   const valides = utilisateurs.filter((u) => u.actif && u.valide);
@@ -48,8 +49,10 @@ function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [],
       (utilisateur.clientId && String(s.clientId) === String(utilisateur.clientId))).map((s) => String(s.id));
   } else if (regle) siteIds = sites.filter((s) => attribues.has(String(s.id))).map((s) => String(s.id));
 
+  const client = utilisateur.clientId ? clients.find((c) => String(c.id) === String(utilisateur.clientId)) : null;
   return {
     reconnu: true,
+    sitePrincipalId: perimetre.sitePrincipal({ siteIds, explicite: client?.sitePrincipalId ?? null }),
     role: utilisateur.roleId ? { titre: utilisateur.roleTitre || null } : null,
     fonctions,
     siteIds
@@ -59,7 +62,7 @@ function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [],
 function colonnes(cols) {
   const parListe = (listeId) => cols.find((c) => c.lookup && minuscule(c.lookup.listId) === minuscule(listeId));
   const parNom = (nom) => cols.find((c) => minuscule(c.displayName) === minuscule(nom));
-  return { parListe, parNom };
+  return { parListe, parNom, toutes: cols };
 }
 
 function lookupId(fields, colonne) {
@@ -105,10 +108,14 @@ async function chargerDonnees() {
   });
   const colOid = k.cols.parNom("ENTRA-OBJECT-ID");
   const colMail = k.cols.parNom("ENTRA-EMAIL");
+  const colSitePrincipal = k.cols.toutes.find((c) => c.lookup && minuscule(c.lookup.listId) === minuscule(L.site.id) &&
+    /principal/i.test(String(c.displayName || c.name)));
   const clients = k.items.filter((i) => oui(i.fields || {}, k.cols, L.actif)).map((i) => ({
     id: String(i.id),
     entraObjectId: colOid ? i.fields?.[colOid.name] || null : null,
-    entraEmail: colMail ? i.fields?.[colMail.name] || null : null
+    entraEmail: colMail ? i.fields?.[colMail.name] || null : null,
+    // Evolution prevue : Lookup client -> site principal (colonne dont le nom contient PRINCIPAL).
+    sitePrincipalId: colSitePrincipal ? lookupId(i.fields || {}, colSitePrincipal) : null
   }));
   const liens = li.items.map((i) => {
     const f = i.fields || {};

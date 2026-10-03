@@ -102,8 +102,15 @@ function lireSites(elements, mediaListId = null) {
     const colonnes = el._colonnes || [];
     const fields = el._fields || {};
     const colonneDomaine = (el._colonnes || []).find(
-      (c) => c.lookup && catalogue.cleChamp(c.displayName || c.name).includes("NOMDEDOMAINE")
+      (c) => c.lookup && catalogue.cleChamp(c.displayName || c.name).includes("NOMDEDOMAINE") &&
+        !catalogue.cleChamp(c.displayName || c.name).includes("PRINCIPAL")
     );
+    // Evolution prevue : domaine principal designe explicitement (Lookup ou texte).
+    const colonnePrincipal = colonnes.find((c) => catalogue.cleChamp(c.displayName || c.name).includes("DOMAINEPRINCIPAL"));
+    const brutPrincipal = colonnePrincipal ? fields[colonnePrincipal.name] : null;
+    const domainePrincipal = dse.normaliserDomaine(
+      Array.isArray(brutPrincipal) ? brutPrincipal[0]?.LookupValue : (brutPrincipal?.LookupValue ?? brutPrincipal)
+    ) || null;
 
     const valeurs = colonneDomaine ? fields[colonneDomaine.name] : [];
     const domaines = (Array.isArray(valeurs) ? valeurs : [])
@@ -133,6 +140,7 @@ function lireSites(elements, mediaListId = null) {
       id: el.id,
       titre: catalogue.titreElement(el) || null,
       domaines,
+      domainePrincipal,
       actif: catalogue.etatOui(el, catalogue.ALIAS.actif),
       valide: catalogue.etatOui(el, catalogue.ALIAS.valide),
       statutColonne: Boolean(colonneStatut),

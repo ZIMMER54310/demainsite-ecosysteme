@@ -6,6 +6,7 @@
  * uniquement des libelles d'interface, des etats et des resumes lisibles.
  */
 
+const perimetre = require("./perimetre");
 const FONCTIONS_COCKPIT = [
   "sites", "creer", "pages", "entete", "logo-medias", "menu",
   "footer", "seo", "domaine", "apercu", "suivi"
@@ -61,9 +62,19 @@ function contenus(sc, filtre) {
     .flatMap(([, c]) => (c && c.disponible !== false ? liste(c.donnees) : []));
 }
 
-function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT }) {
+function etatDomaines(dom) {
+  if (!dom.tous.length) return { etat: ETATS.afaire, nombre: 0, resume: [] };
+  const resume = dom.principal ? [`${dom.principal} (principal)`, ...dom.alias] : dom.tous;
+  if (dom.aPreciser) {
+    return { etat: ETATS.attention, nombre: dom.tous.length, resume: resume.slice(0, 6), alerte: "Plusieurs domaines : le domaine principal reste à désigner." };
+  }
+  return { etat: ETATS.termine, nombre: dom.tous.length, resume: resume.slice(0, 6) };
+}
+
+function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT, domaineDemande = null }) {
   const sc = siteComplet || {};
-  const domaines = Array.isArray(info?.domaines) ? info.domaines : [];
+  const dom = perimetre.domainesDuSite(info);
+  const domaines = dom.tous;
   const nom = sc.site?.nom || info?.titre || null;
   const actif = String(statut?.code || "").toUpperCase() === "ACTIF";
   const logo = composant(sc, "logo");
@@ -71,7 +82,7 @@ function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT }) {
 
   const etapes = [
     { cle: "informations", fonction: "sites", libelle: "Informations", ...(nom ? { etat: ETATS.termine, nombre: 1, resume: [nom] } : { etat: ETATS.afaire, nombre: 0, resume: [] }) },
-    { cle: "domaine", fonction: "domaine", libelle: "Domaine", ...(domaines.length ? { etat: ETATS.termine, nombre: domaines.length, resume: domaines.slice(0, 5) } : { etat: ETATS.afaire, nombre: 0, resume: [] }) },
+    { cle: "domaine", fonction: "domaine", libelle: "Domaine", ...etatDomaines(dom) },
     { cle: "identite", fonction: "logo-medias", libelle: "Logo et médias", ...etatElements([...logo, ...medias]) },
     { cle: "entete", fonction: "entete", libelle: "En-tête", ...etatElements(composant(sc, "entete")) },
     { cle: "menu", fonction: "menu", libelle: "Menu", ...etatElements(composant(sc, "menu"), { verifierLiens: true }) },
@@ -85,8 +96,11 @@ function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT }) {
   const terminees = etapes.filter((e) => e.etat === ETATS.termine).length;
   return {
     nom,
-    domaine: domaines[0] || null,
+    domaine: dom.principal,
+    alias: dom.alias,
     domaines,
+    domaineAPreciser: dom.aPreciser,
+    acces: perimetre.domaineAcces(info, domaineDemande),
     statut: statut ? { titre: statut.titre || null, actif, message: statut.noteCourte || null } : null,
     progression: etapes.length ? Math.round((terminees / etapes.length) * 100) : 0,
     etapes: etapes.map(({ fonction, ...e }) => e),
@@ -95,10 +109,13 @@ function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT }) {
 }
 
 function resumeSite(info, statut) {
-  const domaines = Array.isArray(info?.domaines) ? info.domaines : [];
+  const dom = perimetre.domainesDuSite(info);
   return {
     nom: info?.titre || null,
-    domaine: domaines[0] || null,
+    domaine: dom.principal,
+    alias: dom.alias,
+    domaineAPreciser: dom.aPreciser,
+    acces: perimetre.domaineAcces(info),
     statut: statut ? { titre: statut.titre || null, actif: String(statut.code || "").toUpperCase() === "ACTIF" } : null
   };
 }
