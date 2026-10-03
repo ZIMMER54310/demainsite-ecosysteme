@@ -56,3 +56,21 @@
   .cockpit-tableau td { border: 0; padding: .15rem .75rem; }
   .cockpit-tableau td[data-label]::before { content: attr(data-label) " : "; color: var(--muted, #5b6b7f); font-size: .85rem; }
 }
+
+/* Ecriture : apercu, resultat, administration */
+.cockpit-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+.cockpit-edition .form-field { display: flex; flex-direction: column; gap: .25rem; margin-bottom: .75rem; }
+.cockpit-edition input, .cockpit-edition textarea { width: 100%; padding: .5rem; border: 1px solid var(--border, #d0d7de); border-radius: 6px; font: inherit; }
+.cockpit-diff { width: 100%; border-collapse: collapse; margin: .5rem 0; }
+.cockpit-diff th, .cockpit-diff td { border: 1px solid var(--border, #d0d7de); padding: .5rem; text-align: left; vertical-align: top; white-space: pre-wrap; }
+.cockpit-diff td.avant { background: #fff5f5; }
+.cockpit-diff td.apres { background: #f0fff4; }
+.cockpit-resultat.ok { border-left: 4px solid #2da44e; }
+.cockpit-resultat.erreur { border-left: 4px solid #cf222e; }
+.cockpit-admin { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.cockpit-liste { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
+.cockpit-form-inline { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin: .2rem 0; }
+.cockpit-table { width: 100%; border-collapse: collapse; }
+.cockpit-table th, .cockpit-table td { padding: .5rem; border-bottom: 1px solid var(--border, #d0d7de); text-align: left; vertical-align: top; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 700px) { .cockpit-table thead { display: none; } .cockpit-table td { display: block; border: 0; } .cockpit-table tr { display: block; border-bottom: 1px solid var(--border, #d0d7de); } }

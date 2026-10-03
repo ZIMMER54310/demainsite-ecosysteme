@@ -203,5 +203,110 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.ok(!TERMES_TECHNIQUES.test(htmlListe), "aucun terme technique dans Mes sites");
   assert.strictEqual(ui.lienSites({ q: "a b", statut: "Actif" }, { page: 3 }), "#/cockpit/sites?q=a+b&statut=Actif&page=3");
 
+  // --- Ecriture, droits d'administration, refus hors perimetre ---------------
+  const droitsMod = require("../auth/droits");
+  const admin = require("../shared/administration");
+  const ecriture = require("../shared/ecriture");
+  const { origineValide } = require("../dseCockpit")._test;
+
+  // peutAttribuer : jamais au-dessus de soi
+  const dSuper = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "super@ex.fr" }, utilisateurs: [u("1", "super@ex.fr", "1")] });
+  const dClient = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "c", email: "admin@client.fr" }, utilisateurs: [u("5", "admin@client.fr", "3")] });
+  assert.strictEqual(dSuper.portee, "tous"); assert.strictEqual(dSuper.niveau, "administration");
+  assert.strictEqual(dClient.portee, "client"); assert.deepStrictEqual(dClient.clientIds, ["2"]); assert.deepStrictEqual(dClient.siteIds, ["4"]);
+  assert.ok(droitsMod.peutAttribuer(dSuper, "1", politique));
+  assert.ok(!droitsMod.peutAttribuer(dClient, "1", politique), "admin client ne peut pas attribuer Super admin");
+  assert.ok(!droitsMod.peutAttribuer(dClient, "2", politique));
+  assert.ok(droitsMod.peutAttribuer(dClient, "4", politique) && droitsMod.peutAttribuer(dClient, "6", politique));
+
+  // Menu par role
+  const dLecteur = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "l", email: "l@ex.fr" }, utilisateurs: [u("7", "l@ex.fr", "6")], liens: [{ utilisateurId: "7", siteId: "4", actif: true, valide: true }] });
+  const urls = async (d) => (await admin.menu(d)).map((m) => m.url);
+  const origApps = admin.applications;
+  assert.ok((await urls(dSuper)).includes("/cockpit/administration") && (await urls(dSuper)).includes("/cockpit/utilisateurs"));
+  assert.ok(!(await urls(dLecteur)).includes("/cockpit/utilisateurs") && !(await urls(dLecteur)).includes("/cockpit/creer"));
+  assert.deepStrictEqual(await urls({ reconnu: false, fonctions: [] }), ["/cockpit"]);
+
+  // Donnees simulees : 2 clients, refus hors perimetre et elevation
+  const donneesSim = {
+    utilisateurs: [u("1", "super@ex.fr", "1"), u("5", "admin@client.fr", "3"), u("6", "redac@client.fr", "4"), u("8", "autre@client3.fr", "4", { clientId: "3" })],
+    liens: [{ id: "1", utilisateurId: "6", siteId: "4", actif: true, valide: true }, { id: "2", utilisateurId: "8", siteId: "9", actif: true, valide: true }],
+    roles: ["1", "2", "3", "4", "5", "6"].map((id) => ({ id, titre: `Rôle ${id}`, actif: true, valide: true })),
+    structure: { listes: { utilisateur: "LU", lien: "LL", actif: "LA", valide: "LV" }, colonnes: { utilisateurRole: "ROLE", lienUtilisateur: "U", lienSite: "S", lienActif: "A", lienValide: "V" } }
+  };
+  const origDonnees = droitsMod.donneesDroits, origIndex = droitsMod.sitesIndex;
+  droitsMod.donneesDroits = async () => donneesSim;
+  droitsMod.sitesIndex = async () => ({ sites: new Map([["4", { id: "4", titre: "Site A", domaines: ["a.fr"], domainePrincipal: "a.fr", clientId: "2" }], ["9", { id: "9", titre: "Site B", domaines: ["b.fr"], domainePrincipal: "b.fr", clientId: "3" }]]), statuts: new Map() });
+  try {
+    const visibles = admin._test.utilisateursVisibles(dClient, donneesSim).map((x) => x.id).sort();
+    assert.deepStrictEqual(visibles, ["5", "6"], "admin client : jamais un utilisateur d'un autre client");
+    assert.strictEqual(admin._test.utilisateursVisibles(dSuper, donneesSim).length, 4);
+    const R = admin._test.ref;
+    let a = await admin.construireAction(dClient, "changer-role", { utilisateur: R("u", "6"), role: R("r", "1") }, null);
+    assert.ok(a.refus, "elevation refusee");
+    a = await admin.construireAction(dClient, "changer-role", { utilisateur: R("u", "8"), role: R("r", "5") }, null);
+    assert.ok(a.refus, "utilisateur d'un autre client refuse");
+    a = await admin.construireAction(dClient, "changer-role", { utilisateur: R("u", "5"), role: R("r", "4") }, null);
+    assert.ok(a.refus, "pas de modification de son propre role");
+    a = await admin.construireAction(dClient, "changer-role", { utilisateur: R("u", "6"), role: R("r", "5") }, null);
+    assert.ok(a.op && a.op.champs.ROLELookupId === "5" && a.changements.length === 1);
+    a = await admin.construireAction(dClient, "ajouter-acces-site", { utilisateur: R("u", "6"), domaine: "b.fr" }, null);
+    assert.ok(a.refus, "site hors perimetre refuse");
+    a = await admin.construireAction(dClient, "ajouter-acces-site", { utilisateur: R("u", "6"), domaine: "a.fr" }, null);
+    assert.ok(a.refus && /déjà/.test(a.refus), "anti-doublon acces");
+    a = await admin.construireAction(dClient, "creer-utilisateur", { email: "n@client.fr", role: R("r", "4") }, null);
+    assert.ok(a.refus, "creation reservee a la portee tous");
+    a = await admin.construireAction(dSuper, "creer-utilisateur", { email: "redac@client.fr", role: R("r", "4") }, null);
+    assert.ok(a.refus, "anti-doublon e-mail");
+    a = await admin.construireAction(dLecteur, "changer-role", { utilisateur: R("u", "6"), role: R("r", "6") }, null);
+    assert.ok(a.refus, "lecteur refuse");
+    a = await admin.construireAction(dSuper, "supprimer", {}, null);
+    assert.ok(a.refus, "action inconnue refusee");
+  } finally { droitsMod.donneesDroits = origDonnees; droitsMod.sitesIndex = origIndex; }
+  assert.strictEqual(admin.applications, origApps);
+
+  // Validation serveur des valeurs
+  const champs = ecriture.champsModifiables([
+    { name: "Title", displayName: "Titre", text: { maxLength: 20 } },
+    { name: "NoteCourte", displayName: "Note", text: { allowMultipleLines: true } },
+    { name: "ID-SITE", text: {} }, { name: "Ro", readOnly: true, text: {} }, { name: "Riche", text: { allowMultipleLines: true, textType: "richText" } }
+  ]);
+  assert.deepStrictEqual(champs.map((c) => c.nom), ["Title", "NoteCourte"]);
+  assert.ok(champs.every((c) => !c.cle.includes("Title") && !c.cle.includes("Note")), "cles opaques");
+  const [cT, cN] = champs.map((c) => c.cle);
+  assert.ok(ecriture.validerValeurs(champs, { [cT]: "x".repeat(21) }).erreurs.length);
+  assert.ok(ecriture.validerValeurs(champs, { [cT]: "a\nb" }).erreurs.length);
+  assert.ok(ecriture.validerValeurs(champs, { [cT]: "a\u0001" }).erreurs.length);
+  assert.ok(ecriture.validerValeurs(champs, { inconnu: "a" }).erreurs.length);
+  assert.ok(ecriture.validerValeurs(champs, { [cT]: 3 }).erreurs.length);
+  const ok = ecriture.validerValeurs(champs, { [cT]: "  Bonjour ", [cN]: "l1\r\nl2" });
+  assert.deepStrictEqual(ok, { erreurs: [], propres: { Title: "Bonjour", NoteCourte: "l1\nl2" } });
+
+  // Jeton : falsifie, autre utilisateur, operation conservee cote serveur
+  const idA = { fournisseur: "entra", sujet: "A" }, idB = { fournisseur: "entra", sujet: "B" };
+  const { jeton: jetonE } = ecriture.emettreJeton(idA, { type: "modifier", listId: "L", itemId: "1" });
+  assert.ok(!jetonE.includes("\"L\"") && !Buffer.from(jetonE.split(".")[0], "base64url").toString().includes("listId"));
+  assert.ok(ecriture.lireJeton(idA, jetonE).op);
+  assert.ok(ecriture.lireJeton(idB, jetonE).erreur, "jetonE d'un autre utilisateur refuse");
+  assert.ok(ecriture.lireJeton(idA, jetonE.slice(0, -2) + "xx").erreur, "jetonE falsifie refuse");
+  let refuse = await ecriture.executer({ identite: idA, jeton: jetonE, revalider: async () => ({ refus: "Accès non autorisé." }), acteur: "test" });
+  assert.strictEqual(refuse.status, 403, "droits revalides a la confirmation");
+
+  // Origine des POST
+  const req = (origin, host) => ({ get: (h) => ({ origin, host }[h.toLowerCase()]) });
+  assert.ok(origineValide(req("https://dseco.fr", "dseco.fr")));
+  assert.ok(!origineValide(req("https://evil.fr", "dseco.fr")));
+  assert.ok(!origineValide(req("http://dseco.fr", "dseco.fr")));
+  assert.ok(!origineValide(req(undefined, "dseco.fr")));
+
+  // Rendu : aucun terme technique, controles masques selon le niveau
+  const htmlAdmin = ui.rendreAdministration(moi, { nombreSites: 2, sitesParStatut: [{ statut: "Actif", nombre: 2, lien: "/cockpit/sites?statut=Actif" }], problemes: [{ niveau: "critique", titre: "Domaine manquant", lien: "/cockpit/site/a.fr" }], prochaines: [], aCompleter: [], utilisateursParRole: [{ role: "Rédacteur", nombre: 1 }], applications: { disponible: true, liste: [], colonnesManquantes: ["icône"] }, ecrituresRecentes: { disponible: true, liste: [] }, journal: {} });
+  assert.ok(!TERMES_TECHNIQUES.test(htmlAdmin) && htmlAdmin.includes("#/cockpit/site/a.fr"));
+  const htmlEd = ui.rendreEdition(moi, { disponible: true, libelle: "En-tête", site: "Site A", domaine: "a.fr", champs: [{ cle: cT, libelle: "Titre", valeur: "<b>", max: 20 }] }, { composant: "entete" });
+  assert.ok(htmlEd.includes("data-edition") && htmlEd.includes("&lt;b&gt;") && !TERMES_TECHNIQUES.test(htmlEd));
+  assert.ok(ui.rendreApercu({ changements: [{ libelle: "Titre", avant: "a", apres: "b" }] }).includes("data-confirmer"));
+  assert.deepStrictEqual(ui.editionsVisibles({ niveau: "lecture" }, ["entete", "seo"]), []);
+  assert.strictEqual(ui.editionsVisibles({ niveau: "ecriture" }, ["entete"]).length, 1);
+
   console.log("Tests cockpit OK");
 })().catch((e) => { console.error(e); process.exit(1); });

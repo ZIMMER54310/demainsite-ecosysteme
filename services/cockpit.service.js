@@ -1,4 +1,11 @@
-import { apiGet } from "../js/api.js";
+import { apiGet, apiPost } from "../js/api.js";
 export const getMoi = () => apiGet("/moi");
 export const getSitesCockpit = (criteres = {}) => apiGet("/cockpit/sites", criteres);
 export const getSiteCockpit = (domaine) => apiGet("/cockpit/site", { domaine });
+export const getEdition = (domaine, composant) => apiGet("/cockpit/edition", { domaine, composant });
+export const apercuEdition = (domaine, composant, valeurs) => apiPost("/cockpit/edition/apercu", { domaine, composant, valeurs });
+export const confirmerEdition = (jeton) => apiPost("/cockpit/edition/confirmer", { jeton });
+export const getAdminTableau = () => apiGet("/cockpit/admin/tableau");
+export const getAdminUtilisateurs = () => apiGet("/cockpit/admin/utilisateurs");
+export const apercuAdmin = (action, params) => apiPost("/cockpit/admin/apercu", { action, params });
+export const confirmerAdmin = (jeton) => apiPost("/cockpit/admin/confirmer", { jeton });

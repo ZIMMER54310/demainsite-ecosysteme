@@ -13,7 +13,7 @@ const GRAPH_ATTENTE_MAX_MS = 5000;
    REQUETES HTTP
    ========================================================= */
 
-function requete(url, options = {}) {
+function requete(url, options = {}, corps = null) {
   return new Promise((resolve, reject) => {
     const cible =
       url instanceof URL
@@ -73,7 +73,7 @@ function requete(url, options = {}) {
     );
 
     req.on("error", reject);
-    req.end();
+    req.end(corps || undefined);
   });
 }
 
@@ -202,6 +202,37 @@ async function graph(token, pathOuUrl) {
 
 function viderCacheGraph() {
   GRAPH_CACHE.clear();
+}
+
+/*
+ * Ecriture Graph (PATCH/POST uniquement, jamais DELETE) : sans cache, reessais 429/503.
+ * Reservee a la couche d'ecriture du cockpit (shared/ecriture.js).
+ */
+async function graphEcriture(token, methode, chemin, corps) {
+  if (!["PATCH", "POST"].includes(methode)) throw creerErreur("DSE-ECRITURE-METHODE", 500, "Méthode d'écriture refusée");
+  const url = new URL(`https://graph.microsoft.com/v1.0${chemin}`);
+  const donnees = JSON.stringify(corps || {});
+  const options = {
+    method: methode,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(donnees)
+    }
+  };
+  let resultat = await requete(url, options, donnees);
+  for (let t = 0; t < GRAPH_REESSAIS_MAX && (resultat.status === 429 || resultat.status === 503); t++) {
+    const s = Number(resultat.headers["retry-after"]);
+    await new Promise((r) => setTimeout(r, Number.isFinite(s) && s >= 0 ? Math.min(s * 1000, GRAPH_ATTENTE_MAX_MS) : 1000 * (t + 1)));
+    resultat = await requete(url, options, donnees);
+  }
+  if (resultat.status < 200 || resultat.status >= 300) {
+    const erreur = creerErreur("DSE-GRAPH-ECRITURE-REFUSEE", resultat.status, `Microsoft Graph HTTP ${resultat.status}`);
+    erreur.detailGraph = resultat.body?.error?.message || null;
+    throw erreur;
+  }
+  return resultat.body;
 }
 
 async function graphSansCache(
@@ -1593,6 +1624,8 @@ module.exports = {
   obtenirJetonGraph,
   obtenirSiteGraph,
   graph,
+  graphSansCache,
+  graphEcriture,
   viderCacheGraph,
   creerErreur,
 

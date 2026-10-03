@@ -18,8 +18,34 @@ let cache = { valeur: null, expiration: 0, promesse: null };
 
 const minuscule = (v) => String(v || "").trim().toLowerCase();
 
+const RANG_PORTEE = { attribues: 0, client: 1, tous: 2 };
+const RANG_NIVEAU = { lecture: 0, ecriture: 1, administration: 2 };
+
+function regleRole(politique, roleId) {
+  const regle = roleId ? politique.roles?.[String(roleId)] : null;
+  if (!regle) return null;
+  return {
+    portee: Object.hasOwn(RANG_PORTEE, regle.portee) ? regle.portee : "attribues",
+    niveau: Object.hasOwn(RANG_NIVEAU, regle.niveau) ? regle.niveau : "lecture",
+    fonctions: (regle.fonctions || []).filter((f) => FONCTIONS_COCKPIT.includes(f))
+  };
+}
+
+/*
+ * Un role ne peut attribuer qu'un role dont la portee, le niveau ET les fonctions
+ * sont inclus dans les siens : jamais d'elevation de privilege.
+ */
+function peutAttribuer(droitsActeur, roleIdCible, politique = politiqueParDefaut) {
+  const cible = regleRole(politique, roleIdCible);
+  if (!cible || !droitsActeur?.reconnu || !droitsActeur.portee) return false;
+  if (RANG_PORTEE[cible.portee] > RANG_PORTEE[droitsActeur.portee]) return false;
+  if (RANG_NIVEAU[cible.niveau] > RANG_NIVEAU[droitsActeur.niveau]) return false;
+  const miennes = new Set(droitsActeur.fonctions || []);
+  return cible.fonctions.every((f) => miennes.has(f));
+}
+
 function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [], sites = [], politique = politiqueParDefaut }) {
-  const aucun = { reconnu: false, role: null, fonctions: [], siteIds: [], sitePrincipalId: null };
+  const aucun = { reconnu: false, role: null, fonctions: [], siteIds: [], sitePrincipalId: null, clientIds: [], portee: null, niveau: null, utilisateurId: null };
   if (!identite || !identite.sujet) return aucun;
   const email = minuscule(identite.email);
   const valides = utilisateurs.filter((u) => u.actif && u.valide);
@@ -36,26 +62,36 @@ function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [],
   if (candidats.length !== 1) return aucun;
   const utilisateur = candidats[0];
 
-  const regle = utilisateur.roleId ? politique.roles?.[String(utilisateur.roleId)] : null;
-  const fonctions = regle ? (regle.fonctions || []).filter((f) => FONCTIONS_COCKPIT.includes(f)) : [];
+  const regle = regleRole(politique, utilisateur.roleId);
+  const fonctions = regle ? regle.fonctions : [];
   const attribues = new Set(liens
     .filter((l) => l.actif && l.valide && String(l.utilisateurId) === String(utilisateur.id) && l.siteId)
     .map((l) => String(l.siteId)));
+  // Clients du perimetre : client de l'utilisateur, sinon clients des sites qui lui sont attribues.
+  const clientIds = [...new Set([
+    utilisateur.clientId,
+    ...sites.filter((s) => attribues.has(String(s.id))).map((s) => s.clientId)
+  ].filter(Boolean).map(String))];
 
   let siteIds = [];
   if (regle?.portee === "tous") siteIds = sites.map((s) => String(s.id));
   else if (regle?.portee === "client") {
     siteIds = sites.filter((s) => attribues.has(String(s.id)) ||
-      (utilisateur.clientId && String(s.clientId) === String(utilisateur.clientId))).map((s) => String(s.id));
+      (s.clientId && clientIds.includes(String(s.clientId)))).map((s) => String(s.id));
   } else if (regle) siteIds = sites.filter((s) => attribues.has(String(s.id))).map((s) => String(s.id));
 
   const client = utilisateur.clientId ? clients.find((c) => String(c.id) === String(utilisateur.clientId)) : null;
   return {
     reconnu: true,
+    utilisateurId: String(utilisateur.id),
     sitePrincipalId: perimetre.sitePrincipal({ siteIds, explicite: client?.sitePrincipalId ?? null }),
     role: utilisateur.roleId ? { titre: utilisateur.roleTitre || null } : null,
+    roleId: utilisateur.roleId ? String(utilisateur.roleId) : null,
+    portee: regle?.portee || null,
+    niveau: regle?.niveau || null,
     fonctions,
-    siteIds
+    siteIds,
+    clientIds: regle?.portee === "tous" ? clients.map((c) => String(c.id)) : clientIds
   };
 }
 
@@ -86,7 +122,7 @@ async function chargerDonnees() {
     valide: liste("OBJ-VALIDE")
   };
   if (!L.utilisateur || !L.client || !L.role || !L.site) {
-    return { utilisateurs: [], clients: [], liens: [], sites: [] };
+    return { utilisateurs: [], clients: [], liens: [], sites: [], roles: [], structure: null };
   }
   const lire = async (l) => l ? {
     cols: colonnes(await dse.chargerColonnesListe(token, site.id, l.id)),
@@ -94,6 +130,7 @@ async function chargerDonnees() {
   } : { cols: colonnes([]), items: [] };
   const [u, k, r, s, li] = await Promise.all([lire(L.utilisateur), lire(L.client), lire(L.role), lire(L.site), lire(L.lien)]);
   const oui = (f, cols, l) => l ? lookupId(f, cols.parListe(l.id)) === "1" : false;
+  const actifValide = (f, cols) => ({ actif: oui(f, cols, L.actif), valide: oui(f, cols, L.valide) });
   const titresRoles = new Map(r.items.map((i) => [String(i.id), i.fields?.Title || null]));
 
   const utilisateurs = u.items.map((i) => {
@@ -112,6 +149,7 @@ async function chargerDonnees() {
     /principal/i.test(String(c.displayName || c.name)));
   const clients = k.items.filter((i) => oui(i.fields || {}, k.cols, L.actif)).map((i) => ({
     id: String(i.id),
+    titre: String(i.fields?.Title || "").trim() || null,
     entraObjectId: colOid ? i.fields?.[colOid.name] || null : null,
     entraEmail: colMail ? i.fields?.[colMail.name] || null : null,
     // Evolution prevue : Lookup client -> site principal (colonne dont le nom contient PRINCIPAL).
@@ -120,13 +158,28 @@ async function chargerDonnees() {
   const liens = li.items.map((i) => {
     const f = i.fields || {};
     return {
+      id: String(i.id),
       utilisateurId: lookupId(f, li.cols.parListe(L.utilisateur.id)),
       siteId: lookupId(f, li.cols.parListe(L.site.id)),
       actif: oui(f, li.cols, L.actif), valide: oui(f, li.cols, L.valide)
     };
   });
   const sites = s.items.map((i) => ({ id: String(i.id), clientId: lookupId(i.fields || {}, s.cols.parListe(L.client.id)) }));
-  return { utilisateurs, clients, liens, sites };
+  const roles = r.items.map((i) => ({ id: String(i.id), titre: i.fields?.Title || null, ...actifValide(i.fields || {}, r.cols) }));
+  // Structure utile a la couche d'ecriture (noms internes resolus, jamais exposes au navigateur).
+  const structure = {
+    listes: { utilisateur: L.utilisateur.id, lien: L.lien?.id || null, actif: L.actif?.id || null, valide: L.valide?.id || null },
+    colonnes: {
+      utilisateurRole: u.cols.parListe(L.role.id)?.name || null,
+      utilisateurActif: L.actif ? u.cols.parListe(L.actif.id)?.name || null : null,
+      utilisateurValide: L.valide ? u.cols.parListe(L.valide.id)?.name || null : null,
+      lienUtilisateur: li.cols.parListe(L.utilisateur.id)?.name || null,
+      lienSite: li.cols.parListe(L.site.id)?.name || null,
+      lienActif: L.actif ? li.cols.parListe(L.actif.id)?.name || null : null,
+      lienValide: L.valide ? li.cols.parListe(L.valide.id)?.name || null : null
+    }
+  };
+  return { utilisateurs, clients, liens, sites, roles, structure };
 }
 
 async function donneesDroits() {
@@ -149,4 +202,8 @@ async function sitesIndex() {
   return { sites: index.sites, statuts: index.statuts };
 }
 
-module.exports = { calculerDroits, droitsPour, sitesIndex };
+function viderCache() {
+  cache = { valeur: null, expiration: 0, promesse: null };
+}
+
+module.exports = { calculerDroits, droitsPour, sitesIndex, donneesDroits, viderCache, peutAttribuer, regleRole, RANG_PORTEE, RANG_NIVEAU };

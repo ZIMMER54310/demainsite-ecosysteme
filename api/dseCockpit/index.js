@@ -13,6 +13,9 @@ const cockpit = require("../shared/cockpit");
 const perimetre = require("../shared/perimetre");
 const controleurSiteComplet = require("../dseSiteComplet");
 const resumeSites = require("../shared/resume-sites");
+const edition = require("../shared/edition");
+const ecriture = require("../shared/ecriture");
+const administration = require("../shared/administration");
 
 const meta = () => ({ genereLe: new Date().toISOString() });
 
@@ -81,6 +84,8 @@ async function moi(req, res) {
         reconnu: ctx.droits.reconnu,
         role: ctx.droits.role,
         fonctions: ctx.droits.fonctions,
+        niveau: ctx.droits.niveau,
+        menu: await administration.menu(ctx.droits),
         nombreSites: ctx.droits.reconnu ? (await groupesAutorises(ctx)).groupes.length : 0,
         domaineAccueil: await domaineAccueil(req, ctx),
         fournisseurs: fournisseurs.lister()
@@ -138,6 +143,157 @@ async function site(req, res) {
   }
 }
 
+/* ---------------- Ecriture : controles communs ---------------- */
+
+/*
+ * Les requetes d'ecriture doivent provenir du cockpit lui-meme (meme origine) :
+ * protection contre la falsification de requete inter-sites, en plus du cookie SameSite=Lax.
+ */
+function origineValide(req) {
+  const origine = String(req.get("origin") || "");
+  const hote = String(req.get("x-forwarded-host") || req.get("host") || "").split(",")[0].trim().toLowerCase();
+  if (!origine || !hote) return false;
+  try {
+    const u = new URL(origine);
+    const local = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(hote);
+    return u.host.toLowerCase() === hote && (u.protocol === "https:" || (local && u.protocol === "http:"));
+  } catch {
+    return false;
+  }
+}
+
+const RANG = { lecture: 0, ecriture: 1, administration: 2 };
+const peutEcrire = (d, fonction) => d.reconnu && d.fonctions.includes(fonction) && RANG[d.niveau] >= RANG.ecriture;
+
+/* Site demande -> site principal (ID natif) dans le perimetre, sinon null (aucune divulgation). */
+async function siteDuPerimetre(ctx, domaineBrut) {
+  const domaine = normaliserDomaine(domaineBrut);
+  if (!domaine) return null;
+  const { sites: index } = await droits.sitesIndex();
+  const info = perimetre.groupeParDomaine(perimetre.regrouperSites([...index.values()]), domaine);
+  return info && ctx.droits.siteIds.includes(String(info.id)) ? info : null;
+}
+
+function repondreResultat(res, r) {
+  const { status, erreur, ...reste } = r;
+  if (erreur) return repondre(res, status || 400, { succes: false, erreur: { message: erreur }, ...reste, meta: meta() });
+  return repondre(res, status || 200, { succes: true, donnees: reste, meta: meta() });
+}
+
+async function contexteEcriture(req, res) {
+  if (!origineValide(req)) { refuser(res, 403, "Requête refusée."); return null; }
+  const ctx = await contexteUtilisateur(req);
+  if (!ctx) { refuser(res, 401, "Connexion requise."); return null; }
+  return ctx;
+}
+
+/* ---------------- Edition d'un composant (pilote En-tete / SEO) ---------------- */
+
+async function editionLire(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const composant = String(req.query.composant || "");
+    const def = edition.COMPOSANTS_EDITABLES[composant];
+    const info = await siteDuPerimetre(ctx, req.query.domaine);
+    if (!info || !def || !peutEcrire(ctx.droits, def.fonction)) return refuser(res, 404, "Ce réglage n'est pas disponible dans votre espace.");
+    const r = await edition.lire({ composant, siteId: info.id });
+    repondre(res, 200, { succes: true, donnees: { site: info.titre, domaine: perimetre.domaineAcces(info), ...r }, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] edition", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+async function editionApercu(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const composant = String(req.body?.composant || "");
+    const def = edition.COMPOSANTS_EDITABLES[composant];
+    const info = await siteDuPerimetre(ctx, req.body?.domaine);
+    if (!info || !def || !peutEcrire(ctx.droits, def.fonction)) return refuser(res, 404, "Ce réglage n'est pas disponible dans votre espace.");
+    const r = await edition.preparer({ identite: ctx.identite, composant, siteId: info.id, siteNom: info.titre, valeurs: req.body?.valeurs });
+    repondreResultat(res, r);
+  } catch (e) {
+    console.error("[DSE cockpit] edition apercu", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+/* Confirmation commune : les droits sont recalcules au moment de l'ecriture. */
+async function confirmer(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const r = await ecriture.executer({
+      identite: ctx.identite,
+      jeton: req.body?.jeton,
+      acteur: ctx.identite.email || ctx.identite.sujet,
+      revalider: async (op) => {
+        const d = await droits.droitsPour(ctx.identite);
+        if (op.portee === "site") {
+          if (!peutEcrire(d, op.fonction) || !d.siteIds.includes(String(op.siteId))) return "Vous n'avez plus l'autorisation de modifier ce réglage.";
+          return null;
+        }
+        if (op.portee === "admin") {
+          const a = await administration.construireAction(d, op.adminAction, op.adminParams || {}, null);
+          if (a.refus) return a.refus;
+          if (op.type === "ajouter") op.doublon = administration.controleDoublon(op);
+          return null;
+        }
+        return "Opération non autorisée.";
+      }
+    });
+    repondreResultat(res, r);
+  } catch (e) {
+    console.error("[DSE cockpit] confirmer", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+/* ---------------- Administration ---------------- */
+
+async function adminTableau(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    if (!ctx.droits.reconnu || !ctx.droits.fonctions.includes("administration")) return refuser(res, 403, "Accès non autorisé.");
+    repondre(res, 200, { succes: true, donnees: await administration.tableau(ctx.droits), meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] admin tableau", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+async function adminUtilisateurs(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const r = ctx.droits.reconnu ? await administration.utilisateurs(ctx.droits) : null;
+    if (!r) return refuser(res, 403, "Accès non autorisé.");
+    repondre(res, 200, { succes: true, donnees: r, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] admin utilisateurs", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+async function adminApercu(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const action = String(req.body?.action || "");
+    const p = req.body?.params && typeof req.body.params === "object" ? req.body.params : {};
+    const params = Object.fromEntries(["utilisateur", "role", "domaine", "email"]
+      .filter((k) => typeof p[k] === "string").map((k) => [k, p[k].slice(0, 255)]));
+    repondreResultat(res, await administration.preparerAction({ identite: ctx.identite, d: ctx.droits, action, params }));
+  } catch (e) {
+    console.error("[DSE cockpit] admin apercu", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
 function connexion(req, res) {
   const f = fournisseurs.trouver(req.params.fournisseur);
   if (!f || !f.disponible() || !f.demarrer(req, res)) {
@@ -161,4 +317,8 @@ function deconnexion(req, res) {
   res.redirect(302, "/#/cockpit");
 }
 
-module.exports = { moi, sites, site, connexion, retour, deconnexion };
+module.exports = {
+  moi, sites, site, connexion, retour, deconnexion,
+  editionLire, editionApercu, confirmer, adminTableau, adminUtilisateurs, adminApercu,
+  _test: { origineValide }
+};

@@ -219,6 +219,13 @@ application.get("/api/v1/auth/:fournisseur/retour", controleurCockpit.retour);
 application.get("/api/v1/auth/deconnexion", controleurCockpit.deconnexion);
 application.get("/api/v1/cockpit/sites", controleurCockpit.sites);
 application.get("/api/v1/cockpit/site", controleurCockpit.site);
+application.get("/api/v1/cockpit/edition", controleurCockpit.editionLire);
+application.post("/api/v1/cockpit/edition/apercu", controleurCockpit.editionApercu);
+application.post("/api/v1/cockpit/edition/confirmer", controleurCockpit.confirmer);
+application.get("/api/v1/cockpit/admin/tableau", controleurCockpit.adminTableau);
+application.get("/api/v1/cockpit/admin/utilisateurs", controleurCockpit.adminUtilisateurs);
+application.post("/api/v1/cockpit/admin/apercu", controleurCockpit.adminApercu);
+application.post("/api/v1/cockpit/admin/confirmer", controleurCockpit.confirmer);
 
 application.get(
   "/api/v1/sites/par-domaine",

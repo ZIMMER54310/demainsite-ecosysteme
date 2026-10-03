@@ -1,9 +1,12 @@
 import { initializeAuth } from "../js/auth.js";
 import { setState } from "../js/state.js";
-import { getSitesCockpit, getSiteCockpit } from "../services/cockpit.service.js";
+import {
+  getSitesCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
+  getAdminTableau, getAdminUtilisateurs, apercuAdmin, confirmerAdmin
+} from "../services/cockpit.service.js";
 import {
   rendreConnexion, rendreSansAcces, rendreAccueil, rendreListeSites, rendreVueSite, rendreAssistant,
-  CRITERES_SITES, lienSites
+  CRITERES_SITES, lienSites, rendreEdition, rendreApercu, rendreResultatEcriture, rendreAdministration, rendreUtilisateurs
 } from "../modules/cockpit/cockpit.js";
 
 const CLE_ASSISTANT = "dseAssistantSite";
@@ -13,7 +16,10 @@ const MESSAGES_CONNEXION = {
 };
 const indisponible = `<section class="cockpit card"><p>Le cockpit est momentanément indisponible. Merci de réessayer dans quelques instants.</p></section>`;
 
-const moiDepuis = (u) => ({ nom: u.displayName, role: u.role, fonctions: u.fonctions, nombreSites: u.nombreSites, fournisseurs: u.fournisseurs });
+const moiDepuis = (u) => ({
+  nom: u.displayName, role: u.role, fonctions: u.fonctions, niveau: u.niveau, menu: u.menu,
+  domaineAccueil: u.domaineAccueil, nombreSites: u.nombreSites, fournisseurs: u.fournisseurs
+});
 const domaineCourant = () => location.hostname.trim().toLowerCase().replace(/^www\./, "");
 
 async function contexte(params = {}) {
@@ -93,5 +99,97 @@ export function activerAssistant(racine = document) {
     const valeurs = lireAssistant();
     valeurs[champ.name] = champ.value;
     sessionStorage.setItem(CLE_ASSISTANT, JSON.stringify(valeurs));
+  });
+}
+
+/* ---------------- Edition : formulaire -> apercu -> confirmation -> resultat ---------------- */
+
+const nonDisponible = (texte) => `<section class="cockpit card"><p>${texte}</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
+
+export async function cockpitEditionPage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return c.html;
+    const r = await getEdition(params.domaine, params.composant).catch(() => null);
+    if (!r?.donnees) return nonDisponible("Ce réglage n'est pas disponible dans votre espace.");
+    return rendreEdition(c.moi, r.donnees, params);
+  } catch { return indisponible; }
+}
+
+/*
+ * Workflow commun aux formulaires d'ecriture : l'apercu est calcule par le serveur,
+ * puis la confirmation est envoyee avec le jeton recu (aucune donnee technique cote navigateur).
+ */
+function brancherConfirmation(zone, apercu, confirmer, apresSucces) {
+  const afficherErreur = (err) => { zone.innerHTML = rendreResultatEcriture({ erreur: err.message }); };
+  return async (demande) => {
+    zone.innerHTML = `<p class="muted">Préparation de l'aperçu…</p>`;
+    let r;
+    try { r = (await apercu(demande))?.donnees; } catch (err) { return afficherErreur(err); }
+    zone.innerHTML = rendreApercu(r);
+    zone.querySelector("[data-annuler]")?.addEventListener("click", () => { zone.innerHTML = ""; });
+    const bouton = zone.querySelector("[data-confirmer]");
+    bouton?.addEventListener("click", async () => {
+      bouton.disabled = true;
+      bouton.textContent = "Enregistrement…";
+      try {
+        const res = (await confirmer(r.jeton))?.donnees;
+        zone.innerHTML = rendreResultatEcriture(res);
+        apresSucces?.();
+      } catch (err) { afficherErreur(err); }
+    }, { once: true });
+  };
+}
+
+export function activerEdition(racine = document) {
+  const form = racine.querySelector("[data-edition]");
+  const zone = racine.querySelector("[data-apercu]");
+  if (!form || !zone) return;
+  const lancer = brancherConfirmation(zone, (d) => apercuEdition(d.domaine, d.composant, d.valeurs), confirmerEdition, () => {
+    form.querySelectorAll("[data-champ]").forEach((c) => { c.defaultValue = c.value; });
+  });
+  form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const valeurs = {};
+    form.querySelectorAll("[data-champ]").forEach((c) => { valeurs[c.name] = c.value; });
+    lancer({ domaine: form.dataset.domaine, composant: form.dataset.composant, valeurs });
+  });
+}
+
+/* ---------------- Administration ---------------- */
+
+export async function cockpitAdministrationPage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return c.html;
+    if (!c.moi.fonctions.includes("administration")) return nonDisponible("L'administration n'est pas disponible pour votre profil.");
+    const r = await getAdminTableau().catch(() => null);
+    if (!r?.donnees) return indisponible;
+    return rendreAdministration(c.moi, r.donnees);
+  } catch { return indisponible; }
+}
+
+export async function cockpitUtilisateursPage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return c.html;
+    if (!c.moi.fonctions.includes("utilisateurs")) return nonDisponible("La gestion des utilisateurs n'est pas disponible pour votre profil.");
+    const r = await getAdminUtilisateurs().catch(() => null);
+    if (!r?.donnees) return indisponible;
+    return rendreUtilisateurs(c.moi, r.donnees);
+  } catch { return indisponible; }
+}
+
+export function activerUtilisateurs(racine = document) {
+  const zone = racine.querySelector("[data-apercu]");
+  if (!zone) return;
+  const lancer = brancherConfirmation(zone, (d) => apercuAdmin(d.action, d.params), confirmerAdmin);
+  racine.querySelectorAll("form[data-action-admin]").forEach((form) => {
+    form.addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const params = Object.fromEntries(new FormData(form));
+      lancer({ action: form.dataset.actionAdmin, params });
+      zone.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
   });
 }

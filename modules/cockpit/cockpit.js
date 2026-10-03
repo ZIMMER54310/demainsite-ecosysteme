@@ -24,8 +24,22 @@ export const CARTES = Object.freeze([
   { fonction: "seo", icone: "🔎", titre: "SEO", texte: "Référencement dans les moteurs.", cible: (d) => lienSite(d, "seo") },
   { fonction: "domaine", icone: "🔗", titre: "Domaine", texte: "Adresse publique du site.", cible: (d) => lienSite(d, "domaine") },
   { fonction: "apercu", icone: "👁️", titre: "Aperçu du site", texte: "Voir le site tel que le public le voit.", cible: (d) => (d ? `https://${d}/` : "#/cockpit/sites"), externe: true },
-  { fonction: "suivi", icone: "📈", titre: "Suivi / progression", texte: "Avancement de la configuration.", cible: (d) => lienSite(d) }
+  { fonction: "suivi", icone: "📈", titre: "Suivi / progression", texte: "Avancement de la configuration.", cible: (d) => lienSite(d) },
+  { fonction: "administration", icone: "🛡️", titre: "Administration", texte: "Problèmes, anomalies et prochaines actions.", cible: () => "#/cockpit/administration" },
+  { fonction: "utilisateurs", icone: "👥", titre: "Utilisateurs et accès", texte: "Rôles et sites attribués.", cible: () => "#/cockpit/utilisateurs" }
 ]);
+
+/* Reglages modifiables depuis le cockpit (le serveur refait tous les controles). */
+export const EDITIONS = Object.freeze([
+  { composant: "entete", fonction: "entete", libelle: "Modifier l'En-tête" },
+  { composant: "seo", fonction: "seo", libelle: "Modifier le SEO" }
+]);
+const NIVEAUX = { lecture: 0, ecriture: 1, administration: 2 };
+export function editionsVisibles(moi, fonctionsSite = []) {
+  if ((NIVEAUX[moi?.niveau] ?? -1) < NIVEAUX.ecriture) return [];
+  const f = new Set(fonctionsSite);
+  return EDITIONS.filter((x) => f.has(x.fonction));
+}
 
 export function cartesVisibles(fonctions = []) {
   const autorisees = new Set(Array.isArray(fonctions) ? fonctions : []);
@@ -196,6 +210,8 @@ export function rendreVueSite(moi, vue, section) {
       ${(vue.alias || []).length ? `<p class="muted">Alias : ${(vue.alias || []).map(e).join(", ")}</p>` : ""}
       ${vue.statut?.message ? `<p class="muted">${e(vue.statut.message)}</p>` : ""}
     </div>
+    ${editionsVisibles(moi, vue.fonctions).length ? `<div class="cockpit-actions">${editionsVisibles(moi, vue.fonctions).map((x) =>
+      `<a class="btn btn-primary" href="#/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}/modifier/${x.composant}">${e(x.libelle)}</a>`).join("")}</div>` : ""}
     <h2>Progression</h2>
     ${rendreProgression(vue, section)}
     <h2>Accès rapides</h2>
@@ -292,5 +308,129 @@ export function rendreAssistant({ moi, numero = 1, valeurs = {} }) {
         ${n < total ? `<a class="btn btn-primary" href="#/cockpit/creer?etape=${n + 1}">Suivant</a>` : ""}
       </div>
     </form>
+  </section>`;
+}
+
+/* ---------------- Ecriture : formulaire, apercu, resultat ---------------- */
+
+export function rendreEdition(moi, d, params = {}) {
+  const retour = `#/cockpit/site/${encodeURIComponent(d.domaine || params.domaine)}`;
+  if (!d.disponible) {
+    return `<section class="cockpit">${rendreEnteteCockpit(moi)}
+      <div class="card"><h2>${e(d.libelle || "Réglage")} — ${e(d.site || "")}</h2>
+      <p>⚠ ${e(d.raison || "Ce réglage n'est pas encore modifiable.")}</p>
+      <a class="btn btn-secondary" href="${retour}">Retour au site</a></div></section>`;
+  }
+  const champs = (d.champs || []).map((c) => {
+    const id = `ed-${e(c.cle)}`;
+    const commun = `id="${id}" name="${e(c.cle)}" data-champ maxlength="${Number(c.max) || 255}"`;
+    return `<div class="form-field"><label for="${id}">${e(c.libelle)}</label>${c.multiligne
+      ? `<textarea ${commun} rows="5">${e(c.valeur || "")}</textarea>`
+      : `<input type="text" ${commun} value="${e(c.valeur || "")}">`}</div>`;
+  }).join("");
+  return `<section class="cockpit">${rendreEnteteCockpit(moi)}
+    <div class="card">
+      <h2>${e(d.libelle)} — ${e(d.site || "")}</h2>
+      <p class="muted">Modifiez les valeurs puis vérifiez l'aperçu des changements avant de confirmer.</p>
+      <form class="cockpit-edition" data-edition data-domaine="${e(d.domaine || params.domaine)}" data-composant="${e(params.composant)}">
+        ${champs}
+        <div class="cockpit-actions"><button class="btn btn-primary" type="submit">Voir les changements</button>
+        <a class="btn btn-secondary" href="${retour}">Retour au site</a></div>
+      </form>
+    </div>
+    <div data-apercu aria-live="polite"></div>
+  </section>`;
+}
+
+export function rendreApercu(r) {
+  if (!r || r.aucunChangement) return `<div class="card"><p>Aucun changement à enregistrer.</p></div>`;
+  return `<div class="card cockpit-apercu"><h2>Aperçu des changements</h2>
+    <table class="cockpit-diff"><thead><tr><th>Élément</th><th>Valeur actuelle</th><th>Nouvelle valeur</th></tr></thead><tbody>
+    ${(r.changements || []).map((c) => `<tr><th scope="row">${e(c.libelle)}</th><td class="avant">${e(c.avant) || '<span class="muted">(vide)</span>'}</td><td class="apres">${e(c.apres) || '<span class="muted">(vide)</span>'}</td></tr>`).join("")}
+    </tbody></table>
+    <div class="cockpit-actions"><button class="btn btn-primary" type="button" data-confirmer>Confirmer l'enregistrement</button>
+    <button class="btn btn-secondary" type="button" data-annuler>Annuler</button></div></div>`;
+}
+
+export function rendreResultatEcriture(r) {
+  if (!r || r.erreur) return `<div class="card cockpit-resultat erreur"><p>⚠ ${e(r?.erreur || "L'enregistrement n'a pas abouti.")}</p></div>`;
+  const journal = r.journal ? (r.journal.enregistre ? "✅ Modification journalisée." : "⚠ La modification est enregistrée mais n'a pas pu être journalisée.") : "";
+  return `<div class="card cockpit-resultat ok"><p>✅ ${e(r.message || (r.deja ? "Modification déjà enregistrée." : "Modification enregistrée et vérifiée."))}</p>
+    ${journal ? `<p class="muted">${journal}</p>` : ""}</div>`;
+}
+
+/* ---------------- Administration ---------------- */
+
+const lienInterne = (url) => `#${String(url || "/cockpit").replace(/^#/, "")}`;
+const NIVEAU_PROBLEME = { critique: "🔴", attention: "⚠" };
+
+export function rendreAdministration(moi, t) {
+  const cartesStatut = (t.sitesParStatut || []).map((s) =>
+    `<li><a href="${e(lienInterne(s.lien))}">${e(s.statut)} · ${Number(s.nombre) || 0}</a></li>`).join("");
+  const problemes = (t.problemes || []).length
+    ? `<ul class="cockpit-liste">${t.problemes.map((p) => `<li><a href="${e(lienInterne(p.lien))}">${NIVEAU_PROBLEME[p.niveau] || "⚠"} ${e(p.titre)}</a></li>`).join("")}</ul>`
+    : `<p>✅ Aucun problème détecté.</p>`;
+  const prochaines = (t.prochaines || []).length
+    ? `<ul class="cockpit-liste">${t.prochaines.map((p) => `<li><a href="${e(lienInterne(p.lien))}">➡ ${e(p.titre)}</a></li>`).join("")}</ul>`
+    : `<p class="muted">Aucune action en attente.</p>`;
+  const aCompleter = (t.aCompleter || []).length
+    ? `<ul class="cockpit-liste">${t.aCompleter.map((s) => `<li><a href="${e(lienInterne(s.lien))}"><strong>${e(s.site)}</strong> ${s.progression !== null ? `— ${Number(s.progression)} %` : ""}</a><br><span class="muted">${(s.elements || []).map(e).join(", ")}</span></li>`).join("")}</ul>`
+    : `<p>✅ Rien à compléter.</p>`;
+  const utilisateurs = t.utilisateursParRole
+    ? `<ul class="cockpit-liste">${t.utilisateursParRole.map((u) => `<li>${e(u.role)} : <strong>${Number(u.nombre)}</strong></li>`).join("")}</ul><a class="btn btn-secondary" href="#/cockpit/utilisateurs">Gérer les utilisateurs</a>`
+    : "";
+  const apps = t.applications;
+  const applications = !apps?.disponible ? `<p class="muted">Applications non disponibles.</p>`
+    : apps.liste.length ? `<ul class="cockpit-liste">${apps.liste.map((a) => `<li>${a.actif && a.valide ? "✅" : "⬜"} ${e(a.titre || "Application")}${a.description ? ` <span class="muted">— ${e(a.description)}</span>` : ""}</li>`).join("")}</ul>`
+      : `<p class="muted">Aucune application déclarée pour l'instant.</p>`;
+  const manquantes = (apps?.colonnesManquantes || []).length
+    ? `<p class="muted">⚠ Informations à prévoir pour publier une application dans le menu : ${apps.colonnesManquantes.map(e).join(", ")}.</p>` : "";
+  const ecritures = !t.ecrituresRecentes?.disponible ? `<p>🔴 Journal indisponible.</p>`
+    : t.ecrituresRecentes.liste.length ? `<ul class="cockpit-liste">${t.ecrituresRecentes.liste.map((x) => `<li>${e(String(x.le || "").replace("T", " ").slice(0, 16))} — ${e(x.objet || x.action || "")} ${x.statut ? `<span class="cockpit-badge">${e(x.statut)}</span>` : ""}</li>`).join("")}</ul>`
+      : `<p class="muted">Aucune écriture depuis le cockpit pour l'instant.</p>`;
+  const journal = t.journal?.derniere && !t.journal.derniere.enregistre ? `<p>🔴 La dernière écriture n'a pas pu être journalisée.</p>` : "";
+  return `<section class="cockpit">${rendreEnteteCockpit(moi)}
+    <h2>Administration</h2>
+    <h3>Sites par statut <span class="muted">(${Number(t.nombreSites) || 0})</span></h3>
+    ${cartesStatut ? `<ul class="cockpit-fil cockpit-compteurs">${cartesStatut}</ul>` : '<p class="muted">Aucun site.</p>'}
+    <div class="grid cockpit-admin">
+      <div class="card"><h3>Problèmes et anomalies</h3>${problemes}</div>
+      <div class="card"><h3>Prochaines actions</h3>${prochaines}</div>
+      <div class="card"><h3>Éléments à compléter</h3>${aCompleter}</div>
+      ${utilisateurs ? `<div class="card"><h3>Utilisateurs et droits</h3>${utilisateurs}</div>` : ""}
+      <div class="card"><h3>Applications</h3>${applications}${manquantes}</div>
+      <div class="card"><h3>Écritures récentes</h3>${journal}${ecritures}</div>
+    </div>
+  </section>`;
+}
+
+export function rendreUtilisateurs(moi, d) {
+  const roles = (d.roles || []).map((r) => `<option value="${e(r.ref)}">${e(r.titre)}</option>`).join("");
+  const sites = (d.sites || []).map((s) => `<option value="${e(s.domaine)}">${e(s.nom)} — ${e(s.domaine)}</option>`).join("");
+  const lignes = (d.utilisateurs || []).map((u) => `<tr>
+    <td>${e(u.email)}${u.moi ? ' <span class="muted">(vous)</span>' : ""}</td>
+    <td>${e(u.role || "Aucun")}</td>
+    <td>${u.actif ? "✅ Actif" : "⬜ Inactif"}</td>
+    <td>${u.sites.length ? u.sites.map((s) => e(s.nom)).join(", ") : (u.portee === "tous" ? '<span class="muted">Tous les sites</span>' : "⚠ Aucun site")}</td>
+    <td>${u.modifiable ? `
+      <form data-action-admin="changer-role" class="cockpit-form-inline"><input type="hidden" name="utilisateur" value="${e(u.ref)}">
+        <label class="sr-only" for="r-${e(u.ref)}">Rôle</label><select id="r-${e(u.ref)}" name="role" required>${roles}</select>
+        <button class="btn btn-secondary" type="submit">Changer le rôle</button></form>
+      ${sites ? `<form data-action-admin="ajouter-acces-site" class="cockpit-form-inline"><input type="hidden" name="utilisateur" value="${e(u.ref)}">
+        <label class="sr-only" for="s-${e(u.ref)}">Site</label><select id="s-${e(u.ref)}" name="domaine" required>${sites}</select>
+        <button class="btn btn-secondary" type="submit">Donner accès</button></form>` : ""}` : '<span class="muted">—</span>'}</td>
+  </tr>`).join("");
+  const creation = d.peutCreer && roles ? `<div class="card"><h3>Ajouter un utilisateur</h3>
+    <form data-action-admin="creer-utilisateur" class="cockpit-form-inline">
+      <label for="nouvel-email">Adresse e-mail</label><input id="nouvel-email" type="email" name="email" required maxlength="255">
+      <label for="nouveau-role">Rôle</label><select id="nouveau-role" name="role" required>${roles}</select>
+      <button class="btn btn-primary" type="submit">Voir l'aperçu</button></form></div>` : "";
+  return `<section class="cockpit">${rendreEnteteCockpit(moi)}
+    <h2>Utilisateurs et accès <span class="muted">(${(d.utilisateurs || []).length})</span></h2>
+    <div data-apercu aria-live="polite"></div>
+    <div class="card"><div class="table-wrap"><table class="cockpit-table">
+      <thead><tr><th>Utilisateur</th><th>Rôle</th><th>État</th><th>Sites</th><th>Actions</th></tr></thead>
+      <tbody>${lignes || '<tr><td colspan="5" class="muted">Aucun utilisateur dans votre périmètre.</td></tr>'}</tbody></table></div></div>
+    ${creation}
   </section>`;
 }

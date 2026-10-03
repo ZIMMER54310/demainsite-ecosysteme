@@ -16,10 +16,29 @@ export async function apiGet(path, query = {}) {
   try {
     const response = await fetch(buildUrl(path, query), { headers: { Accept: "application/json" }, signal: controller.signal, cache: "no-store" });
     const payload = await response.json().catch(() => null);
-    if (!response.ok) throw new ApiError(payload?.error?.message || `Erreur API ${response.status}`, response.status, payload);
+    if (!response.ok) throw new ApiError(payload?.erreur?.message || payload?.error?.message || `Erreur API ${response.status}`, response.status, payload);
     return payload;
   } catch (error) {
     if (error.name === "AbortError") throw new ApiError("Le délai de réponse de l’API est dépassé.");
+    if (error instanceof ApiError) throw error;
+    throw new ApiError("Connexion à l’API DSE impossible.", 0, error);
+  } finally { clearTimeout(timer); }
+}
+
+// Ecritures du cockpit : meme origine, cookie de session HttpOnly, corps JSON.
+export async function apiPost(path, corps = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.max(CONFIG.REQUEST_TIMEOUT_MS, 30000));
+  try {
+    const response = await fetch(buildUrl(path), {
+      method: "POST", credentials: "same-origin", cache: "no-store", signal: controller.signal,
+      headers: { Accept: "application/json", "Content-Type": "application/json" }, body: JSON.stringify(corps)
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) throw new ApiError(payload?.erreur?.message || payload?.error?.message || `Erreur API ${response.status}`, response.status, payload);
+    return payload;
+  } catch (error) {
+    if (error.name === "AbortError") throw new ApiError("Le délai de réponse est dépassé. Vérifiez le résultat avant de recommencer.");
     if (error instanceof ApiError) throw error;
     throw new ApiError("Connexion à l’API DSE impossible.", 0, error);
   } finally { clearTimeout(timer); }

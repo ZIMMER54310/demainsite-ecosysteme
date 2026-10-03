@@ -110,4 +110,4 @@ async function obtenirResumes() {
   return enCours;
 }
 
-module.exports = { obtenirResumes };
+module.exports = { obtenirResumes, viderCache: () => { cache = null; } };

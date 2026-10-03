@@ -10,11 +10,14 @@ export async function initializeAuth() {
       reconnu: moi.reconnu === true,
       role: moi.role || null,
       fonctions: Array.isArray(moi.fonctions) ? moi.fonctions : [],
+      niveau: moi.niveau || null,
+      menu: Array.isArray(moi.menu) ? moi.menu : [],
+      domaineAccueil: moi.domaineAccueil || null,
       nombreSites: Number(moi.nombreSites) || 0,
       fournisseurs: Array.isArray(moi.fournisseurs) ? moi.fournisseurs : []
     };
   } catch {
-    return { authenticated: false, displayName: null, reconnu: false, role: null, fonctions: [], nombreSites: 0, fournisseurs: [] };
+    return { authenticated: false, displayName: null, reconnu: false, role: null, fonctions: [], niveau: null, menu: [], nombreSites: 0, fournisseurs: [] };
   }
 }
 
