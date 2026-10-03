@@ -48,6 +48,13 @@ const url = (f) => require("url").pathToFileURL(path.join(__dirname, "..", "..",
   const e2 = rendreEntete({ nomSite: "Repli", entete: [{ ...non, configuration: { Titre: "Inactif" } }] });
   assert.ok(e2.includes("Repli") && !e2.includes("Inactif"), "entete non valide ignore");
 
+
+  // SEO generique : OBJ-SEO publie -> titre/description ; sinon nom du site, sans description
+  const { donneesSeo } = await import(url("modules/seo/seo.js"));
+  assert.deepStrictEqual(donneesSeo(null, { nomSite: "N" }), { titre: "N", description: "" });
+  assert.deepStrictEqual(donneesSeo({ ...ok, configuration: { "Titre OBJ-SEO": "T", "NOTE-COURTE": "D" } }, { nomSite: "N" }), { titre: "T", description: "D" });
+  assert.deepStrictEqual(donneesSeo({ ...non, configuration: { "Titre OBJ-SEO": "T" } }, { nomSite: "N" }), { titre: "N", description: "" });
+
   // Footer : fallback sans configuration
   assert.strictEqual(rendreFooter(null, {}), "");
   assert.ok(/Mon Site/.test(rendreFooter(null, { nomSite: "Mon Site" })));

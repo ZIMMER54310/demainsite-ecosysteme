@@ -17,6 +17,7 @@ import { rendreBuilder, STYLES_BUILDER } from "../modules/builder/rendu.js";
 import { apiGet } from "../js/api.js";
 import { rendreSituation } from "../modules/situation/situation.js";
 import { rendreEntete as enteteSharePoint } from "../modules/entete/entete.js";
+import { donneesSeo, appliquerSeo } from "../modules/seo/seo.js";
 
 /* =========================================================
    OUTILS
@@ -80,6 +81,7 @@ function donneesEntete(complet) {
 
 // Elements communs (En-tete, Footer) d'un site en situation : jamais de page.
 function communsSituation(complet) {
+  appliquerSeo(document, donneesSeo(complet?.seo?.donnees, { nomSite: complet?.site?.nom ?? "", nettoyerTexte: texteSharePoint }));
   return {
     footer: trouverFooter({ modules: complet?.communs?.modules ?? [] }),
     entete: donneesEntete(complet)
@@ -651,13 +653,7 @@ export async function accueilPage(domaine) {
       siteComplet.site?.nom ?? site?.nom ?? ""
     ).trim();
 
-    if (nomPublic) {
-      document.title = nomPublic;
-    }
-
-    document
-      .querySelector('meta[name="description"]')
-      ?.remove();
+    appliquerSeo(document, donneesSeo(siteComplet.seo?.donnees, { nomSite: nomPublic, nettoyerTexte: texteSharePoint }));
 
     /* -----------------------------------------------------
        RENDU
