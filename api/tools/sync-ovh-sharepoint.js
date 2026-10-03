@@ -547,8 +547,45 @@ async function main(args = process.argv.slice(2), dependencies = {}) {
         if (!domainItem) {
           counts.domainBlocked += 1;
           counts.metadataAlerts += 1;
-          const result = { domain, purchaseDate: null, subscription: null, expirationDate: null, modified: [], unchanged: [], alert: "DOMAINE_OVH_ABSENT_SHAREPOINT_A_TRAITER" };
-          metadataResults.push(result);
+          const info = await getDomainInfo(domain).catch((error) => {
+            const reason = `LECTURE_SERVICEINFOS_OVH_IMPOSSIBLE:${error.code || error.message}`;
+            logger.emit({ code: "ANOMALIE_MÉTADONNÉE", domain, reason });
+            return null;
+          });
+          const purchaseDate = domainSync.dateOvhJour(info?.creation);
+          const expirationDate = domainSync.dateOvhJour(info?.expiration);
+          const subscriptionMonths = info?.renew?.period ?? null;
+          const subscriptionResolution = subscriptionMonths === null
+            ? null
+            : domainSync.souscriptionDepuisMois(subscriptionMonths, context.refs.subscriptionItems || []);
+          const subscriptionLabel = subscriptionResolution?.item ? subscriptionResolution.title : null;
+          const alert = [
+            "DOMAINE_OVH_ABSENT_SHAREPOINT_A_TRAITER",
+            info ? null : "SERVICEINFOS_OVH_INDISPONIBLES",
+            subscriptionMonths !== null && !subscriptionLabel ? subscriptionResolution.reason : null
+          ].filter(Boolean).join("; ");
+          metadataResults.push({
+            domain,
+            purchaseDate,
+            subscription: subscriptionMonths,
+            subscriptionLabel,
+            expirationDate,
+            modified: [],
+            unchanged: [],
+            alert
+          });
+          logger.emit({
+            code: "VALEURS_OVH_RÉCUPÉRÉES",
+            domain,
+            domainId: null,
+            source: "OVH /domain/{domaine}/serviceInfos",
+            values: {
+              purchaseDate: info?.creation ?? null,
+              subscriptionMonths,
+              expirationDate: info?.expiration ?? null
+            },
+            derived: { subscription: subscriptionLabel }
+          });
           logger.emit({
             code: "DOMAINE_OVH_ABSENT_SHAREPOINT_A_TRAITER",
             domain,

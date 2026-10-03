@@ -29,8 +29,9 @@ références SharePoint non publiées résolues sans ambiguïté (`NON - Actif`,
 synchronisation technique : il ne crée, ne supprime et n'archive aucun domaine
 ni site. Il ne traite que les domaines déjà présents dans `OBJ-NOM DE DOMAINE`.
 Les domaines OVH sans élément SharePoint produisent une alerte
-`DOMAINE_OVH_ABSENT_SHAREPOINT_A_TRAITER` pour examen métier. Les domaines
-présents sont lus via `GET /domain/{domaine}/serviceInfos` :
+`DOMAINE_OVH_ABSENT_SHAREPOINT_A_TRAITER` pour examen métier; leurs valeurs OVH
+sont également journalisées pour faciliter cet examen, sans créer d'élément.
+Tous les domaines sont lus via `GET /domain/{domaine}/serviceInfos` :
 
 - `creation` alimente `Date Achat`;
 - `expiration` alimente `Date d'expiration`;

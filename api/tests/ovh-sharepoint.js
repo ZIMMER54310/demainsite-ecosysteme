@@ -202,6 +202,11 @@ const {
     ...dependencies,
     context: metadataContext,
     listDomains: async () => ["absent.fr"],
+    getDomainInfo: async () => ({
+      creation: "2026-01-01",
+      expiration: "2027-01-01",
+      renew: { period: 12 }
+    }),
     write: async (...args) => absentWrites.push(args),
     logger: { emit: (event) => absentEvents.push(event), localBlocked: null, filename: "/tmp/domain-sync.jsonl" }
   });
@@ -209,6 +214,9 @@ const {
   assert.strictEqual(absentResult.counts.domainCreated, 0);
   assert.strictEqual(absentResult.counts.siteCreated, 0);
   assert.ok(absentEvents.some((event) => event.code === "DOMAINE_OVH_ABSENT_SHAREPOINT_A_TRAITER"));
+  assert.strictEqual(absentResult.metadataResults[0].purchaseDate, "2026-01-01");
+  assert.strictEqual(absentResult.metadataResults[0].subscriptionLabel, "1 AN");
+  assert.strictEqual(absentResult.metadataResults[0].expirationDate, "2027-01-01");
 
   // Domaine trouvé mais valeur obligatoire manquante : aucune écriture partielle.
   const blockedContext = contexteFictif();
