@@ -1,6 +1,7 @@
 "use strict";
 // Tests du moteur public HERO/FOOTER (fonctions pures, sans reseau).
 const assert = require("assert");
+const fs = require("fs");
 const path = require("path");
 const url = (f) => require("url").pathToFileURL(path.join(__dirname, "..", "..", f)).href;
 
@@ -41,5 +42,9 @@ const url = (f) => require("url").pathToFileURL(path.join(__dirname, "..", "..",
   assert.ok(h.includes('rel="noopener noreferrer"'));
   // Aucune info technique
   assert.ok(!/SharePoint|API|Azure|data-.*id/i.test(h));
+  const cssPublic = fs.readFileSync(path.join(__dirname, "../../assets/css/public.css"), "utf8");
+  assert.ok(cssPublic.includes(".dse-site-public-header"), "en-tete public");
+  assert.ok(cssPublic.includes("body.dse-public .dse-site-public .dse-footer"), "footer Builder visible");
+  assert.ok(cssPublic.includes("body.dse-public .dse-public-page > .dse-footer"), "footer statut visible");
   console.log("rendu OK");
 })().catch((e) => { console.error(e); process.exit(1); });

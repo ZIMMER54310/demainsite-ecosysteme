@@ -15,7 +15,9 @@ et OBJ-MEDIA en suivant les relations par **ID natifs SharePoint**.
 Pour un statut autre qu'Actif, seules la page publiee reliee par `PAGE-PUBLIQUE` et sa composition
 sont renvoyees. `DATE-DEBUT` et `DATE-FIN` bornent sa periode de publication ; hors periode, aucun
 contenu de page n'est expose. Pour un site Actif, `PAGE-PUBLIQUE` est prioritaire ; sans relation,
-la route `/` conserve son comportement historique.
+la route `/` conserve son comportement historique. Le rendu public reprend l'en-tete du site,
+la composition Builder et le footer configure ; les rendus de repli n'affichent pas de contenu
+metier absent de SharePoint.
 
 Appels Graph : timeout 15 s, au plus 2 reessais sur 429/503 en respectant `Retry-After` (plafonne
 a 5 s).

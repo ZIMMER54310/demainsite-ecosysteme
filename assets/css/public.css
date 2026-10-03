@@ -498,6 +498,21 @@ body.dse-public .dse-public-card {
   flex: 1 0 auto;
 }
 
+.dse-site-public-header {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 18px 24px;
+  color: #e8edf5;
+  background: #0f1b2d;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.dse-site-public-header a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .dse-footer {
   flex-shrink: 0;
   box-sizing: border-box;
@@ -506,6 +521,11 @@ body.dse-public .dse-public-card {
   color: #e8edf5;
   background: #0f1b2d;
   text-align: center;
+}
+
+body.dse-public .dse-site-public .dse-footer,
+body.dse-public .dse-public-page > .dse-footer {
+  display: block !important;
 }
 
 .dse-footer-inner {

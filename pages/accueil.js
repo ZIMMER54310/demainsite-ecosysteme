@@ -532,19 +532,32 @@ function rendreSitePublic({
   footer,
   composition
 }) {
-  const nomSite =
+  const nomSite = String(
     site?.nom ??
-    page?.configuration?.[
-      "Titre OBJ-PAGE-SITE-PUBLIC"
-    ] ??
-    "DemainSite Ecosystème";
+    page?.configuration?.["Titre OBJ-PAGE-SITE-PUBLIC"] ??
+    ""
+  ).trim();
+  const typesComposition = new Set(
+    (composition?.sections || []).flatMap((section) =>
+      (section.lignes || []).flatMap((ligne) =>
+        (ligne.colonnes || []).flatMap((colonne) =>
+          (colonne.modules || []).map((module) => String(module.type || "").toUpperCase())
+        )
+      )
+    )
+  );
+  const rendreEntete = () => nomSite
+    ? `<div class="dse-site-public-header" role="banner"><a href="/" aria-label="${escapeHtml(nomSite)}">${escapeHtml(nomSite)}</a></div>`
+    : "";
+  const footerHtml = rendreFooter(footer, { nomSite, nettoyerTexte: texteSharePoint });
 
   // Mode Builder : prioritaire uniquement si une composition validee existe ; sinon rendu historique.
   const builder = rendreBuilder(composition, {
     apiBase: CONFIG.API_BASE_URL,
     adapteurs: {
       HERO: () => (hero ? rendreHero(hero) : ""),
-      FOOTER: () => rendreFooter(footer, { nomSite, nettoyerTexte: texteSharePoint })
+      FOOTER: () => footerHtml,
+      HEADER: rendreEntete
     }
   });
 
@@ -552,7 +565,9 @@ function rendreSitePublic({
     return `
     <div class="dse-site-public" data-site-id="${escapeHtml(site?.id ?? "")}" data-page-id="${escapeHtml(page?.id ?? "")}">
       <style>${STYLES_BUILDER}</style>
+      ${typesComposition.has("HEADER") ? "" : rendreEntete()}
       <main class="dse-site-public-main">${builder}</main>
+      ${typesComposition.has("FOOTER") ? "" : footerHtml}
     </div>`;
   }
 
@@ -562,6 +577,8 @@ function rendreSitePublic({
       data-site-id="${escapeHtml(site?.id ?? "")}"
       data-page-id="${escapeHtml(page?.id ?? "")}"
     >
+
+      ${rendreEntete()}
 
       <main class="dse-site-public-main">
 
@@ -593,6 +610,8 @@ function rendreSitePublic({
         ></section>
 
       </main>
+
+      ${footerHtml}
 
     </div>
   `;
