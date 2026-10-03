@@ -4,6 +4,7 @@
 // Le code ne connait aucun statut ; seul un repli neutre existe si SharePoint ne fournit rien.
 import { escapeHtml, urlSure } from "../public/outils.js";
 import { rendreFooter } from "../footer/footer.js";
+import { rendreEntete } from "../entete/entete.js";
 
 const REPLI_TITRE = "Site momentanément indisponible";
 
@@ -16,6 +17,7 @@ export function rendreSituation(situation, {
   nomSite = "",
   domaine = "",
   footer = null,
+  entete = null,
   nettoyerTexte = null
 } = {}) {
   const s = situation && typeof situation === "object" ? situation : {};
@@ -30,7 +32,7 @@ export function rendreSituation(situation, {
   return `
     <div class="dse-public-page dse-situation${fond ? " dse-situation-media" : ""}"${code ? ` data-situation="${escapeHtml(code)}"` : ""}${fond ? ` style="background-image:url('${escapeHtml(encodeURI(fond))}')"` : ""}>
       <div class="dse-public-overlay"></div>
-      ${nom ? `<div class="dse-site-public-header" role="banner"><a href="/" aria-label="${escapeHtml(nom)}">${escapeHtml(nom)}</a></div>` : ""}
+      ${rendreEntete({ nomSite: nom, ...(entete || {}), ...(nettoyerTexte ? { nettoyerTexte } : {}) })}
       <main class="dse-public-centre">
         <section class="dse-public-card">
           ${marque ? `<div class="dse-public-marque"><span>${escapeHtml(marque)}</span></div>` : ""}

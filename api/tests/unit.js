@@ -31,4 +31,10 @@ assert.strictEqual(selectionner(tous, { ecriture: true, tous: true }).domaines.l
 for (const m of ["a b.fr", "../etc.fr", "a.fr;x", "a", "-a.fr", "a/b.fr"]) assert.ok(!DOMAINE_VALIDE.test(m), m);
 const conf = confHttp("x.fr");
 assert.ok(/server_name x\.fr www\.x\.fr;/.test(conf) && !/ssl_certificate/.test(conf));
+// Rattachement au site par l'ID natif de la liste cible du Lookup (OBJ-SITE -> OBJ-SITE-PUBLIC)
+const { correspondAuSite } = require("../shared/dse");
+const colSite = [{ name: "OBJ_x002d_SITE", displayName: "OBJ-SITE", lookup: { listId: "{ABC}" } }];
+assert.ok(correspondAuSite({ OBJ_x002d_SITELookupId: "4" }, colSite, 4, "abc"));
+assert.ok(!correspondAuSite({ OBJ_x002d_SITELookupId: "5" }, colSite, 4, "abc"));
+assert.ok(!correspondAuSite({ OBJ_x002d_SITELookupId: "4" }, colSite, 4, "autre"));
 console.log("unit OK");

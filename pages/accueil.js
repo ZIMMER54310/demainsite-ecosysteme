@@ -16,6 +16,7 @@ import { rendreFooter } from "../modules/footer/footer.js";
 import { rendreBuilder, STYLES_BUILDER } from "../modules/builder/rendu.js";
 import { apiGet } from "../js/api.js";
 import { rendreSituation } from "../modules/situation/situation.js";
+import { rendreEntete as enteteSharePoint } from "../modules/entete/entete.js";
 
 /* =========================================================
    OUTILS
@@ -68,22 +69,39 @@ function texteSharePoint(value) {
    proviennent de SharePoint, le code ne connaît aucun statut.
    ========================================================= */
 
-function pageSituation(site = null, footer = null) {
+// En-tete SharePoint du site (OBJ-ENTETE-SITE, OBJ-LOGO-SITE, OBJ-MENU-SITE).
+function donneesEntete(complet) {
+  return {
+    entete: complet?.entete?.donnees ?? null,
+    logo: complet?.logo?.donnees ?? null,
+    menu: complet?.menu?.donnees ?? []
+  };
+}
+
+// Elements communs (En-tete, Footer) d'un site en situation : jamais de page.
+function communsSituation(complet) {
+  return {
+    footer: trouverFooter({ modules: complet?.communs?.modules ?? [] }),
+    entete: donneesEntete(complet)
+  };
+}
+
+function pageSituation(site = null, communs = {}) {
   return rendreSituation(site?.situation ?? null, {
     nomSite: site?.nom && site.nom !== site?.domaines?.[0] ? site.nom : "",
     domaine: site?.domaines?.[0] ?? "",
-    footer,
+    footer: communs.footer ?? null,
+    entete: communs.entete ?? null,
     nettoyerTexte: texteSharePoint
   });
 }
 
-async function footerSituation(siteId) {
-  if (!siteId) return null;
+async function chargerCommunsSituation(siteId) {
+  if (!siteId) return {};
   try {
-    const complet = (await getSiteFull(siteId))?.donnees;
-    return trouverFooter({ modules: complet?.communs?.modules ?? [] });
+    return communsSituation((await getSiteFull(siteId))?.donnees);
   } catch {
-    return null;
+    return {};
   }
 }
 
@@ -438,6 +456,7 @@ function rendreSitePublic({
   page,
   hero,
   footer,
+  entete,
   composition
 }) {
   const nomSite = String(
@@ -454,9 +473,7 @@ function rendreSitePublic({
       )
     )
   );
-  const rendreEntete = () => nomSite
-    ? `<div class="dse-site-public-header" role="banner"><a href="/" aria-label="${escapeHtml(nomSite)}">${escapeHtml(nomSite)}</a></div>`
-    : "";
+  const rendreEntete = () => enteteSharePoint({ nomSite, ...entete, nettoyerTexte: texteSharePoint });
   const footerHtml = rendreFooter(footer, { nomSite, nettoyerTexte: texteSharePoint });
 
   // Mode Builder : prioritaire uniquement si une composition validee existe ; sinon rendu historique.
@@ -563,7 +580,7 @@ export async function accueilPage(domaine) {
 
     // Regle unique : ACTIF (etat "normal") = vrai site ; toute autre situation = page generique.
     if (site?.etat !== "normal" || !siteId) {
-      return pageSituation(site, await footerSituation(siteId));
+      return pageSituation(site, await chargerCommunsSituation(siteId));
     }
 
     /* -----------------------------------------------------
@@ -617,7 +634,7 @@ export async function accueilPage(domaine) {
         : null;
 
     if (!page) {
-      return pageSituation(site, trouverFooter({ modules: siteComplet.communs?.modules ?? [] }));
+      return pageSituation(site, communsSituation(siteComplet));
     }
 
     /* -----------------------------------------------------
@@ -657,6 +674,7 @@ export async function accueilPage(domaine) {
       page,
       hero,
       footer,
+      entete: donneesEntete(siteComplet),
       composition
     });
 

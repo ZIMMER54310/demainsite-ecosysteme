@@ -26,6 +26,28 @@ const url = (f) => require("url").pathToFileURL(path.join(__dirname, "..", "..",
   const inactif = { relations: { "OBJ-ACTIF": { id: "2" }, "OBJ-VALIDE": { id: "1" } } };
   assert.strictEqual(outils.trouverContenuModule({ modules: [{ ...inactif, contenus: { footer: [c] } }] }, "footer"), null);
 
+
+  // En-tete generique SharePoint : entete/logo/menu publies uniquement, sinon nom du site
+  const { rendreEntete } = await import(url("modules/entete/entete.js"));
+  assert.strictEqual(rendreEntete({}), "");
+  assert.ok(rendreEntete({ nomSite: "Site <x>" }).includes("Site &lt;x&gt;"));
+  const e1 = rendreEntete({
+    nomSite: "Repli",
+    entete: [{ ...ok, configuration: { Titre: "Titre SP", "NOTE-COURTE": "Accroche SP" } }],
+    logo: [{ ...ok, configuration: { Titre: "Logo" }, media: { url: "/api/v1/media/9" } }],
+    menu: [
+      { ...ok, configuration: { Titre: "Contact", URL: "/contact" } },
+      { ...non, configuration: { Titre: "Brouillon", URL: "/b" } },
+      { ...ok, configuration: { Titre: "Pirate", URL: "javascript:alert(1)" } },
+      { ...ok, configuration: { Titre: "Sans URL" } }
+    ]
+  });
+  assert.ok(e1.includes("Titre SP") && !e1.includes("Repli"), "titre SharePoint prioritaire");
+  assert.ok(e1.includes("Accroche SP") && e1.includes('src="/api/v1/media/9"'));
+  assert.ok(e1.includes('href="/contact"') && !/Brouillon|Pirate|Sans URL|javascript:/.test(e1));
+  const e2 = rendreEntete({ nomSite: "Repli", entete: [{ ...non, configuration: { Titre: "Inactif" } }] });
+  assert.ok(e2.includes("Repli") && !e2.includes("Inactif"), "entete non valide ignore");
+
   // Footer : fallback sans configuration
   assert.strictEqual(rendreFooter(null, {}), "");
   assert.ok(/Mon Site/.test(rendreFooter(null, { nomSite: "Mon Site" })));

@@ -816,3 +816,9 @@ body.dse-public .dse-public-page > .dse-footer {
   background-position: center;
   background-repeat: no-repeat;
 }
+
+/* En-tete generique : logo, accroche et menu fournis par SharePoint */
+.dse-site-public-header a { display: inline-flex; align-items: center; gap: 10px; }
+.dse-entete-logo { max-height: 40px; width: auto; }
+.dse-entete-accroche { margin: 4px 0 0; opacity: .8; font-size: .9rem; }
+.dse-entete-menu { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 6px; }

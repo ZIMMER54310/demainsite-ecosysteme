@@ -1063,10 +1063,19 @@ function trierElements(elements) {
    COMPOSANTS LIES DIRECTEMENT AU SITE
    ========================================================= */
 
+const idListe = (v) =>
+  String(v || "").replace(/[{}]/g, "").toLowerCase();
+
+/*
+ * Un element est rattache au site par un Lookup dont la liste cible est
+ * OBJ-SITE-PUBLIC (ID natif de liste), quel que soit le nom de la colonne
+ * (ex. "OBJ-SITE-PUBLIC" ou "OBJ-SITE"). Repli par nom pour les colonnes simples.
+ */
 function correspondAuSite(
   fields,
   colonnes,
-  siteItemId
+  siteItemId,
+  listeSiteId = null
 ) {
   const attendu =
     String(siteItemId);
@@ -1078,14 +1087,16 @@ function correspondAuSite(
     ].map(nomNormalise);
 
     const lieAuSite =
-      noms.some(
-        (nom) =>
-          nom.includes(
-            "OBJSITEPUBLIC"
-          ) ||
-          nom === "SITE" ||
-          nom.includes("IDSITE")
-      );
+      colonne.lookup?.listId && listeSiteId
+        ? idListe(colonne.lookup.listId) === idListe(listeSiteId)
+        : noms.some(
+          (nom) =>
+            nom.includes(
+              "OBJSITEPUBLIC"
+            ) ||
+            nom === "SITE" ||
+            nom.includes("IDSITE")
+        );
 
     if (!lieAuSite) {
       continue;
@@ -1154,27 +1165,49 @@ async function chargerComposantSite(
       liste.id
     );
 
+  const listeSite =
+    trouverListe(
+      listes,
+      ["OBJ-SITE-PUBLIC"]
+    );
+
   const trouves =
     items.filter(
       (item) =>
         correspondAuSite(
           item.fields || {},
           colonnes,
-          siteItemId
+          siteItemId,
+          listeSite?.id || null
         )
     );
 
   const elements = [];
 
+  const listeMedia =
+    trouverListe(
+      listes,
+      ["OBJ-MEDIA"]
+    );
+
   for (const item of trouves) {
-    elements.push(
+    const element =
       await construireElementPublic(
         token,
         siteGraphId,
         item,
         colonnes
-      )
-    );
+      );
+
+    // Media generique : Lookup vers OBJ-MEDIA (ID natif) => /api/v1/media/:id.
+    element.media =
+      require("./statuts-site").mediaElement(
+        colonnes,
+        item.fields || {},
+        listeMedia ? idListe(listeMedia.id) : null
+      );
+
+    elements.push(element);
   }
 
   trierElements(elements);
@@ -1281,15 +1314,30 @@ async function chargerElementsLies(
 
   const elements = [];
 
+  const listeMedia =
+    trouverListe(
+      listes,
+      ["OBJ-MEDIA"]
+    );
+
   for (const item of trouves) {
-    elements.push(
+    const element =
       await construireElementPublic(
         token,
         siteGraphId,
         item,
         colonnes
-      )
-    );
+      );
+
+    // Media generique : Lookup vers OBJ-MEDIA (ID natif) => /api/v1/media/:id.
+    element.media =
+      require("./statuts-site").mediaElement(
+        colonnes,
+        item.fields || {},
+        listeMedia ? idListe(listeMedia.id) : null
+      );
+
+    elements.push(element);
   }
 
   trierElements(elements);

@@ -22,11 +22,11 @@ metier absent de SharePoint.
 Appels Graph : timeout 15 s, au plus 2 reessais sur 429/503 en respectant `Retry-After` (plafonne
 a 5 s).
 
-## Fichiers historiques Azure Functions (conserves)
+## Gestionnaires `dse*/index.js`
 
-Les dossiers `dse*/index.js` gardent la signature `(context, req)` des Azure Functions et SONT
-utilises par `server.js` via un adaptateur. Les `function.json` et `host.json` ne sont plus utilises
-par OVH ; ils sont conserves sans effet jusqu'a un nettoyage dedie.
+Les dossiers `dse*/index.js` conservent la signature `(context, req)` et sont appeles par
+`server.js` via un adaptateur Express. Aucun fichier Azure Functions (`function.json`, `host.json`)
+n'est conserve : l'API s'execute uniquement sur le VPS OVH.
 
 ## Tests
 
