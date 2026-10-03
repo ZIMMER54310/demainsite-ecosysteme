@@ -24,7 +24,7 @@ const { main, logWriter, journalBlockedReason } = require("../tools/sync-ovh-sha
     Domaines: [{ LookupId: 12 }, { LookupId: "13" }]
   }, { name: "Domaines" }), ["12", "13"]);
   assert.deepStrictEqual(domainSync.lookupChamp({ name: "Domaines" }, "12", true), {
-    "Domaines@odata.type": "Collection(Edm.Int32)",
+    "DomainesLookupId@odata.type": "Collection(Edm.Int32)",
     DomainesLookupId: [12]
   });
   assert.deepStrictEqual(domainSync.lookupChamp({ name: "Statut" }, "2"), { StatutLookupId: 2 });

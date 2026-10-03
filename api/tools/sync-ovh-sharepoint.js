@@ -430,7 +430,7 @@ async function main(args = process.argv.slice(2), dependencies = {}) {
           logger.emit({ code: "DOMAINE_BLOQUÉ", domain, missing: domainCreation.missing });
           continue;
         }
-        logger.emit({ code: dryRun ? "DOMAINE_À_CRÉER" : "DOMAINE_CRÉÉ", domain, fields: Object.keys(domainCreation.fields) });
+        logger.emit({ code: "DOMAINE_À_CRÉER", domain, fields: Object.keys(domainCreation.fields) });
         if (dryRun) {
           domainItem = { id: "0", fields: domainCreation.fields };
         } else {
@@ -484,7 +484,7 @@ async function main(args = process.argv.slice(2), dependencies = {}) {
           logger.emit({ code: "SITE_BLOQUÉ", domain, domainId, missing: siteCreation.missing });
           continue;
         }
-        logger.emit({ code: dryRun ? "SITE_À_CRÉER" : "SITE_CRÉÉ", domain, domainId, status: "Construction", statusId: String(context.refs.construction.id) });
+        logger.emit({ code: "SITE_À_CRÉER", domain, domainId, status: "Construction", statusId: String(context.refs.construction.id) });
         if (dryRun) {
           logger.emit({ code: "LIAISON_DOMAINE_SITE_À_CRÉER", domain, domainId, status: "Construction" });
           continue;

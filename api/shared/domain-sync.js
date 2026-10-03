@@ -33,7 +33,7 @@ function lireLookupIds(fields, column) {
 function lookupChamp(column, id, multiple = false) {
   if (!column || !/^\d+$/.test(String(id))) throw new Error("LOOKUP_ID_INVALIDE");
   return multiple
-    ? { [`${column.name}@odata.type`]: "Collection(Edm.Int32)", [`${column.name}LookupId`]: [Number(id)] }
+    ? { [`${column.name}LookupId@odata.type`]: "Collection(Edm.Int32)", [`${column.name}LookupId`]: [Number(id)] }
     : { [`${column.name}LookupId`]: Number(id) };
 }
 
