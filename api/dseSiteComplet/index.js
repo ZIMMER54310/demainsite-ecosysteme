@@ -262,53 +262,54 @@ async function chargerContenusSpecialises(
     return resultats;
   }
 
-  for (
-    const [
-      cle,
-      definition
-    ] of Object.entries(
-      CONTENUS_MODULES
-    )
-  ) {
-    const resultat =
-      await dse.chargerContenusModules(
-        token,
-        siteGraphId,
-        listes,
-        {
-          nomsListeContenu:
-            definition.noms,
-          moduleItemIds:
-            moduleIds
-        }
-      );
-
-    resultats[cle] = {
-      disponible:
-        resultat.disponible,
-      liste:
-        resultat.liste,
-      listeId:
-        resultat.listeId ||
-        null,
-      lookup:
-        resultat.lookup ||
-        null,
-      donnees:
-        resultat.elements
-    };
-
-    if (cle === "hero") {
-      resultats[cle].donnees =
-        await hydraterMediasHero(
-          token,
-          siteGraphId,
-          listes,
-          resultat.elements,
-          context
-        );
-    }
+  for (const cle of Object.keys(CONTENUS_MODULES)) {
+    resultats[cle] = null;
   }
+
+  await Promise.all(
+    Object.entries(CONTENUS_MODULES).map(
+      async ([cle, definition]) => {
+        const resultat =
+          await dse.chargerContenusModules(
+            token,
+            siteGraphId,
+            listes,
+            {
+              nomsListeContenu:
+                definition.noms,
+              moduleItemIds:
+                moduleIds
+            }
+          );
+
+        resultats[cle] = {
+          disponible:
+            resultat.disponible,
+          liste:
+            resultat.liste,
+          listeId:
+            resultat.listeId ||
+            null,
+          lookup:
+            resultat.lookup ||
+            null,
+          donnees:
+            resultat.elements
+        };
+
+        if (cle === "hero") {
+          resultats[cle].donnees =
+            await hydraterMediasHero(
+              token,
+              siteGraphId,
+              listes,
+              resultat.elements,
+              context
+            );
+        }
+      }
+    )
+  );
 
   return resultats;
 }
@@ -741,28 +742,26 @@ module.exports =
          COMPOSANTS DIRECTEMENT LIES AU SITE
          ----------------------------------------------------- */
 
-      const resultatsSite = {};
+      const resultatsSite = Object.fromEntries(
+        Object.keys(COMPOSANTS_SITE).map((cle) => [cle, null])
+      );
 
-      for (
-        const [
-          cle,
-          definition
-        ] of Object.entries(
-          COMPOSANTS_SITE
+      await Promise.all(
+        Object.entries(COMPOSANTS_SITE).map(
+          async ([cle, definition]) => {
+            resultatsSite[cle] =
+              simplifierComposant(
+                await dse.chargerComposantSite(
+                  token,
+                  siteGraph.id,
+                  listes,
+                  definition,
+                  siteIdDemande
+                )
+              );
+          }
         )
-      ) {
-        resultatsSite[cle] =
-          simplifierComposant(
-            await dse
-              .chargerComposantSite(
-                token,
-                siteGraph.id,
-                listes,
-                definition,
-                siteIdDemande
-              )
-          );
-      }
+      );
 
       /* -----------------------------------------------------
          SITE → PAGES

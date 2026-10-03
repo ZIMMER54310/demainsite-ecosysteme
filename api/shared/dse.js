@@ -163,7 +163,48 @@ function creerErreur(
    MICROSOFT GRAPH
    ========================================================= */
 
-async function graph(
+/*
+ * Cache memoire court des lectures Graph (GET) : fusionne les appels identiques
+ * simultanes et evite de relire SharePoint a chaque rendu. Duree reglable par
+ * DSE_GRAPH_CACHE_MS (0 = desactive). Les erreurs ne sont jamais mises en cache.
+ */
+const GRAPH_CACHE = new Map();
+const GRAPH_CACHE_MAX = 2000;
+const dureeCacheGraph = () => {
+  const v = Number(process.env.DSE_GRAPH_CACHE_MS);
+  return Number.isFinite(v) && v >= 0 ? v : 60000;
+};
+
+async function graph(token, pathOuUrl) {
+  const duree = dureeCacheGraph();
+  if (!duree) return graphSansCache(token, pathOuUrl);
+  const cle = String(pathOuUrl);
+  const maintenant = Date.now();
+  const entree = GRAPH_CACHE.get(cle);
+  if (entree && entree.expire > maintenant) {
+    const valeur = await entree.promesse;
+    return valeur && typeof valeur === "object" && !Buffer.isBuffer(valeur) ? structuredClone(valeur) : valeur;
+  }
+  const promesse = graphSansCache(token, pathOuUrl);
+  if (GRAPH_CACHE.size >= GRAPH_CACHE_MAX) {
+    for (const [k, v] of GRAPH_CACHE) if (v.expire <= maintenant) GRAPH_CACHE.delete(k);
+    if (GRAPH_CACHE.size >= GRAPH_CACHE_MAX) GRAPH_CACHE.delete(GRAPH_CACHE.keys().next().value);
+  }
+  GRAPH_CACHE.set(cle, { expire: maintenant + duree, promesse });
+  try {
+    const valeur = await promesse;
+    return valeur && typeof valeur === "object" && !Buffer.isBuffer(valeur) ? structuredClone(valeur) : valeur;
+  } catch (e) {
+    if (GRAPH_CACHE.get(cle)?.promesse === promesse) GRAPH_CACHE.delete(cle);
+    throw e;
+  }
+}
+
+function viderCacheGraph() {
+  GRAPH_CACHE.clear();
+}
+
+async function graphSansCache(
   token,
   pathOuUrl
 ) {
@@ -922,29 +963,45 @@ async function relationsLookup(
   colonnes
 ) {
   const relations = {};
+  const resolues = await Promise.all(
+    colonnes.map((colonne) => resoudreColonneLookup(token, siteId, fields, colonne))
+  );
 
-  for (const colonne of colonnes) {
-    if (
-      !colonne.lookup ||
-      !colonne.lookup.listId ||
-      colonne.hidden
-    ) {
-      continue;
+  for (const entree of resolues) {
+    if (entree) {
+      relations[entree[0]] = entree[1];
     }
+  }
 
-    const ids =
-      idsLookupColonne(
-        fields,
-        colonne
-      );
+  return relations;
+}
 
-    if (!ids.length) {
-      continue;
-    }
+async function resoudreColonneLookup(
+  token,
+  siteId,
+  fields,
+  colonne
+) {
+  if (
+    !colonne.lookup ||
+    !colonne.lookup.listId ||
+    colonne.hidden
+  ) {
+    return null;
+  }
 
-    const valeurs = [];
+  const ids =
+    idsLookupColonne(
+      fields,
+      colonne
+    );
 
-    for (const id of ids) {
+  if (!ids.length) {
+    return null;
+  }
+
+  const valeurs = await Promise.all(
+    ids.map(async (id) => {
       try {
         const lie =
           await graph(
@@ -955,7 +1012,7 @@ async function relationsLookup(
             "?$expand=fields"
           );
 
-        valeurs.push({
+        return {
           id: String(lie.id),
           titre:
             lie.fields &&
@@ -965,29 +1022,31 @@ async function relationsLookup(
               lie.fields.NOM
             ) ||
             null
-        });
+        };
       } catch (_) {
-        valeurs.push({
+        return {
           id: String(id),
           titre: null
-        });
+        };
       }
-    }
+    })
+  );
 
-    if (valeurs.length) {
-      const nomRelation =
-        colonne.displayName ||
-        colonne.name;
+  if (valeurs.length) {
+    const nomRelation =
+      colonne.displayName ||
+      colonne.name;
 
-      relations[nomRelation] =
-        colonne.lookup
-          .allowMultipleValues
-          ? valeurs
-          : valeurs[0];
-    }
+    return [
+      nomRelation,
+      colonne.lookup
+        .allowMultipleValues
+        ? valeurs
+        : valeurs[0]
+    ];
   }
 
-  return relations;
+  return null;
 }
 
 /* =========================================================
@@ -1190,14 +1249,19 @@ async function chargerComposantSite(
       ["OBJ-MEDIA"]
     );
 
-  for (const item of trouves) {
-    const element =
-      await construireElementPublic(
+  const construits = await Promise.all(
+    trouves.map((item) =>
+      construireElementPublic(
         token,
         siteGraphId,
         item,
         colonnes
-      );
+      )
+    )
+  );
+
+  for (const [index, item] of trouves.entries()) {
+    const element = construits[index];
 
     // Media generique : Lookup vers OBJ-MEDIA (ID natif) => /api/v1/media/:id.
     element.media =
@@ -1320,14 +1384,19 @@ async function chargerElementsLies(
       ["OBJ-MEDIA"]
     );
 
-  for (const item of trouves) {
-    const element =
-      await construireElementPublic(
+  const construits = await Promise.all(
+    trouves.map((item) =>
+      construireElementPublic(
         token,
         siteGraphId,
         item,
         colonnes
-      );
+      )
+    )
+  );
+
+  for (const [index, item] of trouves.entries()) {
+    const element = construits[index];
 
     // Media generique : Lookup vers OBJ-MEDIA (ID natif) => /api/v1/media/:id.
     element.media =
@@ -1524,6 +1593,7 @@ module.exports = {
   obtenirJetonGraph,
   obtenirSiteGraph,
   graph,
+  viderCacheGraph,
   creerErreur,
 
   normaliserDomaine,

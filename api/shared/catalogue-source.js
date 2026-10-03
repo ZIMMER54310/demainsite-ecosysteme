@@ -64,8 +64,10 @@ async function titresListe(token, siteGraphId, listId, cache) {
 
 // Meme forme que construireElementPublic, mais les titres des Lookup sont resolus par lot.
 async function lireElements(token, siteGraphId, liste, cacheTitres) {
-  const colonnes = await dse.chargerColonnesListe(token, siteGraphId, liste.id);
-  const items = await dse.chargerItemsListe(token, siteGraphId, liste.id);
+  const [colonnes, items] = await Promise.all([
+    dse.chargerColonnesListe(token, siteGraphId, liste.id),
+    dse.chargerItemsListe(token, siteGraphId, liste.id)
+  ]);
   const lookups = colonnes.filter((c) => c.lookup?.listId && !c.hidden);
 
   const elements = [];
@@ -182,22 +184,33 @@ async function chargerDonnees() {
 
   const listeMedias = dse.trouverListe(listes, ["OBJ-MEDIA"]);
   const mediaListId = listeMedias ? String(listeMedias.id).toLowerCase() : null;
-  const sites = lireSites(await lireElements(token, siteGraph.id, listeSites, cacheTitres), mediaListId);
+  const lire = (liste) => lireElements(token, siteGraph.id, liste, cacheTitres);
+  const listeStatuts = dse.trouverListe(listes, statutsSite.LISTE_STATUTS);
+  const entreesContenu = Object.entries(LISTES_CONTENU).map(([type, noms]) => [type, dse.trouverListe(listes, noms)]);
+  const entreesReferentiel = Object.entries(LISTES_REFERENTIEL).map(([kind, noms]) => [kind, dse.trouverListe(listes, noms)]);
+
+  // Listes independantes lues en parallele (le cache Graph fusionne les doublons).
+  const [elementsSites, contenus, elementsStatuts, refs] = await Promise.all([
+    lire(listeSites),
+    Promise.all(entreesContenu.map(([, liste]) => (liste ? lire(liste) : null))),
+    listeStatuts ? lire(listeStatuts) : null,
+    Promise.all(entreesReferentiel.map(([, liste]) => (liste ? lire(liste) : null)))
+  ]);
+
+  const sites = lireSites(elementsSites, mediaListId);
 
   const elements = {};
   const disponibles = {};
 
-  for (const [type, noms] of Object.entries(LISTES_CONTENU)) {
-    const liste = dse.trouverListe(listes, noms);
+  entreesContenu.forEach(([type, liste], i) => {
     disponibles[type] = Boolean(liste);
-    elements[type] = liste ? nettoyer(await lireElements(token, siteGraph.id, liste, cacheTitres)) : [];
-  }
+    elements[type] = liste ? nettoyer(contenus[i]) : [];
+  });
 
   let statuts = null;
-  const listeStatuts = dse.trouverListe(listes, statutsSite.LISTE_STATUTS);
   if (listeStatuts) {
     statuts = new Map();
-    for (const el of await lireElements(token, siteGraph.id, listeStatuts, cacheTitres)) {
+    for (const el of elementsStatuts) {
       statuts.set(el.id, {
         id: el.id,
         titre: catalogue.titreElement(el) || null,
@@ -212,13 +225,9 @@ async function chargerDonnees() {
   }
 
   const referentiels = {};
-
-  for (const [kind, noms] of Object.entries(LISTES_REFERENTIEL)) {
-    const liste = dse.trouverListe(listes, noms);
-    referentiels[kind] = liste
-      ? idsReferentielValides(await lireElements(token, siteGraph.id, liste, cacheTitres))
-      : null;
-  }
+  entreesReferentiel.forEach(([kind, liste], i) => {
+    referentiels[kind] = liste ? idsReferentielValides(refs[i]) : null;
+  });
 
   return { sites, elements, referentiels, disponibles, statuts };
 }
