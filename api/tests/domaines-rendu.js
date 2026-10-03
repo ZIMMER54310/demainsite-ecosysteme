@@ -27,7 +27,7 @@ const publie = (e) => actif(e, "OBJ-ACTIF", "1") && actif(e, "OBJ-VALIDE", "1");
       const c = (await get(`/api/v1/site-complet/${site.id}`)).corps?.donnees;
       const p = (c?.pages?.donnees ?? []).find((x) => publie(x));
       page = p ? "oui" : "non";
-      const mods = (c?.modules?.donnees ?? c?.modules ?? []).filter((m) => String(m.pageId) === String(p?.id) && publie(m));
+      const mods = (c?.modules?.donnees ?? c?.modules ?? []).filter((m) => String(m.pageId) === String(p?.id) && actif(m, "OBJ-ACTIF", "1"));
       const a = (cle) => mods.some((m) => (m.contenus?.[cle] ?? []).some(publie)) ? "oui" : "non";
       hero = a("hero"); footer = a("footer");
     }

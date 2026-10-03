@@ -21,8 +21,10 @@ const url = (f) => require("url").pathToFileURL(path.join(__dirname, "..", "..",
   const c = { ...ok, id: "7", configuration: { "TITRE-PRINCIPAL": "X" } };
   assert.strictEqual(outils.trouverContenuModule(page([c], [c]), "footer").contenu.id, "7");
   assert.strictEqual(outils.trouverContenuModule(page([c], []), "footer"), null);
-  // Module non valide : ignore
-  assert.strictEqual(outils.trouverContenuModule({ modules: [{ ...non, contenus: { footer: [c] } }] }, "footer"), null);
+  // Module actif non valide : le contenu valide est retenu ; module inactif : ignore
+  assert.strictEqual(outils.trouverContenuModule({ modules: [{ ...non, contenus: { footer: [c] } }] }, "footer").contenu.id, "7");
+  const inactif = { relations: { "OBJ-ACTIF": { id: "2" }, "OBJ-VALIDE": { id: "1" } } };
+  assert.strictEqual(outils.trouverContenuModule({ modules: [{ ...inactif, contenus: { footer: [c] } }] }, "footer"), null);
 
   // Footer : fallback sans configuration
   assert.strictEqual(rendreFooter(null, {}), "");

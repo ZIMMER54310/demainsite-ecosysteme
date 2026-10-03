@@ -144,7 +144,9 @@ export function trouverContenuModule(page, cle) {
     modulesPage(page);
 
   for (const module of modules) {
-    if (!estActif(module) || !estValide(module)) {
+    // Le module parent doit être actif ; la validation de publication
+    // est portée par le contenu spécialisé (HERO, FOOTER…) lui-même.
+    if (!estActif(module)) {
       continue;
     }
 
