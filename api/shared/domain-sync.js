@@ -38,13 +38,76 @@ function lookupChamp(column, id, multiple = false) {
 }
 
 function dateOVH(info) {
-  const possible = [info?.creationDate, info?.createdAt, info?.creationDateTime, info?.dateAchat];
+  const possible = [
+    info?.creation,
+    info?.creationDate,
+    info?.createdAt,
+    info?.creationDateTime,
+    info?.dateAchat
+  ];
   for (const value of possible) {
     if (!value) continue;
+    const dateOnly = String(value).match(/^(\d{4}-\d{2}-\d{2})$/);
+    if (dateOnly) return dateSharePointValeur(dateOnly[1]);
     const date = new Date(value);
     if (!Number.isNaN(date.valueOf())) return date.toISOString();
   }
   return null;
+}
+
+function dateOvhJour(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value ? value : null;
+}
+
+function dateSharePointJour(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.valueOf())) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const part = Object.fromEntries(parts.map(({ type, value: partValue }) => [type, partValue]));
+  return `${part.year}-${part.month}-${part.day}`;
+}
+
+function dateSharePointValeur(date) {
+  const jour = dateOvhJour(date);
+  if (!jour) throw new Error("DATE_OVH_INVALIDE");
+  const minuitUTC = new Date(`${jour}T00:00:00.000Z`);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(minuitUTC);
+  const part = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const heureLocaleUTC = Date.UTC(
+    Number(part.year), Number(part.month) - 1, Number(part.day),
+    Number(part.hour), Number(part.minute), Number(part.second)
+  );
+  return new Date(minuitUTC.valueOf() - (heureLocaleUTC - minuitUTC.valueOf())).toISOString();
+}
+
+function souscriptionDepuisMois(mois, items) {
+  if (!Number.isInteger(mois) || mois < 12 || mois % 12 !== 0) {
+    return { item: null, reason: "PÉRIODE_OVH_NON_CONVERTIBLE_EN_ANNÉES" };
+  }
+  const annees = mois / 12;
+  const titre = `${annees} ${annees === 1 ? "AN" : "ANS"}`;
+  const matches = items.filter((item) => cleNom(item.fields?.Title) === cleNom(titre));
+  if (matches.length !== 1) {
+    return { item: null, reason: matches.length ? "SOUSCRIPTION_SHAREPOINT_AMBIGUË" : "SOUSCRIPTION_SHAREPOINT_ABSENTE" };
+  }
+  return { item: matches[0], title: matches[0].fields?.Title, months: mois, derived: true };
 }
 
 function referenceParId(items, id, name) {
@@ -71,6 +134,10 @@ module.exports = {
   lireLookupIds,
   lookupChamp,
   dateOVH,
+  dateOvhJour,
+  dateSharePointJour,
+  dateSharePointValeur,
+  souscriptionDepuisMois,
   referenceParId,
   referenceParTitre,
   domaineDansSite

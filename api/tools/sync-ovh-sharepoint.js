@@ -32,6 +32,7 @@ const LABELS = {
     supplier: ["OBJ-NOM DE DOMAINE-FOURNISSEUR"],
     purchaseDate: ["Date Achat"],
     subscription: ["Temps de souscription"],
+    expirationDate: ["Date d'expiration"],
     active: ["OBJ-ACTIF"],
     valid: ["OBJ-VALIDE"],
     locked: ["OBJ-VEROUILLE"],
@@ -168,6 +169,7 @@ async function construireContexte(token, siteGraph) {
   assertLookup(columnMap.domain.site, listMap.site, `${LIST_NAMES.domain}.site`, false);
   assertType(columnMap.domain.title, "text", `${LIST_NAMES.domain}.Title`);
   assertType(columnMap.domain.purchaseDate, "dateTime", `${LIST_NAMES.domain}.Date Achat`);
+  assertType(columnMap.domain.expirationDate, "dateTime", `${LIST_NAMES.domain}.Date d'expiration`);
   assertType(columnMap.site.title, "text", `${LIST_NAMES.site}.Title`);
   assertLookup(columnMap.site.client, listMap.client, `${LIST_NAMES.site}.client`, false);
   assertLookup(columnMap.site.domain, listMap.domain, `${LIST_NAMES.site}.domain`, true);
@@ -226,6 +228,7 @@ async function construireContexte(token, siteGraph) {
     assertRefConfig(env, "DSE_OVH_CLIENT_ID", allRefItems.client));
   refs.subscription = resoudreReference(refs, "DSE_OVH_SUBSCRIPTION_ID", () =>
     assertRefConfig(env, "DSE_OVH_SUBSCRIPTION_ID", allRefItems.subscription));
+  refs.subscriptionItems = allRefItems.subscription;
   refs.domainActive = resoudreReference(refs, "DSE_OVH_DOMAIN_ACTIVE_ID", () =>
     assertRefConfig(env, "DSE_OVH_DOMAIN_ACTIVE_ID", allRefItems.active));
   refs.domainValid = resoudreReference(refs, "DSE_OVH_DOMAIN_VALID_ID", () =>
@@ -318,28 +321,162 @@ function makeSiteFields(context, domain, domainId, domainFields) {
   return { fields, missing, clientId };
 }
 
+function planifierMiseAJourTechnique(context, domainItem, ovhInfo) {
+  const columns = context.columns.domain;
+  const fields = {};
+  const modified = [];
+  const unchanged = [];
+  const alerts = [];
+  let derivedSubscription = null;
+  const source = {
+    purchaseDate: ovhInfo?.creation ?? null,
+    subscriptionMonths: ovhInfo?.renew?.period ?? null,
+    expirationDate: ovhInfo?.expiration ?? null
+  };
+  const dates = {
+    purchaseDate: domainSync.dateOvhJour(source.purchaseDate),
+    expirationDate: domainSync.dateOvhJour(source.expirationDate)
+  };
+  const current = domainItem.fields || {};
+
+  const planifierDate = (key, label, sourceDate) => {
+    if (sourceDate === null || sourceDate === undefined || sourceDate === "") {
+      alerts.push(`${label}: valeur OVH absente; valeur SharePoint conservée`);
+      return;
+    }
+    const validDate = domainSync.dateOvhJour(sourceDate);
+    if (!validDate) {
+      alerts.push(`${label}: date OVH invalide (${String(sourceDate)}); valeur SharePoint conservée`);
+      return;
+    }
+    const column = columns[key];
+    const currentDate = domainSync.dateSharePointJour(current[column.name]);
+    if (!currentDate) {
+      fields[column.name] = domainSync.dateSharePointValeur(validDate);
+      modified.push({ field: label, source: "OVH", value: validDate, current: current[column.name] ?? null });
+    } else if (currentDate === validDate) {
+      unchanged.push({ field: label, source: "OVH", value: validDate });
+    } else {
+      fields[column.name] = domainSync.dateSharePointValeur(validDate);
+      modified.push({ field: label, source: "OVH", value: validDate, current: currentDate });
+    }
+  };
+
+  planifierDate("purchaseDate", "Date Achat", source.purchaseDate);
+  planifierDate("expirationDate", "Date d'expiration", source.expirationDate);
+
+  if (source.subscriptionMonths === null || source.subscriptionMonths === undefined || source.subscriptionMonths === "") {
+    alerts.push("Temps de souscription: valeur OVH absente; valeur SharePoint conservée");
+  } else {
+    const resolution = domainSync.souscriptionDepuisMois(source.subscriptionMonths, context.refs.subscriptionItems || []);
+    if (!resolution.item) {
+      alerts.push(`Temps de souscription: ${resolution.reason} (${String(source.subscriptionMonths)} mois); valeur SharePoint conservée`);
+    } else {
+      derivedSubscription = resolution.title;
+      const currentIds = domainSync.lireLookupIds(current, columns.subscription);
+      const targetId = String(resolution.item.id);
+      if (currentIds.length === 1 && currentIds[0] === targetId) {
+        unchanged.push({
+          field: "Temps de souscription",
+          source: "OVH",
+          months: source.subscriptionMonths,
+          derived: resolution.title,
+          sharePointId: targetId
+        });
+      } else if (currentIds.length === 0) {
+        fields[`${columns.subscription.name}LookupId`] = Number(targetId);
+        modified.push({
+          field: "Temps de souscription",
+          source: "OVH",
+          months: source.subscriptionMonths,
+          derived: resolution.title,
+          sharePointId: targetId,
+          currentIds
+        });
+      } else if (currentIds.length > 1) {
+        alerts.push(`Temps de souscription: plusieurs IDs SharePoint présents (${currentIds.join(",")}); valeur conservée`);
+      } else {
+        fields[`${columns.subscription.name}LookupId`] = Number(targetId);
+        modified.push({
+          field: "Temps de souscription",
+          source: "OVH",
+          months: source.subscriptionMonths,
+          derived: resolution.title,
+          sharePointId: targetId,
+          currentIds
+        });
+      }
+    }
+  }
+
+  return { source, dates, fields, modified, unchanged, alerts, derivedSubscription };
+}
+
+async function synchroniserMetadonneesDomaine(context, domainItem, info, options) {
+  const { domain, dryRun, write, logger } = options;
+  const plan = planifierMiseAJourTechnique(context, domainItem, info);
+  logger.emit({
+    code: "VALEURS_OVH_RÉCUPÉRÉES",
+    domain,
+    domainId: String(domainItem.id),
+    source: "OVH /domain/{domaine}/serviceInfos",
+    values: plan.source,
+    derived: { subscription: plan.derivedSubscription },
+    subscriptionMapping: plan.modified.concat(plan.unchanged)
+      .filter((item) => item.field === "Temps de souscription")
+      .map((item) => ({ source: "OVH mois", derived: item.derived, sharePointId: item.sharePointId }))
+  });
+  for (const item of plan.modified) {
+    logger.emit({ code: dryRun ? "CHAMP_TECHNIQUE_À_MODIFIER" : "CHAMP_TECHNIQUE_MODIFIÉ", domain, ...item });
+  }
+  for (const item of plan.unchanged) logger.emit({ code: "CHAMP_TECHNIQUE_INCHANGÉ", domain, ...item });
+  for (const reason of plan.alerts) logger.emit({ code: "ANOMALIE_MÉTADONNÉE", domain, reason });
+
+  if (Object.keys(plan.fields).length && !dryRun) {
+    const latest = await context.snapshot();
+    const current = latest.domains.filter((item) => String(item.id) === String(domainItem.id));
+    if (current.length !== 1 ||
+        domainSync.normaliserEtValiderDomaine(current[0].fields?.[context.columns.domain.title.name]) !== domain) {
+      throw new Error(`DOMAINE_MODIFIÉ_CONCURREMMENT:${domain}`);
+    }
+    const latestPlan = planifierMiseAJourTechnique(context, current[0], info);
+    if (Object.keys(latestPlan.fields).length) {
+      await write("PATCH", `/sites/${context.siteId}/lists/${context.lists.domain.id}/items/${domainItem.id}/fields`, latestPlan.fields);
+      logger.emit({ code: "CHAMPS_TECHNIQUES_ENREGISTRÉS", domain, domainId: String(domainItem.id), fields: latestPlan.modified.map((item) => item.field) });
+    }
+  }
+  return plan;
+}
+
 async function main(args = process.argv.slice(2), dependencies = {}) {
   const runId = crypto.randomUUID();
   const logger = dependencies.logger || logWriter(runId);
   const domainIndex = args.indexOf("--domain");
   const domainArg = domainIndex >= 0 ? args[domainIndex + 1] : null;
+  const metadataSync = args.includes("--metadata-sync");
   const unknown = args.filter((arg, index) =>
-    !["--dry-run", "--sync", "--domain"].includes(arg) && !(domainIndex >= 0 && index === domainIndex + 1)
+    !["--dry-run", "--sync", "--metadata-sync", "--domain"].includes(arg) && !(domainIndex >= 0 && index === domainIndex + 1)
   );
   const syncMode = args.includes("--sync");
   const dryMode = args.includes("--dry-run");
   if (unknown.length || args.filter((arg) => arg === "--sync").length > 1 ||
+      args.filter((arg) => arg === "--metadata-sync").length > 1 ||
       args.filter((arg) => arg === "--dry-run").length > 1 ||
       args.filter((arg) => arg === "--domain").length > 1 ||
-      (syncMode && (dryMode || domainIndex >= 0)) || (domainIndex >= 0 && !domainArg)) {
-    throw new Error("Options: [--dry-run] | --domain exemple.fr | --sync");
+      (syncMode && (metadataSync || dryMode || domainIndex >= 0)) || (domainIndex >= 0 && !domainArg)) {
+    throw new Error("Options: [--dry-run] [--metadata-sync] [--domain exemple.fr] | --sync");
   }
-  const mode = syncMode ? "--sync" : domainIndex >= 0 ? "--domain" : "--dry-run";
-  const dryRun = dryMode || (!syncMode && domainIndex < 0);
+  const mode = syncMode ? "--sync" : metadataSync ? "--metadata-sync" : domainIndex >= 0 ? "--domain" : "--dry-run";
+  const dryRun = dryMode || (!syncMode && !metadataSync && domainIndex < 0);
   const filter = domainArg ? domainSync.normaliserEtValiderDomaine(domainArg) : null;
   if (domainArg && !filter) throw new Error("DOMAINE_INVALIDE");
 
-  const counts = { detected: 0, domainCreated: 0, domainExisting: 0, domainBlocked: 0, siteCreated: 0, siteExisting: 0, siteBlocked: 0 };
+  const counts = {
+    detected: 0, domainCreated: 0, domainExisting: 0, domainBlocked: 0,
+    siteCreated: 0, siteExisting: 0, siteBlocked: 0,
+    metadataUpdated: 0, metadataUnchanged: 0, metadataAlerts: 0, metadataErrors: 0
+  };
+  const metadataResults = [];
   logger.emit({ phase: "DEBUT", mode: mode === "--domain" ? "--domain" : mode, dryRun, code: "DEBUT" });
   let context;
   try {
@@ -350,7 +487,7 @@ async function main(args = process.argv.slice(2), dependencies = {}) {
     const graphSite = dependencies.graphSite || await dse.obtenirSiteGraph(token);
     context = dependencies.context || await (dependencies.getContext || construireContexte)(token, graphSite);
     const write = dependencies.write || ((method, url, body) => P.appel(token, method, url, body));
-    const getDomainInfo = dependencies.getDomainInfo || ((domain) => ovh.appel("GET", `/domain/${encodeURIComponent(domain)}`));
+    const getDomainInfo = dependencies.getDomainInfo || ((domain) => ovh.appel("GET", `/domain/${encodeURIComponent(domain)}/serviceInfos`));
     const journalReason = journalBlockedReason(context);
     logger.emit({ code: "JOURNAL_OBJ_JRN_BLOQUÉ", reason: journalReason });
     logger.emit({
@@ -378,10 +515,88 @@ async function main(args = process.argv.slice(2), dependencies = {}) {
       );
       if (matches.length > 1) {
         counts.domainBlocked += 1;
+        if (metadataSync) {
+          counts.metadataAlerts += 1;
+          metadataResults.push({
+            domain, purchaseDate: null, subscription: null, subscriptionLabel: null,
+            expirationDate: null, modified: [], unchanged: [],
+            alert: "PLUSIEURS_ENREGISTREMENTS_SHAREPOINT"
+          });
+          logger.emit({
+            code: "ANOMALIE_MÉTADONNÉE",
+            domain,
+            reason: "Plusieurs éléments OBJ-NOM DE DOMAINE correspondent; aucune mise à jour."
+          });
+          continue;
+        }
         logger.emit({ code: "DOMAINE_BLOQUÉ", domain, reason: "Plusieurs enregistrements SharePoint correspondent au domaine normalisé." });
         continue;
       }
       let domainItem = matches[0] || null;
+      if (metadataSync) {
+        if (!domainItem) {
+          counts.domainBlocked += 1;
+          counts.metadataAlerts += 1;
+          const result = { domain, purchaseDate: null, subscription: null, expirationDate: null, modified: [], unchanged: [], alert: "DOMAINE_OVH_ABSENT_SHAREPOINT_A_TRAITER" };
+          metadataResults.push(result);
+          logger.emit({
+            code: "DOMAINE_OVH_ABSENT_SHAREPOINT_A_TRAITER",
+            domain,
+            action: "À examiner par Pasc ARA IA; aucune création automatique dans ce mode"
+          });
+          continue;
+        }
+        counts.domainExisting += 1;
+        const info = await getDomainInfo(domain).catch((error) => {
+          const reason = `LECTURE_SERVICEINFOS_OVH_IMPOSSIBLE:${error.code || error.message}`;
+          counts.metadataAlerts += 1;
+          metadataResults.push({ domain, purchaseDate: null, subscription: null, expirationDate: null, modified: [], unchanged: [], alert: reason });
+          logger.emit({ code: "ANOMALIE_MÉTADONNÉE", domain, reason });
+          return null;
+        });
+        if (!info || typeof info !== "object") {
+          counts.metadataAlerts += 1;
+          metadataResults.push({
+            domain, purchaseDate: null, subscription: null, subscriptionLabel: null,
+            expirationDate: null, modified: [], unchanged: [],
+            alert: "SERVICEINFOS_OVH_VIDE_OU_INVALIDE"
+          });
+          logger.emit({
+            code: "ANOMALIE_MÉTADONNÉE",
+            domain,
+            reason: "La réponse OVH serviceInfos est vide ou invalide; les valeurs SharePoint sont conservées."
+          });
+          continue;
+        }
+          let plan;
+          try {
+            plan = await synchroniserMetadonneesDomaine(context, domainItem, info, { domain, dryRun, write, logger });
+          } catch (error) {
+            const reason = `ÉCRITURE_MÉTADONNÉE_IMPOSSIBLE:${error.code || error.message}`;
+            counts.metadataAlerts += 1;
+            counts.metadataErrors += 1;
+            metadataResults.push({
+              domain, purchaseDate: null, subscription: null, subscriptionLabel: null,
+              expirationDate: null, modified: [], unchanged: [], alert: reason
+            });
+            logger.emit({ code: "ANOMALIE_MÉTADONNÉE", domain, reason });
+            continue;
+          }
+          if (Object.keys(plan.fields).length) counts.metadataUpdated += 1;
+          else if (!plan.alerts.length) counts.metadataUnchanged += 1;
+          counts.metadataAlerts += plan.alerts.length;
+          metadataResults.push({
+            domain,
+            purchaseDate: plan.dates.purchaseDate,
+            subscription: plan.source.subscriptionMonths,
+            subscriptionLabel: plan.derivedSubscription,
+            expirationDate: plan.dates.expirationDate,
+            modified: plan.modified.map((item) => item.field),
+            unchanged: plan.unchanged.map((item) => item.field),
+            alert: plan.alerts.join("; ") || null
+          });
+        continue;
+      }
       if (domainItem) {
         counts.domainExisting += 1;
         logger.emit({ code: "DOMAINE_EXISTANT", domain, domainId: String(domainItem.id) });
@@ -541,13 +756,44 @@ async function main(args = process.argv.slice(2), dependencies = {}) {
     logger.emit({ code: "FIN", counts, localLog: logger.localBlocked ? "BLOQUÉ" : logger.filename });
     logger.emit({ code: "TERMINÉ" });
   }
-  return { runId, counts, journalReason: context ? journalBlockedReason(context) : "Contexte SharePoint indisponible", localLog: logger.filename };
+  return {
+    runId, counts, metadataResults,
+    journalReason: context ? journalBlockedReason(context) : "Contexte SharePoint indisponible",
+    localLog: logger.filename
+  };
+}
+
+function bilanMetadonnees(results) {
+  const lines = [
+    "Domaine | Date achat | Souscription (source OVH → valeur SharePoint) | Expiration | Modifié | Inchangé | Erreur/Alerte",
+    "--------|------------|-----------------------------------------------|------------|---------|-----------|--------------"
+  ];
+  for (const row of results) {
+    const subscription = row.subscription === null || row.subscription === undefined
+      ? "OVH absent"
+      : `${row.subscription} mois${row.subscriptionLabel ? ` → ${row.subscriptionLabel}` : ""}`;
+    lines.push([
+      row.domain,
+      row.purchaseDate || "OVH absent",
+      subscription,
+      row.expirationDate || "OVH absent",
+      row.modified.length ? row.modified.join(", ") : "—",
+      row.unchanged.length ? row.unchanged.join(", ") : "—",
+      row.alert || "—"
+    ].join(" | "));
+  }
+  return lines.join("\n");
 }
 
 if (require.main === module) {
   main().then((result) => {
+    if (process.argv.includes("--metadata-sync")) console.log(bilanMetadonnees(result.metadataResults));
     console.log(JSON.stringify({ code: "RAPPORT_COMPENSATOIRE", runId: result.runId, counts: result.counts, journal: "JOURNAL_OBJ_JRN_BLOQUÉ", journalReason: result.journalReason, localLog: result.localLog }));
   }).catch(() => process.exitCode = 1);
 }
 
-module.exports = { main, construireContexte, journalBlockedReason, makeDomainFields, makeSiteFields, logWriter, LIST_NAMES, LABELS };
+module.exports = {
+  main, construireContexte, journalBlockedReason, makeDomainFields, makeSiteFields,
+  planifierMiseAJourTechnique, synchroniserMetadonneesDomaine, bilanMetadonnees,
+  logWriter, LIST_NAMES, LABELS
+};

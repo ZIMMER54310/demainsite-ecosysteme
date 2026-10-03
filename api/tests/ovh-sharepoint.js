@@ -5,7 +5,9 @@ const os = require("node:os");
 const path = require("node:path");
 const { listerDomainesOvh } = require("../shared/ovh-sharepoint");
 const domainSync = require("../shared/domain-sync");
-const { main, logWriter, journalBlockedReason } = require("../tools/sync-ovh-sharepoint");
+const {
+  main, logWriter, journalBlockedReason, planifierMiseAJourTechnique, bilanMetadonnees
+} = require("../tools/sync-ovh-sharepoint");
 
 (async () => {
   // Domaines normalisés : espace et point final supprimés, www conservé.
@@ -28,6 +30,15 @@ const { main, logWriter, journalBlockedReason } = require("../tools/sync-ovh-sha
     DomainesLookupId: [12]
   });
   assert.deepStrictEqual(domainSync.lookupChamp({ name: "Statut" }, "2"), { StatutLookupId: 2 });
+  assert.strictEqual(domainSync.dateOvhJour("2026-02-30"), null);
+  assert.strictEqual(domainSync.dateSharePointJour("2025-11-17T23:00:00Z"), "2025-11-18");
+  assert.strictEqual(domainSync.dateSharePointJour("2026-04-24T22:00:00Z"), "2026-04-25");
+  assert.strictEqual(domainSync.dateSharePointValeur("2025-11-18"), "2025-11-17T23:00:00.000Z");
+  assert.strictEqual(domainSync.dateSharePointValeur("2026-04-25"), "2026-04-24T22:00:00.000Z");
+  assert.strictEqual(domainSync.souscriptionDepuisMois(12, [
+    { id: "24", fields: { Title: "1 AN" } }
+  ]).item.id, "24");
+  assert.strictEqual(domainSync.souscriptionDepuisMois(18, []).reason, "PÉRIODE_OVH_NON_CONVERTIBLE_EN_ANNÉES");
 
   const context = contexteFictif();
   const events = [];
@@ -97,6 +108,100 @@ const { main, logWriter, journalBlockedReason } = require("../tools/sync-ovh-sha
   assert.strictEqual(writes.filter((entry) => entry.method === "POST").length, postsBeforeSecond);
   assert.ok(events.some((event) => event.code === "SITE_DÉJÀ_EXISTANT"));
 
+  // Metadata-only: only existing domain fields are patched; no domain/site creation.
+  const metadataContext = contexteFictif();
+  metadataContext.refs.subscriptionItems = [
+    { id: "24", fields: { Title: "1 AN" } },
+    { id: "31", fields: { Title: "2 ANS" } }
+  ];
+  metadataContext.data.domains.push({
+    id: "71",
+    fields: {
+      Title: "connu.fr",
+      purchaseDate: "2025-12-31T23:00:00Z",
+      expirationDate: null,
+      subscriptionLookupId: 24
+    }
+  });
+  const missingOvhValues = planifierMiseAJourTechnique(
+    metadataContext,
+    metadataContext.data.domains[0],
+    {}
+  );
+  assert.deepStrictEqual(missingOvhValues.fields, {});
+  assert.strictEqual(missingOvhValues.alerts.length, 3);
+  const metadataEvents = [];
+  const metadataWrites = [];
+  const metadataDryContext = contexteFictif();
+  metadataDryContext.refs.subscriptionItems = metadataContext.refs.subscriptionItems;
+  metadataDryContext.data.domains.push({
+    id: "72",
+    fields: {
+      Title: "connu.fr",
+      purchaseDate: "2025-12-31T23:00:00Z",
+      expirationDate: null,
+      subscriptionLookupId: 24
+    }
+  });
+  const dryMetadata = await main(["--metadata-sync", "--dry-run"], {
+    ...dependencies,
+    context: metadataDryContext,
+    listDomains: async () => ["connu.fr"],
+    getDomainInfo: async () => ({
+      creation: "2026-01-01",
+      expiration: "2027-01-01",
+      renew: { period: 24 }
+    }),
+    write: async (...args) => metadataWrites.push(args),
+    logger: { emit: () => {}, localBlocked: null, filename: "/tmp/domain-sync.jsonl" }
+  });
+  assert.strictEqual(dryMetadata.counts.metadataUpdated, 1);
+  assert.strictEqual(metadataWrites.length, 0);
+  const metadataResult = await main(["--metadata-sync"], {
+    ...dependencies,
+    context: metadataContext,
+    listDomains: async () => ["connu.fr"],
+    getDomainInfo: async () => ({
+      creation: "2026-01-01",
+      expiration: "2027-01-01",
+      renew: { period: 24 }
+    }),
+    write: async (method, url, body) => {
+      metadataWrites.push({ method, url, body });
+      if (method !== "PATCH") throw new Error(`unexpected metadata write ${method}`);
+      Object.assign(metadataContext.data.domains[0].fields, body);
+    },
+    logger: { emit: (event) => metadataEvents.push(event), localBlocked: null, filename: "/tmp/domain-sync.jsonl" }
+  });
+  assert.strictEqual(metadataResult.counts.domainCreated, 0);
+  assert.strictEqual(metadataResult.counts.siteCreated, 0);
+  assert.strictEqual(metadataResult.counts.metadataUpdated, 1);
+  assert.strictEqual(metadataWrites.length, 1);
+  assert.deepStrictEqual(Object.keys(metadataWrites[0].body).sort(), ["expirationDate", "subscriptionLookupId"]);
+  assert.strictEqual(metadataWrites[0].body.expirationDate, "2026-12-31T23:00:00.000Z");
+  assert.strictEqual(metadataWrites[0].body.subscriptionLookupId, 31);
+  assert.ok(metadataEvents.some((event) =>
+    event.code === "CHAMP_TECHNIQUE_INCHANGÉ" && event.field === "Date Achat"
+  ));
+  assert.ok(metadataEvents.some((event) =>
+    event.code === "VALEURS_OVH_RÉCUPÉRÉES" && event.source === "OVH /domain/{domaine}/serviceInfos"
+  ));
+  assert.match(bilanMetadonnees(metadataResult.metadataResults), /24 mois → 2 ANS/);
+
+  const absentEvents = [];
+  const absentWrites = [];
+  const absentResult = await main(["--metadata-sync"], {
+    ...dependencies,
+    context: metadataContext,
+    listDomains: async () => ["absent.fr"],
+    write: async (...args) => absentWrites.push(args),
+    logger: { emit: (event) => absentEvents.push(event), localBlocked: null, filename: "/tmp/domain-sync.jsonl" }
+  });
+  assert.strictEqual(absentWrites.length, 0);
+  assert.strictEqual(absentResult.counts.domainCreated, 0);
+  assert.strictEqual(absentResult.counts.siteCreated, 0);
+  assert.ok(absentEvents.some((event) => event.code === "DOMAINE_OVH_ABSENT_SHAREPOINT_A_TRAITER"));
+
   // Domaine trouvé mais valeur obligatoire manquante : aucune écriture partielle.
   const blockedContext = contexteFictif();
   blockedContext.refs.domainType = null;
@@ -158,7 +263,7 @@ const { main, logWriter, journalBlockedReason } = require("../tools/sync-ovh-sha
   fs.rmSync(tempLogs, { recursive: true, force: true });
 
   const service = fs.readFileSync(path.join(__dirname, "../../deploy/systemd/dse-sync.service"), "utf8");
-  assert.match(service, /sync-ovh-sharepoint\.js --sync/);
+  assert.match(service, /sync-ovh-sharepoint\.js --metadata-sync/);
   assert.match(service, /ExecStartPost=.*sync-domaines\.js/);
   console.log("ovh-sharepoint OK");
 })().catch((e) => { console.error(e); process.exit(1); });
@@ -176,6 +281,7 @@ function contexteFictif() {
         supplier: col("supplier", true, { listId: "supplier-list" }),
         purchaseDate: col("purchaseDate"),
         subscription: col("subscription", true, { listId: "term-list" }),
+        expirationDate: col("expirationDate", false),
         active: col("active", true, { listId: "active-list" }),
         valid: col("valid", true, { listId: "valid-list" }),
         locked: col("locked", true, { listId: "locked-list" }),

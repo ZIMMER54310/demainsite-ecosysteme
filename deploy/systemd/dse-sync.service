@@ -8,5 +8,5 @@ WorkingDirectory=/home/ubuntu/dse/demainsite-ecosysteme/api
 EnvironmentFile=-/etc/dse/domain-sync.env
 LogsDirectory=dse
 LogsDirectoryMode=0750
-ExecStart=/usr/bin/node tools/sync-ovh-sharepoint.js --sync
+ExecStart=/usr/bin/node tools/sync-ovh-sharepoint.js --metadata-sync
 ExecStartPost=/usr/bin/node tools/sync-domaines.js --dns --nginx --https --tous

@@ -14,6 +14,8 @@
     "test:sharepoint-access": "node tools/test-sharepoint-access.js",
     "domain-sync": "node tools/sync-ovh-sharepoint.js --dry-run",
     "domain-sync:apply": "node tools/sync-ovh-sharepoint.js --sync",
+    "domain-sync:metadata": "node tools/sync-ovh-sharepoint.js --metadata-sync",
+    "domain-sync:metadata:dry-run": "node tools/sync-ovh-sharepoint.js --metadata-sync --dry-run",
     "domain-sync:test": "node tests/ovh-sharepoint.js",
     "audit:domaines": "node tests/audit-domaines.js",
     "test:statuts": "node tests/statuts.js",
