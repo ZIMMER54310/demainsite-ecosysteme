@@ -57,6 +57,12 @@ function logWriter(runId) {
     fs.accessSync(directory, fs.constants.W_OK);
   } catch (error) {
     localBlocked = `JOURNAL_LOCAL_BLOQUÉ: ${error.code || "EACCES"} (${directory})`;
+    console.error(JSON.stringify({
+      runId,
+      at: new Date().toISOString(),
+      code: "JOURNAL_LOCAL_BLOQUÉ",
+      reason: localBlocked
+    }));
   }
   const emit = (entry) => {
     const record = { runId, at: new Date().toISOString(), ...entry };
@@ -362,8 +368,12 @@ function planifierMiseAJourTechnique(context, domainItem, ovhInfo) {
     }
   };
 
-  planifierDate("purchaseDate", "Date Achat", source.purchaseDate);
-  planifierDate("expirationDate", "Date d'expiration", source.expirationDate);
+  if (dates.purchaseDate && dates.expirationDate && dates.expirationDate < dates.purchaseDate) {
+    alerts.push("Dates OVH contradictoires: expiration antérieure à la création; dates SharePoint conservées");
+  } else {
+    planifierDate("purchaseDate", "Date Achat", source.purchaseDate);
+    planifierDate("expirationDate", "Date d'expiration", source.expirationDate);
+  }
 
   if (source.subscriptionMonths === null || source.subscriptionMonths === undefined || source.subscriptionMonths === "") {
     alerts.push("Temps de souscription: valeur OVH absente; valeur SharePoint conservée");
@@ -759,7 +769,8 @@ async function main(args = process.argv.slice(2), dependencies = {}) {
   return {
     runId, counts, metadataResults,
     journalReason: context ? journalBlockedReason(context) : "Contexte SharePoint indisponible",
-    localLog: logger.filename
+    localLog: logger.localBlocked ? null : logger.filename,
+    localLogError: logger.localBlocked
   };
 }
 
@@ -788,7 +799,15 @@ function bilanMetadonnees(results) {
 if (require.main === module) {
   main().then((result) => {
     if (process.argv.includes("--metadata-sync")) console.log(bilanMetadonnees(result.metadataResults));
-    console.log(JSON.stringify({ code: "RAPPORT_COMPENSATOIRE", runId: result.runId, counts: result.counts, journal: "JOURNAL_OBJ_JRN_BLOQUÉ", journalReason: result.journalReason, localLog: result.localLog }));
+    console.log(JSON.stringify({
+      code: "RAPPORT_COMPENSATOIRE",
+      runId: result.runId,
+      counts: result.counts,
+      journal: "JOURNAL_OBJ_JRN_BLOQUÉ",
+      journalReason: result.journalReason,
+      localLog: result.localLog,
+      localLogError: result.localLogError
+    }));
   }).catch(() => process.exitCode = 1);
 }
 

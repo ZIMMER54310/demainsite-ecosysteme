@@ -130,6 +130,14 @@ const {
   );
   assert.deepStrictEqual(missingOvhValues.fields, {});
   assert.strictEqual(missingOvhValues.alerts.length, 3);
+  const conflictingOvhDates = planifierMiseAJourTechnique(
+    metadataContext,
+    metadataContext.data.domains[0],
+    { creation: "2026-02-02", expiration: "2026-02-01", renew: { period: 12 } }
+  );
+  assert.strictEqual(conflictingOvhDates.fields.purchaseDate, undefined);
+  assert.strictEqual(conflictingOvhDates.fields.expirationDate, undefined);
+  assert.ok(conflictingOvhDates.alerts.some((alert) => alert.includes("Dates OVH contradictoires")));
   const metadataEvents = [];
   const metadataWrites = [];
   const metadataDryContext = contexteFictif();
@@ -258,6 +266,20 @@ const {
   const logLines = fs.readFileSync(path.join(tempLogs, "domain-sync.jsonl"), "utf8").trim().split("\n");
   assert.strictEqual(JSON.parse(logLines[0]).runId, "test-run");
   assert.strictEqual(JSON.parse(logLines[0]).code, "RAPPORT_TEST");
+  const previousConsoleError = console.error;
+  let loggerError = "";
+  console.error = (line) => { loggerError += line; };
+  const previousLogDirForBlockedTest = process.env.DSE_DOMAIN_SYNC_LOG_DIR;
+  const nonDirectory = path.join(tempLogs, "not-a-directory");
+  fs.writeFileSync(nonDirectory, "");
+  process.env.DSE_DOMAIN_SYNC_LOG_DIR = nonDirectory;
+  const blockedLogger = logWriter("blocked-test");
+  blockedLogger.emit({ code: "FALLBACK_STDOUT" });
+  assert.match(blockedLogger.localBlocked, /JOURNAL_LOCAL_BLOQUÉ/);
+  assert.match(loggerError, /JOURNAL_LOCAL_BLOQUÉ/);
+  console.error = previousConsoleError;
+  if (previousLogDirForBlockedTest === undefined) delete process.env.DSE_DOMAIN_SYNC_LOG_DIR;
+  else process.env.DSE_DOMAIN_SYNC_LOG_DIR = previousLogDirForBlockedTest;
   if (previousLogDir === undefined) delete process.env.DSE_DOMAIN_SYNC_LOG_DIR;
   else process.env.DSE_DOMAIN_SYNC_LOG_DIR = previousLogDir;
   fs.rmSync(tempLogs, { recursive: true, force: true });
