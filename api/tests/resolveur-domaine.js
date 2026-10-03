@@ -15,7 +15,7 @@ const { resoudreDomaine } = require("../shared/resolveur-domaine");
 
 (async () => {
   assert.strictEqual((await resoudreDomaine("www.Connu.test")).type, "site");
-  assert.strictEqual((await resoudreDomaine("sanssite.test")).type, "construction");
+  assert.strictEqual((await resoudreDomaine("sanssite.test")).type, "declare");
   assert.strictEqual((await resoudreDomaine("inactif.test")).type, "inconnu");
   assert.strictEqual((await resoudreDomaine("autre.test")).type, "inconnu");
   assert.strictEqual((await resoudreDomaine("../etc")).type, "invalide");

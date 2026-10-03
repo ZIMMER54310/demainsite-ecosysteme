@@ -22,7 +22,7 @@ async function domainesDeclares() {
   try { return await enCours; } catch (e) { if (cacheDomaines) return cacheDomaines.liste; throw e; }
 }
 
-// -> { type: "site", site, statut } | { type: "construction", domaine } | { type: "inconnu" }
+// -> { type: "site", site, statut } | { type: "declare", domaine } | { type: "inconnu" }
 async function resoudreDomaine(brut) {
   const domaine = dse.normaliserDomaine(brut);
   if (!domaine || !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domaine)) return { type: "invalide" };
@@ -36,7 +36,7 @@ async function resoudreDomaine(brut) {
   }
 
   const declare = (await domainesDeclares()).some((d) => d.domaine === domaine && d.actif && d.valide);
-  return declare ? { type: "construction", domaine } : { type: "inconnu", domaine };
+  return declare ? { type: "declare", domaine } : { type: "inconnu", domaine };
 }
 
 module.exports = { resoudreDomaine, domainesDeclares };

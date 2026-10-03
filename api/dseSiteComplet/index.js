@@ -552,13 +552,24 @@ function pagePubliee(page) {
   return relationOui("OBJACTIF") && relationOui("OBJVALIDE");
 }
 
+/*
+ * Pages chargees selon la decision de statut :
+ * - vrai site (ACTIF / transition) : toutes les pages du site ;
+ * - situation generique : pages publiees, uniquement pour en extraire les elements
+ *   communs (Footer) ; aucune page n'est alors exposee.
+ */
 function pagesPourStatut(pages, site, rendu, periodeApplicable) {
-  if (!periodeApplicable || !site?.actif || !site?.valide) return [];
-  if (rendu === "actif" || rendu === "transition") return pages;
-  if (!["construction", "maintenance", "suspendu", "archive"].includes(rendu) || !site.pagePubliqueId) return [];
-  return pages.filter((page) =>
-    String(page.id) === String(site.pagePubliqueId) && pagePubliee(page)
-  );
+  if (!periodeApplicable || !site?.actif || !site?.valide) return { vraiSite: false, pages: [] };
+  if (statutsSite.afficheVraiSite(rendu)) return { vraiSite: true, pages };
+  if (rendu !== "situation") return { vraiSite: false, pages: [] };
+  return { vraiSite: false, pages: pages.filter(pagePubliee) };
+}
+
+// Elements communs du site (Footer) utilisables par la page Situation generique.
+function elementsCommuns(modules) {
+  return modules
+    .filter((m) => Array.isArray(m?.contenus?.footer) && m.contenus.footer.length)
+    .map((m) => ({ id: m.id, ordre: m.ordre, relations: m.relations, contenus: { footer: m.contenus.footer } }));
 }
 
 /* =========================================================
@@ -765,13 +776,16 @@ module.exports =
           siteIdDemande
         );
 
-      const pages =
+      const selection =
         pagesPourStatut(
           resultatPages.elements || [],
           siteDse,
           statutDse.rendu,
           periodeDse.applicable
         );
+
+      const pages =
+        selection.pages;
 
       const pageIds =
         idsElements(pages);
@@ -892,7 +906,9 @@ module.exports =
                 null,
 
               donnees:
-                pagesAvecModules
+                selection.vraiSite
+                  ? pagesAvecModules
+                  : []
             },
 
             modules: {
@@ -913,11 +929,22 @@ module.exports =
                 null,
 
               donnees:
-                modulesAvecContenus
+                selection.vraiSite
+                  ? modulesAvecContenus
+                  : []
             },
 
             contenus:
-              contenusSpecialises,
+              selection.vraiSite
+                ? contenusSpecialises
+                : { footer: contenusSpecialises.footer },
+
+            communs: {
+              modules:
+                elementsCommuns(
+                  modulesAvecContenus
+                )
+            },
 
             menu:
               resultatsSite.menu,

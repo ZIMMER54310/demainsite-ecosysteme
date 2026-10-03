@@ -15,10 +15,10 @@ module.exports = async function (context, req) {
     const r = await resoudreur.resoudreDomaine(domaine);
     if (r.type === "inconnu") throw dse.creerErreur("DSE-API-SITE-ININTROUVABLE", 404, "Domaine inconnu");
     if (r.type !== "site") {
-      // Domaine declare dans SharePoint mais sans site actif : etat "construction" du moteur DSE.
+      // Domaine declare dans SharePoint sans site public encore rattache : situation generique neutre.
       return dse.reponseJson(context, req, 200, {
         succes: true,
-        donnees: { id: null, nom: domaine, domaines: [domaine], langue: null, etat: "construction", publication: { actif: false, valide: false } },
+        donnees: { id: null, nom: domaine, domaines: [domaine], langue: null, etat: "situation", situation: null, publication: { actif: false, valide: false } },
         meta: { versionApi: "0.9", correlationId: id, genereLe: new Date().toISOString() }
       }, id);
     }
@@ -47,15 +47,20 @@ module.exports = async function (context, req) {
     const rendu = periode.applicable ? r.statut.rendu : "indisponible";
     const etat = statutsSite.etatPublic(rendu, pagePubliquePrete);
     const nom = r.site.titre || null;
+    // Situation generique : donnees du statut SharePoint ; le media propre au site est prioritaire.
+    const situation = etat === "situation" && rendu === "situation"
+      ? { ...r.statut.situation, media: r.site.mediaSituation || r.statut.situation?.media || null }
+      : null;
 
     return dse.reponseJson(context, req, 200, {
       succes: true,
       donnees: {
-        id: etat === "indisponible" ? null : String(r.site.id),
+        id: rendu === "indisponible" ? null : String(r.site.id),
         nom,
         domaines: [domaine],
         etat,
-        pageId: r.site.pagePubliqueId ? String(r.site.pagePubliqueId) : null,
+        situation,
+        pageId: etat === "normal" && r.site.pagePubliqueId ? String(r.site.pagePubliqueId) : null,
         langue: null,
         publication: { actif: true, valide: true }
       },

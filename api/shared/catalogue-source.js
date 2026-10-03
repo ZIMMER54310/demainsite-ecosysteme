@@ -97,7 +97,7 @@ async function lireElements(token, siteGraphId, liste, cacheTitres) {
   return elements;
 }
 
-function lireSites(elements) {
+function lireSites(elements, mediaListId = null) {
   return elements.map((el) => {
     const colonnes = el._colonnes || [];
     const fields = el._fields || {};
@@ -140,6 +140,7 @@ function lireSites(elements) {
       pagePubliqueId: lienPagePublique?.id ?? null,
       dateDebut: valeurChamp(["DATEDEBUT"]),
       dateFin: valeurChamp(["DATEFIN"]),
+      mediaSituation: statutsSite.mediaElement(colonnes, fields, mediaListId, ["SITUATION"]),
       portail: marque !== null ? catalogue.vrai(marque) : portailsEnvironnement().includes(el.id)
     };
   });
@@ -171,7 +172,9 @@ async function chargerDonnees() {
     throw dse.creerErreur("DSE-API-LISTE-SITE-PUBLIC-ININTROUVABLE", 404, "OBJ-SITE-PUBLIC introuvable");
   }
 
-  const sites = lireSites(await lireElements(token, siteGraph.id, listeSites, cacheTitres));
+  const listeMedias = dse.trouverListe(listes, ["OBJ-MEDIA"]);
+  const mediaListId = listeMedias ? String(listeMedias.id).toLowerCase() : null;
+  const sites = lireSites(await lireElements(token, siteGraph.id, listeSites, cacheTitres), mediaListId);
 
   const elements = {};
   const disponibles = {};
@@ -191,6 +194,9 @@ async function chargerDonnees() {
         id: el.id,
         titre: catalogue.titreElement(el) || null,
         code: catalogue.champ(el, ["CODE"]),
+        noteCourte: catalogue.champ(el, ["NOTECOURTE"]),
+        noteLongue: catalogue.champ(el, ["NOTELONGUE"]),
+        media: statutsSite.mediaElement(el._colonnes, el._fields, mediaListId),
         actif: catalogue.etatOui(el, catalogue.ALIAS.actif),
         valide: catalogue.etatOui(el, catalogue.ALIAS.valide)
       });

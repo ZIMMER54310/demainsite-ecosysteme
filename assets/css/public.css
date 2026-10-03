@@ -809,3 +809,10 @@ body.dse-public .dse-public-page > .dse-footer {
   line-height: 1.4;
 }
 .dse-public-soustitre + .dse-public-message { margin-top: 14px; }
+
+/* Page generique « Situation du site » : fond fourni par SharePoint s'il existe */
+.dse-situation-media {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}

@@ -21,19 +21,16 @@ async function contexteDomaine(req) {
   }
 
   const r = await resoudreur.resoudreDomaine(domaine);
-  if (r.type === "construction") return { site: null, construction: true };
+  if (r.type === "declare") return { site: null, mode: "situation" };
   if (r.type !== "site") throw dse.creerErreur("DSE-API-SITE-ININTROUVABLE", 404, "Domaine inconnu");
-  const periode = statutsSite.periodeApplicable(r.site);
-  if (!periode.applicable) return { site: null, mode: "indisponible" };
-  const statutsRendus = ["actif", "transition", "construction", "maintenance", "suspendu", "archive"];
-  if (!statutsRendus.includes(r.statut.rendu)) return { site: null, mode: r.statut.rendu };
-  if (r.statut.rendu !== "actif" && r.statut.rendu !== "transition" && !r.site.pagePubliqueId) {
-    return { site: null, mode: r.statut.rendu };
+  // Seul le vrai site (ACTIF ou transition historique) est compose ; toute autre situation
+  // est rendue par la page generique, sans contenu Builder.
+  if (!statutsSite.periodeApplicable(r.site).applicable || !statutsSite.afficheVraiSite(r.statut.rendu)) {
+    return { site: null, mode: "situation" };
   }
   return {
     site: { id: String(r.site.id) },
-    pageId: r.site.pagePubliqueId ? String(r.site.pagePubliqueId) : null,
-    statut: r.statut.rendu
+    pageId: r.site.pagePubliqueId ? String(r.site.pagePubliqueId) : null
   };
 }
 
@@ -41,10 +38,10 @@ function fabrique(construire) {
   return async function (context, req) {
     const id = dse.correlationId(req);
     try {
-      const { site, pageId, statut, construction, mode } = await contexteDomaine(req);
-      const donnees = construction || mode
-        ? { mode: mode || "construction", sections: [] }
-        : construire({ donnees: await source.obtenirDonnees(), site, pageId, statut, req });
+      const { site, pageId, mode } = await contexteDomaine(req);
+      const donnees = mode
+        ? { mode, sections: [] }
+        : construire({ donnees: await source.obtenirDonnees(), site, pageId, req });
       dse.reponseJson(context, req, 200, { succes: true, donnees, meta: meta(id) }, id);
     } catch (e) {
       context.log.error(`[DSE ${id}] ${e.codeDse || e.message}`);
@@ -67,10 +64,8 @@ module.exports = {
     route: pageId ? undefined : req.query.route || "/"
   }))),
   // Un ID de page n'est accepte que s'il appartient au site du domaine.
-  pageParId: fabrique(({ donnees, site, pageId, statut, req }) => sortie(builder.composerPage(donnees, site, {
-    pageId: !["actif", "transition"].includes(statut)
-      ? pageId || undefined
-      : String(req.params.pageId || "").replace(/\D/g, ""),
+  pageParId: fabrique(({ donnees, site, req }) => sortie(builder.composerPage(donnees, site, {
+    pageId: String(req.params.pageId || "").replace(/\D/g, ""),
     appareil: req.query.appareil
   }))),
   modeles: fabrique(({ donnees, site }) => ({ modeles: builder.listerModeles(donnees, site) })),

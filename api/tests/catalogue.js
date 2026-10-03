@@ -274,7 +274,7 @@ test("lecture des sites : domaines et portail par variable de repli", () => {
 
   assert.deepEqual(sites[0], {
     id: "4", titre: "DemainSite Ecosystème", domaines: ["dseco.fr"], actif: true, valide: true,
-    statutColonne: false, statutId: null, pagePubliqueId: null, dateDebut: null, dateFin: null, portail: true
+    statutColonne: false, statutId: null, pagePubliqueId: null, dateDebut: null, dateFin: null, mediaSituation: null, portail: true
   });
 });
 

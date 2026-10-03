@@ -15,7 +15,7 @@ import {
 import { rendreFooter } from "../modules/footer/footer.js";
 import { rendreBuilder, STYLES_BUILDER } from "../modules/builder/rendu.js";
 import { apiGet } from "../js/api.js";
-import { pageStatut } from "../modules/statut/statuts.js";
+import { rendreSituation } from "../modules/situation/situation.js";
 
 /* =========================================================
    OUTILS
@@ -63,120 +63,28 @@ function texteSharePoint(value) {
 }
 
 /* =========================================================
-   ETATS SHAREPOINT
+   PAGE GENERIQUE « SITUATION DU SITE »
+   Une seule page pour toute situation non ACTIF : les données
+   proviennent de SharePoint, le code ne connaît aucun statut.
    ========================================================= */
 
-/* =========================================================
-   PAGE PUBLIQUE PAR DEFAUT
-   ========================================================= */
-
-function pageStatutSite(etat, site) {
-  const nom = String(site?.nom || "").trim();
-  const domaine = String(site?.domaines?.[0] || "").trim();
-  const page = pageStatut(etat);
-
-  return pagePublique({
-    titre: page.titre,
-    sousTitre: page.sousTitre,
-    message: page.message,
-    etat,
-    marque: nom && nom !== domaine ? nom : "",
-    recherche: false
+function pageSituation(site = null, footer = null) {
+  return rendreSituation(site?.situation ?? null, {
+    nomSite: site?.nom && site.nom !== site?.domaines?.[0] ? site.nom : "",
+    domaine: site?.domaines?.[0] ?? "",
+    footer,
+    nettoyerTexte: texteSharePoint
   });
 }
 
-function pageConstruction(site) {
-  return pageStatutSite("construction", site);
-}
-
-function pagePublique({
-  titre,
-  sousTitre = "",
-  message,
-  etat = "indisponible",
-  marque = "",
-  recherche = true
-}) {
-  const icone =
-    etat === "maintenance" || etat === "construction"
-      ? "🚧"
-      : "🌐";
-
-  return `
-    <div class="dse-public-page">
-
-      <div class="dse-public-overlay"></div>
-
-      <main class="dse-public-centre">
-
-        <section class="dse-public-card">
-
-          <div class="dse-public-marque">
-            ${marque ? `<span>${escapeHtml(marque)}</span>` : ""}
-          </div>
-
-          <div class="dse-public-icone">
-            ${icone}
-          </div>
-
-          <h1>
-            ${escapeHtml(titre)}
-          </h1>
-
-          ${sousTitre ? `<p class="dse-public-soustitre">${escapeHtml(sousTitre)}</p>` : ""}
-          ${message ? `<p class="dse-public-message">${escapeHtml(message)}</p>` : ""}
-
-          ${recherche ? `<form
-            class="dse-domain-search"
-            id="dse-domain-search"
-            autocomplete="off"
-          >
-            <label for="dse-domain-input">
-              Vous recherchez un site ?
-            </label>
-
-            <div class="dse-domain-search-line">
-
-              <input
-                id="dse-domain-input"
-                name="domaine"
-                type="text"
-                inputmode="url"
-                placeholder="Tapez le nom du site recherché"
-                aria-label="Nom de domaine recherché"
-              >
-
-              <button type="submit">
-                Rechercher
-              </button>
-
-            </div>
-
-            <p
-              class="dse-domain-result"
-              id="dse-domain-result"
-              aria-live="polite"
-            ></p>
-
-          </form>` : ""}
-
-          <div class="dse-public-separateur"></div>
-
-          <div class="dse-public-signature">
-            ${escapeHtml(marque)}
-          </div>
-
-        </section>
-
-      </main>
-
-      ${rendreFooter(footer, {
-        nomSite,
-        nettoyerTexte: texteSharePoint
-      })}
-
-    </div>
-  `;
+async function footerSituation(siteId) {
+  if (!siteId) return null;
+  try {
+    const complet = (await getSiteFull(siteId))?.donnees;
+    return trouverFooter({ modules: complet?.communs?.modules ?? [] });
+  } catch {
+    return null;
+  }
 }
 
 /* =========================================================
@@ -618,105 +526,6 @@ function rendreSitePublic({
 }
 
 /* =========================================================
-   RECHERCHE PUBLIQUE DE DOMAINE
-   ========================================================= */
-
-async function verifierDomaine(domaine) {
-  const resultat =
-    document.querySelector(
-      "#dse-domain-result"
-    );
-
-  const domaineNormalise =
-    normaliserDomaine(domaine);
-
-  if (!domaineNormalise) {
-    if (resultat) {
-      resultat.textContent =
-        "Saisissez un nom de domaine.";
-    }
-
-    return;
-  }
-
-  if (resultat) {
-    resultat.textContent =
-      "Recherche en cours...";
-  }
-
-  try {
-    const response =
-      await getSiteByDomain(
-        domaineNormalise
-      );
-
-    const site =
-      response?.donnees ??
-      response;
-
-    const siteId =
-      site?.id ??
-      site?.ID ??
-      site?.siteId ??
-      site?.siteID;
-
-    if (!siteId) {
-      if (resultat) {
-        resultat.textContent =
-          "Aucun site actif trouvé pour ce domaine.";
-      }
-
-      return;
-    }
-
-    window.location.href =
-      `https://${domaineNormalise}`;
-
-  } catch (error) {
-    console.error(
-      "[DSE] Recherche domaine impossible",
-      error
-    );
-
-    if (resultat) {
-      resultat.textContent =
-        "Aucun site actif trouvé pour ce domaine.";
-    }
-  }
-}
-
-/* =========================================================
-   ACTIVATION DU FORMULAIRE
-   ========================================================= */
-
-export function activerRecherchePublique() {
-  const formulaire =
-    document.querySelector(
-      "#dse-domain-search"
-    );
-
-  const champ =
-    document.querySelector(
-      "#dse-domain-input"
-    );
-
-  if (!formulaire || !champ) {
-    return;
-  }
-
-  formulaire.addEventListener(
-    "submit",
-    async (event) => {
-      event.preventDefault();
-
-      await verifierDomaine(
-        champ.value
-      );
-    }
-  );
-}
-
-/* =========================================================
    PAGE ACCUEIL PUBLIQUE
    ========================================================= */
 
@@ -729,7 +538,7 @@ export async function accueilPage(domaine) {
     normaliserDomaine(domaine);
 
   if (!domaineCourant) {
-    return pageStatutSite("inconnu");
+    return pageSituation();
   }
 
   try {
@@ -752,12 +561,9 @@ export async function accueilPage(domaine) {
       site?.siteId ??
       site?.siteID;
 
-    if (site?.etat === "indisponible" || site?.etat === "inconnu") {
-      return pageStatutSite(site.etat, site);
-    }
-
-    if (!siteId) {
-      return pageStatutSite("inconnu");
+    // Regle unique : ACTIF (etat "normal") = vrai site ; toute autre situation = page generique.
+    if (site?.etat !== "normal" || !siteId) {
+      return pageSituation(site, await footerSituation(siteId));
     }
 
     /* -----------------------------------------------------
@@ -772,7 +578,7 @@ export async function accueilPage(domaine) {
       reponseComplete;
 
     if (!siteComplet) {
-      return pageConstruction(site);
+      return pageSituation(site);
     }
 
     /* -----------------------------------------------------
@@ -797,10 +603,6 @@ export async function accueilPage(domaine) {
     const pageIdConfiguree = site?.pageId
       ?? siteComplet.site?.relations?.["PAGE-PUBLIQUE"]?.id
       ?? null;
-    if (site?.etat && site.etat !== "normal" && !pageIdConfiguree) {
-      return pageStatutSite(site.etat, site);
-    }
-
     const pageRacine = trouverPageRacine(
       siteComplet,
       pageIdConfiguree,
@@ -815,7 +617,7 @@ export async function accueilPage(domaine) {
         : null;
 
     if (!page) {
-      return pageStatutSite(site?.etat || "construction", site);
+      return pageSituation(site, trouverFooter({ modules: siteComplet.communs?.modules ?? [] }));
     }
 
     /* -----------------------------------------------------
@@ -861,6 +663,6 @@ export async function accueilPage(domaine) {
   } catch {
     console.error("[DSE] Accueil public indisponible");
 
-    return pageStatutSite("inconnu");
+    return pageSituation();
   }
 }
