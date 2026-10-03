@@ -24,6 +24,9 @@ const controleurCatalogue =
 const routeMedia =
   require("./media");
 
+const controleurCockpit =
+  require("./dseCockpit");
+
 const application = express();
 
 application.disable("x-powered-by");
@@ -207,37 +210,15 @@ application.get(
 );
 
 /*
- * AUTHENTIFICATION UTILISATEUR DSE : desactivee temporairement.
- * Les en-tetes x-ms-client-principal* provenaient d'Azure App Service
- * Authentication et ne prouvent aucune identite sur OVH.
- * dseMoi/ n'est volontairement plus charge tant qu'une authentification
- * Entra native (validation JWT) n'est pas implementee.
+ * COCKPIT DSE : identite (fournisseurs branchables), droits et donnees
+ * du cockpit, tous controles cote serveur (dseCockpit/).
  */
-application.all(
-  "/api/v1/moi",
-  (req, res) => {
-    res
-      .status(501)
-      .set("Cache-Control", "no-store")
-      .json({
-        succes: false,
-
-        erreur: {
-          code:
-            "DSE-AUTHENTIFICATION-DESACTIVEE",
-
-          message:
-            "L'authentification utilisateur est temporairement desactivee."
-        },
-
-        meta: {
-          genereLe:
-            new Date()
-              .toISOString()
-        }
-      });
-  }
-);
+application.get("/api/v1/moi", controleurCockpit.moi);
+application.get("/api/v1/auth/:fournisseur/connexion", controleurCockpit.connexion);
+application.get("/api/v1/auth/:fournisseur/retour", controleurCockpit.retour);
+application.get("/api/v1/auth/deconnexion", controleurCockpit.deconnexion);
+application.get("/api/v1/cockpit/sites", controleurCockpit.sites);
+application.get("/api/v1/cockpit/site", controleurCockpit.site);
 
 application.get(
   "/api/v1/sites/par-domaine",

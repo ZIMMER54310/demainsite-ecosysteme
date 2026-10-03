@@ -64,11 +64,12 @@ function exiger(condition, message) {
       JSON.stringify({ claims: [{ typ: "oid", val: "x" }] })
     ).toString("base64")
   };
-  await test("GET /moi desactivee (en-tetes Azure ignores)", "/api/v1/moi", (s, c) => {
-    exiger(s === 501, `statut ${s} (501 attendu)`);
-    exiger(c?.succes === false, "succes != false");
-    exiger(c.erreur?.code === "DSE-AUTHENTIFICATION-DESACTIVEE", "code inattendu");
+  await test("GET /moi : en-tetes Azure ignores, non connecte", "/api/v1/moi", (s, c) => {
+    exiger(s === 200, `statut ${s}`);
+    exiger(c?.donnees?.connecte === false, "connecte != false");
   }, faux);
+  await test("GET /cockpit/sites refuse sans session", "/api/v1/cockpit/sites", (s) => exiger(s === 401, `statut ${s}`), faux);
+  await test("GET /cockpit/site refuse sans session", "/api/v1/cockpit/site?domaine=dseco.fr", (s) => exiger(s === 401, `statut ${s}`), faux);
 
   console.log(echecs ? `${echecs} echec(s).` : "Tous les tests de fumee sont OK.");
   process.exit(echecs ? 1 : 0);

@@ -1,4 +1,26 @@
-// V1 lecture seule. Le raccordement Entra External ID sera ajouté derrière l’API DSE sécurisée.
-export async function initializeAuth(){ return { authenticated: false, mode: "lecture-seule", displayName: "Utilisateur DSE" }; }
-export function signIn(){ throw new Error("Connexion Entra External ID non activée dans la V1."); }
-export function signOut(){ location.hash = "#/"; }
+// Identite fournie par le serveur (session HttpOnly). Aucun secret ni jeton n'est manipule ici.
+import { getMoi } from "../services/cockpit.service.js";
+
+export async function initializeAuth() {
+  try {
+    const moi = (await getMoi())?.donnees || {};
+    return {
+      authenticated: moi.connecte === true,
+      displayName: moi.nom || null,
+      reconnu: moi.reconnu === true,
+      role: moi.role || null,
+      fonctions: Array.isArray(moi.fonctions) ? moi.fonctions : [],
+      nombreSites: Number(moi.nombreSites) || 0,
+      fournisseurs: Array.isArray(moi.fournisseurs) ? moi.fournisseurs : []
+    };
+  } catch {
+    return { authenticated: false, displayName: null, reconnu: false, role: null, fonctions: [], nombreSites: 0, fournisseurs: [] };
+  }
+}
+
+export function signIn(fournisseur = "entra") {
+  const domaine = location.hostname.replace(/^www\./, "");
+  location.href = `/api/v1/auth/${encodeURIComponent(fournisseur)}/connexion?domaine=${encodeURIComponent(domaine)}`;
+}
+
+export function signOut() { location.href = "/api/v1/auth/deconnexion"; }

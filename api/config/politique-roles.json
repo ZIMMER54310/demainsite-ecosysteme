@@ -1,0 +1,11 @@
+{
+  "_description": "Politique d'acces du cockpit DSE, cote serveur uniquement. Cle = ID SharePoint natif d'un element OBJ-ROLE. portee : tous | client | attribues. Les titres des roles proviennent de SharePoint. Provisoire tant qu'aucune liste SharePoint ne decrit les fonctions par role : un role absent n'obtient aucune fonction.",
+  "roles": {
+    "1": { "portee": "tous", "fonctions": ["sites", "creer", "pages", "entete", "logo-medias", "menu", "footer", "seo", "domaine", "apercu", "suivi"] },
+    "2": { "portee": "tous", "fonctions": ["sites", "creer", "pages", "entete", "logo-medias", "menu", "footer", "seo", "domaine", "apercu", "suivi"] },
+    "3": { "portee": "client", "fonctions": ["sites", "pages", "entete", "logo-medias", "menu", "footer", "seo", "domaine", "apercu", "suivi"] },
+    "4": { "portee": "attribues", "fonctions": ["sites", "pages", "entete", "logo-medias", "menu", "footer", "seo", "domaine", "apercu", "suivi"] },
+    "5": { "portee": "attribues", "fonctions": ["sites", "pages", "entete", "logo-medias", "menu", "footer", "apercu", "suivi"] },
+    "6": { "portee": "attribues", "fonctions": ["sites", "apercu", "suivi"] }
+  }
+}

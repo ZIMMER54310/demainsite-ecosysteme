@@ -1,1 +1,1 @@
-import { CONFIG } from "../js/config.js"; export function renderFooter(){ return `<p class="muted">${CONFIG.APP_NAME} V${CONFIG.APP_VERSION} · Lecture seule · SharePoint source officielle</p>`; }
+import { CONFIG } from "../js/config.js"; export function renderFooter(){ return `<p class="muted">${CONFIG.APP_NAME} · Espace de gestion</p>`; }
