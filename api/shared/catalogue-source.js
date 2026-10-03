@@ -99,20 +99,35 @@ async function lireElements(token, siteGraphId, liste, cacheTitres) {
 
 function lireSites(elements) {
   return elements.map((el) => {
+    const colonnes = el._colonnes || [];
+    const fields = el._fields || {};
     const colonneDomaine = (el._colonnes || []).find(
       (c) => c.lookup && catalogue.cleChamp(c.displayName || c.name).includes("NOMDEDOMAINE")
     );
 
-    const valeurs = colonneDomaine ? el._fields[colonneDomaine.name] : [];
+    const valeurs = colonneDomaine ? fields[colonneDomaine.name] : [];
     const domaines = (Array.isArray(valeurs) ? valeurs : [])
       .map((v) => dse.normaliserDomaine(v?.LookupValue))
       .filter(Boolean);
 
     const marque = catalogue.champ(el, ["PORTAILCATALOGUE", "PORTAIL"]);
-    const colonneStatut = (el._colonnes || []).find(
+    const colonneStatut = colonnes.find(
       (c) => c.lookup && catalogue.cleChamp(c.displayName || c.name).includes("SITESSTATUT")
     );
     const lienStatut = colonneStatut ? el.relations?.[colonneStatut.displayName || colonneStatut.name] : null;
+    const colonnePagePublique = colonnes.find(
+      (c) => c.lookup && catalogue.cleChamp(c.displayName || c.name) === "PAGEPUBLIQUE"
+    );
+    const lienPagePublique = colonnePagePublique
+      ? el.relations?.[colonnePagePublique.displayName || colonnePagePublique.name]
+      : null;
+    const valeurChamp = (noms) => {
+      const colonne = colonnes.find((c) =>
+        noms.includes(catalogue.cleChamp(c.displayName || c.name)) ||
+        noms.includes(catalogue.cleChamp(c.name))
+      );
+      return colonne ? fields[colonne.name] ?? null : null;
+    };
 
     return {
       id: el.id,
@@ -122,6 +137,9 @@ function lireSites(elements) {
       valide: catalogue.etatOui(el, catalogue.ALIAS.valide),
       statutColonne: Boolean(colonneStatut),
       statutId: lienStatut?.id ?? null,
+      pagePubliqueId: lienPagePublique?.id ?? null,
+      dateDebut: valeurChamp(["DATEDEBUT"]),
+      dateFin: valeurChamp(["DATEFIN"]),
       portail: marque !== null ? catalogue.vrai(marque) : portailsEnvironnement().includes(el.id)
     };
   });

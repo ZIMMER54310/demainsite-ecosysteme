@@ -9,6 +9,7 @@ import {
   urlSure,
   estActif,
   estValide,
+  relationEst,
   trouverContenuModule
 } from "../modules/public/outils.js";
 import { rendreFooter } from "../modules/footer/footer.js";
@@ -151,11 +152,6 @@ function pagePublique({
 
             </div>
 
-            <p class="dse-domain-example">
-              Exemple :
-              <strong>dseco.fr</strong>
-            </p>
-
             <p
               class="dse-domain-result"
               id="dse-domain-result"
@@ -187,7 +183,7 @@ function pagePublique({
    RECHERCHE DE LA PAGE RACINE
    ========================================================= */
 
-function trouverPageRacine(data) {
+function trouverPageRacine(data, pageId = null, siteId = null) {
   const pages =
     Array.isArray(data?.pages?.donnees)
       ? data.pages.donnees
@@ -195,6 +191,14 @@ function trouverPageRacine(data) {
 
   if (!pages.length) {
     return null;
+  }
+
+  const pagesDuSite = siteId
+    ? pages.filter((page) => relationEst(page, "OBJ-SITE-PUBLIC", siteId))
+    : pages;
+
+  if (pageId) {
+    return pagesDuSite.find((page) => String(page.id) === String(pageId)) ?? null;
   }
 
   /*
@@ -206,7 +210,7 @@ function trouverPageRacine(data) {
    * restent portées par les ID SharePoint.
    */
   return (
-    pages.find((page) => {
+    pagesDuSite.find((page) => {
       const url =
         valeurConfiguration(
           page?.configuration,
@@ -729,7 +733,7 @@ export async function accueilPage(domaine) {
       site?.siteId ??
       site?.siteID;
 
-    if (site?.etat && site.etat !== "normal") {
+    if (site?.etat === "indisponible" || site?.etat === "inconnu") {
       return pageStatutSite(site.etat, site);
     }
 
@@ -771,10 +775,18 @@ export async function accueilPage(domaine) {
        SITE → PAGE RACINE
        ----------------------------------------------------- */
 
-    const pageRacine =
-      trouverPageRacine(
-        siteComplet
-      );
+    const pageIdConfiguree = site?.pageId
+      ?? siteComplet.site?.relations?.["PAGE-PUBLIQUE"]?.id
+      ?? null;
+    if (site?.etat && site.etat !== "normal" && !pageIdConfiguree) {
+      return pageStatutSite(site.etat, site);
+    }
+
+    const pageRacine = trouverPageRacine(
+      siteComplet,
+      pageIdConfiguree,
+      siteId
+    );
 
     const page =
       pageRacine &&
@@ -784,7 +796,7 @@ export async function accueilPage(domaine) {
         : null;
 
     if (!page) {
-      return pageConstruction(site);
+      return pageStatutSite(site?.etat || "construction", site);
     }
 
     /* -----------------------------------------------------
@@ -814,8 +826,7 @@ export async function accueilPage(domaine) {
        ----------------------------------------------------- */
 
     const composition = await apiGet("/builder/page", { domaine: domaineCourant })
-      .then((r) => r?.donnees ?? null)
-      .catch(() => null);
+      .then((r) => r?.donnees ?? null);
 
     return rendreSitePublic({
       site:
@@ -828,11 +839,8 @@ export async function accueilPage(domaine) {
       composition
     });
 
-  } catch (error) {
-    console.error(
-      "[DSE] Accueil public indisponible",
-      error
-    );
+  } catch {
+    console.error("[DSE] Accueil public indisponible");
 
     return pageStatutSite("inconnu");
   }

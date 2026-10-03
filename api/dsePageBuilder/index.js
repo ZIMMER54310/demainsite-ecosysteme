@@ -4,6 +4,7 @@ const dse = require("../shared/dse");
 const resoudreur = require("../shared/resolveur-domaine");
 const builder = require("../shared/builder");
 const source = require("../shared/builder-source");
+const statutsSite = require("../shared/statuts-site");
 
 const MESSAGES = {
   "DSE-API-DOMAINE-INVALIDE": "Le domaine fourni est invalide.",
@@ -22,17 +23,28 @@ async function contexteDomaine(req) {
   const r = await resoudreur.resoudreDomaine(domaine);
   if (r.type === "construction") return { site: null, construction: true };
   if (r.type !== "site") throw dse.creerErreur("DSE-API-SITE-ININTROUVABLE", 404, "Domaine inconnu");
-  // Le vrai contenu n'est jamais servi hors statut Actif (ou transition avant provisionnement des statuts).
-  if (!["actif", "transition"].includes(r.statut.rendu)) return { site: null, mode: r.statut.rendu };
-  return { site: { id: String(r.site.id) } };
+  const periode = statutsSite.periodeApplicable(r.site);
+  if (!periode.applicable) return { site: null, mode: "indisponible" };
+  const statutsRendus = ["actif", "transition", "construction", "maintenance", "suspendu", "archive"];
+  if (!statutsRendus.includes(r.statut.rendu)) return { site: null, mode: r.statut.rendu };
+  if (r.statut.rendu !== "actif" && r.statut.rendu !== "transition" && !r.site.pagePubliqueId) {
+    return { site: null, mode: r.statut.rendu };
+  }
+  return {
+    site: { id: String(r.site.id) },
+    pageId: r.site.pagePubliqueId ? String(r.site.pagePubliqueId) : null,
+    statut: r.statut.rendu
+  };
 }
 
 function fabrique(construire) {
   return async function (context, req) {
     const id = dse.correlationId(req);
     try {
-      const { site, construction, mode } = await contexteDomaine(req);
-      const donnees = construction || mode ? { mode: mode || "construction", sections: [] } : construire({ donnees: await source.obtenirDonnees(), site, req });
+      const { site, pageId, statut, construction, mode } = await contexteDomaine(req);
+      const donnees = construction || mode
+        ? { mode: mode || "construction", sections: [] }
+        : construire({ donnees: await source.obtenirDonnees(), site, pageId, statut, req });
       dse.reponseJson(context, req, 200, { succes: true, donnees, meta: meta(id) }, id);
     } catch (e) {
       context.log.error(`[DSE ${id}] ${e.codeDse || e.message}`);
@@ -49,9 +61,18 @@ const sortie = (r) => ({ mode: r.mode, sections: r.sections.map((s) => ({ ...s, 
   colonnes: l.colonnes.map((c) => ({ ...c, modules: c.modules.map(({ _id, ...m }) => m) })) })) })) });
 
 module.exports = {
-  page: fabrique(({ donnees, site, req }) => sortie(builder.composerPage(donnees, site, { appareil: req.query.appareil, route: req.query.route || "/" }))),
+  page: fabrique(({ donnees, site, pageId, req }) => sortie(builder.composerPage(donnees, site, {
+    appareil: req.query.appareil,
+    pageId: pageId || undefined,
+    route: pageId ? undefined : req.query.route || "/"
+  }))),
   // Un ID de page n'est accepte que s'il appartient au site du domaine.
-  pageParId: fabrique(({ donnees, site, req }) => sortie(builder.composerPage(donnees, site, { pageId: String(req.params.pageId || "").replace(/\D/g, ""), appareil: req.query.appareil }))),
+  pageParId: fabrique(({ donnees, site, pageId, statut, req }) => sortie(builder.composerPage(donnees, site, {
+    pageId: !["actif", "transition"].includes(statut)
+      ? pageId || undefined
+      : String(req.params.pageId || "").replace(/\D/g, ""),
+    appareil: req.query.appareil
+  }))),
   modeles: fabrique(({ donnees, site }) => ({ modeles: builder.listerModeles(donnees, site) })),
   typesModules: fabrique(({ donnees }) => ({ types: builder.listerTypes(donnees) }))
 };

@@ -28,24 +28,34 @@ module.exports = async function (context, req) {
       return k ? String(f[k]) === "1" : false;
     };
 
-    // Une page d'accueil active et validee (lue dans le cache commun) est necessaire pour le mode normal.
+    // La page configuree dans OBJ-SITE-PUBLIC est prioritaire ; sans configuration,
+    // le comportement historique de la route "/" reste disponible pour un site actif.
     const donnees = await builderSource.obtenirDonnees();
-    const pageAccueilPrete = (donnees.pages || []).some((p) => {
+    const pagePubliquePrete = (donnees.pages || []).some((p) => {
       const f = p._fields || {};
       const k = Object.keys(f).find((x) => /^OBJ_x002d_SITE/.test(x) && x.endsWith("LookupId"));
-      return k && String(f[k]) === String(r.site.id) && String(f.URL || "/").trim() === "/" &&
+      const pageCorrespond = r.site.pagePubliqueId
+        ? String(p.id) === String(r.site.pagePubliqueId)
+        : String(f.URL || "/").trim() === "/";
+      return k && String(f[k]) === String(r.site.id) && pageCorrespond &&
         lookupOui(f, /^OBJ_x002d_ACTIF/) && lookupOui(f, /^OBJ_x002d_VALIDE/);
     });
-    const etat = statutsSite.etatPublic(r.statut.rendu, pageAccueilPrete);
+    const periode = statutsSite.periodeApplicable(r.site);
+    if (periode.anomalie) {
+      context.log.warn(`[DSE ${id}] domaine hors configuration temporelle site=${r.site.id}`);
+    }
+    const rendu = periode.applicable ? r.statut.rendu : "indisponible";
+    const etat = statutsSite.etatPublic(rendu, pagePubliquePrete);
     const nom = r.site.titre || null;
 
     return dse.reponseJson(context, req, 200, {
       succes: true,
       donnees: {
-        id: etat === "normal" ? String(r.site.id) : null,
+        id: etat === "indisponible" ? null : String(r.site.id),
         nom,
         domaines: [domaine],
         etat,
+        pageId: r.site.pagePubliqueId ? String(r.site.pagePubliqueId) : null,
         langue: null,
         publication: { actif: true, valide: true }
       },

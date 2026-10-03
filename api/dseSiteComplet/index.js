@@ -1,6 +1,8 @@
 "use strict";
 
 const dse = require("../shared/dse");
+const catalogueSource = require("../shared/catalogue-source");
+const statutsSite = require("../shared/statuts-site");
 
 /* =========================================================
    COMPOSANTS DIRECTEMENT LIES AU SITE
@@ -539,8 +541,28 @@ function construirePagesAvecModules(
   );
 }
 
+function pagePubliee(page) {
+  const relationOui = (alias) => {
+    const relation = Object.entries(page?.relations || {}).find(([nom]) =>
+      nom.toUpperCase().replace(/[^A-Z0-9]/g, "") === alias
+    )?.[1];
+    const valeurs = Array.isArray(relation) ? relation : [relation];
+    return valeurs.some((valeur) => String(valeur?.id ?? "") === "1");
+  };
+  return relationOui("OBJACTIF") && relationOui("OBJVALIDE");
+}
+
+function pagesPourStatut(pages, site, rendu, periodeApplicable) {
+  if (!periodeApplicable || !site?.actif || !site?.valide) return [];
+  if (rendu === "actif" || rendu === "transition") return pages;
+  if (!["construction", "maintenance", "suspendu", "archive"].includes(rendu) || !site.pagePubliqueId) return [];
+  return pages.filter((page) =>
+    String(page.id) === String(site.pagePubliqueId) && pagePubliee(page)
+  );
+}
+
 /* =========================================================
-   FONCTION AZURE
+   CONTROLEUR HTTP
    ========================================================= */
 
 module.exports =
@@ -655,6 +677,16 @@ module.exports =
       const fieldsSite =
         itemSite.fields || {};
 
+      const indexSites = await catalogueSource.obtenirIndex();
+      const siteDse = indexSites.sites.get(siteIdDemande);
+      const statutDse = siteDse
+        ? statutsSite.decider(siteDse, indexSites.statuts)
+        : { rendu: "indisponible" };
+      const periodeDse = statutsSite.periodeApplicable(siteDse);
+      if (statutDse.anomalie || periodeDse.anomalie) {
+        context.log.warn(`[DSE ${correlationId}] configuration publique indisponible site=${siteIdDemande}`);
+      }
+
       /* -----------------------------------------------------
          PUBLICATION DU SITE
          ----------------------------------------------------- */
@@ -734,7 +766,12 @@ module.exports =
         );
 
       const pages =
-        resultatPages.elements || [];
+        pagesPourStatut(
+          resultatPages.elements || [],
+          siteDse,
+          statutDse.rendu,
+          periodeDse.applicable
+        );
 
       const pageIds =
         idsElements(pages);

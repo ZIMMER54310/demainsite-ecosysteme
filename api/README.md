@@ -12,6 +12,10 @@ types image, 15 Mo max. Le chemin `MEDIA-PATH` prime ; le drive stocke dans l'el
 
 `site-complet` agrege OBJ-SITE-PUBLIC avec menu, logo, entete, theme, SEO, pages, modules, contenus
 et OBJ-MEDIA en suivant les relations par **ID natifs SharePoint**.
+Pour un statut autre qu'Actif, seules la page publiee reliee par `PAGE-PUBLIQUE` et sa composition
+sont renvoyees. `DATE-DEBUT` et `DATE-FIN` bornent sa periode de publication ; hors periode, aucun
+contenu de page n'est expose. Pour un site Actif, `PAGE-PUBLIQUE` est prioritaire ; sans relation,
+la route `/` conserve son comportement historique.
 
 Appels Graph : timeout 15 s, au plus 2 reessais sur 429/503 en respectant `Retry-After` (plafonne
 a 5 s).
@@ -52,8 +56,9 @@ Code de sortie 1 si une erreur est detectee. Aucune ecriture SharePoint.
 4. `npm run audit:domaines` verifie le resultat.
 
 Etats par domaine (`/api/v1/sites/par-domaine`, champ `etat`) :
-- domaine connu + site actif/valide + page d'accueil active/validee -> `normal` (site public) ;
-- domaine connu mais site ou page non pret -> `construction` (page "Site en construction") ;
+- domaine connu + site actif/valide + page configuree publiee (ou route `/` sans `PAGE-PUBLIQUE`) -> `normal` ;
+- statuts SharePoint Construction, Maintenance, Suspendu ou Archivé -> page `PAGE-PUBLIQUE` du site, si publiee et dans sa periode ;
+- site/page non pret, configuration temporelle invalide ou page speciale absente -> page de repli neutre ;
 - domaine inconnu -> 404, aucun site.
 
 Statuts de l'audit : OK, CONSTRUCTION, ERREUR DNS, ERREUR NGINX, ERREUR HTTPS, ERREUR SHAREPOINT, DOMAINE INCONNU.

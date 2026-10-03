@@ -32,10 +32,31 @@ function decider(site, statuts) {
   return { rendu: code.toLowerCase() };
 }
 
+function dateBorne(valeur, fin = false) {
+  if (valeur === null || valeur === undefined || valeur === "") return null;
+  const texte = String(valeur).trim();
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(texte)
+    ? new Date(`${texte}T${fin ? "23:59:59.999" : "00:00:00.000"}Z`)
+    : new Date(texte);
+  return Number.isNaN(date.getTime()) ? NaN : date.getTime();
+}
+
+function periodeApplicable(site, maintenant = Date.now()) {
+  const debut = dateBorne(site?.dateDebut);
+  const fin = dateBorne(site?.dateFin, true);
+  if (Number.isNaN(debut) || Number.isNaN(fin)) {
+    return { applicable: false, anomalie: "date de publication invalide" };
+  }
+  if ((debut !== null && maintenant < debut) || (fin !== null && maintenant > fin)) {
+    return { applicable: false, anomalie: "hors période de publication" };
+  }
+  return { applicable: true };
+}
+
 // Valeur exposee au front (champ "etat"). Le vrai site ne s'affiche que pour "normal".
 function etatPublic(rendu, pageAccueilPrete) {
   if (rendu === "actif" || rendu === "transition") return pageAccueilPrete ? "normal" : "construction";
   return rendu;
 }
 
-module.exports = { LISTE_STATUTS, CODES, codeStatut, decider, etatPublic, cle };
+module.exports = { LISTE_STATUTS, CODES, codeStatut, decider, etatPublic, periodeApplicable, cle };
