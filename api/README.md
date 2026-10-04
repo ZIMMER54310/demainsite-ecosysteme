@@ -40,8 +40,9 @@ rejoues automatiquement sur 503 : une relecture est necessaire avant un nouvel a
 L'anti-doublon suppose le service Node unique actuel ; avant un deploiement multi-processus,
 une contrainte d'unicite SharePoint ou un verrou distribue sera necessaire.
 
-OBJ-JRN est prepare avec STATUTJRN et CLEIDEMPOTENCE. Si le Lookup historique STATUT
-est obligatoire ou si Graph refuse le journal, le resultat affiche explicitement le blocage.
+OBJ-JRN est prepare avec STATUTJRN et CLEIDEMPOTENCE. Le Lookup historique STATUT
+facultatif est ignore, meme si sa cible est orpheline : aucun champ STATUT n'est envoye.
+S'il est obligatoire ou si Graph refuse le journal, le resultat affiche explicitement le blocage.
 Aucune valeur artificielle n'est envoyee, aucun nouvel essai sans STATUTJRN n'est effectue.
 Une modification deja effectuee n'est pas presentee comme annulee en cas d'echec du journal.
 Les historiques presentes a un administrateur client sont limites aux sites de son perimetre.

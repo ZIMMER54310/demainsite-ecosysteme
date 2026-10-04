@@ -152,9 +152,8 @@ async function etatStructureJournal(g) {
   const liste = dse.trouverListe(g.listes, ["OBJ-JRN"]);
   if (!liste) return { disponible: false, raison: "Journal indisponible." };
   const colonnes = await dse.chargerColonnesListe(g.token, g.siteGraphId, liste.id);
-  const historique = colonnes.find((c) => c.name === "STATUT" && c.lookup &&
-    (c.required || !g.listes.some((l) => String(l.id).toLowerCase() === String(c.lookup.listId || "").toLowerCase())));
-  if (historique) return { disponible: false, raison: "Journal bloqué par une relation historique obligatoire ou orpheline." };
+  const historique = colonnes.find((c) => c.name === "STATUT" && c.lookup && c.required);
+  if (historique) return { disponible: false, raison: "Journal bloqué par une relation historique obligatoire." };
   if (!["STATUTJRN", "CLEIDEMPOTENCE"].every((nom) => colonnes.some((c) => c.name === nom))) {
     return { disponible: false, raison: "Le journal doit être complété avant journalisation." };
   }

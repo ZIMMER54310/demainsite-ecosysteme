@@ -43,6 +43,12 @@ const admin = require("../shared/administration");
     const ref = admin._test.ref;
     assert.ok((await admin.construireAction(d, "modifier-politique-role", { role: ref("r", "300"),
       portee: "TOUS", niveau: "ADMINISTRATION", fonctions: "ADMINISTRATION-GLOBALE" }, null)).refus);
+    assert.ok((await admin.construireAction(d, "changer-role", { utilisateur: ref("u", "u1"), role: ref("r", "100") }, null)).refus,
+      "auto-elevation refusee");
+    assert.ok((await admin.construireAction(d, "changer-role", { utilisateur: ref("u", "u2"), role: ref("r", "100") }, null)).refus,
+      "droits superieurs ou utilisateur d'un autre client refuses");
+    assert.ok((await admin.construireAction(d, "changer-client", { utilisateur: ref("u", "u1"), client: ref("k", "b") }, null)).refus,
+      "aucune action de changement de client n'est autorisee");
     const global = { ...d, portee: "tous", roleId: "100", fonctions: politique.roles["100"].fonctions, clientIds: ["a", "b"] };
     assert.ok((await admin.construireAction(global, "modifier-politique-role", { role: ref("r", "100"),
       portee: "CLIENT", niveau: "LECTURE", fonctions: "sites" }, null)).refus, "pas de modification de sa propre politique");
@@ -75,6 +81,11 @@ const admin = require("../shared/administration");
     res = reponse();
     await controleur.confirmer(requete("a.example.test", { jeton: interdit.jeton }), res);
     assert.strictEqual(res.code, 403, "les droits serveur sont controles a la confirmation");
+    droits.droitsPour = async () => ({ ...d, fonctions: ["sites", "suivi"] });
+    res = reponse();
+    await controleur.editionApercu(requete("a.example.test", { domaine: "a.example.test", composant: "seo", valeurs: {} }), res);
+    assert.strictEqual(res.code, 404, "une fonction interdite est refusee par le serveur sur un site autorise");
+    droits.droitsPour = async () => d;
     session.identiteSession = () => null;
     res = reponse();
     await controleur.editionLire(requete("a.example.test"), res);
@@ -110,6 +121,7 @@ const admin = require("../shared/administration");
   const sauvegarde = {};
   const remplacer = (nom, f) => { sauvegarde[nom] = dse[nom]; dse[nom] = f; };
   let creations = 0;
+  let journaux = 0;
   remplacer("obtenirJetonGraph", async () => "fake");
   remplacer("obtenirSiteGraph", async () => ({ id: "g" }));
   remplacer("collecter", async (_t, chemin) => chemin.includes("/lists/OBJ-JRN/items") ? [
@@ -126,7 +138,14 @@ const admin = require("../shared/administration");
   });
   remplacer("graphEcriture", async (_t, methode, chemin, corps, etag) => {
     const m = /\/lists\/([^/]+)\/items(?:\/([^/]+))?/.exec(chemin);
-    assert.notStrictEqual(m[1], "OBJ-JRN", "aucune ecriture artificielle du journal obligatoire");
+    if (m[1] === "OBJ-JRN") {
+      assert.strictEqual(cols["OBJ-JRN"][0].required, false, "aucune ecriture du journal historique obligatoire");
+      assert.ok(!Object.keys(corps.fields).some((k) => /^(STATUT|STATUTLookupId|TYPEEVENEMENTREF|SOURCEREF|RESULTATREF)$/.test(k)));
+      assert.strictEqual(corps.fields.STATUTJRN, "SUCCÈS");
+      assert.ok(corps.fields.CLEIDEMPOTENCE);
+      journaux++;
+      return { id: String(journaux), fields: corps.fields };
+    }
     if (methode === "POST") {
       const item = { id: String(++creations + 1), eTag: "test-etag", fields: { ...corps.fields } };
       items[m[1]].push(item);
@@ -181,8 +200,22 @@ const admin = require("../shared/administration");
     assert.strictEqual(menu.elements[0].titre, "Menu A");
     assert.strictEqual((await edition.lire({ composant: "menu", siteId: "20", element: menu.elements[0].ref })).disponible, false);
     assert.ok((await edition.lire({ composant: "menu", siteId: "10", element: menu.elements[0].ref })).champs);
+    cols["OBJ-JRN"] = [
+      { name: "STATUT", required: false, lookup: { listId: "orphelin" } },
+      { name: "STATUTJRN" }, { name: "CLEIDEMPOTENCE", text: { maxLength: 255 } }
+    ];
+    const g = { token: "fake", siteGraphId: "g", listes };
+    assert.ok((await ecriture.etatStructureJournal(g)).disponible, "un Lookup orphelin facultatif ne bloque pas le journal");
+    items["OBJ-SEO"].pop();
+    const modificationJournalisee = await edition.preparer({ ...args, valeurs: { [cle]: "Titre avec journal" } });
+    const resultat = await exe(modificationJournalisee.jeton);
+    assert.ok(resultat.succes && resultat.journal.enregistre);
+    assert.strictEqual((await exe(modificationJournalisee.jeton)).deja, true);
+    assert.strictEqual(journaux, 1, "rejeu de confirmation sans doublon journal");
+    cols["OBJ-JRN"][0].required = true;
+    assert.strictEqual((await ecriture.etatStructureJournal(g)).disponible, false, "STATUT obligatoire reste bloquant");
   } finally {
     Object.assign(dse, sauvegarde);
   }
-  console.log("Droits SharePoint, perimetres, creation/modification SEO, doublons, journal bloque et collections OK");
+  console.log("Droits SharePoint, perimetres, SEO, journal obligatoire/facultatif et rejeu sans doublon OK");
 })().catch((e) => { console.error(e); process.exitCode = 1; });
