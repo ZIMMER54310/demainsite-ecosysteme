@@ -102,6 +102,16 @@ function consommerTransaction(req, res) {
   return verifier(lireCookies(req)[COOKIE_TRANSACTION]);
 }
 
+function origineValide(req) {
+  const origine = String(req.get("origin") || "");
+  const hote = String(req.get("x-forwarded-host") || req.get("host") || "").split(",")[0].trim().toLowerCase();
+  try {
+    const u = new URL(origine);
+    return u.host.toLowerCase() === hote &&
+      (u.protocol === "https:" || (u.protocol === "http:" && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(hote)));
+  } catch { return false; }
+}
+
 module.exports = {
   signer,
   verifier,
@@ -111,5 +121,6 @@ module.exports = {
   identiteSession,
   ouvrirTransaction,
   consommerTransaction,
+  origineValide,
   sessionDisponible: () => Boolean(secret())
 };

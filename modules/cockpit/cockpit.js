@@ -410,6 +410,14 @@ export function rendreAdministration(moi, t) {
 }
 
 export function rendreUtilisateurs(moi, d) {
+  const incidents = d.incidents ? `<section class="card"><h2>Incidents d’accès</h2>
+    ${!d.incidents.politiqueDisponible ? "<p>Blocage automatique en attente de configuration de la politique SharePoint. Aucune durée inventée.</p>" : ""}
+    <p data-resultat-incident role="status"></p>
+    ${(d.incidents.incidents || []).map((i) => `<details><summary>${e(i.utilisateur)} — ${e(i.domaine)} — ${e(i.etat)} (${i.nombre} refus) · Examiner</summary>
+      <p>Motif : ${e(i.motif)}<br>Premier refus : ${e(i.premier)}<br>Dernier refus : ${e(i.dernier)}<br>Journal : ${e(i.journalId)}</p>
+      <button class="btn btn-secondary" data-incident="${e(i.id)}" data-decision-incident="reactiver">Réactiver après vérification</button>
+      <button class="btn btn-secondary" data-incident="${e(i.id)}" data-decision-incident="maintenir">Maintenir le blocage</button>
+    </details>`).join("") || "<p>Aucun incident d’accès.</p>"}</section>` : "";
   const roles = (d.roles || []).map((r) => `<option value="${e(r.ref)}">${e(r.titre)}</option>`).join("");
   const sites = (d.sites || []).map((s) => `<option value="${e(s.domaine)}">${e(s.nom)} — ${e(s.domaine)}</option>`).join("");
   const lignes = (d.utilisateurs || []).map((u) => `<tr>
@@ -451,6 +459,7 @@ export function rendreUtilisateurs(moi, d) {
       <thead><tr><th>Utilisateur</th><th>Rôle</th><th>État</th><th>Sites</th><th>Actions</th></tr></thead>
       <tbody>${lignes || '<tr><td colspan="5" class="muted">Aucun utilisateur dans votre périmètre.</td></tr>'}</tbody></table></div></div>
     ${creation}
+    ${incidents}
     ${politiques ? `<h2>Politiques des rôles</h2>${politiques}` : ""}
   </section>`;
 }

@@ -86,7 +86,7 @@ const inscription = require("../auth/inscription");
       invitation.fields[champ] = avant;
     }
     assert.strictEqual(await inscription.apresAuthentification({ ...id, sujet: "sans-invitation" }, "client.example.test"), false);
-    assert.strictEqual(await inscription.apresAuthentification(id, "client.example.test"), false);
+    await assert.rejects(() => inscription.apresAuthentification(id, "client.example.test"), /indisponible/);
     assert.strictEqual(items["OBJ-UTILISATEUR"].length, 1);
     assert.strictEqual(items["OBJ-UTILISATEUR-SITE"].length, 1);
     assert.strictEqual(await inscription.apresAuthentification(id, "client.example.test"), true, "reprise apres interruption, meme si le compte est deja reconnu");

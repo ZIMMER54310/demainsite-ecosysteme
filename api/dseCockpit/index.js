@@ -146,7 +146,7 @@ async function site(req, res) {
     const info = domaine ? perimetre.groupeParDomaine(perimetre.regrouperSites([...index.values()]), domaine) : null;
     // Meme reponse pour un site inexistant ou hors perimetre : rien n'est divulgue.
     if (!info || !ctx.droits.siteIds.includes(String(info.id)) || !ctx.droits.fonctions.includes("sites")) {
-      return refuser(res, 404, "Ce site n'est pas disponible dans votre espace.");
+      return refuser(res, 403, "Ce site n'est pas disponible dans votre espace.");
     }
     const siteComplet = await chargerSiteComplet(info.id);
     const vue = cockpit.vueSite({
@@ -170,16 +170,7 @@ async function site(req, res) {
  * protection contre la falsification de requete inter-sites, en plus du cookie SameSite=Lax.
  */
 function origineValide(req) {
-  const origine = String(req.get("origin") || "");
-  const hote = String(req.get("x-forwarded-host") || req.get("host") || "").split(",")[0].trim().toLowerCase();
-  if (!origine || !hote) return false;
-  try {
-    const u = new URL(origine);
-    const local = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(hote);
-    return u.host.toLowerCase() === hote && (u.protocol === "https:" || (local && u.protocol === "http:"));
-  } catch {
-    return false;
-  }
+  return session.origineValide(req);
 }
 
 const RANG = { lecture: 0, ecriture: 1, administration: 2 };
@@ -216,7 +207,7 @@ async function editionLire(req, res) {
     const composant = String(req.query.composant || "");
     const def = edition.COMPOSANTS_EDITABLES[composant];
     const info = await siteDuPerimetre(ctx, req.query.domaine);
-    if (!info || !def || !peutEcrire(ctx.droits, def.fonction)) return refuser(res, 404, "Ce réglage n'est pas disponible dans votre espace.");
+    if (!info || !def || !peutEcrire(ctx.droits, def.fonction)) return refuser(res, 403, "Ce réglage n'est pas disponible dans votre espace.");
     const r = await edition.lire({ composant, siteId: info.id, element: String(req.query.element || "") });
     repondre(res, 200, { succes: true, donnees: { site: info.titre, domaine: perimetre.domaineAcces(info), ...r }, meta: meta() });
   } catch (e) {
@@ -304,6 +295,7 @@ async function adminUtilisateurs(req, res) {
     if (!ctx) return refuser(res, 401, "Connexion requise.");
     const r = ctx.droits.reconnu ? await administration.utilisateurs(ctx.droits) : null;
     if (!r) return refuser(res, 403, "Accès non autorisé.");
+    r.peutGererIncidents = require("../auth/incidents").global(ctx.droits);
     repondre(res, 200, { succes: true, donnees: r, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] admin utilisateurs", e.message);

@@ -9,3 +9,5 @@ export const getAdminTableau = () => apiGet("/cockpit/admin/tableau");
 export const getAdminUtilisateurs = () => apiGet("/cockpit/admin/utilisateurs");
 export const apercuAdmin = (action, params) => apiPost("/cockpit/admin/apercu", { action, params });
 export const confirmerAdmin = (jeton) => apiPost("/cockpit/admin/confirmer", { jeton });
+export const getIncidents = () => apiGet("/cockpit/incidents");
+export const deciderIncident = (incident, decision) => apiPost("/cockpit/incidents/decision", { incident, decision });

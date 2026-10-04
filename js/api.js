@@ -30,9 +30,11 @@ export async function apiPost(path, corps = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.max(CONFIG.REQUEST_TIMEOUT_MS, 30000));
   try {
+    const acces = await apiGet("/acces/status");
     const response = await fetch(buildUrl(path), {
       method: "POST", credentials: "same-origin", cache: "no-store", signal: controller.signal,
-      headers: { Accept: "application/json", "Content-Type": "application/json" }, body: JSON.stringify(corps)
+      headers: { Accept: "application/json", "Content-Type": "application/json",
+        "X-DSE-CSRF": acces?.donnees?.csrf || "" }, body: JSON.stringify(corps)
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok) throw new ApiError(payload?.erreur?.message || payload?.error?.message || `Erreur API ${response.status}`, response.status, payload);

@@ -28,6 +28,7 @@ const controleurCockpit =
   require("./dseCockpit");
 
 const application = express();
+const acces = require("./auth/acces");
 
 application.disable("x-powered-by");
 application.set("trust proxy", 1);
@@ -213,9 +214,16 @@ application.get(
  * COCKPIT DSE : identite (fournisseurs branchables), droits et donnees
  * du cockpit, tous controles cote serveur (dseCockpit/).
  */
+application.use(["/api/v1/auth", "/api/v1/cockpit", "/api/v1/acces"], acces.limiter);
+application.use(["/api/v1/cockpit", "/api/v1/moi"], acces.proteger);
+application.get("/api/v1/acces/status", acces.status);
+application.get("/api/v1/acces/entrer", acces.entrer);
+application.get("/api/v1/cockpit/incidents", acces.liste);
+application.post("/api/v1/cockpit/incidents/decision", acces.decision);
 application.get("/api/v1/moi", controleurCockpit.moi);
 application.get("/api/v1/auth/:fournisseur/connexion", controleurCockpit.connexion);
 application.get("/api/v1/auth/:fournisseur/retour", controleurCockpit.retour);
+application.get("/api/v1/auth/continuer", require("./auth/fournisseurs/entra").continuer);
 application.post("/api/v1/cockpit/inscription", controleurCockpit.inscrire);
 application.get("/api/v1/auth/deconnexion", controleurCockpit.deconnexion);
 application.get("/api/v1/cockpit/sites", controleurCockpit.sites);

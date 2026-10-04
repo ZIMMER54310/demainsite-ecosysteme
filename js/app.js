@@ -8,6 +8,9 @@ registerRoute("/", async () => {
   const page = await accueilPage(domaine);
 
   mount(page, ["Accueil"]);
+  if (document.body.classList.contains("dse-public")) {
+    await monterAccesPublic(document.querySelector("#app-page"));
+  }
 
   for (const racineCatalogue of document.querySelectorAll("[data-dse-catalogue], [data-dse-catalogue-builder]")) {
     monterCatalogue(racineCatalogue, { domaine }).catch(() => {
@@ -29,3 +32,4 @@ async function boot(){ const user=await initializeAuth(); setState({user}); try{
 boot();
 import { accueilPage } from "../pages/accueil.js";
 import { monterCatalogue } from "../modules/catalogue/catalogue.js";
+import { monterAccesPublic } from "../modules/public/acces.js";

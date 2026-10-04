@@ -2,7 +2,7 @@ import { initializeAuth } from "../js/auth.js";
 import { setState } from "../js/state.js";
 import {
   getSitesCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
-  getAdminTableau, getAdminUtilisateurs, apercuAdmin, confirmerAdmin
+  getAdminTableau, getAdminUtilisateurs, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident
 } from "../services/cockpit.service.js";
 import {
   rendreConnexion, rendreSansAcces, rendreAccueil, rendreListeSites, rendreVueSite, rendreAssistant,
@@ -13,6 +13,7 @@ const CLE_ASSISTANT = "dseAssistantSite";
 const MESSAGES_CONNEXION = {
   echec: "La connexion n'a pas abouti. Merci de réessayer.",
   "inscription-refusee": "Inscription refusée ou incomplète. Votre administrateur doit vérifier l'autorisation SharePoint pour ce compte et ce site.",
+  securise: "Accès temporairement sécurisé. Contactez votre administrateur pour vérification.",
   indisponible: "Ce mode de connexion n'est pas encore disponible."
 };
 const indisponible = `<section class="cockpit card"><p>Le cockpit est momentanément indisponible. Merci de réessayer dans quelques instants.</p></section>`;
@@ -177,11 +178,26 @@ export async function cockpitUtilisateursPage(params) {
     if (!c.moi.fonctions.includes("utilisateurs")) return nonDisponible("La gestion des utilisateurs n'est pas disponible pour votre profil.");
     const r = await getAdminUtilisateurs().catch(() => null);
     if (!r?.donnees) return indisponible;
+    if (r.donnees.peutGererIncidents) r.donnees.incidents = (await getIncidents()).donnees;
     return rendreUtilisateurs(c.moi, r.donnees);
   } catch { return indisponible; }
 }
 
 export function activerUtilisateurs(racine = document) {
+  racine.querySelectorAll("[data-decision-incident]").forEach((bouton) => {
+    bouton.addEventListener("click", async () => {
+      if (!confirm("Confirmer cette décision après vérification de l’incident ?")) return;
+      bouton.disabled = true;
+      const zoneIncident = racine.querySelector("[data-resultat-incident]");
+      try {
+        await deciderIncident(bouton.dataset.incident, bouton.dataset.decisionIncident);
+        zoneIncident.textContent = "Décision enregistrée et journalisée. Rechargez la page pour voir l’état actualisé.";
+      } catch (e) {
+        zoneIncident.textContent = e.message;
+        bouton.disabled = false;
+      }
+    });
+  });
   const zone = racine.querySelector("[data-apercu]");
   if (!zone) return;
   const lancer = brancherConfirmation(zone, (d) => apercuAdmin(d.action, d.params), confirmerAdmin);

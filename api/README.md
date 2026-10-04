@@ -34,6 +34,56 @@ La page publique de situation utilise une disposition verticale en-tete/carte/fo
 La carte et son titre restent dans la largeur disponible, avec retour a la ligne des
 titres longs sur mobile, sans modification du contenu ou de la decision de statut.
 
+## Acces public et incidents DSE
+
+Le composant public commun propose l'entree Entra (`/acces/entrer`) ou le retour au
+cockpit du domaine courant, jamais un autre site choisi par defaut.
+`GET /acces/status` ne compte aucune tentative : visiteur, autorise, attente, refuse
+ou bloque. Une erreur API laisse le site public utilisable et n'incremente aucun incident.
+Les acces communs permettent l'accueil du cockpit, sans droit metier sur le site commun.
+
+Les refus DSE explicites des routes cockpit et des inscriptions apres authentification
+sont journalises sous forme d'incidents dans OBJ-JRN, sans nouvelle structure.
+Le journal constitue la source durable, y compris apres redemarrage. Les decisions
+Super Administrateur ajoutent des evenements ; aucun incident n'est supprime.
+Les lectures de statut, erreurs techniques, expiration de session, annulation Microsoft
+et erreurs de mot de passe Microsoft ne sont pas des refus DSE.
+
+Sans politique SharePoint, les refus sont visibles pour examen, mais le compteur dans
+une fenetre et le verrouillage automatique ne sont PAS actives. Aucune duree n'est inventee.
+Le moteur est prepare pour une liste OBJ-POLITIQUE-ACCES, un seul element actif/valide,
+Lookups OBJ-ACTIF/OBJ-VALIDE et nombres FENETREREFUSMINUTES et BLOCAGEMINUTES strictement
+positifs. Cette liste n'est ni creee ni modifiee par le code. Apres configuration reelle :
+trois refus dans cette fenetre bloquent le cockpit, sans bloquer le site public.
+L'expiration enregistree derive de la politique au moment du blocage ; un blocage maintenu
+par le Super Administrateur n'expire pas automatiquement. Un administrateur ne peut
+pas maintenir son propre blocage. Une autre autorite globale doit gerer un compte bloque.
+
+`GET /cockpit/incidents` et `POST /cockpit/incidents/decision` sont reserves a la portee
+TOUS, niveau ADMINISTRATION, fonction utilisateurs. La vue est dans Utilisateurs et acces.
+Decisions : reactiver apres verification ou maintenir ; journalisation obligatoire.
+Les verrous et caches correspondent au processus Node unique de production : une
+architecture multi-processus requerrait un verrou partage avant activation.
+
+Une seule ALERTE-EN-ATTENTE par incident est inscrite, destinataires resolus depuis les
+utilisateurs actifs/valides et les politiques de roles globaux SharePoint. Aucun email
+n'est envoye : aucun transport n'est configure. L'alerte ne contient ni identite Entra
+en clair ni cookie/jeton/secret ; elle porte un identifiant masque et un lien relatif
+vers une vue protegee. La mise en place d'un transport d'email reste necessaire.
+
+Les POST cockpit exigent une origine identique et X-DSE-CSRF lie a la session, obtenu
+par `/acces/status`. Les confirmations d'ecriture signees restent obligatoires.
+Limitation technique avant authentification : DSE_ACCES_REQUETES_MINUTE (120 par defaut),
+par IP hachee, sans assimilation a un incident utilisateur. Cette limite n'est pas une
+politique de verrouillage metier.
+
+Le retour Entra central conserve la transaction PKCE/nonce cote OVH et redirige uniquement
+vers le domaine HTTP d'origine, deja resolu par SharePoint. Un passage aleatoire, unique
+et valable 60 secondes exige le cookie de transaction du navigateur d'origine avant
+creation de sa session locale Secure/HttpOnly/SameSite=Lax. Aucun mot de passe ni jeton
+Microsoft n'est stocke. Le nonce de passage est consomme avant ouverture de session.
+Les transactions en cours expirent en cas de redemarrage, sans incident de securite.
+
 ## Identification Entra et inscription controlee
 
 ENTRAOBJECTID est prioritaire. L'email ne sert qu'a migrer un compte historique unique

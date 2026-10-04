@@ -98,7 +98,7 @@ const admin = require("../shared/administration");
     droits.droitsPour = async () => d;
     res = reponse();
     await controleur.editionLire(requete("b.example.test"), res);
-    assert.strictEqual(res.code, 404, "l'URL d'un autre client est refusee");
+    assert.strictEqual(res.code, 403, "l'URL d'un autre client est refusee");
     res = reponse();
     await controleur.editionApercu(requete("a.example.test", { domaine: "b.example.test", composant: "seo", valeurs: {} }), res);
     assert.strictEqual(res.code, 403, "ecriture hors perimetre refusee et tentative de journalisation");

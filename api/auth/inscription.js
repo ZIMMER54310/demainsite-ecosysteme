@@ -283,6 +283,8 @@ async function apresAuthentification(identite, domaine) {
   const d = await droits.droitsPour(identite);
   if (d.reconnu && d.portee === "tous") return true;
   const resultat = await inscrire(identite, domaine, true, d.reconnu);
+  if (resultat.status >= 500) throw new Error("Inscription momentanément indisponible.");
+  if (resultat.status === 403) await require("./incidents").refuser(identite, domaine, "Autorisation d'inscription absente ou invalide");
   return resultat.status === 200 || (d.reconnu && resultat.status === 204);
 }
 
