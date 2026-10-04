@@ -49,17 +49,15 @@ function idsLookup(fields, colonne) {
 }
 
 async function titresListe(token, siteGraphId, listId, cache) {
-  if (cache.has(listId)) return cache.get(listId);
-
-  // Une liste systeme ou inaccessible ne doit pas bloquer le catalogue.
-  const items = await dse.collecter(
-    token,
-    `/sites/${siteGraphId}/lists/${listId}/items?$expand=fields($select=Title)&$top=200`
-  ).catch(() => []);
-
-  const titres = new Map(items.map((i) => [String(i.id), i.fields?.Title ?? null]));
-  cache.set(listId, titres);
-  return titres;
+  // La promesse est mise en cache : des lectures paralleles ne relisent jamais deux fois la meme liste.
+  if (!cache.has(listId)) {
+    // Une liste systeme ou inaccessible ne doit pas bloquer le catalogue.
+    cache.set(listId, dse.collecter(
+      token,
+      `/sites/${siteGraphId}/lists/${listId}/items?$expand=fields($select=Title)&$top=200`
+    ).catch(() => []).then((items) => new Map(items.map((i) => [String(i.id), i.fields?.Title ?? null]))));
+  }
+  return cache.get(listId);
 }
 
 // Meme forme que construireElementPublic, mais les titres des Lookup sont resolus par lot.

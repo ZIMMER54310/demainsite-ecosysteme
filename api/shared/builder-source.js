@@ -26,8 +26,13 @@ async function charger() {
   };
 
   const donnees = { contenus: {} };
-  for (const [cle, nom] of Object.entries(TOUT)) donnees[cle] = await lire(nom);
-  for (const nom of new Set(Object.values(B.LISTES_CONTENU))) donnees.contenus[nom] = await lire(nom);
+  // Lectures paralleles bornees : rapide sans saturer Graph (limitation de debit).
+  const taches = [
+    ...Object.entries(TOUT).map(([cle, nom]) => async () => { donnees[cle] = await lire(nom); }),
+    ...[...new Set(Object.values(B.LISTES_CONTENU))].map((nom) => async () => { donnees.contenus[nom] = await lire(nom); })
+  ];
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(6, taches.length) }, async () => { while (i < taches.length) await taches[i++](); }));
 
   // Valeurs techniques (hex, famille) portees par les elements des referentiels de style.
   return donnees;
