@@ -12,7 +12,19 @@
 .cockpit-badge.actif { background: #dff5ec; color: #0d7a52; }
 .cockpit-badge.situation { background: #fff3d6; color: #8a5a00; }
 .cockpit-jauge { height: .7rem; border-radius: 999px; background: #e8edf3; overflow: hidden; }
-.cockpit-jauge span { display: block; height: 100%; background: var(--accent, #19a974); border-radius: inherit; }
+.cockpit-jauge span { display: block; height: 100%; background: var(--progression-couleur, currentColor); border-radius: inherit; }
+.cockpit-pliant { min-width: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.cockpit-pliant > summary { cursor: pointer; list-style: none; padding: 1rem; font-weight: 600; }
+.cockpit-pliant > summary::-webkit-details-marker { display: none; }
+.cockpit-pliant > summary::before { content: "▶"; display: inline-block; margin-right: .6rem; }
+.cockpit-pliant[open] > summary::before { content: "▼"; }
+.cockpit-pliant > summary:focus-visible { outline: 2px solid currentColor; outline-offset: -3px; }
+.cockpit-pliant-contenu { padding: 0 1rem 1rem; }
+.cockpit-progression > summary, .cockpit-progression-resume {
+  border-inline-start: 6px solid var(--progression-couleur, currentColor);
+  background: color-mix(in srgb, var(--progression-couleur, transparent) 12%, transparent);
+}
+.cockpit-progression-libelle { display: inline-block; margin-inline-start: .6rem; font-size: .85em; font-weight: 400; }
 .cockpit-etapes { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
 .cockpit-etape { display: flex; gap: .75rem; align-items: flex-start; padding: .65rem .85rem; border-radius: 10px; background: #fff; border: 1px solid #e3e8ef; }
 .cockpit-etape p { margin: .25rem 0 0; }

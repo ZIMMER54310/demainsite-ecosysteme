@@ -66,10 +66,26 @@ function badgeStatut(statut) {
   return `<span class="cockpit-badge ${statut.actif ? "actif" : "situation"}">${e(statut.titre)}</span>`;
 }
 
+function styleProgression(visuel) {
+  return /^#[0-9a-f]{6}$/i.test(visuel?.couleur || "") ? ` style="--progression-couleur:${visuel.couleur}"` : "";
+}
+
+function rendreAccesRapides(fonctions, domaine) {
+  return `<details class="cockpit-pliant cockpit-raccourcis">
+    <summary>Accès rapides</summary><div class="cockpit-pliant-contenu">${rendreCartes(fonctions, domaine)}</div>
+  </details>`;
+}
+
 export function rendreProgression(vue, sectionActive) {
   const etapes = Array.isArray(vue?.etapes) ? vue.etapes : [];
   if (!etapes.length) return `<div class="empty">Aucune information de progression disponible.</div>`;
-  return `<div class="cockpit-progression">
+  const visuel = vue.progressionVisuelle;
+  return `<details class="cockpit-pliant cockpit-progression"${styleProgression(visuel)}${sectionActive ? " open" : ""}>
+    <summary>Progression du site - ${Number(vue.progression) || 0} %${visuel?.libelle ? ` <span class="cockpit-progression-libelle">${e(visuel.libelle)}</span>` : ""}</summary>
+    <div class="cockpit-pliant-contenu">
+    ${visuel?.description ? `<p class="muted">${e(visuel.description)}</p>` : ""}
+    ${visuel?.message ? `<p class="cockpit-alerte" role="status">${e(visuel.message)}</p>` : ""}
+    ${visuel?.avertissement ? `<p class="cockpit-alerte" role="status">${e(visuel.avertissement)}</p>` : ""}
     <div class="cockpit-jauge" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Number(vue.progression) || 0}">
       <span style="width:${Math.max(0, Math.min(100, Number(vue.progression) || 0))}%"></span></div>
     <p class="muted">${Number(vue.progression) || 0} % de la configuration terminée</p>
@@ -79,7 +95,7 @@ export function rendreProgression(vue, sectionActive) {
         <div><strong>${e(x.libelle)}</strong> <span class="muted">· ${e(LIBELLES_ETAT[x.etat] || LIBELLES_ETAT.afaire)}</span>
         ${x.alerte ? `<p class="cockpit-alerte">${e(x.alerte)}</p>` : ""}
         ${Array.isArray(x.resume) && x.resume.length ? `<p class="muted">${x.resume.map(e).join(" · ")}</p>` : ""}</div>
-      </li>`).join("")}</ul></div>`;
+      </li>`).join("")}</ul></div></details>`;
 }
 
 export function rendreConnexion({ fournisseurs = [], message = "" } = {}) {
@@ -121,13 +137,12 @@ export function rendreAccueil({ moi, vueCourante = null, domaineCourant = "" }) 
       <div class="card"><h2>Site actuel</h2>${vueCourante
         ? `<p class="metric">${e(vueCourante.nom || domaine)}</p><p>${e(domaine)} ${badgeStatut(vueCourante.statut)}</p>`
         : `<p class="muted">${domaineCourant ? `Le domaine ${e(domaineCourant)} ne fait pas partie de votre espace. ` : ""}Choisissez un site dans <a href="#/cockpit/sites">Mes sites</a>.</p>`}</div>
-      <div class="card"><h2>Configuration</h2>${vueCourante
+      <div class="card cockpit-progression-resume"${styleProgression(vueCourante?.progressionVisuelle)}><h2>Configuration</h2>${vueCourante
         ? `<p class="metric">${Number(vueCourante.progression) || 0} %</p><p class="muted">de la configuration terminée</p>`
         : `<p class="muted">Choisissez un site pour suivre sa progression.</p>`}</div>
       <div class="card"><h2>Mes sites</h2><p class="metric">${Number(moi?.nombreSites) || 0}</p><p class="muted">site(s) dans votre espace</p></div>
     </div>
-    <h2>Accès rapides</h2>
-    ${rendreCartes(moi?.fonctions, domaine)}
+    ${rendreAccesRapides(moi?.fonctions, domaine)}
   </section>`;
 }
 
@@ -149,9 +164,9 @@ function choix(nom, libelle, tous, valeurs, choisi) {
   return `<label class="cockpit-champ"><span>${e(libelle)}</span><select name="${nom}">${option("", tous, choisi)}${valeurs.map((v) => typeof v === "string" ? option(v, v, choisi) : option(v.valeur, v.libelle, choisi)).join("")}</select></label>`;
 }
 
-function jaugeCourte(valeur) {
+function jaugeCourte(valeur, visuel) {
   if (typeof valeur !== "number") return `<span class="muted">—</span>`;
-  return `<span class="cockpit-mini-jauge" title="${valeur} %"><span class="cockpit-jauge"><span style="width:${Math.max(0, Math.min(100, valeur))}%"></span></span><small>${valeur} %</small></span>`;
+  return `<span class="cockpit-mini-jauge"${styleProgression(visuel)} title="${e(visuel?.libelle ? `${valeur} % · ${visuel.libelle}` : `${valeur} %`)}"><span class="cockpit-jauge"><span style="width:${Math.max(0, Math.min(100, valeur))}%"></span></span><small>${valeur} %</small></span>`;
 }
 
 export function rendreListeSites(moi, resultat) {
@@ -184,7 +199,7 @@ export function rendreListeSites(moi, resultat) {
       <td data-label="Site"><strong>${e(s.nom || s.domaine || s.acces)}</strong>${(s.alias || []).length ? `<br><small class="muted" title="${e((s.alias || []).join(", "))}">${(s.alias || []).length} alias</small>` : ""}</td>
       <td data-label="Domaine principal">${s.domaine ? e(s.domaine) : `<span class="cockpit-alerte">Domaine principal à préciser</span>`}</td>
       <td data-label="Statut">${badgeStatut(s.statut)}${r.peutChangerStatut ? ` <button type="button" class="icon-btn" data-changer-statut="${e(s.acces || s.domaine)}" aria-label="Changer le statut de ${e(s.nom)}" title="Changer le statut">✎</button>` : ""}</td>
-      <td data-label="Progression">${jaugeCourte(s.progression)}${(s.aCompleter || []).some((x) => x.etat === "attention") ? ` <span title="Un point demande votre attention">⚠</span>` : ""}</td>
+      <td data-label="Progression">${jaugeCourte(s.progression, s.progressionVisuelle)}${s.progressionVisuelle?.message || s.progressionVisuelle?.avertissement ? ` <span title="${e(s.progressionVisuelle.message || s.progressionVisuelle.avertissement)}">⚠</span>` : ""}${(s.aCompleter || []).some((x) => x.etat === "attention") ? ` <span title="Un point demande votre attention">⚠</span>` : ""}</td>
       ${(o.clients || []).length > 1 ? `<td data-label="Client">${e(s.client || "Non renseigné")}</td>` : ""}
       <td><div class="cockpit-actions"><a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}">Ouvrir</a>${s.domaine ? `<a class="btn btn-secondary" href="https://${e(s.domaine)}/" target="_blank" rel="noopener noreferrer">🌐 Voir le site</a>` : ""}</div></td></tr>`).join("")}</tbody></table></div>`
     : `<div class="empty">${filtre ? "Aucun site ne correspond à votre recherche." : "Aucun site dans votre espace pour le moment."}</div>`;
@@ -198,6 +213,7 @@ export function rendreListeSites(moi, resultat) {
     ${rendreEnteteCockpit(moi)}
     <h2>Mes sites <span class="muted">(${Number(r.total) || 0}${filtre ? ` sur ${Number(r.totalSites) || 0}` : ""})</span></h2>
     <p data-resultat-statut role="status"></p>
+    ${r.avertissementProgression ? `<p class="cockpit-alerte" role="status">${e(r.avertissementProgression)}</p>` : ""}
     ${compteurs}
     ${filtres}
     ${lignes}
@@ -216,10 +232,8 @@ export function rendreVueSite(moi, vue, section) {
     </div>
     ${editionsVisibles(moi, vue.fonctions).length ? `<div class="cockpit-actions">${editionsVisibles(moi, vue.fonctions).map((x) =>
       `<a class="btn btn-primary" href="#/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}/modifier/${x.composant}">${e(x.libelle)}</a>`).join("")}</div>` : ""}
-    <h2>Progression</h2>
     ${rendreProgression(vue, section)}
-    <h2>Accès rapides</h2>
-    ${rendreCartes(vue.fonctions, vue.acces || vue.domaine)}
+    ${rendreAccesRapides(vue.fonctions, vue.acces || vue.domaine)}
   </section>`;
 }
 

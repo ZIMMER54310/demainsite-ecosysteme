@@ -110,11 +110,6 @@ function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT, dom
 }
 
 const NON_RENSEIGNE = "Non renseigné";
-const TRANCHES_PROGRESSION = [
-  { valeur: "0-49", libelle: "Moins de 50 %", min: 0, max: 49 },
-  { valeur: "50-99", libelle: "De 50 à 99 %", min: 50, max: 99 },
-  { valeur: "100", libelle: "Terminé (100 %)", min: 100, max: 100 }
-];
 const TRIS = ["nom", "domaine", "statut", "client", "progression"];
 
 /*
@@ -155,11 +150,11 @@ function compter(elements, cle) {
  * Recherche, filtres, tri et pagination de « Mes sites », cote serveur.
  * Les choix de statut et de client sont produits a partir des donnees elles-memes.
  */
-function filtrerSites(resumes, query = {}) {
+function filtrerSites(resumes, query = {}, tranchesProgression = []) {
   const q = sansAccent(query.q);
   const statut = String(query.statut || "").trim();
   const client = String(query.client || "").trim();
-  const tranche = TRANCHES_PROGRESSION.find((t) => t.valeur === String(query.progression || ""));
+  const tranche = tranchesProgression.find((t) => t.valeur === String(query.progression || ""));
   const aCompleter = String(query.aCompleter || "").trim();
   const tri = TRIS.includes(query.tri) ? query.tri : "nom";
   const sens = query.sens === "desc" ? -1 : 1;
@@ -173,7 +168,8 @@ function filtrerSites(resumes, query = {}) {
   const filtres = recherches.filter((s) =>
     (!statut || statutTitre(s) === statut) &&
     (!client || clientTitre(s) === client) &&
-    (!tranche || (typeof s.progression === "number" && s.progression >= tranche.min && s.progression <= tranche.max)) &&
+    (!tranche || (typeof s.progression === "number" &&
+      tranchesProgression.find((t) => s.progression >= t.min && s.progression <= t.max)?.valeur === tranche.valeur)) &&
     (!aCompleter || (aCompleter === "tout"
       ? (s.aCompleter || []).length > 0
       : (s.aCompleter || []).some((e) => e.cle === aCompleter))));
@@ -206,7 +202,7 @@ function filtrerSites(resumes, query = {}) {
     options: {
       statuts: compter(resumes, statutTitre).map((c) => c.valeur),
       clients: compter(resumes, clientTitre).map((c) => c.valeur),
-      progressions: TRANCHES_PROGRESSION.map(({ valeur: v, libelle }) => ({ valeur: v, libelle })),
+      progressions: tranchesProgression.map(({ valeur: v, libelle }) => ({ valeur: v, libelle })),
       aCompleter: [...etapesDispo.entries()].map(([v, libelle]) => ({ valeur: v, libelle })),
       tris: TRIS
     },

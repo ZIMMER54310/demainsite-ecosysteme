@@ -269,6 +269,47 @@ Tests : `npm run test:catalogue`.
 
 ## Provisionnement SharePoint de production
 
+### Couleurs de progression du cockpit
+
+`npm run provision:progression` inspecte les structures existantes sans écriture ;
+`npm run provision:progression -- --apply` réutilise une liste équivalente ou crée
+`OBJ-COCKPIT-PROGRESSION` vide, avec journalisation du provisionnement dans OBJ-JRN.
+Aucune plage, couleur ou donnée métier n'est initialisée.
+La création du schéma via Graph nécessite une autorisation de gestion des listes.
+Si l'application Sites.Selected reçoit un refus 403, la création peut être effectuée
+avec la session SharePoint administrateur existante, sans modifier Azure ni les
+permissions de l'application.
+
+Champs : `LIBELLE` (colonne native Title affichée sous ce nom), `POURCENTAGE-MIN`,
+`POURCENTAGE-MAX`, `COULEUR`, `ORDRE`, `ACTIF` (booléen), `DESCRIPTION` facultative.
+Les bornes sont inclusives, comprises dans le domaine mathématique 0–100 ; la couleur
+doit être une valeur opaque `#RRGGBB`. En cas de chevauchement, le plus petit ORDRE
+prime, puis le plus petit ID natif SharePoint à ordre égal. Les lignes inactives sont
+ignorées. Les seuils, couleurs et libellés sont exclusivement administrés dans SharePoint.
+
+L'API relit les éléments sans cache à chaque chargement de la fiche ou de Mes sites.
+Le bloc « Progression du site - XX % », sa barre, les mini-jauges et les filtres de
+progression interprètent la même configuration. Aucune plage absente n'est remplacée
+par un seuil ou une couleur métier par défaut : un message explicite accompagne
+l'affichage neutre. Une configuration invalide ou une panne ne supprime pas les
+informations de progression existantes.
+
+Les snapshots et versions des réglages observés sont journalisés dans OBJ-JRN
+(`CONFIGURATION-PROGRESSION` pour le snapshot, `REGLAGE-PROGRESSION` pour chaque
+version native, STATUTJRN + CLEIDEMPOTENCE, ancien STATUT non utilisé).
+Les modifications administratives directes dans SharePoint sont détectées à la
+prochaine lecture du cockpit, pas en temps réel. L'historique natif des éléments est
+relu pour journaliser aussi les versions intermédiaires disponibles, sans doublon.
+La conservation des versions doit rester activée dans SharePoint ; le moteur ne peut
+pas reconstituer des versions supprimées ou non conservées. Un historique indisponible
+produit un avertissement, sans annonce de journalisation réussie. Les erreurs sont affichées et
+retentées à la lecture suivante. Aucun mécanisme Azure n'est nécessaire.
+
+Les blocs Progression et Accès rapides utilisent des éléments HTML `details/summary`
+accessibles au clavier, fermés initialement. Un lien vers une section ouvre la
+progression pour conserver la navigation existante. Aucun détail ni raccourci retiré.
+Tests hors ligne : `npm run test:progression`.
+
 `npm run provision:sharepoint-production -- --plan | --apply | --seed | --verify` (idempotent, aucune suppression).
 `--plan` et `--verify` sont en lecture seule. `--apply` crée listes et colonnes (référentiels `OBJ-THEME/-CATEGORIE/-COLLECTION/-FORMAT/-VISIBILITE/-DISPONIBILITE`, `OBJ-ARTICLE`, `OBJ-SERVICE`, `OBJ-MODULE-FOOTER`, colonnes de `OBJ-CATALOGUE`, `PORTAIL-CATALOGUE`). `--seed` ajoute référentiels, type FOOTER, un pilote par type (actif, non validé), pages racines des sites 2 et 3 (non validées).
 `--apply` et `--seed` exigent `Sites.Manage.All` (temporaire, à révoquer ensuite) ; sans lui, ils s'arrêtent sans rien écrire. Sauvegarde du schéma dans `api/.sauvegardes/` (ignoré par Git).

@@ -195,7 +195,12 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.strictEqual(filtrerSites(nombreux, { q: "SITE12" }).total, 11, "recherche insensible a la casse");
   assert.strictEqual(filtrerSites(nombreux, { client: "Client A" }).total, 115);
   assert.ok(filtrerSites(nombreux, { aCompleter: "tout" }).elements.every((s) => s.aCompleter.length));
-  assert.ok(filtrerSites(nombreux, { progression: "0-49" }).elements.every((s) => s.progression < 50));
+  const plagesConfigurees = [{ valeur: "plage-native", libelle: "Libellé administré", min: 11, max: 44 }];
+  const parProgression = filtrerSites(nombreux, { progression: "plage-native" }, plagesConfigurees);
+  assert.ok(parProgression.total > 0);
+  assert.ok(parProgression.elements.every((s) => s.progression >= 11 && s.progression <= 44));
+  assert.deepStrictEqual(parProgression.options.progressions, [{ valeur: "plage-native", libelle: "Libellé administré" }]);
+  assert.deepStrictEqual(filtrerSites(nombreux).options.progressions, [], "aucun seuil de progression par défaut");
   r = filtrerSites(nombreux, { tri: "nom", sens: "desc" }); assert.strictEqual(r.elements[0].nom, "Site 229");
   const alias = filtrerSites([resumeSite(parTitre["Blogs-Site"], statutsTest[1])], { q: "blogs-site.pro" });
   assert.strictEqual(alias.total, 1, "recherche par alias"); assert.strictEqual(alias.elements[0].domaine, "blogs-site.fr");

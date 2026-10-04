@@ -18,6 +18,7 @@ const edition = require("../shared/edition");
 const ecriture = require("../shared/ecriture");
 const administration = require("../shared/administration");
 const inscription = require("../auth/inscription");
+const progressionVisuelle = require("../shared/progression-visuelle");
 
 const meta = () => ({ genereLe: new Date().toISOString() });
 
@@ -126,9 +127,12 @@ async function sites(req, res) {
     const { groupes, statuts } = await groupesAutorises(ctx);
     // Resume leger : chaque liste est lue une seule fois pour tous les sites.
     const resumes = await resumeSites.obtenirResumes();
+    const configuration = await progressionVisuelle.lire();
     const liste = cockpit.filtrerSites(groupes
       .map((g) => cockpit.resumeSite(g, statuts.get(String(g.statutId)) || null, resumes.get(String(g.id))))
-      .filter((s) => s.acces), req.query);
+      .filter((s) => s.acces), req.query, progressionVisuelle.tranches(configuration));
+    for (const s of liste.elements) s.progressionVisuelle = progressionVisuelle.pourcentage(configuration, s.progression);
+    liste.avertissementProgression = configuration.message || configuration.avertissement || null;
     liste.peutChangerStatut = require("../shared/statut-sites").autorise(ctx.droits);
     repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
   } catch (e) {
@@ -157,6 +161,7 @@ async function site(req, res) {
       fonctions: ctx.droits.fonctions,
       domaineDemande: domaine
     });
+    vue.progressionVisuelle = progressionVisuelle.pourcentage(await progressionVisuelle.lire(), vue.progression);
     repondre(res, 200, { succes: true, donnees: vue, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] site", e.message);
