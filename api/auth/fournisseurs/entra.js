@@ -110,7 +110,9 @@ async function rappel(req, res) {
   });
   const corps = await reponse.json().catch(() => ({}));
   const identite = reponse.ok ? identiteDepuisJeton(decoderJwt(corps.id_token), c, transaction.nonce) : null;
-  if (identite) await inscription.identifier(identite);
+  if (identite && !await inscription.apresAuthentification(identite, transaction.domaine)) {
+    return { ok: false, cible: `${c.base}/#/cockpit?connexion=inscription-refusee` };
+  }
   if (!identite || !session.ouvrirSession(res, identite)) {
     return { ok: false, cible: `${c.base}/#/cockpit?connexion=echec` };
   }

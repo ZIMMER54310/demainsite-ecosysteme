@@ -12,6 +12,7 @@ import {
 const CLE_ASSISTANT = "dseAssistantSite";
 const MESSAGES_CONNEXION = {
   echec: "La connexion n'a pas abouti. Merci de réessayer.",
+  "inscription-refusee": "Inscription refusée ou incomplète. Votre administrateur doit vérifier l'autorisation SharePoint pour ce compte et ce site.",
   indisponible: "Ce mode de connexion n'est pas encore disponible."
 };
 const indisponible = `<section class="cockpit card"><p>Le cockpit est momentanément indisponible. Merci de réessayer dans quelques instants.</p></section>`;

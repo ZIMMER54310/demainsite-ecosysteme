@@ -34,23 +34,37 @@ depuis OBJ-NOM DE DOMAINE -> OBJSITE -> client, pas un client transmis par le na
 `POST /api/v1/cockpit/inscription` exige une session Entra et une origine identique.
 Le corps vide affiche l'apercu ; `{ "confirmer": true }` confirme. Aucun parametre de role,
 client ou site n'est accepte. Pour autoriser une inscription, la structure minimale est
-OBJ-INSCRIPTION avec ENTRAOBJECTID texte, Lookups OBJ-UTILISATEUR (facultatif pour un
+OBJ-INSCRIPTION avec ENTRA-OBJECT-ID texte (nom interne resolu), Lookups OBJ-UTILISATEUR (facultatif pour un
 nouveau compte), OBJ-CLIENT, OBJ-SITE-PUBLIC, OBJ-ROLE, OBJ-ACTIF et OBJ-VALIDE.
 Une invitation unique active/validee doit designer les IDs reels du compte et du domaine.
 La creation de role global n'est jamais permise dans ce parcours. Sans invitation, 409/403,
 trace REFUS et aucune attribution. Un utilisateur existant est reutilise sans modifier
-son role ; le triplet utilisateur/client/site est relu avant creation et ne se duplique pas.
+son role, qui doit correspondre a l'invitation ; le triplet utilisateur/client/site est relu avant creation et ne se duplique pas.
 La reprise apres erreur relit les elements deja crees et ne reactive pas un acces desactive.
+Apres authentification Entra, un compte non reconnu passe automatiquement par ce parcours
+sur le domaine conserve dans la transaction signee. Sans autorisation exacte, aucune session
+nouvelle n'est ouverte. Un utilisateur reconnu non global reprend aussi le parcours si
+une invitation exacte existe (ajout d'un site ou reprise d'une inscription interrompue).
+Sans invitation exacte, sa connexion conserve les droits existants sans nouvelle attribution.
+Les connexions globales restent inchangees ; l'endpoint avec confirmation permet aussi
+l'ajout d'un autre site autorise.
 
-L'acces commun DSE n'est pas une relation metier : aucune exception par nom de domaine.
-Avant activation, declarer une structure distincte OBJ-ACCES-COMMUN avec Lookup site
-commun, identite/utilisateur, actif et valide, et une configuration explicite du site commun.
-Ce lot ne cree pas ces structures et ne falsifie jamais le client d'un site.
+L'acces commun DSE utilise OBJ-ACCES-COMMUN : Lookups utilisateur, site, actif et valide.
+Apres inscription valide, le domaine de service dseco.fr est resolu dans SharePoint ;
+aucun ID ni client n'est fixe dans le code. La relation utilisateur/site commun est creee
+ou reutilisee et relue. Le client utilisateur, le proprietaire DSECO et les relations metier
+restent intacts. Les droits lisent ces relations dans `sitesCommuns`, separe de `siteIds` :
+l'acces commun n'autorise ni administration ni ecriture sur le site DSECO.
+Le cockpit expose seulement l'indicateur `accesCommun`, pas les donnees de ce client.
+Une relation desactivee ou dupliquee bloque le parcours sans reactivation automatique.
+Ce lot ne cree ni ne modifie les structures SharePoint.
 
 Les journaux utilisent des cles deterministes et relisent CLEIDEMPOTENCE avant insertion ;
 les confirmations rejouees n'ajoutent pas d'entree. Les refus et ecritures d'inscription /
 attribution incluent acteur, utilisateur, client, site, resultat et motif dans NOTES.
 Les verrous sont limites au processus Node unique actuel.
+Actions du parcours : INSCRIPTION-AUTORISEE, INSCRIPTION-REFUSEE,
+CREATION-UTILISATEUR, AJOUT-SITE, AJOUT-ACCES-COMMUN, DOUBLON-IGNORE et ERREUR.
 
 Les capacites SharePoint sont traduites en fonctions du moteur dans
 [politique-sharepoint.js](auth/politique-sharepoint.js) : ADMINISTRATION-GLOBALE (TOUS /

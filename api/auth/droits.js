@@ -44,7 +44,7 @@ function peutAttribuer(droitsActeur, roleIdCible, politique = { roles: {} }) {
   return cible.fonctions.every((f) => miennes.has(f));
 }
 
-function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [], sites = [], politique = { roles: {} } }) {
+function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [], liensCommuns = [], sites = [], politique = { roles: {} } }) {
   const aucun = { reconnu: false, role: null, fonctions: [], siteIds: [], sitePrincipalId: null, clientIds: [], portee: null, niveau: null, utilisateurId: null };
   if (!identite || !identite.sujet) return aucun;
   const email = minuscule(identite.email);
@@ -94,6 +94,9 @@ function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [],
     niveau: regle?.niveau || null,
     fonctions,
     siteIds,
+    sitesCommuns: [...new Set(liensCommuns.filter((l) => l.actif && l.valide &&
+      String(l.utilisateurId) === String(utilisateur.id) && sites.some((s) => String(s.id) === String(l.siteId)))
+      .map((l) => String(l.siteId)))],
     clientIds: regle?.portee === "tous" ? clients.map((c) => String(c.id)) : clientIds
   };
 }
@@ -118,6 +121,7 @@ async function chargerDonnees() {
   const L = {
     utilisateur: liste("OBJ-UTILISATEUR"),
     lien: liste("OBJ-UTILISATEUR-SITE"),
+    commun: liste("OBJ-ACCES-COMMUN"),
     client: liste("OBJ-CLIENT"),
     role: liste("OBJ-ROLE"),
     site: liste("OBJ-SITE-PUBLIC"),
@@ -131,7 +135,7 @@ async function chargerDonnees() {
     cols: colonnes(await dse.chargerColonnesListe(token, site.id, l.id)),
     items: await dse.chargerItemsListe(token, site.id, l.id)
   } : { cols: colonnes([]), items: [] };
-  const [u, k, r, s, li] = await Promise.all([lire(L.utilisateur), lire(L.client), lire(L.role), lire(L.site), lire(L.lien)]);
+  const [u, k, r, s, li, co] = await Promise.all([lire(L.utilisateur), lire(L.client), lire(L.role), lire(L.site), lire(L.lien), lire(L.commun)]);
   const [actifs, validesOui] = await Promise.all([lire(L.actif), lire(L.valide)]);
   const valeurOui = (items) => {
     const candidats = items.filter((i) => /^oui\b/i.test(String(i.fields?.Title || "").trim()));
@@ -177,6 +181,11 @@ async function chargerDonnees() {
     };
   });
   const sites = s.items.map((i) => ({ id: String(i.id), clientId: lookupId(i.fields || {}, s.cols.parListe(L.client.id)) }));
+  const liensCommuns = co.items.map((i) => ({
+    utilisateurId: lookupId(i.fields || {}, co.cols.parListe(L.utilisateur.id)),
+    siteId: lookupId(i.fields || {}, co.cols.parListe(L.site.id)),
+    ...actifValide(i.fields || {}, co.cols)
+  }));
   const roles = r.items.map((i) => ({
     id: String(i.id), titre: i.fields?.Title || null, ...actifValide(i.fields || {}, r.cols),
     portee: String(i.fields?.PORTEE || "").trim().toUpperCase(),
@@ -199,7 +208,7 @@ async function chargerDonnees() {
       lienValide: L.valide ? li.cols.parListe(L.valide.id)?.name || null : null
     }
   };
-  return { utilisateurs, clients, liens, sites, roles, politique: politiqueDepuisRoles(roles), structure };
+  return { utilisateurs, clients, liens, liensCommuns, sites, roles, politique: politiqueDepuisRoles(roles), structure };
 }
 
 async function donneesDroits() {

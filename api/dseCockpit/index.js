@@ -98,6 +98,7 @@ async function moi(req, res) {
         role: ctx.droits.role,
         fonctions: ctx.droits.fonctions,
         niveau: ctx.droits.niveau,
+        accesCommun: ctx.droits.reconnu && (ctx.droits.sitesCommuns || []).length > 0,
         menu: await administration.menu(ctx.droits),
         nombreSites: ctx.droits.reconnu ? (await groupesAutorises(ctx)).groupes.length : 0,
         domaineAccueil: await domaineAccueil(req, ctx),
@@ -334,9 +335,10 @@ async function inscrire(req, res) {
     if (!origineValide(req)) return refuser(res, 403, "Requête refusée.");
     const identite = session.identiteSession(req);
     if (!identite || identite.fournisseur !== "entra") return refuser(res, 401, "Connexion Microsoft requise.");
-    if (Object.keys(req.body || {}).some((k) => k !== "confirmer")) {
+    if (Object.keys(req.body || {}).some((k) => k !== "confirmer") ||
+      (Object.hasOwn(req.body || {}, "confirmer") && typeof req.body.confirmer !== "boolean")) {
       const g = await ecriture.contexteGraph();
-      const j = await inscription.journal(g, identite, null, "Entra : inscription", "REFUS", "Paramètres d'attribution interdits.");
+      const j = await inscription.journal(g, identite, null, "INSCRIPTION-REFUSEE", "REFUS", "Paramètres d'attribution interdits.");
       return repondre(res, 403, { succes: false, erreur: { message: "Aucune attribution de client, site ou rôle depuis le navigateur." }, journal: { enregistre: j.ok } });
     }
     const domaine = req.hostname || String(req.get("host") || "").split(":")[0];

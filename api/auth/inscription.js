@@ -51,6 +51,42 @@ async function journal(g, identite, ctx, action, resultat, motif, utilisateurId 
   });
 }
 
+async function structureCommun(g) {
+  const liste = dse.trouverListe(g.listes, ["OBJ-ACCES-COMMUN"]);
+  const ctx = await domaineContexte(g, "dseco.fr");
+  if (!liste || !ctx) throw new Error("Accès commun indisponible : liste ou domaine DSECO non résolu.");
+  const cols = await dse.chargerColonnesListe(g.token, g.siteGraphId, liste.id);
+  const C = Object.fromEntries([
+    ["utilisateur", "OBJ-UTILISATEUR"], ["site", "OBJ-SITE-PUBLIC"],
+    ["actif", "OBJ-ACTIF"], ["valide", "OBJ-VALIDE"]
+  ].map(([cle, nom]) => [cle, vers(cols, dse.trouverListe(g.listes, [nom]))]));
+  if (Object.values(C).some((c) => !c)) throw new Error("Structure d'accès commun incomplète.");
+  return { liste, ctx, C };
+}
+
+async function ajouterCommun(g, identite, commun, utilisateurId, oa, ov) {
+  const { liste, ctx, C } = commun;
+  const items = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${liste.id}/items?$expand=fields&$top=500`);
+  const liens = items.filter((i) => lireId(i.fields, C.utilisateur) === utilisateurId && lireId(i.fields, C.site) === ctx.siteId);
+  if (liens.length > 1) throw new Error("Accès commun dupliqué.");
+  if (liens.length && (lireId(liens[0].fields, C.actif) !== oa || lireId(liens[0].fields, C.valide) !== ov)) {
+    throw new Error("Accès commun désactivé : validation administrateur requise.");
+  }
+  if (!liens.length) {
+    const fields = { [`${C.utilisateur.name}LookupId`]: utilisateurId, [`${C.site.name}LookupId`]: ctx.siteId,
+      [`${C.actif.name}LookupId`]: oa, [`${C.valide.name}LookupId`]: ov };
+    const item = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${liste.id}/items`, { fields });
+    const relu = await ecriture.lireItemFrais(g, liste.id, item.id);
+    if (!Object.entries(fields).every(([k, v]) => String(relu[k]) === v)) throw new Error("Relecture accès commun non conforme.");
+  }
+  const j = await journal(g, identite, ctx, "AJOUT-ACCES-COMMUN", "SUCCÈS", "Accès commun distinct du périmètre métier.", utilisateurId);
+  if (!j.ok) throw new Error("Accès commun enregistré, journalisation indisponible.");
+  if (liens.length) {
+    const doublon = await journal(g, identite, ctx, "DOUBLON-IGNORE", "SUCCÈS", "Accès commun déjà actif et validé.", utilisateurId);
+    if (!doublon.ok) throw new Error("Journalisation du doublon commun indisponible.");
+  }
+}
+
 // Migration unique d'un compte preexistant, sans attribution de role/client/site.
 async function identifier(identite) {
   if (identite.fournisseur !== "entra") return;
@@ -83,7 +119,7 @@ async function identifier(identite) {
   } finally { ecriture.invaliderCaches(); verrous.delete(verrou); }
 }
 
-async function inscrire(identite, domaine, confirmer = false) {
+async function inscrire(identite, domaine, confirmer = false, connexionExistante = false) {
   dse.viderCacheGraph();
   droits.viderCache();
   const g = await ecriture.contexteGraph();
@@ -91,13 +127,15 @@ async function inscrire(identite, domaine, confirmer = false) {
   const x = await droits.donneesDroits();
   const utilisateurActeur = droits.calculerDroits({ identite, ...x }).utilisateurId || null;
   const refuser = async (motif, status = 403) => {
-    const j = await journal(g, identite, ctx, "Entra : inscription", "REFUS", motif, utilisateurActeur);
+    const j = await journal(g, identite, ctx, "INSCRIPTION-REFUSEE", "REFUS", motif, utilisateurActeur);
     return { status, erreur: motif, journal: { enregistre: j.ok } };
   };
+  if (identite.fournisseur !== "entra" || !identite.sujet) return refuser("Identité Entra requise.");
   if (!ctx) return refuser("Le domaine, le site et son client ne sont pas résolus sans ambiguïté.");
   // L'identite et le domaine seuls ne constituent jamais une autorisation d'inscription.
   const invitation = dse.trouverListe(g.listes, ["OBJ-INSCRIPTION"]);
-  if (!invitation) return refuser("Inscription bloquée : une autorisation préalable doit être configurée par votre administrateur.", 409);
+  if (!invitation) return connexionExistante ? { status: 204 } :
+    refuser("Inscription bloquée : une autorisation préalable doit être configurée par votre administrateur.", 409);
   const S = x.structure;
   const utilisateurListe = dse.trouverListe(g.listes, ["OBJ-UTILISATEUR"]);
   const clientListe = dse.trouverListe(g.listes, ["OBJ-CLIENT"]);
@@ -108,7 +146,8 @@ async function inscrire(identite, domaine, confirmer = false) {
   const cols = await dse.chargerColonnesListe(g.token, g.siteGraphId, invitation.id);
   const C = { client: vers(cols, clientListe), site: vers(cols, siteListe), role: vers(cols, roleListe),
     utilisateur: vers(cols, utilisateurListe), actif: vers(cols, actifListe), valide: vers(cols, valideListe) };
-  if (!S || !cols.some((c) => c.name === "ENTRAOBJECTID" && c.text) || Object.values(C).some((c) => !c)) {
+  const oid = cols.find((c) => c.text && (c.displayName === "ENTRA-OBJECT-ID" || c.name === "ENTRAOBJECTID"));
+  if (!S || !oid || Object.values(C).some((c) => !c)) {
     return refuser("L'autorisation d'inscription est incomplète : identité, utilisateur, client, site, rôle, actif et validé sont nécessaires.", 409);
   }
   const oui = async (liste) => {
@@ -120,9 +159,10 @@ async function inscrire(identite, domaine, confirmer = false) {
   const [oa, ov] = await Promise.all([oui(actifListe), oui(valideListe)]);
   if (!oa || !ov) return refuser("Valeurs d'activation indisponibles.", 409);
   const autorisations = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${invitation.id}/items?$expand=fields&$top=500`);
-  const invitations = autorisations.filter((i) => String(i.fields?.ENTRAOBJECTID || "").toLowerCase() === identite.sujet.toLowerCase() &&
+  const invitations = autorisations.filter((i) => String(i.fields?.[oid.name] || "").toLowerCase() === identite.sujet.toLowerCase() &&
     lireId(i.fields, C.client) === ctx.clientId && lireId(i.fields, C.site) === ctx.siteId &&
     lireId(i.fields, C.actif) === oa && lireId(i.fields, C.valide) === ov);
+  if (!invitations.length && connexionExistante) return { status: 204 };
   if (invitations.length !== 1) return refuser("Aucune autorisation d'inscription unique, active et validée pour ce compte et ce site.");
   const f = invitations[0].fields;
   const roleId = lireId(f, C.role);
@@ -137,8 +177,8 @@ async function inscrire(identite, domaine, confirmer = false) {
     return refuser("Un compte existant doit être identifié avant inscription. Aucune création en doublon.");
   }
   const utilisateurInvite = lireId(f, C.utilisateur);
-  if (u && (u.clientId !== ctx.clientId || !u.actif || !u.valide || (utilisateurInvite && utilisateurInvite !== u.id))) {
-    return refuser("Utilisateur, site et autorisation ne désignent pas le même client.");
+  if (u && (u.clientId !== ctx.clientId || u.roleId !== roleId || !u.actif || !u.valide || (utilisateurInvite && utilisateurInvite !== u.id))) {
+    return refuser("Utilisateur, site et autorisation ne désignent pas le même client et rôle.");
   }
   if (!u && utilisateurInvite) return refuser("L'utilisateur autorisé n'est pas identifié par son objet Entra.");
   if (!["utilisateurEntra", "utilisateurRole", "utilisateurClient", "utilisateurActif", "utilisateurValide",
@@ -147,11 +187,21 @@ async function inscrire(identite, domaine, confirmer = false) {
   }
   if (!confirmer) return { status: 200, donnees: { confirmationRequise: true, domaine: ctx.domaine,
     client: x.clients.find((c) => c.id === ctx.clientId)?.titre, role: x.roles.find((r) => r.id === roleId)?.titre } };
-  const verrou = `inscription:${identite.sujet}`;
+  const verrou = `inscription:${identite.sujet.toLowerCase()}`;
   if (verrous.has(verrou)) return refuser("Une inscription est déjà en cours.", 409);
   verrous.add(verrou);
   try {
     if (!(await ecriture.etatStructureJournal(g)).disponible) return refuser("Journalisation indisponible : inscription refusée avant écriture.", 409);
+    const commun = await structureCommun(g);
+    const verifierAutorisation = async () => {
+      const items = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${invitation.id}/items?$expand=fields&$top=500`);
+      const exactes = items.filter((i) => String(i.fields?.[oid.name] || "").toLowerCase() === identite.sujet.toLowerCase() &&
+        lireId(i.fields, C.client) === ctx.clientId && lireId(i.fields, C.site) === ctx.siteId &&
+        lireId(i.fields, C.actif) === oa && lireId(i.fields, C.valide) === ov);
+      return exactes.length === 1 && String(exactes[0].id) === String(invitations[0].id) &&
+        lireId(exactes[0].fields, C.role) === roleId && lireId(exactes[0].fields, C.utilisateur) === utilisateurInvite;
+    };
+    if (!await verifierAutorisation()) return refuser("L'autorisation a changé avant écriture.");
     // Relecture sous verrou pour reprendre une inscription interrompue sans dupliquer.
     const us = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${S.listes.utilisateur}/items?$expand=fields&$top=500`);
     const existants = us.filter((i) => String(i.fields?.ENTRAOBJECTID || "").toLowerCase() === identite.sujet.toLowerCase());
@@ -159,6 +209,8 @@ async function inscrire(identite, domaine, confirmer = false) {
     if (existants.length === 1) {
       const item = existants[0];
       if (String(item.fields?.[`${S.colonnes.utilisateurClient}LookupId`] || "") !== ctx.clientId ||
+        String(item.fields?.[`${S.colonnes.utilisateurRole}LookupId`] || "") !== roleId ||
+        (utilisateurInvite && String(item.id) !== utilisateurInvite) ||
         String(item.fields?.[`${S.colonnes.utilisateurActif}LookupId`]) !== oa ||
         String(item.fields?.[`${S.colonnes.utilisateurValide}LookupId`]) !== ov) return refuser("Utilisateur désactivé ou client différent du client du site.");
       u = { id: String(item.id), clientId: ctx.clientId };
@@ -174,15 +226,20 @@ async function inscrire(identite, domaine, confirmer = false) {
       const cree = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${S.listes.utilisateur}/items`, { fields: champs });
       u = { id: String(cree.id), clientId: ctx.clientId };
       const relu = await ecriture.lireItemFrais(g, S.listes.utilisateur, u.id);
-      if (relu.ENTRAOBJECTID !== identite.sujet || String(relu[`${S.colonnes.utilisateurClient}LookupId`]) !== ctx.clientId) throw new Error("Relecture utilisateur non conforme.");
-      const j = await journal(g, identite, ctx, "Entra : création utilisateur", "SUCCÈS", "Création autorisée par invitation SharePoint.", u.id);
+      if (relu.ENTRAOBJECTID !== identite.sujet || !Object.entries(champs).every(([k, v]) => String(relu[k]) === v)) {
+        throw new Error("Relecture utilisateur non conforme.");
+      }
+      const j = await journal(g, identite, ctx, "CREATION-UTILISATEUR", "SUCCÈS", "Création autorisée par invitation SharePoint.", u.id);
       if (!j.ok) throw new Error("Utilisateur créé, journalisation indisponible.");
     }
     const actuel = await domaineContexte(g, ctx.domaine);
     const utilisateurActuel = await ecriture.lireItemFrais(g, S.listes.utilisateur, u.id);
-    if (!actuel || actuel.siteId !== ctx.siteId || actuel.clientId !== ctx.clientId ||
-      String(utilisateurActuel[`${S.colonnes.utilisateurClient}LookupId`]) !== ctx.clientId) {
-      return refuser("Le propriétaire du site ou le client utilisateur a changé.", 403);
+    if (!await verifierAutorisation() || !actuel || actuel.siteId !== ctx.siteId || actuel.clientId !== ctx.clientId ||
+      String(utilisateurActuel[`${S.colonnes.utilisateurClient}LookupId`]) !== ctx.clientId ||
+      String(utilisateurActuel[`${S.colonnes.utilisateurRole}LookupId`]) !== roleId ||
+      String(utilisateurActuel[`${S.colonnes.utilisateurActif}LookupId`]) !== oa ||
+      String(utilisateurActuel[`${S.colonnes.utilisateurValide}LookupId`]) !== ov) {
+      return refuser("L'autorisation, le propriétaire ou l'utilisateur a changé.", 403);
     }
     const liens = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${S.listes.lien}/items?$expand=fields&$top=500`);
     const triples = liens.filter((i) => String(i.fields?.[`${S.colonnes.lienUtilisateur}LookupId`]) === u.id &&
@@ -192,21 +249,41 @@ async function inscrire(identite, domaine, confirmer = false) {
     if (triples.length === 1) {
       if (String(triples[0].fields?.[`${S.colonnes.lienActif}LookupId`]) !== oa ||
         String(triples[0].fields?.[`${S.colonnes.lienValide}LookupId`]) !== ov) return refuser("Relation existante désactivée : validation administrateur requise.");
-      const j = await journal(g, identite, ctx, "Entra : attribution autorisée", "SUCCÈS", "Relation autorisée par invitation SharePoint.", u.id);
-      return { status: j.ok ? 200 : 502, donnees: { succes: true, deja: true, journal: { enregistre: j.ok } } };
+    } else {
+      const champs = { [`${S.colonnes.lienUtilisateur}LookupId`]: u.id, [`${S.colonnes.lienClient}LookupId`]: ctx.clientId,
+        [`${S.colonnes.lienSite}LookupId`]: ctx.siteId, [`${S.colonnes.lienActif}LookupId`]: oa, [`${S.colonnes.lienValide}LookupId`]: ov };
+      const cree = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${S.listes.lien}/items`, { fields: champs });
+      const relu = await ecriture.lireItemFrais(g, S.listes.lien, cree.id);
+      if (!Object.entries(champs).every(([k, v]) => String(relu[k]) === v)) throw new Error("Relecture du périmètre non conforme.");
     }
-    const champs = { [`${S.colonnes.lienUtilisateur}LookupId`]: u.id, [`${S.colonnes.lienClient}LookupId`]: ctx.clientId,
-      [`${S.colonnes.lienSite}LookupId`]: ctx.siteId, [`${S.colonnes.lienActif}LookupId`]: oa, [`${S.colonnes.lienValide}LookupId`]: ov };
-    const cree = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${S.listes.lien}/items`, { fields: champs });
-    const relu = await ecriture.lireItemFrais(g, S.listes.lien, cree.id);
-    if (!Object.entries(champs).every(([k, v]) => String(relu[k]) === v)) throw new Error("Relecture du périmètre non conforme.");
-    const j = await journal(g, identite, ctx, "Entra : attribution autorisée", "SUCCÈS", "Relation autorisée par invitation SharePoint.", u.id);
-    return { status: j.ok ? 200 : 502, donnees: { succes: true, journal: { enregistre: j.ok } } };
+    const j = await journal(g, identite, ctx, "AJOUT-SITE", "SUCCÈS", "Relation autorisée par invitation SharePoint.", u.id);
+    if (!j.ok) throw new Error("Relation enregistrée, journalisation indisponible.");
+    if (triples.length) {
+      const doublon = await journal(g, identite, ctx, "DOUBLON-IGNORE", "SUCCÈS", "Relation métier déjà active et validée.", u.id);
+      if (!doublon.ok) throw new Error("Journalisation du doublon métier indisponible.");
+    }
+    if (!await verifierAutorisation()) return refuser("L'autorisation a changé avant l'accès commun.");
+    const communActuel = await structureCommun(g);
+    if (communActuel.ctx.siteId !== commun.ctx.siteId || communActuel.ctx.clientId !== commun.ctx.clientId) {
+      return refuser("Le site commun a changé avant écriture.");
+    }
+    await ajouterCommun(g, identite, communActuel, u.id, oa, ov);
+    const fin = await journal(g, identite, ctx, "INSCRIPTION-AUTORISEE", "SUCCÈS", "Inscription et accès commun relus.", u.id);
+    if (!fin.ok) throw new Error("Journalisation finale indisponible.");
+    return { status: 200, donnees: { succes: true, deja: triples.length === 1, accesCommun: true, journal: { enregistre: true } } };
   } catch (err) {
     console.error("[DSE inscription]", err.message);
-    const j = await journal(g, identite, ctx, "Entra : inscription", "ÉCHEC", "Écriture ou relecture incomplète.", u?.id);
+    const j = await journal(g, identite, ctx, "ERREUR", "ÉCHEC", err.message, u?.id);
     return { status: 502, erreur: "Inscription incomplète. Relisez les données avant de recommencer.", journal: { enregistre: j.ok } };
   } finally { ecriture.invaliderCaches(); verrous.delete(verrou); }
 }
 
-module.exports = { domaineContexte, identifier, inscrire, journal };
+async function apresAuthentification(identite, domaine) {
+  await identifier(identite);
+  const d = await droits.droitsPour(identite);
+  if (d.reconnu && d.portee === "tous") return true;
+  const resultat = await inscrire(identite, domaine, true, d.reconnu);
+  return resultat.status === 200 || (d.reconnu && resultat.status === 204);
+}
+
+module.exports = { domaineContexte, identifier, inscrire, journal, apresAuthentification };
