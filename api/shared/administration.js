@@ -109,7 +109,7 @@ async function idOui(g, nomListe, idListe) {
 
 /* ---------------- Actions d'administration ---------------- */
 
-const ACTIONS = ["changer-role", "ajouter-acces-site", "creer-utilisateur", "modifier-politique-role"];
+const ACTIONS = ["changer-role", "ajouter-acces-site", "creer-utilisateur", "modifier-politique-role", "changer-statut-site"];
 
 /*
  * Verifie une action et construit l'operation d'ecriture. Appelee a l'apercu ET a la
@@ -117,6 +117,7 @@ const ACTIONS = ["changer-role", "ajouter-acces-site", "creer-utilisateur", "mod
  */
 async function construireAction(d, action, params, g) {
   if (!ACTIONS.includes(action)) return { refus: "Action non autorisée." };
+  if (action === "changer-statut-site") return require("./statut-sites").construire(d, params, g);
   if (!d.reconnu || !d.fonctions.includes("utilisateurs") || d.niveau !== "administration") return { refus: "Accès non autorisé." };
   const donnees = await droits.donneesDroits();
   const politique = donnees.politique || { roles: {} };

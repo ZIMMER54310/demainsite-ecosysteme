@@ -74,3 +74,16 @@
 .cockpit-table th, .cockpit-table td { padding: .5rem; border-bottom: 1px solid var(--border, #d0d7de); text-align: left; vertical-align: top; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (max-width: 700px) { .cockpit-table thead { display: none; } .cockpit-table td { display: block; border: 0; } .cockpit-table tr { display: block; border-bottom: 1px solid var(--border, #d0d7de); } }
+.cockpit-statut-dialogue {
+  width: min(520px, calc(100% - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+  color: var(--text);
+}
+.cockpit-statut-dialogue::backdrop { background: rgba(6, 22, 38, .58); }
+.cockpit-statut-dialogue form { display: grid; gap: 16px; margin-bottom: 16px; }
+.cockpit-statut-dialogue label { display: grid; gap: 8px; }
+.cockpit-statut-dialogue select { padding: 10px; font: inherit; width: 100%; }

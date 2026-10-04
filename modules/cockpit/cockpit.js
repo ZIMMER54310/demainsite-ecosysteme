@@ -183,10 +183,10 @@ export function rendreListeSites(moi, resultat) {
     <tbody>${elements.map((s) => `<tr>
       <td data-label="Site"><strong>${e(s.nom || s.domaine || s.acces)}</strong>${(s.alias || []).length ? `<br><small class="muted" title="${e((s.alias || []).join(", "))}">${(s.alias || []).length} alias</small>` : ""}</td>
       <td data-label="Domaine principal">${s.domaine ? e(s.domaine) : `<span class="cockpit-alerte">Domaine principal à préciser</span>`}</td>
-      <td data-label="Statut">${badgeStatut(s.statut)}</td>
+      <td data-label="Statut">${badgeStatut(s.statut)}${r.peutChangerStatut ? ` <button type="button" class="icon-btn" data-changer-statut="${e(s.acces || s.domaine)}" aria-label="Changer le statut de ${e(s.nom)}" title="Changer le statut">✎</button>` : ""}</td>
       <td data-label="Progression">${jaugeCourte(s.progression)}${(s.aCompleter || []).some((x) => x.etat === "attention") ? ` <span title="Un point demande votre attention">⚠</span>` : ""}</td>
       ${(o.clients || []).length > 1 ? `<td data-label="Client">${e(s.client || "Non renseigné")}</td>` : ""}
-      <td><a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}">Ouvrir</a></td></tr>`).join("")}</tbody></table></div>`
+      <td><div class="cockpit-actions"><a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}">Ouvrir</a>${s.domaine ? `<a class="btn btn-secondary" href="https://${e(s.domaine)}/" target="_blank" rel="noopener noreferrer">🌐 Voir le site</a>` : ""}</div></td></tr>`).join("")}</tbody></table></div>`
     : `<div class="empty">${filtre ? "Aucun site ne correspond à votre recherche." : "Aucun site dans votre espace pour le moment."}</div>`;
 
   const pagination = (r.pages || 1) > 1 ? `<nav class="cockpit-pagination" aria-label="Pages de résultats">
@@ -197,6 +197,7 @@ export function rendreListeSites(moi, resultat) {
   return `<section class="cockpit">
     ${rendreEnteteCockpit(moi)}
     <h2>Mes sites <span class="muted">(${Number(r.total) || 0}${filtre ? ` sur ${Number(r.totalSites) || 0}` : ""})</span></h2>
+    <p data-resultat-statut role="status"></p>
     ${compteurs}
     ${filtres}
     ${lignes}

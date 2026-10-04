@@ -227,6 +227,19 @@ application.get("/api/v1/auth/continuer", require("./auth/fournisseurs/entra").c
 application.post("/api/v1/cockpit/inscription", controleurCockpit.inscrire);
 application.get("/api/v1/auth/deconnexion", controleurCockpit.deconnexion);
 application.get("/api/v1/cockpit/sites", controleurCockpit.sites);
+application.get("/api/v1/cockpit/sites/statuts", async (req, res) => {
+  try {
+    const identite = require("./auth/session").identiteSession(req);
+    if (!identite) return res.status(401).json({ succes: false, erreur: { message: "Connexion requise." } });
+    const d = await require("./auth/droits").droitsPour(identite);
+    const donnees = await require("./shared/statut-sites").lire(d, String(req.query.domaine || ""));
+    if (donnees.refus) return res.status(403).json({ succes: false, erreur: { message: donnees.refus } });
+    res.set("Cache-Control", "no-store").json({ succes: true, donnees });
+  } catch (e) {
+    console.error("[DSE statut site]", e.message);
+    res.status(503).json({ succes: false, erreur: { message: "Statuts momentanément indisponibles." } });
+  }
+});
 application.get("/api/v1/cockpit/site", controleurCockpit.site);
 application.get("/api/v1/cockpit/edition", controleurCockpit.editionLire);
 application.post("/api/v1/cockpit/edition/apercu", controleurCockpit.editionApercu);

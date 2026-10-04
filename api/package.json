@@ -18,7 +18,7 @@
     "domain-sync:metadata:dry-run": "node tools/sync-ovh-sharepoint.js --metadata-sync --dry-run",
     "domain-sync:test": "node tests/ovh-sharepoint.js",
     "audit:domaines": "node tests/audit-domaines.js",
-    "test:statuts": "node tests/statuts.js",
+    "test:statuts": "node tests/statuts.js && node tests/statut-sites.js",
     "test:catalogue": "node tests/catalogue.js",
     "provision:sharepoint-production": "node tools/provision-sharepoint-production.js",
     "provision:dse-builder": "node tools/provision-dse-builder.js",

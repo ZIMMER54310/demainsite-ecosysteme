@@ -1,13 +1,14 @@
 import { initializeAuth } from "../js/auth.js";
-import { setState } from "../js/state.js";
+import { setState, getState } from "../js/state.js";
 import {
   getSitesCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
-  getAdminTableau, getAdminUtilisateurs, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident
+  getAdminTableau, getAdminUtilisateurs, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident, getStatutsSite
 } from "../services/cockpit.service.js";
 import {
   rendreConnexion, rendreSansAcces, rendreAccueil, rendreListeSites, rendreVueSite, rendreAssistant,
   CRITERES_SITES, lienSites, rendreEdition, rendreApercu, rendreResultatEcriture, rendreAdministration, rendreUtilisateurs
 } from "../modules/cockpit/cockpit.js";
+import { escapeHtml } from "../modules/public/outils.js";
 
 const CLE_ASSISTANT = "dseAssistantSite";
 const MESSAGES_CONNEXION = {
@@ -85,6 +86,45 @@ export async function cockpitAssistantPage(params) {
 // Saisies conservees uniquement dans la session du navigateur : aucune ecriture serveur.
 // Filtres de « Mes sites » : l'adresse porte les criteres, l'API applique le filtrage.
 export function activerFiltresSites(racine = document) {
+  racine.querySelectorAll("[data-changer-statut]").forEach((bouton) => {
+    bouton.addEventListener("click", async () => {
+      const dialogue = document.createElement("dialog");
+      dialogue.className = "cockpit-statut-dialogue";
+      dialogue.innerHTML = `<h2>Changer le statut du site</h2><div data-statut-form><p>Chargement des statuts…</p></div>
+        <div data-apercu role="status"></div><button class="btn btn-secondary" data-fermer type="button">Annuler</button>`;
+      document.body.append(dialogue);
+      dialogue.addEventListener("close", () => dialogue.remove(), { once: true });
+      dialogue.querySelector("[data-fermer]").addEventListener("click", () => dialogue.close());
+      dialogue.showModal();
+      const zone = dialogue.querySelector("[data-apercu]");
+      try {
+        const d = (await getStatutsSite(bouton.dataset.changerStatut)).donnees;
+        if (!dialogue.isConnected) return;
+        dialogue.querySelector("[data-statut-form]").innerHTML = `<p>${escapeHtml(d.site)}</p><form data-statut-selection>
+          <label>Nouveau statut<select name="statut" required>${!d.statuts.some((s) => s.ref === d.actuel) ? `<option value="" selected disabled>${escapeHtml(d.statutActuel)}</option>` : ""}
+          ${d.statuts.map((s) => `<option value="${escapeHtml(s.ref)}"${s.ref === d.actuel ? " selected" : ""}>${escapeHtml(s.titre)}</option>`).join("")}</select></label>
+          <button class="btn btn-primary" type="submit">Valider</button></form>`;
+        const lancer = brancherConfirmation(zone, (p) => apercuAdmin("changer-statut-site", p), confirmerAdmin, async (resultat) => {
+          const criteres = Object.fromEntries(new URLSearchParams(location.hash.split("?")[1] || ""));
+          try {
+            const r = (await getSitesCockpit(criteres)).donnees;
+            const user = getState().user;
+            racine.innerHTML = rendreListeSites(moiDepuis(user), r);
+            activerFiltresSites(racine);
+            racine.querySelector("[data-resultat-statut]").textContent = resultat.journal?.enregistre
+              ? "Statut enregistré et journalisé." : "Statut enregistré, mais journalisation indisponible : vérification nécessaire.";
+            dialogue.close();
+          } catch (e) {
+            zone.innerHTML = rendreResultatEcriture({ erreur: `Statut enregistré ; actualisation impossible : ${e.message}` });
+          }
+        });
+        dialogue.querySelector("form").addEventListener("submit", (ev) => {
+          ev.preventDefault();
+          lancer({ domaine: bouton.dataset.changerStatut, statut: new FormData(ev.currentTarget).get("statut") });
+        });
+      } catch (e) { zone.innerHTML = rendreResultatEcriture({ erreur: e.message }); }
+    });
+  });
   const form = racine.querySelector("[data-filtres-sites]");
   if (!form) return;
   const appliquer = () => { location.hash = lienSites(Object.fromEntries(new FormData(form))); };
@@ -137,7 +177,7 @@ function brancherConfirmation(zone, apercu, confirmer, apresSucces) {
       try {
         const res = (await confirmer(r.jeton))?.donnees;
         zone.innerHTML = rendreResultatEcriture(res);
-        apresSucces?.();
+        await apresSucces?.(res);
       } catch (err) { afficherErreur(err); }
     }, { once: true });
   };

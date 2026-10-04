@@ -1,6 +1,7 @@
 import { apiGet, apiPost } from "../js/api.js";
 export const getMoi = () => apiGet("/moi");
 export const getSitesCockpit = (criteres = {}) => apiGet("/cockpit/sites", criteres);
+export const getStatutsSite = (domaine) => apiGet("/cockpit/sites/statuts", { domaine });
 export const getSiteCockpit = (domaine) => apiGet("/cockpit/site", { domaine });
 export const getEdition = (domaine, composant, element = "") => apiGet("/cockpit/edition", { domaine, composant, element });
 export const apercuEdition = (domaine, composant, valeurs, element = "") => apiPost("/cockpit/edition/apercu", { domaine, composant, valeurs, element });

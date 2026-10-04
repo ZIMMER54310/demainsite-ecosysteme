@@ -129,6 +129,7 @@ async function sites(req, res) {
     const liste = cockpit.filtrerSites(groupes
       .map((g) => cockpit.resumeSite(g, statuts.get(String(g.statutId)) || null, resumes.get(String(g.id))))
       .filter((s) => s.acces), req.query);
+    liste.peutChangerStatut = require("../shared/statut-sites").autorise(ctx.droits);
     repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] sites", e.message);
@@ -257,6 +258,9 @@ async function confirmer(req, res) {
         if (op.portee === "admin") {
           const a = await administration.construireAction(d, op.adminAction, op.adminParams || {}, null);
           if (a.refus) return a.refus;
+          if (op.adminAction === "changer-statut-site" &&
+            (!a.op || a.op.listId !== op.listId || a.op.itemId !== op.itemId ||
+              ecriture.hash(a.op.champs) !== ecriture.hash(op.champs))) return "Le site ou le statut a changé. Relisez avant confirmation.";
           if (op.adminAction === "ajouter-acces-site" && a.op) {
             for (const [nom, valeur] of Object.entries(a.op.champs)) {
               if (String(op.champs[nom]) !== String(valeur)) return "Le rattachement utilisateur/client/site a changé.";
@@ -309,7 +313,7 @@ async function adminApercu(req, res) {
     if (!ctx) return;
     const action = String(req.body?.action || "");
     const p = req.body?.params && typeof req.body.params === "object" ? req.body.params : {};
-    const params = Object.fromEntries(["utilisateur", "role", "domaine", "email", "client", "portee", "niveau", "fonctions"]
+    const params = Object.fromEntries(["utilisateur", "role", "domaine", "email", "client", "portee", "niveau", "fonctions", "statut"]
       .filter((k) => typeof p[k] === "string").map((k) => [k, p[k].slice(0, k === "fonctions" ? 2000 : 255)]));
     repondreResultat(res, await administration.preparerAction({ identite: ctx.identite, d: ctx.droits, action, params }));
   } catch (e) {

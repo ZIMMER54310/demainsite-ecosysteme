@@ -30,6 +30,14 @@ un alias, mais ouvre toujours le domaine principal public en HTTPS dans un nouve
 Sans selection, un site unique est utilise ; plusieurs sites offrent un choix explicite.
 Un domaine principal absent ou un site hors perimetre ne produit aucun lien de secours.
 Le lien n'inclut ni route cockpit ni parametre : le moteur public conserve ses statuts.
+Mes sites propose aussi un lien public par ligne vers le domaine principal, dans un
+nouvel onglet, independamment du statut. L'action Ouvrir reste la fiche cockpit.
+La modification de statut est reservee a la portee TOUS, niveau ADMINISTRATION et
+fonctions administration/sites. La popup lit OBJ-SITES-STATUT via des references opaques,
+presente le statut actuel, puis reutilise apercu/confirmation admin, ETag, relecture
+et OBJ-JRN. La relation Lookup existante d'OBJ-SITE-PUBLIC est resolue par la liste cible.
+La confirmation revalide la cible et le statut ; les caches publics sont invalides.
+La liste, ses compteurs et filtres sont relus apres succes sans recharger la page.
 La page publique de situation utilise une disposition verticale en-tete/carte/footer.
 La carte et son titre restent dans la largeur disponible, avec retour a la ligne des
 titres longs sur mobile, sans modification du contenu ou de la decision de statut.
