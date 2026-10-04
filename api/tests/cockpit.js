@@ -213,6 +213,36 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.strictEqual(dernierePage.elements[24].nom, "Site 499");
   assert.strictEqual(filtrerSites(cinqCents, { statut: "Statut nouveau", client: "B", parPage: "100" }).total, 250);
 
+  const sidebar = await import(url("components/sidebar.js"));
+  const publicUser = { authenticated: true, reconnu: true, sitesPublics: [
+    { nom: "Premier", domainePrincipal: "principal.example.test", domaines: ["principal.example.test", "alias.example.test"] },
+    { nom: "Second", domainePrincipal: "second.example.test", domaines: ["second.example.test"] }
+  ] };
+  let lien = sidebar.rendreVoirSite(publicUser, "/cockpit/site/alias.example.test");
+  assert.ok(lien.includes('href="https://principal.example.test/"'), "alias selectionne -> domaine principal");
+  assert.ok(lien.includes('target="_blank"') && lien.includes('rel="noopener noreferrer"'));
+  assert.ok(!lien.includes("href=\"#") && !lien.includes("/cockpit") && !lien.includes("?"), "URL publique sans administration");
+  assert.ok(!lien.includes("second.example.test"), "la selection est respectee meme avec plusieurs sites");
+  assert.ok(sidebar.rendreVoirSite(publicUser, "/cockpit/site/second.example.test/modifier/seo").includes('href="https://second.example.test/"'));
+  lien = sidebar.rendreVoirSite(publicUser, "/cockpit/sites");
+  assert.ok(lien.includes("<details") && lien.includes("principal.example.test") && lien.includes("second.example.test"));
+  assert.ok(sidebar.rendreVoirSite({ ...publicUser, sitesPublics: [publicUser.sitesPublics[0]] }, "/cockpit").includes('href="https://principal.example.test/"'));
+  assert.ok(!sidebar.rendreVoirSite(publicUser, "/cockpit/site/interdit.example.test").includes("href="), "site hors perimetre sans repli");
+  assert.ok(!sidebar.rendreVoirSite(publicUser, "/cockpit/site/%ZZ").includes("href="));
+  assert.ok(!sidebar.rendreVoirSite({ ...publicUser, sitesPublics: [{ nom: "Incomplet", domainePrincipal: null, domaines: ["alias.example.test"] }] },
+    "/cockpit/site/alias.example.test").includes("href="), "pas de domaine principal invente");
+  assert.ok(!sidebar.rendreVoirSite({ ...publicUser, sitesPublics: [{ nom: "Invalide", domainePrincipal: "evil.test/admin", domaines: [] }] }, "/cockpit").includes("href="));
+  assert.strictEqual(sidebar.rendreVoirSite({ ...publicUser, authenticated: false }, "/cockpit"), "");
+  assert.strictEqual(sidebar.rendreVoirSite(publicUser, "/"), "");
+  const state = await import(url("js/state.js"));
+  const ancienLocation = global.location;
+  global.location = { hash: "#/cockpit/site/alias.example.test" };
+  state.setState({ user: publicUser });
+  const navigation = sidebar.renderSidebar();
+  assert.ok(navigation.indexOf("Voir le site") < navigation.indexOf('href="#/cockpit"'), "sortie publique avant Cockpit");
+  state.setState({ user: null });
+  global.location = ancienLocation;
+
   // --- Ecriture, droits d'administration, refus hors perimetre ---------------
   const droitsMod = require("../auth/droits");
   const admin = require("../shared/administration");

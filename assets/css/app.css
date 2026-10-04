@@ -17,3 +17,15 @@
 #main {
   grid-area: main;
 }
+
+.nav-public {
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+.nav-public > summary { cursor: pointer; list-style: none; }
+.nav-public > summary::-webkit-details-marker { display: none; }
+.nav-public-externe { margin-left: auto; opacity: .7; }
+.nav-public-choix { max-height: 260px; overflow-y: auto; padding: 4px; }
+.nav-public-choix small { display: block; opacity: .7; overflow-wrap: anywhere; }
+.nav-public-indisponible { opacity: .6; }

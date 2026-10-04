@@ -14,6 +14,7 @@ export async function initializeAuth() {
       menu: Array.isArray(moi.menu) ? moi.menu : [],
       domaineAccueil: moi.domaineAccueil || null,
       nombreSites: Number(moi.nombreSites) || 0,
+      sitesPublics: Array.isArray(moi.sitesPublics) ? moi.sitesPublics : [],
       fournisseurs: Array.isArray(moi.fournisseurs) ? moi.fournisseurs : []
     };
   } catch {

@@ -23,6 +23,14 @@ Un administrateur CLIENT peut affecter les sites appartenant a son client sans q
 lui donne automatiquement acces a leur contenu. Un administrateur de portee ATTRIBUES
 ne peut affecter que ses propres sites autorises.
 
+Le menu propose « Voir le site » avant Cockpit. `/moi` fournit `sitesPublics`,
+un resume leger des seuls groupes autorises (nom, domaine principal, domaines alias).
+Le lien respecte le site selectionne dans les routes de fiche et d'edition, y compris
+un alias, mais ouvre toujours le domaine principal public en HTTPS dans un nouvel onglet.
+Sans selection, un site unique est utilise ; plusieurs sites offrent un choix explicite.
+Un domaine principal absent ou un site hors perimetre ne produit aucun lien de secours.
+Le lien n'inclut ni route cockpit ni parametre : le moteur public conserve ses statuts.
+
 ## Identification Entra et inscription controlee
 
 ENTRAOBJECTID est prioritaire. L'email ne sert qu'a migrer un compte historique unique

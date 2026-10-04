@@ -74,9 +74,9 @@ async function groupesAutorises(ctx) {
  * Domaine d'accueil calcule cote serveur : le domaine utilise s'il appartient au perimetre,
  * sinon le site principal designe ; sinon null (l'utilisateur choisit dans sa liste).
  */
-async function domaineAccueil(req, ctx) {
+async function domaineAccueil(req, ctx, groupes = null) {
   if (!ctx.droits.reconnu || !ctx.droits.siteIds.length) return null;
-  const { groupes: autorises } = await groupesAutorises(ctx);
+  const autorises = groupes || (await groupesAutorises(ctx)).groupes;
   const demande = normaliserDomaine(req.query.domaine || req.get("x-forwarded-host") || req.hostname);
   if (demande && perimetre.groupeParDomaine(autorises, demande)) return demande;
   const principal = ctx.droits.sitePrincipalId && autorises.find((g) => g.fiches.includes(String(ctx.droits.sitePrincipalId)));
@@ -89,6 +89,7 @@ async function moi(req, res) {
     if (!ctx) {
       return repondre(res, 200, { succes: true, donnees: { connecte: false, fournisseurs: fournisseurs.lister() }, meta: meta() });
     }
+    const groupes = ctx.droits.reconnu ? (await groupesAutorises(ctx)).groupes : [];
     return repondre(res, 200, {
       succes: true,
       donnees: {
@@ -100,8 +101,13 @@ async function moi(req, res) {
         niveau: ctx.droits.niveau,
         accesCommun: ctx.droits.reconnu && (ctx.droits.sitesCommuns || []).length > 0,
         menu: await administration.menu(ctx.droits),
-        nombreSites: ctx.droits.reconnu ? (await groupesAutorises(ctx)).groupes.length : 0,
-        domaineAccueil: await domaineAccueil(req, ctx),
+        nombreSites: groupes.length,
+        sitesPublics: groupes.map((g) => {
+          const domaines = perimetre.domainesDuSite(g);
+          return { nom: g.titre || domaines.principal || "Site sans nom",
+            domainePrincipal: domaines.principal, domaines: domaines.tous };
+        }),
+        domaineAccueil: await domaineAccueil(req, ctx, groupes),
         fournisseurs: fournisseurs.lister()
       },
       meta: meta()

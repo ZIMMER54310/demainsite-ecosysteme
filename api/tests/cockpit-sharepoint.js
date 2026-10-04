@@ -80,11 +80,23 @@ const admin = require("../shared/administration");
   const donneesAvantControleur = droits.donneesDroits;
   droits.donneesDroits = async () => base;
   droits.sitesIndex = async () => ({ sites: new Map([
-    ["10", { id: "10", titre: "A", domaines: ["a.example.test"], clientId: "a" }],
-    ["20", { id: "20", titre: "B", domaines: ["b.example.test"], clientId: "b" }]
+    ["10", { id: "10", titre: "A", domainePrincipal: "a.example.test", domaines: ["a.example.test", "alias.example.test"], clientId: "a" }],
+    ["20", { id: "20", titre: "B", domainePrincipal: "b.example.test", domaines: ["b.example.test"], clientId: "b" }]
   ]), statuts: new Map() });
+  const ancienMenu = admin.menu;
+  admin.menu = async () => [];
   try {
     let res = reponse();
+    await controleur.moi({ query: {}, hostname: "a.example.test", get: () => null }, res);
+    assert.strictEqual(res.code, 200);
+    assert.deepStrictEqual(res.corps.donnees.sitesPublics, [{ nom: "A", domainePrincipal: "a.example.test",
+      domaines: ["a.example.test", "alias.example.test"] }], "seuls les sites autorises et leurs domaines sont exposes");
+    droits.droitsPour = async () => ({ ...d, portee: "tous", siteIds: ["10", "20"] });
+    res = reponse();
+    await controleur.moi({ query: {}, hostname: "a.example.test", get: () => null }, res);
+    assert.strictEqual(res.corps.donnees.sitesPublics.length, 2, "le super administrateur recoit un choix, pas un site arbitraire");
+    droits.droitsPour = async () => d;
+    res = reponse();
     await controleur.editionLire(requete("b.example.test"), res);
     assert.strictEqual(res.code, 404, "l'URL d'un autre client est refusee");
     res = reponse();
@@ -104,6 +116,7 @@ const admin = require("../shared/administration");
     await controleur.editionLire(requete("a.example.test"), res);
     assert.strictEqual(res.code, 401);
   } finally {
+    admin.menu = ancienMenu;
     session.identiteSession = anciennesMethodes.identite;
     droits.droitsPour = anciennesMethodes.droits;
     droits.sitesIndex = anciennesMethodes.index;
