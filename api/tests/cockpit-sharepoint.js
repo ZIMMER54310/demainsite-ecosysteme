@@ -26,11 +26,22 @@ const admin = require("../shared/administration");
     { id: "u2", titre: "b@example.test", roleId: "200", clientId: "b", actif: true, valide: true }
   ];
   const base = { politique, clients, utilisateurs, sites: [{ id: "10", clientId: "a" }, { id: "20", clientId: "b" }],
-    liens: [{ utilisateurId: "u1", siteId: "20", actif: true, valide: true }],
+    liens: [{ utilisateurId: "u1", clientId: "a", siteId: "10", actif: true, valide: true },
+      { utilisateurId: "u1", clientId: "b", siteId: "20", actif: true, valide: true }],
     identite: { fournisseur: "entra", sujet: "subject", email: "a@example.test" } };
   const d = droits.calculerDroits(base);
   assert.deepStrictEqual(d.siteIds, ["10"], "un acces explicite d'un autre client ne donne aucun droit");
   assert.deepStrictEqual(d.clientIds, ["a"]);
+  const multi = { ...base, sites: [...base.sites, { id: "11", clientId: "a" }, { id: "12", clientId: "a" }],
+    liens: [...base.liens, { utilisateurId: "u1", clientId: "a", siteId: "11", actif: true, valide: true },
+      { utilisateurId: "u1", clientId: "b", siteId: "12", actif: true, valide: true }] };
+  assert.deepStrictEqual(droits.calculerDroits(multi).siteIds, ["10", "11"], "deux sites attribues, aucun site non attribue ni mauvais client");
+  const permanent = { ...multi, utilisateurs: [{ ...utilisateurs[0], entraObjectId: "objet-stable" }],
+    identite: { fournisseur: "entra", sujet: "objet-stable", email: "nouvelle-adresse@example.test" } };
+  assert.deepStrictEqual(droits.calculerDroits(permanent).siteIds, ["10", "11"], "objet Entra prioritaire malgre changement email");
+  assert.strictEqual(droits.calculerDroits({ ...permanent, identite: { fournisseur: "entra", sujet: "autre", email: "a@example.test" } }).reconnu, false,
+    "l'email ne reprend pas une identite deja liee");
+  assert.strictEqual(droits.calculerDroits({ ...permanent, utilisateurs: [permanent.utilisateurs[0], { ...permanent.utilisateurs[0], id: "doublon" }] }).reconnu, false);
   assert.ok(!droits.peutAttribuer(d, "100", politique));
   assert.ok(!droits.calculerDroits({ ...base, clients: [] }).reconnu);
   assert.ok(!droits.calculerDroits({ ...base, politique: undefined }).reconnu, "aucun repli JSON");
@@ -66,6 +77,8 @@ const admin = require("../shared/administration");
     get: (h) => ({ origin: "https://a.example.test", host: "a.example.test" }[h]) });
   session.identiteSession = () => base.identite;
   droits.droitsPour = async () => d;
+  const donneesAvantControleur = droits.donneesDroits;
+  droits.donneesDroits = async () => base;
   droits.sitesIndex = async () => ({ sites: new Map([
     ["10", { id: "10", titre: "A", domaines: ["a.example.test"], clientId: "a" }],
     ["20", { id: "20", titre: "B", domaines: ["b.example.test"], clientId: "b" }]
@@ -76,7 +89,7 @@ const admin = require("../shared/administration");
     assert.strictEqual(res.code, 404, "l'URL d'un autre client est refusee");
     res = reponse();
     await controleur.editionApercu(requete("a.example.test", { domaine: "b.example.test", composant: "seo", valeurs: {} }), res);
-    assert.strictEqual(res.code, 404, "ecriture hors perimetre refusee avant toute requete Graph");
+    assert.strictEqual(res.code, 403, "ecriture hors perimetre refusee et tentative de journalisation");
     const interdit = ecriture.emettreJeton(base.identite, { type: "modifier", portee: "site", fonction: "seo", siteId: "20", listId: "seo", itemId: "1" });
     res = reponse();
     await controleur.confirmer(requete("a.example.test", { jeton: interdit.jeton }), res);
@@ -84,7 +97,7 @@ const admin = require("../shared/administration");
     droits.droitsPour = async () => ({ ...d, fonctions: ["sites", "suivi"] });
     res = reponse();
     await controleur.editionApercu(requete("a.example.test", { domaine: "a.example.test", composant: "seo", valeurs: {} }), res);
-    assert.strictEqual(res.code, 404, "une fonction interdite est refusee par le serveur sur un site autorise");
+    assert.strictEqual(res.code, 403, "une fonction interdite est refusee par le serveur sur un site autorise");
     droits.droitsPour = async () => d;
     session.identiteSession = () => null;
     res = reponse();
@@ -94,6 +107,7 @@ const admin = require("../shared/administration");
     session.identiteSession = anciennesMethodes.identite;
     droits.droitsPour = anciennesMethodes.droits;
     droits.sitesIndex = anciennesMethodes.index;
+    droits.donneesDroits = donneesAvantControleur;
   }
 
   const listes = ["OBJ-SITE-PUBLIC", "OBJ-SEO", "OBJ-JRN", "OBJ-ACTIF", "OBJ-VALIDE", "OBJ-MENU-SITE"]
@@ -113,6 +127,7 @@ const admin = require("../shared/administration");
     ]
   };
   const items = {
+    "OBJ-JRN": [],
     "OBJ-SEO": [{ id: "1", fields: { Title: "Orphelin" } }],
     "OBJ-ACTIF": [{ id: "17", fields: { Title: "Oui" } }],
     "OBJ-VALIDE": [{ id: "23", fields: { Title: "Oui" } }],
@@ -144,6 +159,7 @@ const admin = require("../shared/administration");
       assert.strictEqual(corps.fields.STATUTJRN, "SUCCÈS");
       assert.ok(corps.fields.CLEIDEMPOTENCE);
       journaux++;
+      items["OBJ-JRN"].push({ id: String(journaux), fields: corps.fields });
       return { id: String(journaux), fields: corps.fields };
     }
     if (methode === "POST") {
@@ -212,6 +228,10 @@ const admin = require("../shared/administration");
     assert.ok(resultat.succes && resultat.journal.enregistre);
     assert.strictEqual((await exe(modificationJournalisee.jeton)).deja, true);
     assert.strictEqual(journaux, 1, "rejeu de confirmation sans doublon journal");
+    const journalRejoue = { cle: "cle-deterministe", action: "Recette journal", nom: "Journal", ancien: {}, nouveau: {}, notes: "recette", succes: true };
+    await ecriture.journaliser(g, journalRejoue);
+    await ecriture.journaliser(g, journalRejoue);
+    assert.strictEqual(journaux, 2, "une meme cle deterministe n'ajoute pas un second journal");
     cols["OBJ-JRN"][0].required = true;
     assert.strictEqual((await ecriture.etatStructureJournal(g)).disponible, false, "STATUT obligatoire reste bloquant");
   } finally {

@@ -50,13 +50,16 @@ function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [],
   const email = minuscule(identite.email);
   const valides = utilisateurs.filter((u) => u.actif && u.valide);
 
-  let candidats = email ? valides.filter((u) => minuscule(u.titre) === email) : [];
+  const parObjet = identite.fournisseur === "entra"
+    ? utilisateurs.filter((u) => u.entraObjectId && minuscule(u.entraObjectId) === minuscule(identite.sujet)) : [];
+  if (parObjet.length > 1 || (parObjet.length === 1 && (!parObjet[0].actif || !parObjet[0].valide))) return aucun;
+  let candidats = parObjet.length ? parObjet : (email ? valides.filter((u) => !u.entraObjectId && minuscule(u.titre) === email) : []);
   if (candidats.length === 0) {
     const clientsLies = clients.filter((c) =>
       (identite.fournisseur === "entra" && c.entraObjectId && minuscule(c.entraObjectId) === minuscule(identite.sujet)) ||
       (email && minuscule(c.entraEmail) === email));
     const ids = new Set(clientsLies.map((c) => String(c.id)));
-    candidats = valides.filter((u) => u.clientId && ids.has(String(u.clientId)));
+    candidats = valides.filter((u) => !u.entraObjectId && u.clientId && ids.has(String(u.clientId)));
   }
   // Un rapprochement ambigu n'accorde rien : jamais de droit par supposition.
   if (candidats.length !== 1) return aucun;
@@ -66,17 +69,19 @@ function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [],
   if (!regle || !Object.hasOwn(RANG_PORTEE, regle.portee) || !Object.hasOwn(RANG_NIVEAU, regle.niveau) || !regle.fonctions.length) return aucun;
   const fonctions = regle ? regle.fonctions : [];
   const attribues = new Set(liens
-    .filter((l) => l.actif && l.valide && String(l.utilisateurId) === String(utilisateur.id) && l.siteId)
+    .filter((l) => l.actif && l.valide && String(l.utilisateurId) === String(utilisateur.id) && l.siteId &&
+      l.clientId && String(l.clientId) === String(utilisateur.clientId) &&
+      sites.some((s) => String(s.id) === String(l.siteId) && String(s.clientId) === String(l.clientId)))
     .map((l) => String(l.siteId)));
   // Clients du perimetre : client de l'utilisateur, sinon clients des sites qui lui sont attribues.
   const client = utilisateur.clientId ? clients.find((c) => String(c.id) === String(utilisateur.clientId)) : null;
-  if (regle.portee === "client" && (!client || Array.isArray(utilisateur.clientId))) return aucun;
+  if (regle.portee !== "tous" && (!client || Array.isArray(utilisateur.clientId))) return aucun;
   const clientIds = client ? [String(client.id)] : [];
 
   let siteIds = [];
   if (regle?.portee === "tous") siteIds = sites.map((s) => String(s.id));
   else if (regle?.portee === "client") {
-    siteIds = sites.filter((s) => s.clientId && clientIds.includes(String(s.clientId))).map((s) => String(s.id));
+    siteIds = sites.filter((s) => attribues.has(String(s.id)) && s.clientId && clientIds.includes(String(s.clientId))).map((s) => String(s.id));
   } else if (regle) siteIds = sites.filter((s) => attribues.has(String(s.id))).map((s) => String(s.id));
 
   return {
@@ -142,6 +147,7 @@ async function chargerDonnees() {
     const roleId = lookupId(f, u.cols.parListe(L.role.id));
     return {
       id: String(i.id), titre: f.Title || "",
+      entraObjectId: f.ENTRAOBJECTID ? String(f.ENTRAOBJECTID).trim() : null,
       clientId: lookupId(f, u.cols.toutes.find((c) => c.name === "_x002d_CLIENT" && !c.lookup?.allowMultipleValues &&
         minuscule(c.lookup?.listId) === minuscule(L.client.id))),
       roleId, roleTitre: roleId ? titresRoles.get(roleId) || null : null,
@@ -165,6 +171,7 @@ async function chargerDonnees() {
     return {
       id: String(i.id),
       utilisateurId: lookupId(f, li.cols.parListe(L.utilisateur.id)),
+      clientId: lookupId(f, li.cols.parListe(L.client.id)),
       siteId: lookupId(f, li.cols.parListe(L.site.id)),
       actif: oui(f, li.cols, L.actif), valide: oui(f, li.cols, L.valide)
     };
@@ -182,9 +189,11 @@ async function chargerDonnees() {
     colonnes: {
       utilisateurRole: u.cols.parListe(L.role.id)?.name || null,
       utilisateurClient: u.cols.toutes.find((c) => c.name === "_x002d_CLIENT")?.name || null,
+      utilisateurEntra: u.cols.toutes.find((c) => c.name === "ENTRAOBJECTID" && c.text)?.name || null,
       utilisateurActif: L.actif ? u.cols.parListe(L.actif.id)?.name || null : null,
       utilisateurValide: L.valide ? u.cols.parListe(L.valide.id)?.name || null : null,
       lienUtilisateur: li.cols.parListe(L.utilisateur.id)?.name || null,
+      lienClient: li.cols.parListe(L.client.id)?.name || null,
       lienSite: li.cols.parListe(L.site.id)?.name || null,
       lienActif: L.actif ? li.cols.parListe(L.actif.id)?.name || null : null,
       lienValide: L.valide ? li.cols.parListe(L.valide.id)?.name || null : null

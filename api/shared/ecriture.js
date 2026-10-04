@@ -147,6 +147,7 @@ async function collecterFrais(g, chemin) {
 /* ---------------- Journal OBJ-JRN (texte uniquement : aucun Lookup OBJ-REF / OBJ-REL) ---------------- */
 
 const tronquer = (v, n) => (v.length > n ? `${v.slice(0, n - 1)}…` : v);
+const journauxEnCours = new Map();
 
 async function etatStructureJournal(g) {
   const liste = dse.trouverListe(g.listes, ["OBJ-JRN"]);
@@ -160,7 +161,14 @@ async function etatStructureJournal(g) {
   return { disponible: true };
 }
 
-async function journaliser(g, { cle, action, nom, ancien, nouveau, notes, succes }) {
+function journaliser(g, entree) {
+  if (journauxEnCours.has(entree.cle)) return journauxEnCours.get(entree.cle);
+  const p = journaliserUnique(g, entree).finally(() => journauxEnCours.delete(entree.cle));
+  journauxEnCours.set(entree.cle, p);
+  return p;
+}
+
+async function journaliserUnique(g, { cle, action, nom, ancien, nouveau, notes, succes, refus = false, contexte = {} }) {
   const liste = dse.trouverListe(g.listes, ["OBJ-JRN"]);
   const horodatage = new Date();
   const entree = {
@@ -179,13 +187,16 @@ async function journaliser(g, { cle, action, nom, ancien, nouveau, notes, succes
       CLEIDEMPOTENCE: cle,
       ANCIENNEVALEUR: JSON.stringify(ancien),
       NOUVELLEVALEUR: JSON.stringify(nouveau),
-      NOTES: notes,
-      STATUTJRN: succes ? "SUCCÈS" : "ÉCHEC"
+      NOTES: `${notes || ""} | Contexte : ${JSON.stringify(contexte)}`,
+      STATUTJRN: refus ? "REFUS" : succes ? "SUCCÈS" : "ÉCHEC"
     };
     try {
       const structure = await etatStructureJournal(g);
       if (!structure.disponible) throw new Error(structure.raison);
-      await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${liste.id}/items`, { fields: champs });
+      const existantes = await collecterFrais(g, `/sites/${g.siteGraphId}/lists/${liste.id}/items?$expand=fields&$top=500`);
+      if (!existantes.some((i) => i.fields?.CLEIDEMPOTENCE === cle)) {
+        await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${liste.id}/items`, { fields: champs });
+      }
       entree.ok = true;
     } catch (e) {
       entree.erreur = e.message;
@@ -236,8 +247,19 @@ async function executer({ identite, jeton, revalider, acteur }) {
 }
 
 async function executerOperation({ cle, op, revalider, acteur }) {
+  const cleJournal = hash([op.action, op.listId, op.itemId || op.cleDoublon, op.avant || null, op.champs, acteur]);
   const refus = await revalider(op);
-  if (refus) return { status: 403, erreur: refus };
+  if (refus) {
+    let journal = { ok: false };
+    try {
+      const g = await contexteGraph();
+      journal = await journaliser(g, { cle: hash([cleJournal, "REFUS", refus]), action: op.action || "Écriture refusée", nom: op.nom || "Écriture refusée",
+        ancien: {}, nouveau: {}, notes: `Acteur : ${acteur} | Motif : ${refus}`, succes: false, refus: true, contexte: op.contexteJournal });
+    } catch (e) {
+      console.error("[DSE ecriture] journal du refus", e.message);
+    }
+    return { status: 403, erreur: refus, journal: resumeJournal(journal) };
+  }
   enAttente.delete(cle);
 
   const g = await contexteGraph();
@@ -282,14 +304,14 @@ async function executerOperation({ cle, op, revalider, acteur }) {
   } catch (e) {
     console.error("[DSE ecriture]", e.message);
     if (e.status === 412 || e.statusCode === 412) return { status: 409, erreur: "Les données ont été modifiées entre-temps. Merci de les relire." };
-    const journal = await journaliser(g, { cle, action: op.action, nom: op.nom, ancien, nouveau: op.champs, notes: `${op.notes} | Acteur : ${acteur} | Erreur : ${e.message}`, succes: false });
+    const journal = await journaliser(g, { cle: hash([cleJournal, "ECHEC"]), action: op.action, nom: op.nom, ancien, nouveau: op.champs, notes: `${op.notes} | Acteur : ${acteur} | Erreur : ${e.message}`, succes: false, contexte: op.contexteJournal });
     invaliderCaches();
     return { status: 502, erreur: "L'enregistrement ou sa vérification a échoué. Relisez les données avant de recommencer.", journal: resumeJournal(journal) };
   }
   invaliderCaches();
   const conforme = noms.every((n) => normaliserTexte(relu[n]) === normaliserTexte(op.champs[n]));
   const journal = await journaliser(g, {
-    cle, action: op.action, nom: op.nom, ancien, nouveau: relu,
+    cle: cleJournal, action: op.action, nom: op.nom, ancien, nouveau: relu, contexte: op.contexteJournal,
     notes: `${op.notes} | Élément ${itemId} | Acteur : ${acteur} | Relecture ${conforme ? "conforme" : "NON conforme"}`,
     succes: conforme
   });

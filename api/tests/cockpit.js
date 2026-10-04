@@ -17,7 +17,8 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   // --- Droits -------------------------------------------------------------
   const sites = [{ id: "4", clientId: "2" }, { id: "9", clientId: "3" }, { id: "11", clientId: null }];
   const u = (id, titre, roleId, extra = {}) => ({ id, titre, roleId, roleTitre: `Rôle ${roleId}`, clientId: "2", actif: true, valide: true, ...extra });
-  const base = { sites, politique, clients: [{ id: "2", entraObjectId: "oid-pascal", entraEmail: "pascal@ex.fr" }] };
+  const base = { sites, politique, clients: [{ id: "2", entraObjectId: "oid-pascal", entraEmail: "pascal@ex.fr" }, { id: "3" }],
+    liens: [{ utilisateurId: "2", clientId: "2", siteId: "4", actif: true, valide: true }] };
 
   // Rapprochement par e-mail, portee "tous"
   let d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "autre", email: "Admin@Ex.fr" }, utilisateurs: [u("1", "admin@ex.fr", "1")] });
@@ -32,8 +33,8 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "admin@ex.fr" }, utilisateurs: [u("1", "admin@ex.fr", "1", { valide: false })] });
   assert.strictEqual(d.reconnu, false);
   // Portee "attribues" : uniquement les liens actifs et valides
-  const liens = [{ utilisateurId: "5", siteId: "9", actif: true, valide: true }, { utilisateurId: "5", siteId: "11", actif: true, valide: false }];
-  d = calculerDroits({ ...base, liens, identite: { fournisseur: "entra", sujet: "s", email: "c@ex.fr" }, utilisateurs: [u("5", "c@ex.fr", "5")] });
+  const liens = [{ utilisateurId: "5", clientId: "3", siteId: "9", actif: true, valide: true }, { utilisateurId: "5", clientId: "3", siteId: "11", actif: true, valide: false }];
+  d = calculerDroits({ ...base, liens, identite: { fournisseur: "entra", sujet: "s", email: "c@ex.fr" }, utilisateurs: [u("5", "c@ex.fr", "5", { clientId: "3" })] });
   assert.deepStrictEqual(d.siteIds, ["9"]); assert.ok(!d.fonctions.includes("seo")); assert.ok(!d.fonctions.includes("domaine"));
   // Role inconnu de la politique -> aucune fonction, aucun site
   d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "z@ex.fr" }, utilisateurs: [u("6", "z@ex.fr", "99")] });
@@ -220,7 +221,8 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
 
   // peutAttribuer : jamais au-dessus de soi
   const dSuper = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "super@ex.fr" }, utilisateurs: [u("1", "super@ex.fr", "1")] });
-  const dClient = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "c", email: "admin@client.fr" }, utilisateurs: [u("5", "admin@client.fr", "3")] });
+  const dClient = calculerDroits({ ...base, liens: [{ utilisateurId: "5", clientId: "2", siteId: "4", actif: true, valide: true }],
+    identite: { fournisseur: "entra", sujet: "c", email: "admin@client.fr" }, utilisateurs: [u("5", "admin@client.fr", "3")] });
   assert.strictEqual(dSuper.portee, "tous"); assert.strictEqual(dSuper.niveau, "administration");
   assert.strictEqual(dClient.portee, "client"); assert.deepStrictEqual(dClient.clientIds, ["2"]); assert.deepStrictEqual(dClient.siteIds, ["4"]);
   assert.ok(droitsMod.peutAttribuer(dSuper, "1", politique));
@@ -238,11 +240,11 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
 
   // Donnees simulees : 2 clients, refus hors perimetre et elevation
   const donneesSim = {
-    politique, clients: base.clients,
+    politique, clients: base.clients, sites,
     utilisateurs: [u("1", "super@ex.fr", "1"), u("5", "admin@client.fr", "3"), u("6", "redac@client.fr", "4"), u("8", "autre@client3.fr", "4", { clientId: "3" })],
-    liens: [{ id: "1", utilisateurId: "6", siteId: "4", actif: true, valide: true }, { id: "2", utilisateurId: "8", siteId: "9", actif: true, valide: true }],
+    liens: [{ id: "1", utilisateurId: "6", clientId: "2", siteId: "4", actif: true, valide: true }, { id: "2", utilisateurId: "8", clientId: "3", siteId: "9", actif: true, valide: true }],
     roles: ["1", "2", "3", "4", "5", "6"].map((id) => ({ id, titre: `Rôle ${id}`, actif: true, valide: true })),
-    structure: { listes: { utilisateur: "LU", lien: "LL", actif: "LA", valide: "LV" }, colonnes: { utilisateurRole: "ROLE", lienUtilisateur: "U", lienSite: "S", lienActif: "A", lienValide: "V" } }
+    structure: { listes: { utilisateur: "LU", lien: "LL", actif: "LA", valide: "LV" }, colonnes: { utilisateurRole: "ROLE", lienUtilisateur: "U", lienSite: "S", lienClient: "K", lienActif: "A", lienValide: "V" } }
   };
   const origDonnees = droitsMod.donneesDroits, origIndex = droitsMod.sitesIndex;
   droitsMod.donneesDroits = async () => donneesSim;
@@ -263,7 +265,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     a = await admin.construireAction(dClient, "ajouter-acces-site", { utilisateur: R("u", "6"), domaine: "b.fr" }, null);
     assert.ok(a.refus, "site hors perimetre refuse");
     a = await admin.construireAction(dClient, "ajouter-acces-site", { utilisateur: R("u", "6"), domaine: "a.fr" }, null);
-    assert.ok(a.refus && /déjà/.test(a.refus), "anti-doublon acces");
+    assert.ok(a.aucunChangement, "relation active existante : succes idempotent sans nouvelle ecriture");
     a = await admin.construireAction(dClient, "creer-utilisateur", { email: "n@client.fr", role: R("r", "4") }, null);
     assert.ok(a.refus, "creation reservee a la portee tous");
     a = await admin.construireAction(dSuper, "creer-utilisateur", { email: "redac@client.fr", role: R("r", "4") }, null);

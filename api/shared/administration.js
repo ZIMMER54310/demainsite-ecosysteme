@@ -33,6 +33,13 @@ async function contexteSites(d) {
   return { groupes: groupes.filter((g) => autorises.has(String(g.id))), tous: groupes, parFiche, statuts };
 }
 
+async function sitesAffectables(d) {
+  const ctx = await contexteSites(d);
+  if (d.portee === "tous") return ctx.tous;
+  if (d.portee !== "client") return ctx.groupes;
+  return ctx.tous.filter((s) => s.clientId && d.clientIds.includes(String(s.clientId)));
+}
+
 /*
  * Utilisateurs visibles : tous pour la portee "tous" ; sinon uniquement ceux dont
  * tous les acces sont dans le perimetre de l'acteur (jamais un utilisateur d'un autre client).
@@ -81,7 +88,7 @@ async function utilisateurs(d) {
     utilisateurs: utilisateursVisibles(d, donnees).map((u) => vueUtilisateur(u, d, donnees, ctxSites))
       .sort((a, b) => a.email.localeCompare(b.email, "fr")),
     roles: rolesAttribuables(d, donnees).map((r) => ({ ref: ref("r", r.id), titre: r.titre })),
-    sites: ctxSites.groupes.map((g) => ({ nom: g.titre, domaine: perimetre.domaineAcces(g) })).filter((s) => s.domaine)
+    sites: (await sitesAffectables(d)).map((g) => ({ nom: g.titre, domaine: perimetre.domaineAcces(g) })).filter((s) => s.domaine)
       .sort((a, b) => a.nom.localeCompare(b.nom, "fr")),
     peutCreer: d.portee === "tous",
     clients: donnees.clients.filter((c) => d.clientIds.includes(String(c.id))).map((c) => ({ ref: ref("k", c.id), titre: c.titre })),
@@ -167,14 +174,18 @@ async function construireAction(d, action, params, g) {
     if (!cible) return { refus: "Utilisateur introuvable dans votre périmètre." };
     if (String(cible.id) === String(d.utilisateurId) ||
       !droits.peutAttribuer(d, cible.roleId, politique)) return { refus: "Vous ne pouvez pas modifier les accès de cet utilisateur." };
-    const ctxSites = await contexteSites(d);
-    const groupe = perimetre.groupeParDomaine(ctxSites.groupes, minuscule(params.domaine));
+    const groupe = perimetre.groupeParDomaine(await sitesAffectables(d), minuscule(params.domaine));
     if (!groupe) return { refus: "Ce site n'est pas dans votre périmètre." };
+    const site = donnees.sites.find((s) => String(s.id) === String(groupe.id));
+    if (!site?.clientId || String(cible.clientId) !== String(site.clientId)) return { refus: "L'utilisateur et le site doivent appartenir au même client." };
     const C = S.colonnes;
-    if (!S.listes.lien || !C.lienUtilisateur || !C.lienSite) return { refus: "La gestion des accès est momentanément indisponible." };
-    const existe = donnees.liens.some((l) => String(l.utilisateurId) === String(cible.id) && String(l.siteId) === String(groupe.id));
-    if (existe) return { refus: "Cet utilisateur a déjà un accès à ce site." };
-    const champs = { [`${C.lienUtilisateur}LookupId`]: String(cible.id), [`${C.lienSite}LookupId`]: String(groupe.id) };
+    if (!S.listes.lien || !C.lienUtilisateur || !C.lienSite || !C.lienClient) return { refus: "La gestion des accès est momentanément indisponible." };
+    const existants = donnees.liens.filter((l) => String(l.utilisateurId) === String(cible.id) && String(l.siteId) === String(groupe.id) && String(l.clientId) === String(site.clientId));
+    if (existants.length > 1) return { refus: "Plusieurs relations existent déjà : résolution administrateur requise." };
+    if (existants.length === 1) return existants[0].actif && existants[0].valide
+      ? { aucunChangement: true } : { refus: "Un accès désactivé existe déjà : validation administrateur requise." };
+    const champs = { [`${C.lienUtilisateur}LookupId`]: String(cible.id), [`${C.lienSite}LookupId`]: String(groupe.id),
+      [`${C.lienClient}LookupId`]: String(site.clientId) };
     if (g) {
       const [oa, ov] = await Promise.all([idOui(g, "OBJ-ACTIF", S.listes.actif), idOui(g, "OBJ-VALIDE", S.listes.valide)]);
       if (!oa || !ov || !C.lienActif || !C.lienValide) return { refus: "Les valeurs d'activation ne sont pas disponibles." };
@@ -186,7 +197,8 @@ async function construireAction(d, action, params, g) {
         type: "ajouter", listId: S.listes.lien, champs,
         action: "Cockpit : ajout d'accès site", nom: `Accès — ${cible.titre} — ${groupe.titre}`,
         notes: `Utilisateur ${cible.id} (${cible.titre}) | Site ${groupe.id} (${groupe.titre})`,
-        cleDoublon: `lien:${cible.id}:${groupe.id}`
+        cleDoublon: `lien:${cible.id}:${groupe.id}:${site.clientId}`,
+        contexteJournal: { utilisateurId: String(cible.id), clientId: String(site.clientId), siteId: String(groupe.id) }
       },
       changements: [{ libelle: `Accès de ${cible.titre}`, avant: "Aucun accès", apres: groupe.titre }]
     };
@@ -228,12 +240,13 @@ async function construireAction(d, action, params, g) {
 function controleDoublon(op) {
   return async (g) => {
     const items = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${op.listId}/items?$expand=fields`);
-    const [type, a, b] = String(op.cleDoublon || "").split(":");
+    const [type, a, b, clientId] = String(op.cleDoublon || "").split(":");
     if (type === "utilisateur") return items.some((i) => minuscule(i.fields?.Title) === a);
     if (type === "lien") {
       const nomU = Object.keys(op.champs)[0];
       const nomS = Object.keys(op.champs)[1];
-      return items.some((i) => String(i.fields?.[nomU]) === a && String(i.fields?.[nomS]) === b);
+      const nomC = Object.keys(op.champs)[2];
+      return items.some((i) => String(i.fields?.[nomU]) === a && String(i.fields?.[nomS]) === b && String(i.fields?.[nomC]) === clientId);
     }
     return false;
   };
@@ -242,14 +255,25 @@ function controleDoublon(op) {
 async function preparerAction({ identite, d, action, params }) {
   const g = await ecriture.contexteGraph();
   const r = await construireAction(d, action, params || {}, g);
-  if (r.refus) return { status: 403, erreur: r.refus };
+  if (r.refus) {
+    const ctx = params?.domaine ? await require("../auth/inscription").domaineContexte(g, params.domaine) : null;
+    const utilisateurId = d.utilisateurId || null;
+    const j = await ecriture.journaliser(g, { cle: ecriture.hash(["admin-refus", identite.sujet, action, params, r.refus]),
+      action: `Cockpit : ${action}`, nom: "Attribution refusée", ancien: {}, nouveau: {},
+      notes: `Acteur : ${identite.sujet} | Motif : ${r.refus}`, succes: false, refus: true,
+      contexte: { acteur: identite.sujet, utilisateurId, clientId: ctx?.clientId || null, siteId: ctx?.siteId || null, resultat: "REFUS", motif: r.refus } });
+    return { status: 403, erreur: r.refus, journal: { enregistre: j.ok } };
+  }
   if (r.aucunChangement) return { status: 200, aucunChangement: true, changements: [] };
   const op = { ...r.op, portee: "admin", adminAction: action, adminParams: params };
+  op.contexteJournal = { acteur: identite.sujet, utilisateurId: d.utilisateurId || null,
+    clientId: d.clientIds?.length === 1 ? d.clientIds[0] : null, siteId: null, ...op.contexteJournal };
   if (op.type === "modifier") op.avant = ecriture.hash(op.avantValeurs);
   delete op.avantValeurs;
   const { jeton } = ecriture.emettreJeton(identite, op);
   return { status: 200, jeton, changements: r.changements };
 }
+
 
 /* ---------------- Menu dynamique ---------------- */
 

@@ -17,6 +17,40 @@ et validation. OBJ-UTILISATEUR utilise exclusivement le Lookup client `_x002d_CL
 Un role inconnu, incomplet ou desactive n'accorde aucun droit. La politique JSON historique
 n'est plus utilisee en production. Un administrateur de portee CLIENT doit avoir exactement
 un client actif et valide ; aucun lien vers un site d'un autre client ne peut etendre ses droits.
+Tous les comptes hors portee TOUS voient uniquement leurs relations OBJ-UTILISATEUR-SITE
+actives et validees, avec egalite du client utilisateur, client de la relation et client du site.
+Un administrateur CLIENT peut affecter les sites appartenant a son client sans que cela
+lui donne automatiquement acces a leur contenu. Un administrateur de portee ATTRIBUES
+ne peut affecter que ses propres sites autorises.
+
+## Identification Entra et inscription controlee
+
+ENTRAOBJECTID est prioritaire. L'email ne sert qu'a migrer un compte historique unique
+non lie, apres authentification Microsoft reussie : PATCH conditionnel ETag, relecture,
+journalisation, sans changer role/client/sites. Un compte deja lie a un autre objet Entra
+ne peut pas etre repris par son email. Le point de connexion resout le domaine HTTP reel
+depuis OBJ-NOM DE DOMAINE -> OBJSITE -> client, pas un client transmis par le navigateur.
+
+`POST /api/v1/cockpit/inscription` exige une session Entra et une origine identique.
+Le corps vide affiche l'apercu ; `{ "confirmer": true }` confirme. Aucun parametre de role,
+client ou site n'est accepte. Pour autoriser une inscription, la structure minimale est
+OBJ-INSCRIPTION avec ENTRAOBJECTID texte, Lookups OBJ-UTILISATEUR (facultatif pour un
+nouveau compte), OBJ-CLIENT, OBJ-SITE-PUBLIC, OBJ-ROLE, OBJ-ACTIF et OBJ-VALIDE.
+Une invitation unique active/validee doit designer les IDs reels du compte et du domaine.
+La creation de role global n'est jamais permise dans ce parcours. Sans invitation, 409/403,
+trace REFUS et aucune attribution. Un utilisateur existant est reutilise sans modifier
+son role ; le triplet utilisateur/client/site est relu avant creation et ne se duplique pas.
+La reprise apres erreur relit les elements deja crees et ne reactive pas un acces desactive.
+
+L'acces commun DSE n'est pas une relation metier : aucune exception par nom de domaine.
+Avant activation, declarer une structure distincte OBJ-ACCES-COMMUN avec Lookup site
+commun, identite/utilisateur, actif et valide, et une configuration explicite du site commun.
+Ce lot ne cree pas ces structures et ne falsifie jamais le client d'un site.
+
+Les journaux utilisent des cles deterministes et relisent CLEIDEMPOTENCE avant insertion ;
+les confirmations rejouees n'ajoutent pas d'entree. Les refus et ecritures d'inscription /
+attribution incluent acteur, utilisateur, client, site, resultat et motif dans NOTES.
+Les verrous sont limites au processus Node unique actuel.
 
 Les capacites SharePoint sont traduites en fonctions du moteur dans
 [politique-sharepoint.js](auth/politique-sharepoint.js) : ADMINISTRATION-GLOBALE (TOUS /

@@ -17,6 +17,7 @@ const resumeSites = require("../shared/resume-sites");
 const edition = require("../shared/edition");
 const ecriture = require("../shared/ecriture");
 const administration = require("../shared/administration");
+const inscription = require("../auth/inscription");
 
 const meta = () => ({ genereLe: new Date().toISOString() });
 
@@ -26,6 +27,17 @@ function repondre(res, status, corps) {
 
 function refuser(res, status, message) {
   repondre(res, status, { succes: false, erreur: { message }, meta: meta() });
+}
+
+async function refuserEcriture(res, ctx, domaine, action, message) {
+  let enregistre = false;
+  try {
+    const g = await ecriture.contexteGraph();
+    const cible = await inscription.domaineContexte(g, domaine);
+    const j = await inscription.journal(g, ctx.identite, cible, action, "REFUS", message, ctx.droits.utilisateurId);
+    enregistre = j.ok;
+  } catch (e) { console.error("[DSE cockpit] journal refus", e.message); }
+  return repondre(res, 403, { succes: false, erreur: { message }, journal: { enregistre }, meta: meta() });
 }
 
 async function contexteUtilisateur(req) {
@@ -213,7 +225,8 @@ async function editionApercu(req, res) {
     const composant = String(req.body?.composant || "");
     const def = edition.COMPOSANTS_EDITABLES[composant];
     const info = await siteDuPerimetre(ctx, req.body?.domaine);
-    if (!info || !def || !peutEcrire(ctx.droits, def.fonction)) return refuser(res, 404, "Ce réglage n'est pas disponible dans votre espace.");
+    if (!info || !def || !peutEcrire(ctx.droits, def.fonction)) return refuserEcriture(res, ctx, req.body?.domaine, "Cockpit : aperçu édition",
+      "Ce réglage n'est pas disponible dans votre espace.");
     const r = await edition.preparer({ identite: ctx.identite, composant, siteId: info.id, siteNom: info.titre, valeurs: req.body?.valeurs, element: String(req.body?.element || "") });
     repondreResultat(res, r);
   } catch (e) {
@@ -236,12 +249,21 @@ async function confirmer(req, res) {
         droits.viderCache();
         const d = await droits.droitsPour(ctx.identite);
         if (op.portee === "site") {
+          const donnees = await droits.donneesDroits();
+          const s = donnees.sites.find((s) => String(s.id) === String(op.siteId));
+          op.contexteJournal = { acteur: ctx.identite.sujet, utilisateurId: d.utilisateurId,
+            clientId: s?.clientId || null, siteId: String(op.siteId) };
           if (!peutEcrire(d, op.fonction) || !d.siteIds.includes(String(op.siteId))) return "Vous n'avez plus l'autorisation de modifier ce réglage.";
           return null;
         }
         if (op.portee === "admin") {
           const a = await administration.construireAction(d, op.adminAction, op.adminParams || {}, null);
           if (a.refus) return a.refus;
+          if (op.adminAction === "ajouter-acces-site" && a.op) {
+            for (const [nom, valeur] of Object.entries(a.op.champs)) {
+              if (String(op.champs[nom]) !== String(valeur)) return "Le rattachement utilisateur/client/site a changé.";
+            }
+          }
           if (op.type === "ajouter") op.doublon = administration.controleDoublon(op);
           return null;
         }
@@ -288,8 +310,8 @@ async function adminApercu(req, res) {
     if (!ctx) return;
     const action = String(req.body?.action || "");
     const p = req.body?.params && typeof req.body.params === "object" ? req.body.params : {};
-    const params = Object.fromEntries(["utilisateur", "role", "domaine", "email"]
-      .filter((k) => typeof p[k] === "string").map((k) => [k, p[k].slice(0, 255)]));
+    const params = Object.fromEntries(["utilisateur", "role", "domaine", "email", "client", "portee", "niveau", "fonctions"]
+      .filter((k) => typeof p[k] === "string").map((k) => [k, p[k].slice(0, k === "fonctions" ? 2000 : 255)]));
     repondreResultat(res, await administration.preparerAction({ identite: ctx.identite, d: ctx.droits, action, params }));
   } catch (e) {
     console.error("[DSE cockpit] admin apercu", e.message);
@@ -297,10 +319,33 @@ async function adminApercu(req, res) {
   }
 }
 
-function connexion(req, res) {
-  const f = fournisseurs.trouver(req.params.fournisseur);
-  if (!f || !f.disponible() || !f.demarrer(req, res)) {
+async function connexion(req, res) {
+  try {
+    const f = fournisseurs.trouver(req.params.fournisseur);
+    if (f && f.disponible() && await f.demarrer(req, res)) return;
+  } catch (e) {
+    console.error("[DSE cockpit] demarrage connexion", e.message);
+  }
     res.redirect(302, "/#/cockpit?connexion=indisponible");
+}
+
+async function inscrire(req, res) {
+  try {
+    if (!origineValide(req)) return refuser(res, 403, "Requête refusée.");
+    const identite = session.identiteSession(req);
+    if (!identite || identite.fournisseur !== "entra") return refuser(res, 401, "Connexion Microsoft requise.");
+    if (Object.keys(req.body || {}).some((k) => k !== "confirmer")) {
+      const g = await ecriture.contexteGraph();
+      const j = await inscription.journal(g, identite, null, "Entra : inscription", "REFUS", "Paramètres d'attribution interdits.");
+      return repondre(res, 403, { succes: false, erreur: { message: "Aucune attribution de client, site ou rôle depuis le navigateur." }, journal: { enregistre: j.ok } });
+    }
+    const domaine = req.hostname || String(req.get("host") || "").split(":")[0];
+    const r = await inscription.inscrire(identite, domaine, req.body?.confirmer === true);
+    if (r.erreur) return repondre(res, r.status, { succes: false, erreur: { message: r.erreur }, journal: r.journal });
+    return repondre(res, r.status, { succes: r.status === 200, donnees: r.donnees });
+  } catch (e) {
+    console.error("[DSE cockpit] inscription", e.message);
+    refuser(res, 503, "Inscription momentanément indisponible.");
   }
 }
 
@@ -321,7 +366,7 @@ function deconnexion(req, res) {
 }
 
 module.exports = {
-  moi, sites, site, connexion, retour, deconnexion,
+  moi, sites, site, connexion, retour, deconnexion, inscrire,
   editionLire, editionApercu, confirmer, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide }
 };

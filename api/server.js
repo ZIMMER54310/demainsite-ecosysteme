@@ -216,6 +216,7 @@ application.get(
 application.get("/api/v1/moi", controleurCockpit.moi);
 application.get("/api/v1/auth/:fournisseur/connexion", controleurCockpit.connexion);
 application.get("/api/v1/auth/:fournisseur/retour", controleurCockpit.retour);
+application.post("/api/v1/cockpit/inscription", controleurCockpit.inscrire);
 application.get("/api/v1/auth/deconnexion", controleurCockpit.deconnexion);
 application.get("/api/v1/cockpit/sites", controleurCockpit.sites);
 application.get("/api/v1/cockpit/site", controleurCockpit.site);

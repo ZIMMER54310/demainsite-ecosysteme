@@ -8,6 +8,8 @@
 
 const crypto = require("crypto");
 const session = require("../session");
+const inscription = require("../inscription");
+const ecriture = require("../../shared/ecriture");
 
 const ID = "entra";
 const CHEMIN_RETOUR = "/api/v1/auth/entra/retour";
@@ -34,14 +36,17 @@ function cibleApresConnexion(base, domaine) {
   return `${base}/#/cockpit${domaine ? `/site/${encodeURIComponent(domaine)}` : ""}`;
 }
 
-function demarrer(req, res) {
+async function demarrer(req, res) {
   const c = configuration();
   if (!c) return false;
+  const domaine = domaineRetour(req.hostname || req.get?.("host")?.split(":")[0]);
+  const contexte = await inscription.domaineContexte(await ecriture.contexteGraph(), domaine);
+  if (!contexte) return false;
   const etat = crypto.randomBytes(24).toString("base64url");
   const nonce = crypto.randomBytes(24).toString("base64url");
   const verificateur = crypto.randomBytes(48).toString("base64url");
   const defi = crypto.createHash("sha256").update(verificateur).digest("base64url");
-  if (!session.ouvrirTransaction(res, { etat, nonce, verificateur, domaine: domaineRetour(req.query?.domaine) })) return false;
+  if (!session.ouvrirTransaction(res, { etat, nonce, verificateur, domaine: contexte.domaine })) return false;
   const url = new URL(`https://login.microsoftonline.com/${c.tenant}/oauth2/v2.0/authorize`);
   url.search = new URLSearchParams({
     client_id: c.client,
@@ -74,7 +79,7 @@ function identiteDepuisJeton(revendications, c, nonce, maintenant = Date.now()) 
   if (!String(revendications.iss || "").includes(c.tenant)) return null;
   if (!nonce || revendications.nonce !== nonce) return null;
   if (typeof revendications.exp !== "number" || revendications.exp * 1000 <= maintenant) return null;
-  const sujet = revendications.oid || revendications.sub;
+  const sujet = revendications.oid;
   if (!sujet) return null;
   return {
     fournisseur: ID,
@@ -105,6 +110,7 @@ async function rappel(req, res) {
   });
   const corps = await reponse.json().catch(() => ({}));
   const identite = reponse.ok ? identiteDepuisJeton(decoderJwt(corps.id_token), c, transaction.nonce) : null;
+  if (identite) await inscription.identifier(identite);
   if (!identite || !session.ouvrirSession(res, identite)) {
     return { ok: false, cible: `${c.base}/#/cockpit?connexion=echec` };
   }
