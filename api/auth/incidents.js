@@ -113,7 +113,9 @@ async function refuser(identite, domaine, motif) {
   return serialiser(cle, async () => {
     const { g, regle, incidents } = await lire(true);
     const x = await droits.donneesDroits();
-    const u = x.utilisateurs.find((u) => String(u.entraObjectId || "").toLowerCase() === String(identite.sujet).toLowerCase());
+    const reconnu = droits.calculerDroits({ identite, ...x });
+    const u = x.utilisateurs.find((u) => String(u.entraObjectId || "").toLowerCase() === String(identite.sujet).toLowerCase()) ||
+      x.utilisateurs.find((u) => u.id === reconnu.utilisateurId);
     const ancien = incidents.find((i) => i.identite === cle && i.etat !== "RESOLU");
     if (ancien?.etat === "BLOQUE") { await alerter(g, ancien); return ancien; }
     const maintenant = new Date().toISOString();

@@ -413,7 +413,7 @@ export function rendreUtilisateurs(moi, d) {
   const incidents = d.incidents ? `<section class="card"><h2>Incidents d’accès</h2>
     ${!d.incidents.politiqueDisponible ? "<p>Blocage automatique en attente de configuration de la politique SharePoint. Aucune durée inventée.</p>" : ""}
     <p data-resultat-incident role="status"></p>
-    ${(d.incidents.incidents || []).map((i) => `<details><summary>${e(i.utilisateur)} — ${e(i.domaine)} — ${e(i.etat)} (${i.nombre} refus) · Examiner</summary>
+    ${(d.incidents.incidents || []).map((i) => `<details><summary>${e(i.utilisateur)} — ${e(i.domaine)} — ${e({ OUVERT: "OUVERT", BLOQUE: "BLOQUÉ", RESOLU: "RÉSOLU" }[i.etat] || i.etat)} (${i.nombre} refus) · Examiner</summary>
       <p>Motif : ${e(i.motif)}<br>Premier refus : ${e(i.premier)}<br>Dernier refus : ${e(i.dernier)}<br>Journal : ${e(i.journalId)}</p>
       <button class="btn btn-secondary" data-incident="${e(i.id)}" data-decision-incident="reactiver">Réactiver après vérification</button>
       <button class="btn btn-secondary" data-incident="${e(i.id)}" data-decision-incident="maintenir">Maintenir le blocage</button>
