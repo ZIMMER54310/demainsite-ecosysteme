@@ -142,6 +142,7 @@ export function rendreAccueil({ moi, vueCourante = null, domaineCourant = "" }) 
         : `<p class="muted">Choisissez un site pour suivre sa progression.</p>`}</div>
       <div class="card"><h2>Mes sites</h2><p class="metric">${Number(moi?.nombreSites) || 0}</p><p class="muted">site(s) dans votre espace</p></div>
     </div>
+    ${vueCourante ? rendreProgression(vueCourante) : ""}
     ${rendreAccesRapides(moi?.fonctions, domaine)}
   </section>`;
 }

@@ -63,6 +63,14 @@ const item = (id, min, max, ordre, couleur, extra = {}) => ({
   assert.equal((html.match(/class="cockpit-etape /g) || []).length, 10);
   assert.ok(html.includes('<details class="cockpit-pliant cockpit-raccourcis">'));
   for (const carte of ui.cartesVisibles(vue.fonctions)) assert.ok(html.includes(carte.titre), carte.titre);
+  const accueil = ui.rendreAccueil({ moi: { nom: "Test", nombreSites: 1, fonctions: vue.fonctions }, vueCourante: vue });
+  assert.ok(accueil.includes('<details class="cockpit-pliant cockpit-progression" style="--progression-couleur:#AbCdEf">'), "progression déroulante sur l'accueil");
+  assert.ok(!/cockpit-progression"[^>]*open/.test(accueil), "progression fermée par défaut sur l'accueil");
+  assert.ok(accueil.includes("Progression du site - 77 %"));
+  assert.equal((accueil.match(/class="cockpit-etape /g) || []).length, 10);
+  assert.ok(accueil.indexOf("cockpit-progression") < accueil.indexOf("cockpit-raccourcis"), "progression avant accès rapides");
+  const accueilVide = ui.rendreAccueil({ moi: { nombreSites: 1, fonctions: vue.fonctions }, vueCourante: { ...vue, progressionVisuelle: progression.pourcentage({ etat: "vide", regles: [], message: "Les couleurs de progression sont à configurer dans SharePoint." }, 77) } });
+  assert.ok(accueilVide.includes('<details class="cockpit-pliant cockpit-progression">'), "liste vide : aucune couleur");
   assert.ok(ui.rendreProgression(vue, "etape-3").includes(' open>'), "une section ciblée reste accessible");
   assert.ok(!ui.rendreProgression({ ...vue, progressionVisuelle: { couleur: '#123456"; onclick="injection' } }).includes("injection"));
   assert.ok(ui.rendreProgression({ ...vue, progressionVisuelle: { message: "Configuration absente" } }).includes("Configuration absente"));
