@@ -205,10 +205,10 @@ function viderCacheGraph() {
 }
 
 /*
- * Ecriture Graph (PATCH/POST uniquement, jamais DELETE) : sans cache, reessais 429/503.
+ * Ecriture Graph : 429 peut etre rejoue ; un POST ambigu (503) ne l'est jamais.
  * Reservee a la couche d'ecriture du cockpit (shared/ecriture.js).
  */
-async function graphEcriture(token, methode, chemin, corps) {
+async function graphEcriture(token, methode, chemin, corps, etag = null) {
   if (!["PATCH", "POST"].includes(methode)) throw creerErreur("DSE-ECRITURE-METHODE", 500, "Méthode d'écriture refusée");
   const url = new URL(`https://graph.microsoft.com/v1.0${chemin}`);
   const donnees = JSON.stringify(corps || {});
@@ -221,8 +221,9 @@ async function graphEcriture(token, methode, chemin, corps) {
       "Content-Length": Buffer.byteLength(donnees)
     }
   };
+  if (etag) options.headers["If-Match"] = etag;
   let resultat = await requete(url, options, donnees);
-  for (let t = 0; t < GRAPH_REESSAIS_MAX && (resultat.status === 429 || resultat.status === 503); t++) {
+  for (let t = 0; t < GRAPH_REESSAIS_MAX && (resultat.status === 429 || (methode === "PATCH" && resultat.status === 503)); t++) {
     const s = Number(resultat.headers["retry-after"]);
     await new Promise((r) => setTimeout(r, Number.isFinite(s) && s >= 0 ? Math.min(s * 1000, GRAPH_ATTENTE_MAX_MS) : 1000 * (t + 1)));
     resultat = await requete(url, options, donnees);
@@ -1169,6 +1170,12 @@ function correspondAuSite(
 ) {
   const attendu =
     String(siteItemId);
+
+  const officiel = colonnes.find((c) => c.name === "OBJSITEPUBLIC");
+  if (officiel && Object.hasOwn(fields, "OBJSITEPUBLICLookupId") && fields.OBJSITEPUBLICLookupId) {
+    return (!listeSiteId || idListe(officiel.lookup?.listId || "") === idListe(listeSiteId)) &&
+      String(fields.OBJSITEPUBLICLookupId) === attendu;
+  }
 
   for (const colonne of colonnes) {
     const noms = [

@@ -47,11 +47,12 @@ function libelleChamp(col) {
 function champsModifiables(colonnes) {
   return colonnes.filter((c) => c.text && !c.readOnly && !c.hidden &&
     !String(c.name).startsWith("_") && !/^(LinkTitle|File_x0020_Type)/.test(c.name) &&
-    !/^ID[-_ ]/i.test(String(c.displayName || "")) && !/^ID[-_]/i.test(String(c.name)) && c.text.textType !== "richText")
+    !/^ID[-_ ]/i.test(String(c.displayName || "")) && !/^(ID[-_]|ComplianceAssetId)/i.test(String(c.name)) && c.text.textType !== "richText")
     .map((c) => ({
       cle: cleChamp(c.name),
       nom: c.name,
       libelle: libelleChamp(c),
+      obligatoire: !!c.required,
       multiligne: !!c.text.allowMultipleLines,
       max: c.text.allowMultipleLines ? MAX_MULTILIGNE : Number(c.text.maxLength) || 255
     }));
@@ -70,6 +71,7 @@ function validerValeurs(champs, valeurs) {
     if (typeof brut !== "string") { erreurs.push(`${champ.libelle} : valeur invalide.`); continue; }
     let v = brut.replace(/\r\n?/g, "\n");
     v = champ.multiligne ? v.replace(/[ \t]+$/gm, "").trim() : v.trim();
+    if (champ.obligatoire && !v) { erreurs.push(`${champ.libelle} : valeur obligatoire.`); continue; }
     if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(v)) { erreurs.push(`${champ.libelle} : caractères non autorisés.`); continue; }
     if (!champ.multiligne && /\n/.test(v)) { erreurs.push(`${champ.libelle} : une seule ligne est autorisée.`); continue; }
     if (v.length > champ.max) { erreurs.push(`${champ.libelle} : ${champ.max} caractères maximum.`); continue; }
@@ -94,6 +96,7 @@ const valeursDe = (fields, noms) => Object.fromEntries(noms.map((n) => [n, norma
  */
 const enAttente = new Map();
 const enCours = new Set();
+const ressourcesEnCours = new Set();
 
 function emettreJeton(identite, operation) {
   const cle = crypto.randomUUID();
@@ -128,9 +131,35 @@ async function lireItemFrais(g, listId, itemId) {
   return r?.fields || {};
 }
 
+async function collecterFrais(g, chemin) {
+  const items = [];
+  let suivant = chemin;
+  for (let page = 0; suivant && page < 100; page++) {
+    const r = await dse.graphSansCache(g.token, suivant);
+    if (!Array.isArray(r.value)) throw new Error("Réponse de lecture des éléments invalide.");
+    items.push(...r.value);
+    suivant = r["@odata.nextLink"];
+  }
+  if (suivant) throw new Error("Lecture incomplète : limite de pagination atteinte.");
+  return items;
+}
+
 /* ---------------- Journal OBJ-JRN (texte uniquement : aucun Lookup OBJ-REF / OBJ-REL) ---------------- */
 
 const tronquer = (v, n) => (v.length > n ? `${v.slice(0, n - 1)}…` : v);
+
+async function etatStructureJournal(g) {
+  const liste = dse.trouverListe(g.listes, ["OBJ-JRN"]);
+  if (!liste) return { disponible: false, raison: "Journal indisponible." };
+  const colonnes = await dse.chargerColonnesListe(g.token, g.siteGraphId, liste.id);
+  const historique = colonnes.find((c) => c.name === "STATUT" && c.lookup &&
+    (c.required || !g.listes.some((l) => String(l.id).toLowerCase() === String(c.lookup.listId || "").toLowerCase())));
+  if (historique) return { disponible: false, raison: "Journal bloqué par une relation historique obligatoire ou orpheline." };
+  if (!["STATUTJRN", "CLEIDEMPOTENCE"].every((nom) => colonnes.some((c) => c.name === nom))) {
+    return { disponible: false, raison: "Le journal doit être complété avant journalisation." };
+  }
+  return { disponible: true };
+}
 
 async function journaliser(g, { cle, action, nom, ancien, nouveau, notes, succes }) {
   const liste = dse.trouverListe(g.listes, ["OBJ-JRN"]);
@@ -155,18 +184,13 @@ async function journaliser(g, { cle, action, nom, ancien, nouveau, notes, succes
       STATUTJRN: succes ? "SUCCÈS" : "ÉCHEC"
     };
     try {
+      const structure = await etatStructureJournal(g);
+      if (!structure.disponible) throw new Error(structure.raison);
       await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${liste.id}/items`, { fields: champs });
       entree.ok = true;
     } catch (e) {
-      // STATUT-JRN peut refuser la valeur : l'entree est conservee sans ce champ plutot que perdue.
-      try {
-        delete champs.STATUTJRN;
-        await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${liste.id}/items`, { fields: champs });
-        entree.ok = true;
-      } catch (e2) {
-        entree.erreur = e2.message;
-        console.error("[DSE ecriture] journal", e2.message, e2.detailGraph || "");
-      }
+      entree.erreur = e.message;
+      console.error("[DSE ecriture] journal", e.message);
     }
   }
   etatJournal.dernier = entree;
@@ -180,7 +204,7 @@ async function journaliser(g, { cle, action, nom, ancien, nouveau, notes, succes
 function invaliderCaches() {
   dse.viderCacheGraph();
   for (const m of ["./catalogue-source", "./resume-sites", "./builder-source", "../auth/droits"]) {
-    try { require(m).viderCache?.(); } catch { /* module absent : rien a vider */ }
+    try { require(m).viderCache?.(); } catch (e) { console.error("[DSE ecriture] invalidation cache", m, e.message); }
   }
 }
 
@@ -195,13 +219,20 @@ async function executer({ identite, jeton, revalider, acteur }) {
   const lu = lireJeton(identite, jeton);
   if (lu.erreur) return { status: 400, erreur: lu.erreur };
   const { cle, op } = lu;
-  if (executees.has(cle)) return { status: 200, ...executees.get(cle), deja: true };
+  if (executees.has(cle)) {
+    const resultat = executees.get(cle);
+    return { status: resultat.succes ? 200 : 502, ...resultat, deja: true };
+  }
   if (enCours.has(cle)) return { status: 409, erreur: "Cet enregistrement est déjà en cours." };
+  const ressource = `${op.listId}:${op.itemId || op.cleDoublon || cle}`;
+  if (ressourcesEnCours.has(ressource)) return { status: 409, erreur: "Une modification de cet élément est déjà en cours." };
   enCours.add(cle);
+  ressourcesEnCours.add(ressource);
   try {
     return await executerOperation({ cle, op, revalider, acteur });
   } finally {
     enCours.delete(cle);
+    ressourcesEnCours.delete(ressource);
   }
 }
 
@@ -211,10 +242,22 @@ async function executerOperation({ cle, op, revalider, acteur }) {
   enAttente.delete(cle);
 
   const g = await contexteGraph();
+  if (op.verifierCible) {
+    const refusCible = await op.verifierCible(g);
+    if (refusCible) return { status: 409, erreur: refusCible };
+  }
   const noms = Object.keys(op.champs || {});
   let ancien = {};
+  let etag = null;
   if (op.type === "modifier") {
-    ancien = valeursDe(await lireItemFrais(g, op.listId, op.itemId), noms);
+    const version = await dse.graphSansCache(g.token, `/sites/${g.siteGraphId}/lists/${op.listId}/items/${encodeURIComponent(op.itemId)}?$expand=fields`);
+    if (op.verifierVersion) {
+      const refusVersion = op.verifierVersion(version?.fields || {});
+      if (refusVersion) return { status: 409, erreur: refusVersion };
+    }
+    ancien = valeursDe(version?.fields, noms);
+    etag = version?.eTag || version?.["@odata.etag"] || version?.fields?.["@odata.etag"] || null;
+    if (!etag) return { status: 409, erreur: "La version de ces données n'a pas pu être vérifiée. Écriture refusée." };
     if (hash(ancien) === hash(op.champs)) {
       const r = { succes: true, journal: null, message: "Cette modification est déjà appliquée." };
       executees.set(cle, r);
@@ -231,16 +274,18 @@ async function executerOperation({ cle, op, revalider, acteur }) {
   let itemId = op.itemId || null;
   try {
     if (op.type === "modifier") {
-      await dse.graphEcriture(g.token, "PATCH", `/sites/${g.siteGraphId}/lists/${op.listId}/items/${encodeURIComponent(op.itemId)}/fields`, op.champs);
+      await dse.graphEcriture(g.token, "PATCH", `/sites/${g.siteGraphId}/lists/${op.listId}/items/${encodeURIComponent(op.itemId)}/fields`, op.champs, etag);
     } else {
       const cree = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${op.listId}/items`, { fields: op.champs });
       itemId = String(cree?.id || "");
     }
     relu = valeursDe(await lireItemFrais(g, op.listId, itemId), noms);
   } catch (e) {
-    console.error("[DSE ecriture]", e.message, e.detailGraph || "");
+    console.error("[DSE ecriture]", e.message);
+    if (e.status === 412 || e.statusCode === 412) return { status: 409, erreur: "Les données ont été modifiées entre-temps. Merci de les relire." };
     const journal = await journaliser(g, { cle, action: op.action, nom: op.nom, ancien, nouveau: op.champs, notes: `${op.notes} | Acteur : ${acteur} | Erreur : ${e.message}`, succes: false });
-    return { status: 502, erreur: "L'enregistrement n'a pas pu être effectué. Aucune donnée n'a été modifiée ou la modification est incomplète.", journal: resumeJournal(journal) };
+    invaliderCaches();
+    return { status: 502, erreur: "L'enregistrement ou sa vérification a échoué. Relisez les données avant de recommencer.", journal: resumeJournal(journal) };
   }
   invaliderCaches();
   const conforme = noms.every((n) => normaliserTexte(relu[n]) === normaliserTexte(op.champs[n]));
@@ -255,7 +300,7 @@ async function executerOperation({ cle, op, revalider, acteur }) {
   return { status: conforme ? 200 : 502, ...r, ...(conforme ? {} : { erreur: "La relecture ne correspond pas à la valeur demandée." }) };
 }
 
-const resumeJournal = (j) => (j ? { enregistre: j.ok, le: j.le } : null);
+const resumeJournal = (j) => (j ? { enregistre: j.ok, le: j.le, ...(j.ok ? {} : { erreur: "Journalisation indisponible : une relation obligatoire du journal doit être vérifiée." }) } : null);
 
 function etatJournalisation() {
   return { dernier: etatJournal.dernier ? { ...etatJournal.dernier } : null, recentes: journalLocal.map((x) => ({ ...x })) };
@@ -263,6 +308,6 @@ function etatJournalisation() {
 
 module.exports = {
   champsModifiables, validerValeurs, differences, valeursDe, hash, emettreJeton, lireJeton,
-  contexteGraph, lireItemFrais, executer, journaliser, invaliderCaches, etatJournalisation,
+  contexteGraph, lireItemFrais, collecterFrais, executer, journaliser, invaliderCaches, etatJournalisation, etatStructureJournal,
   _test: { libelleChamp, cleChamp, executees, enAttente }
 };

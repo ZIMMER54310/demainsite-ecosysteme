@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node server.js",
     "check": "node tests/check-syntax.js",
-    "test": "node tests/unit.js && node tests/rendu.js && node tests/catalogue.js && npm run test:builder && node tests/resolveur-domaine.js && node tests/ovh-sharepoint.js && node tests/statuts.js && node tests/cockpit.js",
+    "test": "node tests/unit.js && node tests/rendu.js && node tests/catalogue.js && npm run test:builder && node tests/resolveur-domaine.js && node tests/ovh-sharepoint.js && node tests/statuts.js && node tests/cockpit.js && node tests/cockpit-sharepoint.js",
     "smoke": "node tests/smoke.js",
     "test:rendu-domaines": "node tests/domaines-rendu.js",
     "test:sharepoint-access": "node tools/test-sharepoint-access.js",

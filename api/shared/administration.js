@@ -14,7 +14,7 @@ const cockpit = require("./cockpit");
 const perimetre = require("./perimetre");
 const resumeSites = require("./resume-sites");
 const droits = require("../auth/droits");
-const politique = require("../config/politique-roles.json");
+const { politiqueDepuisRoles } = require("../auth/politique-sharepoint");
 
 // References opaques : stables pour la duree du processus, impossibles a deviner depuis le navigateur.
 const SEL = crypto.randomBytes(32);
@@ -43,14 +43,14 @@ function utilisateursVisibles(d, donnees) {
   return donnees.utilisateurs.filter((u) => {
     if (d.portee === "tous") return true;
     if (String(u.id) === String(d.utilisateurId)) return true;
-    if (u.roleId && !droits.peutAttribuer(d, u.roleId, politique)) return false;
+    if (u.roleId && !droits.peutAttribuer(d, u.roleId, donnees.politique)) return false;
     const sites = donnees.liens.filter((l) => String(l.utilisateurId) === String(u.id) && l.siteId).map((l) => String(l.siteId));
     const clientOk = u.clientId && d.clientIds.includes(String(u.clientId));
-    return (sites.length > 0 && sites.every((s) => mesSites.has(s))) || (clientOk && sites.every((s) => mesSites.has(s)));
+    return !!clientOk && sites.every((s) => mesSites.has(s));
   });
 }
 
-const rolesAttribuables = (d, donnees) => donnees.roles.filter((r) => droits.peutAttribuer(d, r.id, politique));
+const rolesAttribuables = (d, donnees) => donnees.roles.filter((r) => droits.peutAttribuer(d, r.id, donnees.politique));
 
 function vueUtilisateur(u, d, donnees, ctxSites) {
   const sites = donnees.liens
@@ -60,7 +60,7 @@ function vueUtilisateur(u, d, donnees, ctxSites) {
       return { nom: g?.titre || "Site", domaine: g ? perimetre.domaineAcces(g) : null, actif: l.actif && l.valide };
     });
   const moi = String(u.id) === String(d.utilisateurId);
-  const modifiable = !moi && (!u.roleId || droits.peutAttribuer(d, u.roleId, politique));
+  const modifiable = !moi && (!u.roleId || droits.peutAttribuer(d, u.roleId, donnees.politique));
   return {
     ref: ref("u", u.id),
     email: u.titre,
@@ -68,7 +68,7 @@ function vueUtilisateur(u, d, donnees, ctxSites) {
     actif: u.actif && u.valide,
     moi,
     sites,
-    portee: droits.regleRole(politique, u.roleId)?.portee || null,
+    portee: droits.regleRole(donnees.politique || {}, u.roleId)?.portee || null,
     modifiable
   };
 }
@@ -83,7 +83,11 @@ async function utilisateurs(d) {
     roles: rolesAttribuables(d, donnees).map((r) => ({ ref: ref("r", r.id), titre: r.titre })),
     sites: ctxSites.groupes.map((g) => ({ nom: g.titre, domaine: perimetre.domaineAcces(g) })).filter((s) => s.domaine)
       .sort((a, b) => a.nom.localeCompare(b.nom, "fr")),
-    peutCreer: d.portee === "tous"
+    peutCreer: d.portee === "tous",
+    clients: donnees.clients.filter((c) => d.clientIds.includes(String(c.id))).map((c) => ({ ref: ref("k", c.id), titre: c.titre })),
+    politiques: d.portee === "tous" && d.fonctions.includes("plateforme")
+      ? donnees.roles.map((r) => ({ ref: ref("r", r.id), titre: r.titre, portee: r.portee, niveau: r.niveau, fonctions: r.fonctions,
+        modifiable: String(r.id) !== String(d.roleId) })) : []
   };
 }
 
@@ -98,7 +102,7 @@ async function idOui(g, nomListe, idListe) {
 
 /* ---------------- Actions d'administration ---------------- */
 
-const ACTIONS = ["changer-role", "ajouter-acces-site", "creer-utilisateur"];
+const ACTIONS = ["changer-role", "ajouter-acces-site", "creer-utilisateur", "modifier-politique-role"];
 
 /*
  * Verifie une action et construit l'operation d'ecriture. Appelee a l'apercu ET a la
@@ -108,17 +112,40 @@ async function construireAction(d, action, params, g) {
   if (!ACTIONS.includes(action)) return { refus: "Action non autorisée." };
   if (!d.reconnu || !d.fonctions.includes("utilisateurs") || d.niveau !== "administration") return { refus: "Accès non autorisé." };
   const donnees = await droits.donneesDroits();
+  const politique = donnees.politique || { roles: {} };
   const S = donnees.structure;
   if (!S) return { refus: "La gestion des utilisateurs est momentanément indisponible." };
   const visibles = utilisateursVisibles(d, donnees);
   const cible = params.utilisateur ? visibles.find((u) => ref("u", u.id) === params.utilisateur) : null;
   const role = params.role ? donnees.roles.find((r) => ref("r", r.id) === params.role) : null;
 
+  if (action === "modifier-politique-role") {
+    if (d.portee !== "tous" || !d.fonctions.includes("plateforme") || !role ||
+      String(role.id) === String(d.roleId)) return { refus: "Modification de cette politique non autorisée." };
+    if (!["portee", "niveau", "fonctions"].every((k) => typeof params[k] === "string") || params.fonctions.length > 2000) {
+      return { refus: "Saisie de politique invalide." };
+    }
+    const candidat = { ...role, portee: params.portee, niveau: params.niveau, fonctions: params.fonctions };
+    const p = politiqueDepuisRoles([candidat]);
+    if (!droits.peutAttribuer(d, role.id, p)) return { refus: "Politique incomplète, inconnue ou supérieure à vos droits." };
+    if (!S.listes.role) return { refus: "Gestion des politiques indisponible." };
+    const champs = { PORTEE: candidat.portee, NIVEAUACCES: candidat.niveau, FONCTIONS: candidat.fonctions };
+    const avantValeurs = { PORTEE: role.portee || "", NIVEAUACCES: role.niveau || "", FONCTIONS: role.fonctions || "" };
+    if (ecriture.hash(champs) === ecriture.hash(avantValeurs)) return { aucunChangement: true };
+    return { op: { type: "modifier", listId: S.listes.role, itemId: String(role.id), champs, avantValeurs,
+      action: "Cockpit : politique de rôle", nom: role.titre, notes: `Politique du rôle ${role.id}` },
+    changements: Object.keys(champs).filter((k) => champs[k] !== avantValeurs[k]).map((k) => ({
+      libelle: { PORTEE: "Périmètre", NIVEAUACCES: "Niveau", FONCTIONS: "Fonctions" }[k], avant: avantValeurs[k], apres: champs[k]
+    })) };
+  }
+
   if (action === "changer-role") {
     if (!cible) return { refus: "Utilisateur introuvable dans votre périmètre." };
     if (String(cible.id) === String(d.utilisateurId)) return { refus: "Vous ne pouvez pas modifier votre propre rôle." };
     if (cible.roleId && !droits.peutAttribuer(d, cible.roleId, politique)) return { refus: "Cet utilisateur dispose de droits supérieurs aux vôtres." };
     if (!role || !droits.peutAttribuer(d, role.id, politique)) return { refus: "Vous ne pouvez pas attribuer ce rôle." };
+    if (droits.regleRole(politique, role.id)?.portee === "client" &&
+      !donnees.clients.some((c) => String(c.id) === String(cible.clientId))) return { refus: "Ce rôle exige un client valide sur l'utilisateur." };
     if (!S.colonnes.utilisateurRole) return { refus: "La gestion des rôles est momentanément indisponible." };
     if (String(cible.roleId) === String(role.id)) return { aucunChangement: true };
     return {
@@ -126,6 +153,9 @@ async function construireAction(d, action, params, g) {
         type: "modifier", listId: S.listes.utilisateur, itemId: String(cible.id),
         champs: { [`${S.colonnes.utilisateurRole}LookupId`]: String(role.id) },
         avantValeurs: { [`${S.colonnes.utilisateurRole}LookupId`]: String(cible.roleId || "") },
+        verifierVersion: (fields) => d.portee === "tous" ||
+          (S.colonnes.utilisateurClient && d.clientIds.includes(String(fields[`${S.colonnes.utilisateurClient}LookupId`] || "")))
+          ? null : "L'utilisateur n'appartient plus à votre client.",
         action: "Cockpit : changement de rôle", nom: `Rôle — ${cible.titre}`,
         notes: `Utilisateur ${cible.id} (${cible.titre}) | Rôle ${cible.roleId || "-"} -> ${role.id} (${role.titre})`
       },
@@ -135,6 +165,8 @@ async function construireAction(d, action, params, g) {
 
   if (action === "ajouter-acces-site") {
     if (!cible) return { refus: "Utilisateur introuvable dans votre périmètre." };
+    if (String(cible.id) === String(d.utilisateurId) ||
+      !droits.peutAttribuer(d, cible.roleId, politique)) return { refus: "Vous ne pouvez pas modifier les accès de cet utilisateur." };
     const ctxSites = await contexteSites(d);
     const groupe = perimetre.groupeParDomaine(ctxSites.groupes, minuscule(params.domaine));
     if (!groupe) return { refus: "Ce site n'est pas dans votre périmètre." };
@@ -167,7 +199,15 @@ async function construireAction(d, action, params, g) {
   if (donnees.utilisateurs.some((u) => minuscule(u.titre) === email)) return { refus: "Cet utilisateur existe déjà." };
   if (!role || !droits.peutAttribuer(d, role.id, politique)) return { refus: "Vous ne pouvez pas attribuer ce rôle." };
   const C = S.colonnes;
+  if (!C.utilisateurRole || !S.listes.utilisateur) return { refus: "La structure des utilisateurs est indisponible." };
   const champs = { Title: email, [`${C.utilisateurRole}LookupId`]: String(role.id) };
+  const client = params.client ? donnees.clients.find((c) => ref("k", c.id) === params.client && d.clientIds.includes(String(c.id))) : null;
+  if (params.client && !client) return { refus: "Client introuvable dans votre périmètre." };
+  if (droits.regleRole(politique, role.id)?.portee === "client" && !client) return { refus: "Un client valide est obligatoire pour ce rôle." };
+  if (client) {
+    if (!C.utilisateurClient) return { refus: "La relation client n'est pas disponible." };
+    champs[`${C.utilisateurClient}LookupId`] = String(client.id);
+  }
   if (g) {
     const [oa, ov] = await Promise.all([idOui(g, "OBJ-ACTIF", S.listes.actif), idOui(g, "OBJ-VALIDE", S.listes.valide)]);
     if (!oa || !ov || !C.utilisateurActif || !C.utilisateurValide) return { refus: "Les valeurs d'activation ne sont pas disponibles." };
@@ -180,14 +220,14 @@ async function construireAction(d, action, params, g) {
       action: "Cockpit : création d'utilisateur", nom: `Utilisateur — ${email}`,
       notes: `Utilisateur ${email} | Rôle ${role.id} (${role.titre})`, cleDoublon: `utilisateur:${email}`
     },
-    changements: [{ libelle: "Nouvel utilisateur", avant: "—", apres: `${email} (${role.titre})` }]
+    changements: [{ libelle: "Nouvel utilisateur", avant: "—", apres: `${email} (${role.titre})${client ? ` — ${client.titre}` : ""}` }]
   };
 }
 
 /* Anti-doublon relu dans SharePoint au moment de l'ecriture (et non depuis le cache). */
 function controleDoublon(op) {
   return async (g) => {
-    const items = await dse.collecter(g.token, `/sites/${g.siteGraphId}/lists/${op.listId}/items?$expand=fields`);
+    const items = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${op.listId}/items?$expand=fields`);
     const [type, a, b] = String(op.cleDoublon || "").split(":");
     if (type === "utilisateur") return items.some((i) => minuscule(i.fields?.Title) === a);
     if (type === "lien") {
@@ -244,6 +284,8 @@ async function applications(d) {
   const colUrl = parNom(/(^|[-_ ])(URL|LIEN|ROUTE)([-_ ]|$)/i);
   const colIcone = parNom(/ICONE|ICON/i);
   const colOrdre = parNom(/ORDRE/i);
+  const colFonction = cols.find((c) => c.name === "FONCTIONS");
+  const colNiveau = cols.find((c) => c.name === "NIVEAUACCES");
   const lookupVers = (colonnes, nomListe) => {
     const l = L(nomListe);
     return l ? colonnes.find((c) => c.lookup?.listId && minuscule(c.lookup.listId) === minuscule(l.id)) : null;
@@ -259,6 +301,10 @@ async function applications(d) {
     const f = i.fields || {};
     const rattachements = liensSC[1].filter((l) => lid(l.fields, cCockpit) === String(i.id)).map((l) => lid(l.fields, cSite)).filter(Boolean);
     const dansPerimetre = rattachements.length ? rattachements.some((s) => mesSites.has(s)) : d.portee === "tous";
+    const fonctions = String(colFonction ? f[colFonction.name] || "" : "").split(/[;,\n]+/).map((x) => x.trim().toLowerCase()).filter(Boolean);
+    const niveau = String(colNiveau ? f[colNiveau.name] || "" : "").trim().toLowerCase();
+    const autorisee = fonctions.length > 0 && fonctions.every((x) => d.fonctions.includes(x)) &&
+      Object.hasOwn(droits.RANG_NIVEAU, niveau) && droits.RANG_NIVEAU[niveau] <= droits.RANG_NIVEAU[d.niveau];
     return {
       titre: f.Title || null,
       description: f.NoteCourte || f.NOTE_x002d_COURTE || null,
@@ -267,10 +313,10 @@ async function applications(d) {
       url: colUrl ? String(f[colUrl.name] || "").trim() || null : null,
       icone: colIcone ? String(f[colIcone.name] || "").trim() || null : null,
       ordre: colOrdre ? Number(f[colOrdre.name]) || null : null,
-      dansPerimetre
+      dansPerimetre, autorisee, niveau
     };
   }).filter((a) => a.dansPerimetre);
-  const manquantes = [!colUrl && "adresse interne", !colIcone && "icône", !colOrdre && "ordre", "rôle minimal", "niveau d'accès"].filter(Boolean);
+  const manquantes = [!colUrl && "adresse interne", !colIcone && "icône", !colOrdre && "ordre", !colFonction && "fonctions autorisées", !colNiveau && "niveau d'accès"].filter(Boolean);
   return { disponible: true, liste, colonnesManquantes: manquantes };
 }
 
@@ -281,7 +327,7 @@ async function menu(d) {
   let apps = [];
   try {
     apps = (await applications(d)).liste
-      .filter((a) => a.actif && a.valide && a.url && /^\/cockpit(\/[a-z0-9-]+)*$/i.test(a.url))
+      .filter((a) => a.autorisee && a.actif && a.valide && a.url && /^\/cockpit(\/[a-z0-9-]+)*$/i.test(a.url))
       .map((a, i) => ({ cle: `app-${i}`, libelle: a.titre, icone: a.icone || "🧩", url: a.url, ordre: a.ordre ?? 50 + i, niveau: "lecture" }));
   } catch (e) {
     console.warn("[DSE cockpit] applications", e.message);
@@ -291,12 +337,13 @@ async function menu(d) {
 
 /* ---------------- Tableau de bord ---------------- */
 
-async function ecrituresRecentes(g) {
+async function ecrituresRecentes(g, d) {
   const lj = dse.trouverListe(g.listes, ["OBJ-JRN"]);
   if (!lj) return { disponible: false, liste: [] };
   const items = await dse.collecter(g.token,
-    `/sites/${g.siteGraphId}/lists/${lj.id}/items?$expand=fields($select=Title,ACTION,NOM,DATEEVENEMENT,STATUTJRN)&$top=500`);
+    `/sites/${g.siteGraphId}/lists/${lj.id}/items?$expand=fields($select=Title,ACTION,NOM,DATEEVENEMENT,STATUTJRN,NOTES)&$top=500`);
   const liste = items.filter((i) => String(i.fields?.Title || "").startsWith("DSE-COCKPIT-"))
+    .filter((i) => d.portee === "tous" || d.siteIds.includes(String(/^Site (\d+)\b/.exec(i.fields?.NOTES || "")?.[1] || "")))
     .map((i) => ({ le: i.fields.DATEEVENEMENT || null, action: i.fields.ACTION || null, objet: i.fields.NOM || null, statut: i.fields.STATUTJRN || null }))
     .sort((a, b) => String(b.le).localeCompare(String(a.le))).slice(0, 15);
   return { disponible: true, liste };
@@ -336,6 +383,10 @@ async function tableau(d) {
   }
   const g = await ecriture.contexteGraph();
   const journal = ecriture.etatJournalisation();
+  const structureJournal = await ecriture.etatStructureJournal(g);
+  if (!structureJournal.disponible) {
+    problemes.unshift({ niveau: "critique", titre: structureJournal.raison, lien: "/cockpit/administration" });
+  }
   if (journal.dernier && !journal.dernier.ok) {
     problemes.unshift({ niveau: "critique", titre: "La dernière écriture n'a pas pu être journalisée", lien: "/cockpit/administration" });
   }
@@ -354,15 +405,15 @@ async function tableau(d) {
     for (const u of visibles) m.set(u.roleTitre || "Sans rôle", (m.get(u.roleTitre || "Sans rôle") || 0) + 1);
     utilisateursParRole = [...m.entries()].map(([role, nombre]) => ({ role, nombre }));
     sansAcces = visibles.filter((u) => {
-      const p = droits.regleRole(politique, u.roleId)?.portee;
+      const p = droits.regleRole(donnees.politique || {}, u.roleId)?.portee;
       return p && p !== "tous" && !donnees.liens.some((l) => String(l.utilisateurId) === String(u.id));
     }).map((u) => u.titre);
     for (const e of sansAcces) problemes.push({ niveau: "attention", titre: `${e} : aucun site attribué`, lien: "/cockpit/utilisateurs" });
   }
   let apps = null;
-  try { apps = await applications(d); } catch { apps = { disponible: false, liste: [], colonnesManquantes: [] }; }
+  try { apps = await applications(d); } catch (e) { console.warn("[DSE cockpit] applications", e.message); apps = { disponible: false, liste: [], colonnesManquantes: [] }; }
   let ecritures = { disponible: false, liste: [] };
-  try { ecritures = await ecrituresRecentes(g); } catch (e) { console.warn("[DSE cockpit] journal", e.message); }
+  try { ecritures = await ecrituresRecentes(g, d); } catch (e) { console.warn("[DSE cockpit] journal", e.message); }
 
   const prochaines = [];
   if (problemes.some((p) => p.niveau === "critique")) prochaines.push({ titre: "Traiter les problèmes critiques", lien: "/cockpit/administration" });
@@ -378,11 +429,12 @@ async function tableau(d) {
     utilisateursParRole,
     applications: plateforme ? apps : { disponible: apps.disponible, liste: apps.liste, colonnesManquantes: [] },
     ecrituresRecentes: ecritures,
-    journal: { disponible: ecritures.disponible, derniere: journal.dernier ? { le: journal.dernier.le, enregistre: journal.dernier.ok } : null }
+    journal: { disponible: ecritures.disponible, ecritureDisponible: structureJournal.disponible,
+      raison: structureJournal.raison || null, derniere: journal.dernier ? { le: journal.dernier.le, enregistre: journal.dernier.ok } : null }
   };
 }
 
 module.exports = {
   tableau, utilisateurs, menu, applications, preparerAction, construireAction, controleDoublon, ACTIONS,
-  _test: { utilisateursVisibles, ref, ENTREES_MOTEUR }
+  _test: { utilisateursVisibles, ref, ENTREES_MOTEUR, ecrituresRecentes }
 };

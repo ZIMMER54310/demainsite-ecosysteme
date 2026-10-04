@@ -7,6 +7,7 @@
  */
 
 const session = require("../auth/session");
+const dse = require("../shared/dse");
 const fournisseurs = require("../auth/fournisseurs");
 const droits = require("../auth/droits");
 const cockpit = require("../shared/cockpit");
@@ -197,7 +198,7 @@ async function editionLire(req, res) {
     const def = edition.COMPOSANTS_EDITABLES[composant];
     const info = await siteDuPerimetre(ctx, req.query.domaine);
     if (!info || !def || !peutEcrire(ctx.droits, def.fonction)) return refuser(res, 404, "Ce réglage n'est pas disponible dans votre espace.");
-    const r = await edition.lire({ composant, siteId: info.id });
+    const r = await edition.lire({ composant, siteId: info.id, element: String(req.query.element || "") });
     repondre(res, 200, { succes: true, donnees: { site: info.titre, domaine: perimetre.domaineAcces(info), ...r }, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] edition", e.message);
@@ -213,7 +214,7 @@ async function editionApercu(req, res) {
     const def = edition.COMPOSANTS_EDITABLES[composant];
     const info = await siteDuPerimetre(ctx, req.body?.domaine);
     if (!info || !def || !peutEcrire(ctx.droits, def.fonction)) return refuser(res, 404, "Ce réglage n'est pas disponible dans votre espace.");
-    const r = await edition.preparer({ identite: ctx.identite, composant, siteId: info.id, siteNom: info.titre, valeurs: req.body?.valeurs });
+    const r = await edition.preparer({ identite: ctx.identite, composant, siteId: info.id, siteNom: info.titre, valeurs: req.body?.valeurs, element: String(req.body?.element || "") });
     repondreResultat(res, r);
   } catch (e) {
     console.error("[DSE cockpit] edition apercu", e.message);
@@ -231,6 +232,8 @@ async function confirmer(req, res) {
       jeton: req.body?.jeton,
       acteur: ctx.identite.email || ctx.identite.sujet,
       revalider: async (op) => {
+        dse.viderCacheGraph();
+        droits.viderCache();
         const d = await droits.droitsPour(ctx.identite);
         if (op.portee === "site") {
           if (!peutEcrire(d, op.fonction) || !d.siteIds.includes(String(op.siteId))) return "Vous n'avez plus l'autorisation de modifier ce réglage.";

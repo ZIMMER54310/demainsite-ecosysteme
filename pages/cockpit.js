@@ -110,7 +110,7 @@ export async function cockpitEditionPage(params) {
   try {
     const c = await contexte(params);
     if (c.html) return c.html;
-    const r = await getEdition(params.domaine, params.composant).catch(() => null);
+    const r = await getEdition(params.domaine, params.composant, params.element || "").catch(() => null);
     if (!r?.donnees) return nonDisponible("Ce réglage n'est pas disponible dans votre espace.");
     return rendreEdition(c.moi, r.donnees, params);
   } catch { return indisponible; }
@@ -145,14 +145,14 @@ export function activerEdition(racine = document) {
   const form = racine.querySelector("[data-edition]");
   const zone = racine.querySelector("[data-apercu]");
   if (!form || !zone) return;
-  const lancer = brancherConfirmation(zone, (d) => apercuEdition(d.domaine, d.composant, d.valeurs), confirmerEdition, () => {
+  const lancer = brancherConfirmation(zone, (d) => apercuEdition(d.domaine, d.composant, d.valeurs, d.element), confirmerEdition, () => {
     form.querySelectorAll("[data-champ]").forEach((c) => { c.defaultValue = c.value; });
   });
   form.addEventListener("submit", (ev) => {
     ev.preventDefault();
     const valeurs = {};
     form.querySelectorAll("[data-champ]").forEach((c) => { valeurs[c.name] = c.value; });
-    lancer({ domaine: form.dataset.domaine, composant: form.dataset.composant, valeurs });
+    lancer({ domaine: form.dataset.domaine, composant: form.dataset.composant, element: form.dataset.element, valeurs });
   });
 }
 

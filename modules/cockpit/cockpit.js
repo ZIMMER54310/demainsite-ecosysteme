@@ -32,7 +32,10 @@ export const CARTES = Object.freeze([
 /* Reglages modifiables depuis le cockpit (le serveur refait tous les controles). */
 export const EDITIONS = Object.freeze([
   { composant: "entete", fonction: "entete", libelle: "Modifier l'En-tête" },
-  { composant: "seo", fonction: "seo", libelle: "Modifier le SEO" }
+  { composant: "seo", fonction: "seo", libelle: "Modifier le SEO" },
+  { composant: "footer", fonction: "footer", libelle: "Modifier le Footer" },
+  { composant: "menu", fonction: "menu", libelle: "Modifier le menu" },
+  { composant: "pages", fonction: "pages", libelle: "Modifier les pages" }
 ]);
 const NIVEAUX = { lecture: 0, ecriture: 1, administration: 2 };
 export function editionsVisibles(moi, fonctionsSite = []) {
@@ -315,6 +318,7 @@ export function rendreAssistant({ moi, numero = 1, valeurs = {} }) {
 
 export function rendreEdition(moi, d, params = {}) {
   const retour = `#/cockpit/site/${encodeURIComponent(d.domaine || params.domaine)}`;
+  if (d.selection) return `<section class="cockpit">${rendreEnteteCockpit(moi)}<div class="card"><h2>${e(d.libelle)}</h2><ul class="cockpit-liste">${(d.elements || []).map((x) => `<li><a href="${retour}/modifier/${encodeURIComponent(params.composant)}?element=${encodeURIComponent(x.ref)}">${e(x.titre)}</a></li>`).join("")}</ul><a class="btn btn-secondary" href="${retour}">Retour au site</a></div></section>`;
   if (!d.disponible) {
     return `<section class="cockpit">${rendreEnteteCockpit(moi)}
       <div class="card"><h2>${e(d.libelle || "Réglage")} — ${e(d.site || "")}</h2>
@@ -331,8 +335,8 @@ export function rendreEdition(moi, d, params = {}) {
   return `<section class="cockpit">${rendreEnteteCockpit(moi)}
     <div class="card">
       <h2>${e(d.libelle)} — ${e(d.site || "")}</h2>
-      <p class="muted">Modifiez les valeurs puis vérifiez l'aperçu des changements avant de confirmer.</p>
-      <form class="cockpit-edition" data-edition data-domaine="${e(d.domaine || params.domaine)}" data-composant="${e(params.composant)}">
+      <p class="muted">${d.creation ? "Aucun réglage n'est lié à ce site. Renseignez les valeurs pour le créer." : "Modifiez les valeurs puis vérifiez l'aperçu des changements avant de confirmer."}</p>
+      <form class="cockpit-edition" data-edition data-domaine="${e(d.domaine || params.domaine)}" data-composant="${e(params.composant)}" data-element="${e(params.element || "")}">
         ${champs}
         <div class="cockpit-actions"><button class="btn btn-primary" type="submit">Voir les changements</button>
         <a class="btn btn-secondary" href="${retour}">Retour au site</a></div>
@@ -356,7 +360,7 @@ export function rendreResultatEcriture(r) {
   if (!r || r.erreur) return `<div class="card cockpit-resultat erreur"><p>⚠ ${e(r?.erreur || "L'enregistrement n'a pas abouti.")}</p></div>`;
   const journal = r.journal ? (r.journal.enregistre ? "✅ Modification journalisée." : "⚠ La modification est enregistrée mais n'a pas pu être journalisée.") : "";
   return `<div class="card cockpit-resultat ok"><p>✅ ${e(r.message || (r.deja ? "Modification déjà enregistrée." : "Modification enregistrée et vérifiée."))}</p>
-    ${journal ? `<p class="muted">${journal}</p>` : ""}</div>`;
+    ${journal ? `<p class="muted">${journal}</p>` : ""}${r.journal?.erreur ? `<p>${e(r.journal.erreur)}</p>` : ""}</div>`;
 }
 
 /* ---------------- Administration ---------------- */
@@ -388,7 +392,8 @@ export function rendreAdministration(moi, t) {
   const ecritures = !t.ecrituresRecentes?.disponible ? `<p>🔴 Journal indisponible.</p>`
     : t.ecrituresRecentes.liste.length ? `<ul class="cockpit-liste">${t.ecrituresRecentes.liste.map((x) => `<li>${e(String(x.le || "").replace("T", " ").slice(0, 16))} — ${e(x.objet || x.action || "")} ${x.statut ? `<span class="cockpit-badge">${e(x.statut)}</span>` : ""}</li>`).join("")}</ul>`
       : `<p class="muted">Aucune écriture depuis le cockpit pour l'instant.</p>`;
-  const journal = t.journal?.derniere && !t.journal.derniere.enregistre ? `<p>🔴 La dernière écriture n'a pas pu être journalisée.</p>` : "";
+  const journal = t.journal?.ecritureDisponible === false ? `<p>🔴 ${e(t.journal.raison || "Journalisation indisponible.")}</p>`
+    : t.journal?.derniere && !t.journal.derniere.enregistre ? `<p>🔴 La dernière écriture n'a pas pu être journalisée.</p>` : "";
   return `<section class="cockpit">${rendreEnteteCockpit(moi)}
     <h2>Administration</h2>
     <h3>Sites par statut <span class="muted">(${Number(t.nombreSites) || 0})</span></h3>
@@ -424,7 +429,21 @@ export function rendreUtilisateurs(moi, d) {
     <form data-action-admin="creer-utilisateur" class="cockpit-form-inline">
       <label for="nouvel-email">Adresse e-mail</label><input id="nouvel-email" type="email" name="email" required maxlength="255">
       <label for="nouveau-role">Rôle</label><select id="nouveau-role" name="role" required>${roles}</select>
+      <label for="nouveau-client">Client</label><select id="nouveau-client" name="client"><option value="">Sans client</option>${(d.clients || []).map((c) => `<option value="${e(c.ref)}">${e(c.titre)}</option>`).join("")}</select>
       <button class="btn btn-primary" type="submit">Voir l'aperçu</button></form></div>` : "";
+  const politiques = (d.politiques || []).map((r) => `<div class="card"><h3>${e(r.titre)}</h3>${r.modifiable ? `
+    <form data-action-admin="modifier-politique-role" class="cockpit-edition">
+      <input type="hidden" name="role" value="${e(r.ref)}">
+      <label>Périmètre<select name="portee" required><option value="">Choisir</option>${[
+        ["TOUS", "Tous les clients"], ["CLIENT", "Un client"], ["ATTRIBUES", "Sites attribués"]
+      ].map(([v, t]) => `<option value="${v}"${r.portee === v ? " selected" : ""}>${t}</option>`).join("")}</select></label>
+      <label>Niveau<select name="niveau" required><option value="">Choisir</option>${[
+        ["LECTURE", "Lecture"], ["ECRITURE", "Écriture"], ["ADMINISTRATION", "Administration"]
+      ].map(([v, t]) => `<option value="${v}"${r.niveau === v ? " selected" : ""}>${t}</option>`).join("")}</select></label>
+      <label>Fonctions autorisées<textarea name="fonctions" required maxlength="2000">${e(r.fonctions || "")}</textarea></label>
+      <p class="muted">Capacités disponibles : ADMINISTRATION-GLOBALE, GESTION-CLIENT, GESTION-UTILISATEURS-CLIENT, GESTION-SITES-ATTRIBUES. Les fonctions individuelles de votre espace sont aussi acceptées. Séparez-les par un point-virgule.</p>
+      <button class="btn btn-primary" type="submit">Vérifier la politique</button>
+    </form>` : '<p class="muted">Votre propre politique ne peut pas être modifiée dans ce formulaire.</p>'}</div>`).join("");
   return `<section class="cockpit">${rendreEnteteCockpit(moi)}
     <h2>Utilisateurs et accès <span class="muted">(${(d.utilisateurs || []).length})</span></h2>
     <div data-apercu aria-live="polite"></div>
@@ -432,5 +451,6 @@ export function rendreUtilisateurs(moi, d) {
       <thead><tr><th>Utilisateur</th><th>Rôle</th><th>État</th><th>Sites</th><th>Actions</th></tr></thead>
       <tbody>${lignes || '<tr><td colspan="5" class="muted">Aucun utilisateur dans votre périmètre.</td></tr>'}</tbody></table></div></div>
     ${creation}
+    ${politiques ? `<h2>Politiques des rôles</h2>${politiques}` : ""}
   </section>`;
 }

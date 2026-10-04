@@ -1,6 +1,6 @@
 # API DSE (OVH, Node/Express)
 
-API de **lecture seule** vers SharePoint via Microsoft Graph. Ecoute `127.0.0.1:3000` derriere Nginx
+API publique en lecture et cockpit avec ecriture controlee vers SharePoint via Microsoft Graph. Ecoute `127.0.0.1:3000` derriere Nginx
 (service `dse-api.service`). Voir le [README racine](../README.md) pour l'architecture, le
 deploiement et la verification.
 
@@ -8,7 +8,43 @@ Routes : `GET /api/v1/etat`, `/sites/par-domaine`, `/site/{id}`, `/site-complet/
 `GET /api/v1/media/{id}` sert l'image d'un element OBJ-MEDIA (ID natif) en lecture seule : fichier lu
 uniquement dans la bibliotheque `DSE - MEDIAS` (`DSE_MEDIA_LIBRARY`), sous `SITE-PUBLIC/`, element actif et valide,
 types image, 15 Mo max. Le chemin `MEDIA-PATH` prime ; le drive stocke dans l'element est ignore.
-`/api/v1/moi` est desactivee (HTTP 501) tant qu'une authentification Entra native n'existe pas.
+Le cockpit utilise une session native Entra et des controles de perimetre cote serveur.
+
+## Droits et edition cockpit
+
+La politique est lue dans OBJ-ROLE : PORTEE, NIVEAUACCES, FONCTIONS, avec activation
+et validation. OBJ-UTILISATEUR utilise exclusivement le Lookup client `_x002d_CLIENT`.
+Un role inconnu, incomplet ou desactive n'accorde aucun droit. La politique JSON historique
+n'est plus utilisee en production. Un administrateur de portee CLIENT doit avoir exactement
+un client actif et valide ; aucun lien vers un site d'un autre client ne peut etendre ses droits.
+
+Les capacites SharePoint sont traduites en fonctions du moteur dans
+[politique-sharepoint.js](auth/politique-sharepoint.js) : ADMINISTRATION-GLOBALE (TOUS /
+ADMINISTRATION uniquement), GESTION-CLIENT, GESTION-UTILISATEURS-CLIENT,
+GESTION-SITES-ATTRIBUES. Les codes individuels des fonctions cockpit sont aussi acceptes.
+Tout code inconnu invalide la politique. Les politiques des autres roles peuvent etre
+completees dans le cockpit global, avec apercu, confirmation et controle anti-elevation.
+
+L'editeur generique propose En-tete, SEO, Pages, Menu et Footer lorsque leur structure le permet.
+Pages et Menu proposent une selection d'element dans le seul site autorise ; les references
+opaques ne permettent pas de modifier un autre site. Plusieurs SEO ou En-tetes lies bloquent
+l'edition : aucun choix arbitraire. SEO utilise
+OBJSITEPUBLIC ; l'ancien Lookup reste uniquement en compatibilite de lecture.
+Sans SEO lie, un formulaire vide permet une creation explicite avec
+OBJSITEPUBLICLookupId, activation et validation resolues depuis SharePoint. Aucun orphelin
+n'est rattache automatiquement. La cible est relue sans cache avant confirmation ;
+les creations concurrentes dans ce processus sont serialisees par site/composant.
+Les PATCH exigent l'ETag, reverifient le rattachement sur cette version et le transmettent
+a Graph ; sans version, l'ecriture est refusee. Les POST ne sont pas
+rejoues automatiquement sur 503 : une relecture est necessaire avant un nouvel apercu.
+L'anti-doublon suppose le service Node unique actuel ; avant un deploiement multi-processus,
+une contrainte d'unicite SharePoint ou un verrou distribue sera necessaire.
+
+OBJ-JRN est prepare avec STATUTJRN et CLEIDEMPOTENCE. Si le Lookup historique STATUT
+est obligatoire ou si Graph refuse le journal, le resultat affiche explicitement le blocage.
+Aucune valeur artificielle n'est envoyee, aucun nouvel essai sans STATUTJRN n'est effectue.
+Une modification deja effectuee n'est pas presentee comme annulee en cas d'echec du journal.
+Les historiques presentes a un administrateur client sont limites aux sites de son perimetre.
 
 `site-complet` agrege OBJ-SITE-PUBLIC avec menu, logo, entete, theme, SEO, pages, modules, contenus
 et OBJ-MEDIA en suivant les relations par **ID natifs SharePoint**.

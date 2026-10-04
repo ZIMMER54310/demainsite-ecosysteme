@@ -202,6 +202,15 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.ok(htmlListe.includes("Page 2 sur") && htmlListe.includes("Précédent") && htmlListe.includes("data-filtres-sites"));
   assert.ok(!TERMES_TECHNIQUES.test(htmlListe), "aucun terme technique dans Mes sites");
   assert.strictEqual(ui.lienSites({ q: "a b", statut: "Actif" }, { page: 3 }), "#/cockpit/sites?q=a+b&statut=Actif&page=3");
+  const cinqCents = Array.from({ length: 500 }, (_, i) => resumeSite(
+    { titre: `Site ${String(i).padStart(3, "0")}`, domaines: [`s${i}.example.test`], client: i % 2 ? "B" : "A" },
+    { titre: i % 2 ? "Statut nouveau" : "Actif" }));
+  const dernierePage = filtrerSites(cinqCents, { page: "20" });
+  assert.strictEqual(dernierePage.total, 500);
+  assert.strictEqual(dernierePage.pages, 20);
+  assert.strictEqual(dernierePage.elements.length, 25);
+  assert.strictEqual(dernierePage.elements[24].nom, "Site 499");
+  assert.strictEqual(filtrerSites(cinqCents, { statut: "Statut nouveau", client: "B", parPage: "100" }).total, 250);
 
   // --- Ecriture, droits d'administration, refus hors perimetre ---------------
   const droitsMod = require("../auth/droits");
@@ -229,6 +238,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
 
   // Donnees simulees : 2 clients, refus hors perimetre et elevation
   const donneesSim = {
+    politique, clients: base.clients,
     utilisateurs: [u("1", "super@ex.fr", "1"), u("5", "admin@client.fr", "3"), u("6", "redac@client.fr", "4"), u("8", "autre@client3.fr", "4", { clientId: "3" })],
     liens: [{ id: "1", utilisateurId: "6", siteId: "4", actif: true, valide: true }, { id: "2", utilisateurId: "8", siteId: "9", actif: true, valide: true }],
     roles: ["1", "2", "3", "4", "5", "6"].map((id) => ({ id, titre: `Rôle ${id}`, actif: true, valide: true })),
