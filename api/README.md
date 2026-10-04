@@ -30,6 +30,9 @@ un alias, mais ouvre toujours le domaine principal public en HTTPS dans un nouve
 Sans selection, un site unique est utilise ; plusieurs sites offrent un choix explicite.
 Un domaine principal absent ou un site hors perimetre ne produit aucun lien de secours.
 Le lien n'inclut ni route cockpit ni parametre : le moteur public conserve ses statuts.
+La page publique de situation utilise une disposition verticale en-tete/carte/footer.
+La carte et son titre restent dans la largeur disponible, avec retour a la ligne des
+titres longs sur mobile, sans modification du contenu ou de la decision de statut.
 
 ## Identification Entra et inscription controlee
 
