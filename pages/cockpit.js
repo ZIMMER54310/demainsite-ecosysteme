@@ -2,8 +2,9 @@ import { initializeAuth } from "../js/auth.js";
 import { setState, getState } from "../js/state.js";
 import {
   getSitesCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
-  getAdminTableau, getAdminUtilisateurs, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident, getStatutsSite
+  getAdminTableau, getAdminUtilisateurs, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident, getStatutsSite, getConstruire
 } from "../services/cockpit.service.js";
+import { activerConstructeur } from "../modules/cockpit/constructeur.js";
 import {
   rendreConnexion, rendreSansAcces, rendreAccueil, rendreListeSites, rendreVueSite, rendreAssistant,
   CRITERES_SITES, lienSites, rendreEdition, rendreApercu, rendreResultatEcriture, rendreAdministration, rendreUtilisateurs
@@ -249,4 +250,20 @@ export function activerUtilisateurs(racine = document) {
       zone.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
   });
+}
+
+/* Constructeur DSE : les donnees et droits viennent du serveur (aucune page, aucun role code en dur). */
+export async function cockpitConstruirePage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return { html: c.html };
+    const r = await getConstruire(params.domaine).catch(() => null);
+    if (!r?.donnees) return { html: nonDisponible("La construction de ce site n'est pas disponible dans votre espace.") };
+    return { html: `<div data-constructeur-racine></div>`, moi: c.moi, donnees: r.donnees };
+  } catch { return { html: indisponible }; }
+}
+
+export function activerConstruire(racinePage, page, domaine) {
+  const racine = racinePage.querySelector("[data-constructeur-racine]");
+  if (racine && page.donnees) activerConstructeur(racine, { moi: page.moi, domaine, donnees: page.donnees });
 }

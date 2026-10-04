@@ -99,3 +99,40 @@
 .cockpit-statut-dialogue form { display: grid; gap: 16px; margin-bottom: 16px; }
 .cockpit-statut-dialogue label { display: grid; gap: 8px; }
 .cockpit-statut-dialogue select { padding: 10px; font: inherit; width: 100%; }
+
+/* Constructeur DSE */
+.constructeur-onglets { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.constructeur-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.constructeur-carte header, .constructeur-editeur-entete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.constructeur-carte label { display: grid; gap: 4px; margin: 8px 0; }
+.constructeur-boutons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.constructeur-creer { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.constructeur-creer label { display: grid; gap: 4px; flex: 1 1 260px; }
+.constructeur-badge--actif { background: #d9f5e6; color: #0b6b3a; }
+.constructeur-badge--brouillon { background: #fff2cc; color: #7a5a00; }
+.constructeur-badge--inactif { background: #eceff3; color: #555; }
+.constructeur-type { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted, #667); margin-right: 6px; }
+.constructeur-arbre, .constructeur-arbre ul { list-style: none; padding-left: 0; margin: 0; }
+.constructeur-arbre ul { padding-left: 18px; border-left: 2px solid var(--line, #dde); margin: 6px 0 6px 6px; }
+.constructeur-noeud { margin: 6px 0; }
+.constructeur-noeud-entete { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid var(--line, #dde); border-radius: 8px; background: rgba(0,0,0,.02); }
+.constructeur-outils { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.btn-mini { padding: 2px 8px; font-size: .8rem; min-height: 0; }
+.constructeur-ajout { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 6px 18px; }
+.constructeur-ajout select, .constructeur-ajout input, .constructeur-outils select { padding: 4px 6px; font: inherit; font-size: .85rem; }
+.constructeur-apercus-cadres { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.constructeur-apercus-cadres figure { margin: 0; display: grid; gap: 6px; }
+.constructeur-apercus-cadres figure:first-child { flex: 1 1 520px; }
+.constructeur-apercu { border: 1px solid var(--line, #dde); border-radius: 8px; background: #fff; height: 520px; }
+.constructeur-apercu--ordinateur { width: 100%; }
+.constructeur-apercu--mobile { width: 375px; max-width: 100%; }
+.constructeur-medias { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.constructeur-media { margin: 0; display: grid; gap: 6px; border: 1px solid var(--line, #dde); border-radius: 8px; padding: 8px; }
+.constructeur-media img, .constructeur-logo img { width: 100%; height: 110px; object-fit: contain; background: #f6f7f9; border-radius: 6px; }
+.constructeur-logo img { width: 220px; }
+.constructeur-medias--mini { display: flex; gap: 4px; flex-wrap: wrap; }
+.constructeur-medias--mini img { width: 48px; height: 48px; object-fit: contain; background: #f6f7f9; border-radius: 4px; }
+.constructeur-dialogue form label { display: grid; gap: 6px; }
+.constructeur-dialogue input, .constructeur-dialogue textarea { padding: 8px; font: inherit; width: 100%; }
+.alerte-erreur { color: #a11; } .alerte-succes { color: #0b6b3a; }
+@media (max-width: 640px) { .constructeur-outils { margin-left: 0; } .constructeur-arbre ul { padding-left: 8px; } }

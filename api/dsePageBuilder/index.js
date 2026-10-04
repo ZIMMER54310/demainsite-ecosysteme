@@ -54,10 +54,14 @@ function fabrique(construire) {
   };
 }
 
-const sortie = (r) => ({ mode: r.mode, sections: r.sections.map((s) => ({ ...s, lignes: s.lignes.map((l) => ({ ...l,
-  colonnes: l.colonnes.map((c) => ({ ...c, modules: c.modules.map(({ _id, ...m }) => m) })) })) })) });
+const nettoyer = (sections) => sections.map((s) => ({ ...s, lignes: s.lignes.map((l) => ({ ...l,
+  colonnes: l.colonnes.map((c) => ({ ...c, modules: c.modules.map(({ _id, ...m }) => m) })) })) }));
+const sortie = (r) => ({ mode: r.mode, sections: nettoyer(r.sections),
+  ...(r.entete ? { entete: { sections: nettoyer(r.entete.sections) } } : {}),
+  ...(r.footer ? { footer: { sections: nettoyer(r.footer.sections) } } : {}) });
 
 module.exports = {
+  nettoyer,
   page: fabrique(({ donnees, site, pageId, req }) => sortie(builder.composerPage(donnees, site, {
     appareil: req.query.appareil,
     pageId: pageId || undefined,

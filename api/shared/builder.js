@@ -209,41 +209,41 @@ function trouverPage(donnees, site, { pageId, route } = {}) {
   return pages.find((p) => String(f(p, "URL") || "/").trim() === url) || null;
 }
 
-/*
- * Retourne { mode: "builder" | "historique", page, sections[] }.
- * Le mode Builder n'existe que si au moins un module valide est rendu ; sinon le rendu historique reste actif.
- */
-function composerPage(donnees, site, options = {}) {
-  const page = trouverPage(donnees, site, options);
-  if (!page || !publiable(page)) return { mode: "historique", page: null, sections: [] };
-
-  const modules = indexer(donnees.modules);
-  const types = new Set((donnees.types || []).filter(publiable).map((t) => String(f(t, "Title") || "").toUpperCase()));
-  const ctx = {
-    site, donnees, modules, types,
+function contexteComposition(donnees, site) {
+  return {
+    site, donnees, modules: indexer(donnees.modules),
+    types: new Set((donnees.types || []).filter(publiable).map((t) => String(f(t, "Title") || t?._fields?.Title || "").toUpperCase())),
     modeles: indexer(donnees.modeles), presets: indexer(donnees.presets),
     medias: indexer(donnees.medias), referentiels: indexReferentiels(donnees)
   };
-  const appareil = APPAREILS.includes(String(options.appareil || "").toUpperCase()) ? String(options.appareil).toUpperCase() : null;
+}
 
+const appareilDe = (v) => (APPAREILS.includes(String(v || "").toUpperCase()) ? String(v).toUpperCase() : null);
+
+/*
+ * Moteur commun Section > Ligne > Colonne > Module, partage par les Pages, En-tetes et Footers.
+ * visible(el) : regle de filtrage (public = actif + valide ; apercu cockpit = non desactive).
+ */
+function composerSections(donnees, site, sectionsSource, { appareil = null, visible = publiable, ctx = null } = {}) {
+  const c = ctx || contexteComposition(donnees, site);
   const sections = [];
-  for (const section of enfants(donnees.sections, page.id, "OBJ-PAGES-SITE")) {
-    if (!publiable(section)) continue;
+  for (const section of sectionsSource) {
+    if (!visible(section)) continue;
 
     const lignes = [];
     for (const ligne of enfants(donnees.lignes, section.id, "OBJ-SECTION-SITE")) {
-      if (!publiable(ligne)) continue;
+      if (!visible(ligne)) continue;
 
       const structure = String(rel(ligne, "OBJ-LIGNE-STRUCTURE")?.titre || "100");
       const parts = /^\d+(?:-\d+)*$/.test(structure) ? structure.split("-").map(Number) : null;
       const colonnes = [];
 
       for (const [i, colonne] of enfants(donnees.colonnes, ligne.id, "OBJ-LIGNE-SITE").entries()) {
-        if (!publiable(colonne)) continue;
+        if (!visible(colonne)) continue;
 
         const mods = enfants(donnees.modules, colonne.id, "OBJ-COLONNE-SITE")
-          .filter(publiable)
-          .map((m) => composerModule(m, ctx))
+          .filter(visible)
+          .map((m) => composerModule(m, c))
           .filter((m) => m && (!appareil || m.visibilite[appareil]));
 
         const largeur = borne(f(colonne, "LARGEUR"), 1, 100) ?? (parts && parts.length > 1 ? parts[i] ?? null : 100);
@@ -262,9 +262,38 @@ function composerPage(donnees, site, options = {}) {
       lignes
     });
   }
+  return sections;
+}
 
-  const rendu = sections.some((s) => s.lignes.some((l) => l.colonnes.some((c) => c.modules.length)));
-  return rendu ? { mode: "builder", page: { id: page.id }, sections } : { mode: "historique", page: null, sections: [] };
+const aDesModules = (sections) => sections.some((s) => s.lignes.some((l) => l.colonnes.some((c) => c.modules.length)));
+
+/*
+ * En-tete / Footer affecte a la page : un seul (Lookup simple), utilise seulement s'il est
+ * actif + valide et rattache au meme site. Sinon le rendu historique reste en place.
+ */
+function composerConteneurPage(donnees, site, page, { liste, relation }, options) {
+  const id = rel(page, relation)?.id;
+  const el = id ? (donnees[liste] || []).find((x) => x.id === id) : null;
+  if (!el || !publiable(el) || rel(el, "OBJ-SITE-PUBLIC")?.id !== String(site.id)) return null;
+  const sections = composerSections(donnees, site, enfants(donnees.sections, el.id, relation), options);
+  return aDesModules(sections) ? { id: el.id, sections } : null;
+}
+
+/*
+ * Retourne { mode: "builder" | "historique", page, sections[], entete?, footer? }.
+ * Le mode Builder n'existe que si au moins un module valide est rendu ; sinon le rendu historique reste actif.
+ */
+function composerPage(donnees, site, options = {}) {
+  const page = trouverPage(donnees, site, options);
+  if (!page || !publiable(page)) return { mode: "historique", page: null, sections: [] };
+
+  const opts = { appareil: appareilDe(options.appareil), ctx: contexteComposition(donnees, site) };
+  const sections = composerSections(donnees, site, enfants(donnees.sections, page.id, "OBJ-PAGES-SITE"), opts);
+  const entete = composerConteneurPage(donnees, site, page, { liste: "entetes", relation: "OBJ-ENTETE-SITE" }, opts);
+  const footer = composerConteneurPage(donnees, site, page, { liste: "footers", relation: "OBJ-FOOTER-SITE" }, opts);
+
+  if (!aDesModules(sections) && !entete && !footer) return { mode: "historique", page: null, sections: [] };
+  return { mode: "builder", page: { id: page.id }, sections: aDesModules(sections) ? sections : [], entete, footer };
 }
 
 function listerModeles(donnees, site) {
@@ -280,5 +309,5 @@ function listerTypes(donnees) {
 
 module.exports = {
   LISTES_CONTENU, LISTES_BUILDER, POLICES, APPAREILS,
-  composerPage, composerModule, listerModeles, listerTypes, styleDepuisPreset, responsiveDepuisPreset, trouverPage, publiable
+  composerPage, composerSections, contexteComposition, composerModule, listerModeles, listerTypes, styleDepuisPreset, responsiveDepuisPreset, trouverPage, publiable, enfants, parOrdre
 };

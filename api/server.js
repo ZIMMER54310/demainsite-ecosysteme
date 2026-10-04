@@ -241,6 +241,8 @@ application.get("/api/v1/cockpit/sites/statuts", async (req, res) => {
   }
 });
 application.get("/api/v1/cockpit/site", controleurCockpit.site);
+application.get("/api/v1/cockpit/construire", controleurCockpit.construireLire);
+application.post("/api/v1/cockpit/construire/action", controleurCockpit.construireAction);
 application.get("/api/v1/cockpit/edition", controleurCockpit.editionLire);
 application.post("/api/v1/cockpit/edition/apercu", controleurCockpit.editionApercu);
 application.post("/api/v1/cockpit/edition/confirmer", controleurCockpit.confirmer);

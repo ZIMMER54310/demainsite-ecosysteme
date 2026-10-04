@@ -233,6 +233,7 @@ export function rendreVueSite(moi, vue, section) {
     </div>
     ${editionsVisibles(moi, vue.fonctions).length ? `<div class="cockpit-actions">${editionsVisibles(moi, vue.fonctions).map((x) =>
       `<a class="btn btn-primary" href="#/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}/modifier/${x.composant}">${e(x.libelle)}</a>`).join("")}</div>` : ""}
+    ${["entete", "footer", "pages"].some((f) => (moi.fonctions || []).includes(f)) ? `<div class="cockpit-actions"><a class="btn btn-primary" href="#/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}/construire">🧱 Construire le site</a></div>` : ""}
     ${rendreProgression(vue, section)}
     ${rendreAccesRapides(vue.fonctions, vue.acces || vue.domaine)}
   </section>`;

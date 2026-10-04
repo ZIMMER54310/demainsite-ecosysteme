@@ -1,5 +1,7 @@
 "use strict";
 
+const { publiable } = require("../shared/builder");
+
 const dse = require("../shared/dse");
 const catalogueSource = require("../shared/catalogue-source");
 const statutsSite = require("../shared/statuts-site");
@@ -101,10 +103,11 @@ function simplifierComposant(resultat) {
     listeId:
       resultat.listeId ||
       null,
+    // Plusieurs elements possibles (ex. En-tetes) : le premier actif + valide est prioritaire.
     donnees:
-      resultat.elements.length
-        ? resultat.elements[0]
-        : null
+      resultat.elements.find(publiable) ||
+      resultat.elements[0] ||
+      null
   };
 }
 

@@ -374,8 +374,132 @@ function deconnexion(req, res) {
   res.redirect(302, "/#/cockpit");
 }
 
+/* ---------------- Constructeur (En-tetes / Pages / Footer) ---------------- */
+
+const FONCTIONS_CONSTRUCTEUR = ["entete", "footer", "pages"];
+const constructeurEnCours = new Map();
+const constructeurExecutees = new Map();
+
+async function perimetreConstructeur(ctx, domaine) {
+  const d = ctx.droits;
+  if (!d.reconnu || !FONCTIONS_CONSTRUCTEUR.some((f) => d.fonctions.includes(f))) return null;
+  const info = await siteDuPerimetre(ctx, domaine);
+  if (!info) return null;
+  const fiches = new Set((info.fiches || [String(info.id)]).map(String));
+  const { sites: tous = [] } = await droits.donneesDroits();
+  const clients = new Set(tous.filter((s) => fiches.has(String(s.id)) && s.clientId).map((s) => String(s.clientId)));
+  return {
+    info,
+    sites: fiches,
+    clients,
+    superAdmin: require("../shared/statut-sites").autorise(d),
+    peut: (fonction) => peutEcrire(d, fonction),
+    lecture: (fonction) => d.fonctions.includes(fonction)
+  };
+}
+
+async function construireLire(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const p = await perimetreConstructeur(ctx, req.query.domaine);
+    if (!p) return refuser(res, 403, "Accès non autorisé.");
+    const C = require("../shared/constructeur");
+    const d = await require("../shared/builder-source").obtenirDonnees();
+    const donnees = { site: { titre: p.info.titre, domaine: (p.info.domaines || [])[0] || null },
+      droits: Object.fromEntries([...FONCTIONS_CONSTRUCTEUR, "logo-medias"].map((f) => [f, { lecture: p.lecture(f), ecriture: p.peut(f) }])),
+      superAdmin: p.superAdmin, ...C.vue(d, p) };
+    const reference = String(req.query.conteneur || "");
+    if (reference) {
+      const r = C.resoudre(d, reference, ["entete", "footer", "page"]);
+      if (!r || !p.sites.has(String(C.siteDe(d, r.type, r.el)))) {
+        return refuser(res, 404, "Élément introuvable dans ce site.");
+      }
+      donnees.arbre = C.arbre(d, r.type, r.el);
+      const nettoyer = require("../dsePageBuilder").nettoyer;
+      const apercu = C.apercu(d, p.info.id, r.type, r.el, req.query.appareil);
+      donnees.apercu = { mode: apercu.mode, sections: nettoyer(apercu.sections),
+        entete: apercu.entete ? { sections: nettoyer(apercu.entete.sections) } : null,
+        footer: apercu.footer ? { sections: nettoyer(apercu.footer.sections) } : null };
+    }
+    res.set("Cache-Control", "no-store");
+    repondre(res, 200, { succes: true, donnees, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] constructeur lire", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+/*
+ * Action du constructeur : origine + session + perimetre + droit d'ecriture recontroles a chaque appel,
+ * un seul traitement simultane par site, idempotence (cle cliente + journal OBJ-JRN), journalisation systematique.
+ */
+async function construireAction(req, res) {
+  let verrou = null;
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const domaine = String(req.body?.domaine || "").slice(0, 255);
+    const action = String(req.body?.action || "").slice(0, 64);
+    const params = req.body?.params && typeof req.body.params === "object" && !Array.isArray(req.body.params) ? req.body.params : {};
+    const cleClient = String(req.body?.cle || "").slice(0, 80);
+    if (JSON.stringify(params).length > 20000) return refuser(res, 413, "Saisie trop volumineuse.");
+    const p = await perimetreConstructeur(ctx, domaine);
+    if (!p) return refuserEcriture(res, ctx, domaine, "CONSTRUCTEUR-REFUS", "Site hors de votre périmètre ou fonction non autorisée.");
+
+    const lecture = action === "contenu.formulaire" || (action === "conteneur.modifier" && !params.valeurs);
+    const acteur = `OBJ-UTILISATEUR ${ctx.droits.utilisateurId || "non reconnu"}`;
+    const cle = ecriture.hash(["constructeur", acteur, cleClient || Math.random(), action, params]);
+    if (!lecture) {
+      if (!/^[A-Za-z0-9-]{16,80}$/.test(cleClient)) return refuser(res, 400, "Requête incomplète.");
+      if (constructeurExecutees.has(cle)) return repondreResultat(res, { ...constructeurExecutees.get(cle), deja: true });
+      verrou = String(p.info.id);
+      if (constructeurEnCours.has(verrou)) return refuser(res, 409, "Une autre modification de ce site est en cours. Merci de réessayer.");
+      constructeurEnCours.set(verrou, cle);
+    }
+
+    const C = require("../shared/constructeur");
+    const source = require("../shared/builder-source");
+    if (!lecture) source.viderCache();
+    const d = await source.obtenirDonnees();
+    let r;
+    try {
+      r = await C.executer({ d, perimetre: p, siteId: p.info.id, action, params });
+    } catch (e) {
+      if (e.refus) r = { refus: e.message };
+      else {
+        console.error("[DSE cockpit] constructeur action", action, e.message);
+        r = { erreur: "L'enregistrement SharePoint n'a pas abouti.", status: 502, crees: [] };
+      }
+    }
+    if (lecture) return repondreResultat(res, r);
+    if (r.refus) return refuserEcriture(res, ctx, domaine, "CONSTRUCTEUR-REFUS", r.refus);
+
+    const g = await ecriture.contexteGraph();
+    const succes = !r.erreur;
+    const journal = await ecriture.journaliser(g, {
+      cle, action: `Constructeur : ${action}`, nom: `${p.info.titre || domaine} · ${action}`,
+      ancien: {}, nouveau: { crees: r.crees || [], ...(r.nouveau || {}) },
+      notes: `Acteur : ${acteur} | Site : ${p.info.id} | ${r.message || r.erreur || ""}`,
+      succes, contexte: { domaine, site: String(p.info.id) }
+    });
+    ecriture.invaliderCaches();
+    const sortie = succes
+      ? { message: r.message, nouveau: r.nouveau || {}, journal: { enregistre: journal.ok } }
+      : { erreur: r.erreur, status: r.status, journal: { enregistre: journal.ok } };
+    if (succes) constructeurExecutees.set(cle, sortie);
+    if (constructeurExecutees.size > 500) constructeurExecutees.delete(constructeurExecutees.keys().next().value);
+    return repondreResultat(res, sortie);
+  } catch (e) {
+    console.error("[DSE cockpit] constructeur", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  } finally {
+    if (verrou) constructeurEnCours.delete(verrou);
+  }
+}
+
 module.exports = {
   moi, sites, site, connexion, retour, deconnexion, inscrire,
-  editionLire, editionApercu, confirmer, adminTableau, adminUtilisateurs, adminApercu,
+  editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide }
 };

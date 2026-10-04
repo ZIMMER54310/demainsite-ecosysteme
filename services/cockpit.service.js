@@ -12,3 +12,7 @@ export const apercuAdmin = (action, params) => apiPost("/cockpit/admin/apercu", 
 export const confirmerAdmin = (jeton) => apiPost("/cockpit/admin/confirmer", { jeton });
 export const getIncidents = () => apiGet("/cockpit/incidents");
 export const deciderIncident = (incident, decision) => apiPost("/cockpit/incidents/decision", { incident, decision });
+export const getConstruire = (domaine, conteneur = "") => apiGet("/cockpit/construire", { domaine, conteneur });
+// Cle d'idempotence par action : un double clic ou une relance reseau ne cree jamais de doublon.
+export const actionConstruire = (domaine, action, params = {}) =>
+  apiPost("/cockpit/construire/action", { domaine, action, params, cle: crypto.randomUUID() });

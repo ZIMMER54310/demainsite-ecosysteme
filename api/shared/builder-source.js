@@ -7,7 +7,10 @@ const B = require("./builder");
 
 const TOUT = { pages: "OBJ-PAGES-SITE", sections: "OBJ-SECTION-SITE", lignes: "OBJ-LIGNE-SITE", colonnes: "OBJ-COLONNE-SITE",
   modules: "OBJ-MODULE-SITE-PUBLIC", types: "OBJ-MODULE-SITE-PUBLIC-TYPE", modeles: "OBJ-MODELE-BUILDER",
-  presets: "OBJ-STYLE-PRESET", responsifs: "OBJ-STYLE-RESPONSIVE", medias: "OBJ-MEDIA", couleurs: "OBJ-COULEUR", polices: "OBJ-POLICE" };
+  presets: "OBJ-STYLE-PRESET", responsifs: "OBJ-STYLE-RESPONSIVE", medias: "OBJ-MEDIA", couleurs: "OBJ-COULEUR", polices: "OBJ-POLICE",
+  // Constructeur : conteneurs, utilisations, instances, logos et referentiels de structure.
+  entetes: "OBJ-ENTETE-SITE", footers: "OBJ-FOOTER-SITE", utilisations: "OBJ-MODULE-UTILISATION", instances: "OBJ-MODELE-INSTANCE",
+  logos: "OBJ-LOGO-SITE", structures: "OBJ-LIGNE-STRUCTURE", typesSection: "OBJ-SECTION-TYPE", actifs: "OBJ-ACTIF", valides: "OBJ-VALIDE" };
 
 let cache = null;
 let enCours = null;
