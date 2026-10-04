@@ -29,7 +29,7 @@ async function contexte(d, domaine, g = null) {
   ]);
   const disponibles = items.filter((i) => {
     const s = index.statuts.get(String(i.id));
-    return s?.actif && s?.valide && s?.code;
+    return s?.actif && s?.valide && require("./statuts-site").codeStatut(s);
   });
   return { g, liste, site, col, f, disponibles, statuts: index.statuts };
 }

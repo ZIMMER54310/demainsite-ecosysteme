@@ -15,7 +15,7 @@ const statuts = require("../shared/statut-sites");
   let courant = "a";
   const index = { sites: new Map([["site", { id: "site", titre: "Site", domaines: ["site.example.test"], clientId: "client" }]]),
     statuts: new Map([["a", { titre: "Initial", code: "INITIAL", actif: true, valide: true }],
-      ["b", { titre: "Statut futur", code: "FUTUR", actif: true, valide: true }],
+      ["b", { titre: "Statut futur", code: "", actif: true, valide: true }],
       ["c", { titre: "Invalide", code: "INVALIDE", actif: true, valide: false }]]) };
   changer(droits, "sitesIndex", async () => index);
   changer(ecriture, "contexteGraph", async () => g);
