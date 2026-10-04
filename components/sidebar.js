@@ -1,5 +1,5 @@
 import { getState } from "../js/state.js";
-import { escapeHtml } from "../public/outils.js";
+import { escapeHtml } from "../modules/public/outils.js";
 // Navigation du cockpit unique : construite par le serveur selon utilisateur, role, perimetre et applications.
 const repli = [["/cockpit", "🏠", "Cockpit"]];
 export function renderSidebar() {

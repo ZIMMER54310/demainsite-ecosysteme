@@ -18,6 +18,7 @@ function lister(dossier) {
 
 let erreurs = 0;
 const fichiers = lister(racine);
+const dossiersFront = new Set(["assets", "components", "js", "modules", "pages", "services"]);
 
 for (const fichier of fichiers) {
   try {
@@ -25,6 +26,16 @@ for (const fichier of fichiers) {
   } catch (e) {
     erreurs++;
     console.error(`ECHEC ${path.relative(racine, fichier)}\n${e.stderr}`);
+  }
+  if (dossiersFront.has(path.relative(racine, fichier).split(path.sep)[0])) {
+    const source = fs.readFileSync(fichier, "utf8");
+    for (const match of source.matchAll(/\b(?:import|export)\s+(?:[^;]*?\s+from\s+)?["'](\.[^"']+)["']/g)) {
+      const cible = path.resolve(path.dirname(fichier), match[1]);
+      if (!fs.existsSync(cible)) {
+        erreurs++;
+        console.error(`ECHEC ${path.relative(racine, fichier)} : import absent ${match[1]}`);
+      }
+    }
   }
 }
 

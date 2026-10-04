@@ -71,6 +71,9 @@ npm run check
 npm run smoke
 ```
 
+`check` verifie aussi l'existence des imports relatifs du frontend publie, pour eviter
+un ecran vide cause par un module absent en production.
+
 ## Audit multi-domaines (lecture seule)
 
 ```bash
