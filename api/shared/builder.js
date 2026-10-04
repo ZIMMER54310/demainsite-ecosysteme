@@ -128,12 +128,12 @@ function contenuNormalise(el, medias) {
   return { titre: f(el, "Title"), champs, relations: liens, media: mediasValides(el, medias) };
 }
 
-function contenusDuModule(module, type, donnees, medias) {
+function contenusDuModule(module, type, donnees, medias, visible = publiable) {
   const liste = LISTES_CONTENU[type];
   if (!liste) return [];
 
   return (donnees.contenus?.[liste] || [])
-    .filter((c) => publiable(c) && rel(c, "OBJ-MODULE-SITE-PUBLIC")?.id === module.id)
+    .filter((c) => visible(c) && rel(c, "OBJ-MODULE-SITE-PUBLIC")?.id === module.id)
     .sort(parOrdre)
     .map((c) => contenuNormalise(c, medias));
 }
@@ -181,7 +181,7 @@ function composerModule(module, ctx) {
     type,
     type_connu: types.has(type),
     global: sourceContenu !== module || sourceDesign !== module || sourceAvance !== module,
-    contenu: contenusDuModule(sourceContenu, type, donnees, medias),
+    contenu: contenusDuModule(sourceContenu, type, donnees, medias, ctx.visible || publiable),
     style: styleDepuisPreset(preset, referentiels),
     responsive,
     visibilite,
@@ -225,7 +225,7 @@ const appareilDe = (v) => (APPAREILS.includes(String(v || "").toUpperCase()) ? S
  * visible(el) : regle de filtrage (public = actif + valide ; apercu cockpit = non desactive).
  */
 function composerSections(donnees, site, sectionsSource, { appareil = null, visible = publiable, ctx = null } = {}) {
-  const c = ctx || contexteComposition(donnees, site);
+  const c = { ...(ctx || contexteComposition(donnees, site)), visible };
   const sections = [];
   for (const section of sectionsSource) {
     if (!visible(section)) continue;

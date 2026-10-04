@@ -91,6 +91,11 @@ async function main() {
   assert.equal(apEntete.sections.length, 1);
   const apFooter = C.apercu(d, "4", "footer", d.footers[0]);
   assert.equal(apFooter.sections.length, 1, "le brouillon apparait dans l'apercu");
+  const modApercu = apFooter.sections[0].lignes[0].colonnes[0].modules[0];
+  assert.equal(modApercu.contenu.length, 1, "le contenu en brouillon apparait dans l'apercu");
+  const structure = new Set(["101", "1001", "5001", "7001"]);
+  const strict = B.composerSections(d, { id: "4" }, d.sections.slice(1, 2), { visible: (x) => structure.has(x.id) || B.publiable(x) });
+  assert.equal(strict[0].lignes[0].colonnes[0].modules[0].contenu.length, 0, "regle publique : contenu en brouillon jamais publie");
 
   // Composition publique : En-tete affecte et publie rendu ; Footer en brouillon jamais publie.
   const comp = B.composerPage({ ...d, pages: [d.pages[0]] }, { id: "4" });

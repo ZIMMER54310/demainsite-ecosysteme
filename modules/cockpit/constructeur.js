@@ -53,7 +53,7 @@ function ongletConteneurs(d, type) {
   const liste = type === "entete" ? d.entetes : d.footers;
   const peut = ecrit(d, FONCTION[type]);
   return `${peut ? `<form class="card constructeur-creer" data-c-creer="${type}">
-      <label>Créer un ${LIBELLES[type]} <input name="titre" required maxlength="255" placeholder="Nom du ${LIBELLES[type]}"></label>
+      <label>Créer un ${LIBELLES[type]} <input name="titre" required maxlength="255" placeholder="Nom"></label>
       <button class="btn btn-primary" type="submit">➕ Créer</button>
     </form>` : ""}
     ${liste.length ? `<div class="constructeur-grille">${liste.map((c) => carteConteneur(d, type, c)).join("")}</div>`
