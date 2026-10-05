@@ -191,6 +191,16 @@ body:not(.dse-public) a:focus-visible, body:not(.dse-public) button:focus-visibl
 .cockpit-statut-dialogue label { display: grid; gap: 8px; }
 .cockpit-statut-dialogue select { padding: 10px; font: inherit; width: 100%; }
 
+body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
+.cockpit-mes-sites [data-resultat-statut]:empty { display: none; }
+.cockpit-mes-sites .cockpit-filtres .cockpit-recherche { grid-column: auto; }
+@media (max-width: 760px) {
+  .cockpit-mes-sites .cockpit-tableau thead { display: none; }
+  .cockpit-mes-sites .cockpit-tableau tr { display: grid; }
+  .cockpit-mes-sites .cockpit-tableau td:first-child::before { content: none; }
+  .cockpit-mes-sites .cockpit-tableau td[data-label]:not(:first-child)::before { content: attr(data-label) " : "; color: var(--muted); font-size: .85rem; }
+}
+
 /* Constructeur DSE */
 .constructeur-onglets { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .constructeur-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
