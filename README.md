@@ -28,6 +28,19 @@ DNS, GitHub ou synchronisations.
 
 ## Branche et production
 
+### Presentation du cockpit
+
+Le cadre commun utilise des icones SVG locales, un profil issu de la session et une
+recherche vers les sites autorises. Le menu reste construit depuis les droits serveur ;
+il peut etre reduit sur ordinateur et devient horizontal sur mobile.
+
+La page **Mes sites** propose des compteurs par statut reel, une vue liste/cartes,
+les filtres existants et les actions Ouvrir / Voir le site / changer le statut.
+La progression moyenne porte sur tous les sites autorises, avant filtrage et
+pagination. Elle reste indisponible si un site n'a pas de progression connue.
+Les couleurs de progression restent issues de la configuration SharePoint ;
+aucune couleur specifique a un statut ni aucun chiffre de maquette n'est ajoute.
+
 - Branche de travail et de production : `ovh/api-native` (pas de fusion vers `main` pour l'instant).
 - API : service systemd `dse-api.service` (`api/server.js`, ecoute **127.0.0.1:3000**).
 - Recette : port 3001 (reserve, non gere par ce depot).

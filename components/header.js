@@ -1,2 +1,14 @@
 import { CONFIG } from "../js/config.js";
-export function renderHeader(status){ const ok=status?.succes===true; return `<div class="topbar"><div class="brand"><span class="brand-mark">DS</span><span>${CONFIG.APP_NAME}</span></div><div class="topbar-actions"><span class="status ${ok?"":"off"}">${ok?"Service disponible":"Service à vérifier"}</span></div></div>`; }
+import { escapeHtml as e } from "../modules/public/outils.js";
+import { icon } from "./icons.js";
+
+export function renderHeader(status, user) {
+  const ok = status?.succes === true;
+  const initials = (user?.displayName || "").trim().split(/\s+/).slice(0, 2).map((x) => x[0]).join("");
+  return `<div class="topbar">
+    <a class="brand" href="#/cockpit"><span class="brand-mark">DS</span><span>${e(CONFIG.APP_NAME)}<small>Votre espace de gestion</small></span></a>
+    ${user?.reconnu && user.fonctions?.includes("sites") ? `<form class="cockpit-recherche-globale" data-recherche-cockpit role="search">${icon("search")}<label class="sr-only" for="recherche-cockpit">Rechercher un site ou un domaine</label><input id="recherche-cockpit" name="q" type="search" placeholder="Rechercher un site, un domaine…"><button class="sr-only" type="submit">Rechercher</button></form>` : ""}
+    <div class="topbar-actions"><span class="status ${ok ? "" : "off"}">${ok ? "Service disponible" : "Service à vérifier"}</span>
+    ${user?.authenticated ? `<details class="cockpit-profil"><summary><span class="cockpit-avatar">${e(initials || "DS")}</span><span>${e(user.displayName || "Mon espace")}<small>${e(user.role?.titre || "")}</small></span></summary><a href="/api/v1/auth/deconnexion">Se déconnecter</a></details>` : ""}</div>
+  </div>`;
+}

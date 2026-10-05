@@ -87,6 +87,12 @@ export async function cockpitAssistantPage(params) {
 // Saisies conservees uniquement dans la session du navigateur : aucune ecriture serveur.
 // Filtres de « Mes sites » : l'adresse porte les criteres, l'API applique le filtrage.
 export function activerFiltresSites(racine = document) {
+  racine.querySelectorAll("[data-vue-sites]").forEach((bouton) => {
+    bouton.addEventListener("click", () => {
+      racine.querySelector(".cockpit-tableau")?.classList.toggle("cockpit-vue-cartes", bouton.dataset.vueSites === "cartes");
+      racine.querySelectorAll("[data-vue-sites]").forEach((b) => b.setAttribute("aria-pressed", String(b === bouton)));
+    });
+  });
   racine.querySelectorAll("[data-changer-statut]").forEach((bouton) => {
     bouton.addEventListener("click", async () => {
       const dialogue = document.createElement("dialog");

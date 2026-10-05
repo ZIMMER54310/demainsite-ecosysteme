@@ -217,6 +217,19 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.strictEqual(dernierePage.elements.length, 25);
   assert.strictEqual(dernierePage.elements[24].nom, "Site 499");
   assert.strictEqual(filtrerSites(cinqCents, { statut: "Statut nouveau", client: "B", parPage: "100" }).total, 250);
+  const syntheseSites = [{ progression: 20, aCompleter: [{ cle: "pages" }] }, { progression: 80, aCompleter: [] }];
+  assert.deepStrictEqual(filtrerSites(syntheseSites).synthese, { progressionMoyenne: 50, aCompleter: 1, progressionConnue: 2 });
+  assert.strictEqual(filtrerSites(syntheseSites, { page: 2, parPage: 1 }).synthese.progressionMoyenne, 50, "moyenne globale independante de la pagination");
+  assert.strictEqual(filtrerSites([...syntheseSites, {}]).synthese.progressionMoyenne, null, "pas de moyenne partielle trompeuse");
+  assert.strictEqual(filtrerSites([]).synthese.progressionMoyenne, null, "aucune progression inventee pour une liste vide");
+  assert.ok(htmlListe.includes('data-vue-sites="cartes"') && htmlListe.includes('data-vue-sites="lignes"'));
+  assert.ok(htmlListe.includes("Situation générale") && htmlListe.includes("Actions rapides"));
+  assert.ok(!ui.rendreListeSites({ fonctions: [] }, r).includes('href="#/cockpit/creer"'), "creation masquee sans droit");
+  const header = await import(url("components/header.js"));
+  const profil = header.renderHeader({ succes: true }, { authenticated: true, reconnu: true, displayName: "Nom <b>", role: { titre: "Role <b>" }, fonctions: ["sites"] });
+  assert.ok(profil.includes("data-recherche-cockpit") && profil.includes("/api/v1/auth/deconnexion"));
+  assert.ok(!profil.includes("<b>"), "profil echappe");
+  assert.ok(!header.renderHeader({ succes: true }, { fonctions: [] }).includes("data-recherche-cockpit"), "recherche reservee aux sites autorises");
 
   const sidebar = await import(url("components/sidebar.js"));
   const publicUser = { authenticated: true, reconnu: true, sitesPublics: [

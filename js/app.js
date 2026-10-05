@@ -1,5 +1,22 @@
 import { getHealth } from "../services/health.service.js"; import { initializeAuth } from "./auth.js"; import { setState,getState } from "./state.js"; import { registerRoute,startRouter } from "./router.js"; import { renderHeader } from "../components/header.js"; import { renderSidebar } from "../components/sidebar.js"; import { renderBreadcrumb } from "../components/breadcrumb.js"; import { renderFooter } from "../components/footer.js"; import { showAlert,clearAlert } from "../components/alert.js"; import { notFoundPage } from "../pages/generic.js"; import { cockpitAccueilPage,cockpitSitesPage,cockpitSitePage,cockpitAssistantPage,activerAssistant,activerFiltresSites,cockpitEditionPage,activerEdition,cockpitAdministrationPage,cockpitUtilisateursPage,activerUtilisateurs,cockpitConstruirePage,activerConstruire } from "../pages/cockpit.js";
-function mount(page,breadcrumb){ clearAlert(); document.querySelector("#app-sidebar").innerHTML=renderSidebar(); document.querySelector("#app-breadcrumb").innerHTML=renderBreadcrumb(breadcrumb); document.querySelector("#app-page").innerHTML=page; document.querySelector("#app-page").insertAdjacentHTML("beforeend",renderFooter()); document.querySelector("#main").focus(); }
+function mount(page,breadcrumb){ clearAlert(); document.querySelector("#app-header").innerHTML=renderHeader(getState().apiStatus,getState().user); document.querySelector("#app-sidebar").innerHTML=renderSidebar(); activerCadre(); document.querySelector("#app-breadcrumb").innerHTML=renderBreadcrumb(breadcrumb); document.querySelector("#app-page").innerHTML=page; document.querySelector("#app-page").insertAdjacentHTML("beforeend",renderFooter()); document.querySelector("#main").focus(); }
+function activerCadre() {
+  const bouton = document.querySelector("[data-reduire-menu]");
+  const shell = document.querySelector("#app");
+  const synchroniser = () => {
+    if (!bouton) return;
+    const reduit = shell.classList.contains("cockpit-menu-reduit");
+    bouton.setAttribute("aria-expanded", String(!reduit));
+    bouton.title = reduit ? "Développer le menu" : "Réduire le menu";
+    bouton.querySelector("span").textContent = bouton.title;
+  };
+  synchroniser();
+  bouton?.addEventListener("click", () => { shell.classList.toggle("cockpit-menu-reduit"); synchroniser(); });
+  document.querySelector("[data-recherche-cockpit]")?.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    location.hash = `/cockpit/sites?q=${encodeURIComponent(new FormData(ev.currentTarget).get("q") || "")}`;
+  });
+}
 registerRoute("/", async () => {
   const domaine = window.location.hostname
     .trim()

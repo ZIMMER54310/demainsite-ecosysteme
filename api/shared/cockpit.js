@@ -195,6 +195,12 @@ function filtrerSites(resumes, query = {}, tranchesProgression = []) {
     elements: filtres.slice((page - 1) * parPage, page * parPage),
     total,
     totalSites: resumes.length,
+    synthese: {
+      progressionMoyenne: resumes.length && resumes.every((s) => typeof s.progression === "number" && Number.isFinite(s.progression))
+        ? Math.round(resumes.reduce((n, s) => n + s.progression, 0) / resumes.length) : null,
+      aCompleter: resumes.filter((s) => (s.aCompleter || []).length > 0).length,
+      progressionConnue: resumes.filter((s) => typeof s.progression === "number" && Number.isFinite(s.progression)).length
+    },
     page,
     pages,
     parPage,

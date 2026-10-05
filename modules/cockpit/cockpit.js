@@ -1,4 +1,5 @@
 import { escapeHtml } from "../public/outils.js";
+import { icon, iconForRoute } from "../../components/icons.js";
 
 /*
  * Cockpit DSE generique : une seule interface qui s'adapte aux fonctions
@@ -56,7 +57,7 @@ export function rendreCartes(fonctions, domaine) {
     const cible = c.cible(domaine);
     const externe = c.externe && cible.startsWith("https://");
     return `<a class="cockpit-carte card" href="${e(cible)}"${externe ? ' target="_blank" rel="noopener"' : ""}>
-      <span class="cockpit-carte-icone" aria-hidden="true">${c.icone}</span>
+      <span class="cockpit-carte-icone" aria-hidden="true">${icon(iconForRoute(cible))}</span>
       <strong>${e(c.titre)}</strong><span class="muted">${e(c.texte)}</span></a>`;
   }).join("")}</div>`;
 }
@@ -179,9 +180,17 @@ export function rendreListeSites(moi, resultat) {
   const elements = r.elements || [];
   const filtre = ["q", "statut", "client", "progression", "aCompleter"].some((k) => c[k]);
 
-  const compteurs = (r.compteurs || []).length ? `<ul class="cockpit-fil cockpit-compteurs">
-    <li class="${c.statut ? "" : "active"}"><a href="${e(lienSites(c, { statut: "", page: "" }))}">Tous · ${Number(r.totalSites) || 0}</a></li>
-    ${r.compteurs.map((x) => `<li class="${c.statut === x.valeur ? "active" : ""}"><a href="${e(lienSites(c, { statut: x.valeur, page: "" }))}">${e(x.valeur)} · ${Number(x.nombre) || 0}</a></li>`).join("")}</ul>` : "";
+  const compteurs = `<ul class="cockpit-compteurs">
+    <li><a class="card cockpit-compteur ${c.statut ? "" : "selectionne"}" href="${e(lienSites(c, { statut: "", page: "" }))}"${!c.statut ? ' aria-current="true"' : ""}><span class="cockpit-compteur-icone">${icon("globe")}</span><span><strong>${Number(r.totalSites) || 0}</strong><span>Sites au total</span><small>Tous vos sites</small></span></a></li>
+    ${(r.compteurs || []).map((x) => `<li><a class="card cockpit-compteur ${c.statut === x.valeur ? "selectionne" : ""}" href="${e(lienSites(c, { statut: x.valeur, page: "" }))}"${c.statut === x.valeur ? ' aria-current="true"' : ""}><span class="cockpit-compteur-icone">${icon("layers")}</span><span><strong>${Number(x.nombre) || 0}</strong><span>${e(x.valeur)}</span><small>${r.totalSites ? Math.round(x.nombre / r.totalSites * 100) : 0} % des sites</small></span></a></li>`).join("")}</ul>`;
+
+  const synthese = `<div class="cockpit-sites-synthese">
+    <article class="card"><h2>${icon("chart")} Situation générale</h2><p class="muted">Progression moyenne de tous vos sites</p>
+      ${typeof r.synthese?.progressionMoyenne === "number" ? `<div class="cockpit-moyenne">${jaugeCourte(r.synthese.progressionMoyenne)}</div>` : `<p class="muted">Progression globale non disponible${r.synthese ? ` · ${Number(r.synthese.progressionConnue) || 0} site(s) renseigné(s) sur ${Number(r.totalSites) || 0}` : ""}.</p>`}
+      ${r.synthese ? `<small class="muted">${Number(r.synthese.aCompleter) || 0} site(s) avec des étapes à compléter identifiées.</small>` : ""}
+    </article>
+    <article class="card"><h2>${icon("layers")} Actions rapides</h2><div class="cockpit-sites-raccourcis">${cartesVisibles(moi?.fonctions).filter((x) => ["creer", "administration", "utilisateurs"].includes(x.fonction)).map((x) => `<a class="btn btn-secondary" href="${e(x.cible())}">${icon(iconForRoute(x.cible()))}${e(x.titre)}</a>`).join("")}<a class="btn btn-secondary" href="#/cockpit">${icon("home")}Cockpit</a></div></article>
+  </div>`;
 
   const filtres = `<form class="card cockpit-filtres" data-filtres-sites role="search">
     <label class="cockpit-champ cockpit-recherche"><span>Rechercher</span><input type="search" name="q" value="${e(c.q || "")}" placeholder="Nom du site ou domaine"></label>
@@ -192,17 +201,18 @@ export function rendreListeSites(moi, resultat) {
     <label class="cockpit-champ"><span>Trier par</span><select name="tri">${(o.tris || Object.keys(LIBELLES_TRI)).map((t) => option(t, LIBELLES_TRI[t] || t, c.tri || "nom")).join("")}</select></label>
     <label class="cockpit-champ"><span>Ordre</span><select name="sens">${option("asc", "Croissant", c.sens || "asc")}${option("desc", "Décroissant", c.sens)}</select></label>
     <div class="cockpit-actions"><button class="btn btn-primary" type="submit">Appliquer</button>${filtre ? `<a class="btn btn-secondary" href="#/cockpit/sites">Réinitialiser</a>` : ""}</div>
+    <div class="cockpit-mode-affichage" role="group" aria-label="Présentation des sites"><button class="btn btn-secondary" type="button" data-vue-sites="lignes" aria-pressed="true">${icon("list")}Liste</button><button class="btn btn-secondary" type="button" data-vue-sites="cartes" aria-pressed="false">${icon("grid")}Cartes</button></div>
   </form>`;
 
   const lignes = elements.length ? `<div class="cockpit-tableau"><table>
     <thead><tr><th>Site</th><th>Domaine principal</th><th>Statut</th><th>Progression</th>${(o.clients || []).length > 1 ? "<th>Client</th>" : ""}<th><span class="sr-only">Action</span></th></tr></thead>
     <tbody>${elements.map((s) => `<tr>
-      <td data-label="Site"><strong>${e(s.nom || s.domaine || s.acces)}</strong>${(s.alias || []).length ? `<br><small class="muted" title="${e((s.alias || []).join(", "))}">${(s.alias || []).length} alias</small>` : ""}</td>
+      <td data-label="Site"><div class="cockpit-site-identite"><span class="cockpit-site-avatar">${e((s.nom || s.domaine || s.acces || "—").slice(0, 2).toUpperCase())}</span><div><strong>${e(s.nom || s.domaine || s.acces)}</strong>${(s.alias || []).length ? `<br><small class="muted" title="${e((s.alias || []).join(", "))}">${(s.alias || []).length} alias</small>` : ""}</div></div></td>
       <td data-label="Domaine principal">${s.domaine ? e(s.domaine) : `<span class="cockpit-alerte">Domaine principal à préciser</span>`}</td>
-      <td data-label="Statut">${badgeStatut(s.statut)}${r.peutChangerStatut ? ` <button type="button" class="icon-btn" data-changer-statut="${e(s.acces || s.domaine)}" aria-label="Changer le statut de ${e(s.nom)}" title="Changer le statut">✎</button>` : ""}</td>
+      <td data-label="Statut">${badgeStatut(s.statut)}${r.peutChangerStatut ? ` <button type="button" class="icon-btn" data-changer-statut="${e(s.acces || s.domaine)}" aria-label="Changer le statut de ${e(s.nom)}" title="Changer le statut">${icon("edit")}</button>` : ""}</td>
       <td data-label="Progression">${jaugeCourte(s.progression, s.progressionVisuelle)}${s.progressionVisuelle?.message || s.progressionVisuelle?.avertissement ? ` <span title="${e(s.progressionVisuelle.message || s.progressionVisuelle.avertissement)}">⚠</span>` : ""}${(s.aCompleter || []).some((x) => x.etat === "attention") ? ` <span title="Un point demande votre attention">⚠</span>` : ""}</td>
       ${(o.clients || []).length > 1 ? `<td data-label="Client">${e(s.client || "Non renseigné")}</td>` : ""}
-      <td><div class="cockpit-actions"><a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}">Ouvrir</a>${s.domaine ? `<a class="btn btn-secondary" href="https://${e(s.domaine)}/" target="_blank" rel="noopener noreferrer">🌐 Voir le site</a>` : ""}</div></td></tr>`).join("")}</tbody></table></div>`
+      <td><div class="cockpit-actions"><a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}">Ouvrir ${icon("arrow")}</a>${s.domaine ? `<a class="btn btn-primary" href="https://${e(s.domaine)}/" target="_blank" rel="noopener noreferrer">${icon("external")} Voir le site</a>` : ""}</div></td></tr>`).join("")}</tbody></table></div>`
     : `<div class="empty">${filtre ? "Aucun site ne correspond à votre recherche." : "Aucun site dans votre espace pour le moment."}</div>`;
 
   const pagination = (r.pages || 1) > 1 ? `<nav class="cockpit-pagination" aria-label="Pages de résultats">
@@ -210,14 +220,15 @@ export function rendreListeSites(moi, resultat) {
     <span>Page ${Number(r.page)} sur ${Number(r.pages)}</span>
     ${r.page < r.pages ? `<a class="btn btn-secondary" href="${e(lienSites(c, { page: r.page + 1 }))}">Suivant →</a>` : ""}</nav>` : "";
 
-  return `<section class="cockpit">
-    ${rendreEnteteCockpit(moi)}
-    <h2>Mes sites <span class="muted">(${Number(r.total) || 0}${filtre ? ` sur ${Number(r.totalSites) || 0}` : ""})</span></h2>
+  return `<section class="cockpit cockpit-mes-sites">
+    <div class="cockpit-entete"><div><h1 class="page-title">Mes sites</h1><p class="muted">Gérez, construisez et suivez l'ensemble de vos sites.</p></div>${moi?.fonctions?.includes("creer") ? `<a class="btn btn-primary" href="#/cockpit/creer">${icon("plus")}Créer un site</a>` : ""}</div>
     <p data-resultat-statut role="status"></p>
     ${r.avertissementProgression ? `<p class="cockpit-alerte" role="status">${e(r.avertissementProgression)}</p>` : ""}
     ${compteurs}
+    ${synthese}
     ${filtres}
     ${lignes}
+    <p class="muted cockpit-resultats-sites">${elements.length} site(s) affiché(s) sur ${Number(r.total) || 0}${filtre ? ` · ${Number(r.totalSites) || 0} dans votre espace` : ""}</p>
     ${pagination}
   </section>`;
 }

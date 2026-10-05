@@ -1,10 +1,11 @@
 import { getState } from "../js/state.js";
 import { escapeHtml } from "../modules/public/outils.js";
+import { icon, iconForRoute } from "./icons.js";
 // Navigation du cockpit unique : construite par le serveur selon utilisateur, role, perimetre et applications.
 const repli = [["/cockpit", "🏠", "Cockpit"]];
 
 const domaineValide = (d) => typeof d === "string" && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d);
-const libellePublic = `<span aria-hidden="true">🌐</span><span>Voir le site</span><span class="nav-public-externe" aria-hidden="true">↗</span>`;
+const libellePublic = `${icon("globe")}<span>Voir le site</span><span class="nav-public-externe">${icon("external")}</span>`;
 function lienPublic(site, libelle, classe = "") {
   return `<a class="nav-link ${classe}" href="https://${escapeHtml(site.domainePrincipal)}/" target="_blank" rel="noopener noreferrer" title="Ouvrir le site public dans un nouvel onglet">${libelle}</a>`;
 }
@@ -41,5 +42,6 @@ export function renderSidebar() {
   const entrees = Array.isArray(menu) && menu.length
     ? menu.filter((m) => typeof m.url === "string" && m.url.startsWith("/cockpit")).map((m) => [m.url, m.icone || "•", m.libelle || ""])
     : repli;
-  return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${rendreVoirSite(user, current)}${entrees.map(([p, i, l]) => `<a class="nav-link ${current === p ? "active" : ""}" href="#${escapeHtml(p)}"><span aria-hidden="true">${escapeHtml(i)}</span><span>${escapeHtml(l)}</span></a>`).join("")}</div></nav>`;
+  return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${rendreVoirSite(user, current)}${entrees.map(([p, , l]) => `<a class="nav-link ${current === p ? "active" : ""}"${current === p ? ' aria-current="page"' : ""} href="#${escapeHtml(p)}" title="${escapeHtml(l)}">${icon(iconForRoute(p))}<span>${escapeHtml(l)}</span></a>`).join("")}</div>
+    <div class="cockpit-sidebar-bas"><button type="button" class="nav-link" data-reduire-menu aria-expanded="true">${icon("panel")}<span>Réduire le menu</span></button><small>${escapeHtml(user?.role?.titre || "Espace de gestion")}</small></div></nav>`;
 }
