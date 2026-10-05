@@ -420,6 +420,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     assert.strictEqual(sy.periodeMs({ frequence: 2, unite: "HEURES" }), 7200000);
     assert.strictEqual(sy.periodeMs({ frequence: 1, unite: "X" }), null);
     const reg = require("../shared/synchronisations").REGISTRE;
+    for (const r of reg) assert.ok(!TERMES_TECHNIQUES.test(`${r.titre} ${r.description}`), `terme technique : ${r.code}`);
     assert.ok(sy.effectif(reg[0], { mode: "MANUEL", frequence: 1, unite: "MINUTES" }).invalide, "reglage enregistre invalide => defaut");
     assert.strictEqual(sy.effectif(reg[0], { mode: "MANUEL", frequence: 2, unite: "JOURS" }).mode, "MANUEL");
     const sv = require("../shared/sauvegarde-listes")._test;
@@ -429,6 +430,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     assert.strictEqual(sv.valeur({ name: "T" }, { T: "" }), null);
     assert.deepStrictEqual(sv.champEcriture(cLk, "7"), { SITELookupId: "7" });
     assert.deepStrictEqual(sv.champEcriture(cLkM, [2]), { "SITESLookupId@odata.type": "Collection(Edm.Int32)", SITESLookupId: [2] });
+    assert.ok(!sv.restaurable("OBJ-JRN") && !sv.restaurable("OBJ-GEO") && !sv.restaurable("OBJ-GEO-VILLE") && !sv.restaurable("OBJ-REF") && sv.restaurable("OBJ-JRN-AUT") && sv.restaurable("OBJ-PAGES-SITE"));
     assert.ok(sv.nomManifesteValide("20260101120000.json") && !sv.nomManifesteValide("../x.json"));
     const us = await import(url("modules/cockpit/synchronisations.js"));
     const vueS = { reglagesDisponibles: true, modes: ["AUTOMATIQUE", "MANUEL"], unites: ["MINUTES", "HEURES", "JOURS"], synchronisations: [

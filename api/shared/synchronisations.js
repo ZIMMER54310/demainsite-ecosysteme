@@ -41,7 +41,7 @@ const REGISTRE = [
   },
   {
     code: "SAUVEGARDE-LISTES", titre: "Sauvegarde des listes dans le coffre-fort",
-    description: "Copie chaque liste modifiée dans le coffre-fort SharePoint (dossier des sauvegardes). Rien n'est supprimé.",
+    description: "Copie chaque tableau de données modifié dans le coffre-fort (dossier des sauvegardes). Rien n'est supprimé.",
     defaut: () => ({ mode: "AUTOMATIQUE", frequence: 1, unite: "JOURS" }),
     dernierConnu: () => require("./sauvegarde-listes").dateDerniereSauvegarde(),
     lancer: async (acteur) => {

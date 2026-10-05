@@ -50,7 +50,7 @@ export function rendreSynchronisations(v) {
     ${v.synchronisations.map((s) => carte(s, v.modes, v.unites)).join("")}
     <article class="card cockpit-restauration" data-restauration>
       <h2>${icon("layers")} Restaurer depuis une sauvegarde</h2>
-      <p class="muted">Choisissez une sauvegarde puis des données : un aperçu montre les fiches modifiées ou disparues. Seules les fiches cochées sont rétablies, après confirmation. Aucune fiche n'est supprimée ni dupliquée. Le journal ne se restaure jamais.</p>
+      <p class="muted">Choisissez une sauvegarde puis des données : un aperçu montre les fiches modifiées ou disparues. Seules les fiches cochées sont rétablies, après confirmation. Aucune fiche n'est supprimée ni dupliquée. Le journal, la géographie et les références protégées ne se restaurent jamais.</p>
       <div class="cockpit-synchro-reglage">
         <label class="cockpit-champ"><span>Sauvegarde</span><select data-choix-sauvegarde><option value="">Chargement…</option></select></label>
         <label class="cockpit-champ"><span>Données</span><select data-choix-donnees disabled><option value="">Choisir une sauvegarde</option></select></label>

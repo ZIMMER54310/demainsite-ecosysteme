@@ -20,7 +20,10 @@ const ecriture = require("./ecriture");
 
 const DOSSIER = "SAUVEGARDES-LISTES";
 const FORMAT = "DSE-SAUVEGARDE-LISTE-1";
-const NON_RESTAURABLES = ["OBJ-JRN"];
+// Journal en ajout seul ; geographie, relations et references jamais modifiees par le moteur (sauvegardees en lecture seule).
+const NON_RESTAURABLES = ["OBJ-JRN", "OBJ-REL", "OBJ-REF"];
+const restaurable = (titre) => !NON_RESTAURABLES.includes(titre) && !/^OBJ-GEO(-|$)/i.test(String(titre || ""));
+const REFUS_NON_RESTAURABLE = "Ces données ne se restaurent jamais depuis le cockpit (journal, géographie ou références protégées).";
 const SYSTEME = new Set(["ContentType", "Attachments", "Edit", "LinkTitle", "LinkTitleNoMenu", "DocIcon", "ItemChildCount",
   "FolderChildCount", "AppAuthor", "AppEditor", "ComplianceAssetId", "SelectTitle", "ID", "Author", "Editor", "Created", "Modified"]);
 const JETON_MS = 10 * 60 * 1000;
@@ -79,7 +82,7 @@ async function deposer(g, driveId, relatif, objet) {
 
 async function lireJson(g, driveId, relatif) {
   if (!relatif.startsWith(`${DOSSIER}/`) || relatif.includes("..")) throw Object.assign(new Error("Sauvegarde introuvable."), { refus: true });
-  const meta = await graphBrut(g, "GET", `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${chemin(relatif)}?$select=id,@microsoft.graph.downloadUrl`);
+  const meta = await graphBrut(g, "GET", `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${chemin(relatif)}`);
   const url = meta.json?.["@microsoft.graph.downloadUrl"];
   if (meta.status !== 200 || !/^https:\/\//.test(url || "")) throw Object.assign(new Error("Sauvegarde introuvable."), { refus: true });
   const r = await graphBrut(g, "GET", url);
@@ -211,7 +214,7 @@ async function listesDeSauvegarde(nom) {
   const g = await ecriture.contexteGraph();
   const m = await lireJson(g, await idCoffre(g), `${DOSSIER}/manifestes/${nom}`);
   return { listes: (m.listes || []).filter((x) => x.fichier).map((x) => ({ id: x.id, titre: x.titre, elements: x.elements,
-    restaurable: !NON_RESTAURABLES.includes(x.titre) })) };
+    restaurable: restaurable(x.titre) })) };
 }
 
 /* ---------------- Restauration ---------------- */
@@ -250,7 +253,7 @@ const affichable = (v) => (v === null ? "(vide)" : Array.isArray(v) ? v.join(", 
 async function calculer(g, sauvegarde) {
   const liste = g.listes.find((l) => l.id === sauvegarde.liste?.id);
   if (!liste) return { refus: "La liste de cette sauvegarde n'existe plus ou a été remplacée." };
-  if (NON_RESTAURABLES.includes(sauvegarde.liste.titre)) return { refus: "Le journal ne se restaure jamais (ajout seul)." };
+  if (!restaurable(sauvegarde.liste.titre)) return { refus: REFUS_NON_RESTAURABLE };
   const actuelles = await tout(g, `/sites/${g.siteGraphId}/lists/${liste.id}/columns?$top=999`);
   const colsActuelles = new Map(colonnesUtiles(actuelles).map((c) => [c.name, c]));
   const colonnes = (sauvegarde.colonnes || []).filter((c) => ecrivable(c) && ecrivable(colsActuelles.get(c.name)))
@@ -290,7 +293,7 @@ async function apercu({ identite, manifeste, listeId }) {
   const m = await lireJson(g, driveId, `${DOSSIER}/manifestes/${manifeste}`);
   const entree = (m.listes || []).find((x) => x.id === String(listeId || "") && x.fichier);
   if (!entree) return { refus: "Cette liste ne figure pas dans la sauvegarde." };
-  if (NON_RESTAURABLES.includes(entree.titre)) return { refus: "Le journal ne se restaure jamais (ajout seul)." };
+  if (!restaurable(entree.titre)) return { refus: REFUS_NON_RESTAURABLE };
   const sauvegarde = await lireJson(g, driveId, entree.fichier);
   if (sauvegarde.format !== FORMAT || sauvegarde.liste?.id !== entree.id) return { refus: "Sauvegarde illisible." };
   const plan = await calculer(g, sauvegarde);
@@ -374,5 +377,5 @@ async function dateDerniereSauvegarde() {
 
 module.exports = {
   sauvegarder, sauvegardes, listesDeSauvegarde, apercu, confirmer, dateDerniereSauvegarde, DOSSIER, NON_RESTAURABLES,
-  _test: { valeur, champEcriture, ecrivable, segment, nomManifesteValide, colonnesUtiles, jetons }
+  _test: { restaurable, valeur, champEcriture, ecrivable, segment, nomManifesteValide, colonnesUtiles, jetons }
 };
