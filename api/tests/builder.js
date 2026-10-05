@@ -148,6 +148,31 @@ async function main() {
   assert.deepEqual(decl, ["color:#fff", "font-size:96px"]);
   assert.equal(styles.attributStyle({}), "");
 
+  // Hierarchie Design : THEME SITE -> PRESET (parent) -> PRESET ELEMENT -> RESPONSIVE ; un preset d'un autre site est ignore.
+  {
+    const couleur = (id, hex) => el(id, { "VALEUR-HEX": hex });
+    const donnees = {
+      couleurs: [couleur(1, "#111111"), couleur(2, "#222222"), couleur(3, "#333333")],
+      styleTypes: [el(50, { CODE: "BOUTON" })],
+      presets: [el(60, { "BORDURE-RAYON": 4, "TAILLE-TEXTE": 16 }, { "OBJ-COULEUR-TEXTE": lien(1) }),
+        el(61, { "BORDURE-RAYON": 12 }, { "PRESET-PARENT": lien(60), "OBJ-COULEUR-FOND": lien(2) }),
+        el(62, { "BORDURE-RAYON": 30 }, { "OBJ-SITE-PUBLIC": lien(2) })],
+      responsifs: [el(70, { "TAILLE-TEXTE": 12 }, { "OBJ-STYLE-PRESET": lien(61), "OBJ-APPAREIL": lien(3, "MOBILE"), "OBJ-COULEUR-FOND": lien(3) })],
+      themes: [el(80, {}, { "Titre OBJ-SITE-THEME": lien(1), "OBJ-STYLE-TYPE": lien(50), "OBJ-STYLE-PRESET": lien(60) })]
+    };
+    const ctx = B.contexteComposition(donnees, { id: "1" });
+    const r = B.styleResolu(ctx, "bouton", "61");
+    assert.equal(r.style.couleurTexte, "#111111", "theme herite");
+    assert.equal(r.style.couleurFond, "#222222");
+    assert.equal(r.style.bordureRayon, 12, "le preset de l'element gagne");
+    assert.equal(r.style.tailleTexte, 16);
+    assert.deepEqual([r.responsive.MOBILE.tailleTexte, r.responsive.MOBILE.couleurFond], [12, "#333333"]);
+    assert.equal(B.styleResolu(ctx, "bouton", "62").style.bordureRayon, 4, "preset d'un autre site ignore");
+    const css = styles.cssElement("dse-b-m1", "BOUTON", r.style, r.responsive, {});
+    assert.match(css, /border-radius:12px/);
+    assert.match(css, /@media \(max-width:640px\)/);
+  }
+
   console.log("OK tests builder");
 }
 

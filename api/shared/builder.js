@@ -56,6 +56,45 @@ function espaces(el, prefixe) {
   return Object.keys(sortie).length ? sortie : null;
 }
 
+const choix = (el, nom, valeurs) => { const v = String(f(el, nom) || "").trim().toUpperCase(); return valeurs.includes(v) ? v : null; };
+const sansNuls = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== null && v !== undefined));
+const ALIGNS = ["GAUCHE", "CENTRE", "DROITE", "JUSTIFIE"];
+// Valeurs techniques reconnues par le generateur CSS (enumerations, pas des valeurs de design).
+const CHOIX = {
+  stylePolice: ["NORMAL", "ITALIQUE"], transformation: ["AUCUNE", "MAJUSCULES", "MINUSCULES", "CAPITALES"],
+  fondPosition: ["CENTRE", "HAUT", "BAS", "GAUCHE", "DROITE"], fondTaille: ["COUVRIR", "CONTENIR", "AUTO"],
+  fondRepetition: ["NON", "OUI", "HORIZONTALE", "VERTICALE"], bordureStyle: ["AUCUNE", "PLEINE", "TIRETS", "POINTILLES", "DOUBLE"],
+  justification: ["DEBUT", "CENTRE", "FIN", "ESPACE-ENTRE", "ESPACE-AUTOUR"]
+};
+const alignDe = (el) => { const a = String(rel(el, "ALIGNEMENT")?.titre || "").toUpperCase(); return ALIGNS.includes(a) ? a : null; };
+
+/*
+ * Groupes de reglages Design par type d'element. Source officielle : GROUPES-DESIGN de OBJ-STYLE-TYPE ;
+ * ce tableau n'est qu'un repli technique si la configuration est absente.
+ */
+const GROUPES = ["TYPO", "FOND", "DIMENSIONS", "ESPACEMENT", "BORDURE", "OMBRE", "ALIGNEMENT", "SURVOL"];
+const GROUPES_REPLI = {
+  PAGE: "FOND;DIMENSIONS;ESPACEMENT;BORDURE;OMBRE;TYPO", ENTETE: "FOND;DIMENSIONS;ESPACEMENT;BORDURE;OMBRE;TYPO",
+  FOOTER: "FOND;DIMENSIONS;ESPACEMENT;BORDURE;OMBRE;TYPO", SECTION: "FOND;DIMENSIONS;ESPACEMENT;BORDURE;OMBRE;TYPO",
+  LIGNE: "FOND;DIMENSIONS;ESPACEMENT;BORDURE;OMBRE;ALIGNEMENT", COLONNE: "FOND;DIMENSIONS;ESPACEMENT;BORDURE;OMBRE;ALIGNEMENT",
+  TITRE: "TYPO;FOND;ESPACEMENT;BORDURE;DIMENSIONS", TEXTE: "TYPO;FOND;ESPACEMENT;BORDURE;DIMENSIONS",
+  IMAGE: "DIMENSIONS;ESPACEMENT;BORDURE;OMBRE;ALIGNEMENT", BOUTON: "TYPO;FOND;DIMENSIONS;ESPACEMENT;BORDURE;OMBRE;ALIGNEMENT;SURVOL",
+  ICONE: "TYPO;ESPACEMENT;ALIGNEMENT;SURVOL", GALERIE: "DIMENSIONS;ESPACEMENT;BORDURE;OMBRE", VIDEO: "DIMENSIONS;ESPACEMENT;BORDURE;OMBRE",
+  GLOBAL: "TYPO;FOND", LIEN: "TYPO;SURVOL"
+};
+// Type de module -> type de style (un module sans correspondance garde son propre code).
+const TYPE_STYLE = { "TEXTE-ENRICHI": "TEXTE", BOUTONS: "BOUTON", CTA: "BOUTON", "IMAGE-TEXTE": "IMAGE", CARROUSEL: "GALERIE" };
+const typeStyle = (type) => TYPE_STYLE[String(type || "").toUpperCase()] || String(type || "").toUpperCase();
+
+function groupesDesign(donnees, type) {
+  const code = typeStyle(type);
+  const t = (donnees?.styleTypes || []).find((x) => String(f(x, "CODE") || f(x, "Title") || "").toUpperCase() === code && !inactifEl(x));
+  const brut = String((t && f(t, "GROUPES-DESIGN")) || GROUPES_REPLI[code] || "TYPO;FOND;DIMENSIONS;ESPACEMENT;BORDURE;OMBRE;ALIGNEMENT");
+  return brut.toUpperCase().split(/[;,\s]+/).filter((g) => GROUPES.includes(g));
+}
+const inactifEl = (el) => rel(el, "OBJ-ACTIF")?.id === "2" || rel(el, "OBJ-VALIDE")?.id === "2";
+
+/* Valeurs PROPRES d'un preset (sans heritage). */
 function styleDepuisPreset(preset, referentiels = {}) {
   if (!preset || !publiable(preset)) return {};
 
@@ -64,41 +103,128 @@ function styleDepuisPreset(preset, referentiels = {}) {
     const hex = id ? f(referentiels.couleurs?.get(id), "VALEUR-HEX") : null;
     return hex && HEX.test(String(hex).trim()) ? String(hex).trim() : null;
   };
-  const famille = (() => {
-    const id = rel(preset, "OBJ-POLICE")?.id;
-    const code = String(f(referentiels.polices?.get(id), "FAMILLE") || "").toUpperCase();
-    return POLICES[code] ? code : null;
-  })();
-  const alignement = String(rel(preset, "ALIGNEMENT")?.titre || "").toUpperCase();
+  let police = null;
+  let policeFamille = null;
+  const p = referentiels.polices?.get(rel(preset, "OBJ-POLICE")?.id);
+  if (p) {
+    const fam = String(f(p, "FAMILLE") || f(p, "CODE") || "").trim();
+    if (POLICES[fam.toUpperCase()]) police = fam.toUpperCase();
+    else if (/^[A-Za-z0-9 ]{2,40}$/.test(fam)) policeFamille = fam;
+  }
+  const mediaId = rel(preset, "OBJ-MEDIA-ARRIERE-PLAN")?.id;
+  const media = mediaId ? referentiels.medias?.get(mediaId) : null;
+  const ombreActive = booleen(preset, "OMBRE", false);
+  const survol = sansNuls({ couleurTexte: hexDe("OBJ-COULEUR-TEXTE-SURVOL"), couleurFond: hexDe("OBJ-COULEUR-FOND-SURVOL"), couleurBordure: hexDe("OBJ-COULEUR-BORDURE-SURVOL") });
 
-  const style = {
+  return sansNuls({
     couleurTexte: hexDe("OBJ-COULEUR-TEXTE"), couleurFond: hexDe("OBJ-COULEUR-FOND"), couleurBordure: hexDe("OBJ-COULEUR-BORDURE"),
-    police: famille, tailleTexte: borne(f(preset, "TAILLE-TEXTE"), 8, 96), poidsPolice: borne(f(preset, "POIDS-POLICE"), 100, 900),
-    hauteurLigne: borne(f(preset, "HAUTEUR-LIGNE"), 1, 3), alignement: ["GAUCHE", "CENTRE", "DROITE", "JUSTIFIE"].includes(alignement) ? alignement : null,
+    police, policeFamille, tailleTexte: borne(f(preset, "TAILLE-TEXTE"), 8, 96), poidsPolice: borne(f(preset, "POIDS-POLICE"), 100, 900),
+    hauteurLigne: borne(f(preset, "HAUTEUR-LIGNE"), 1, 3), alignement: alignDe(preset),
+    stylePolice: choix(preset, "STYLE-POLICE", CHOIX.stylePolice),
+    espacementLettres: borne(f(preset, "ESPACEMENT-LETTRES"), -5, 20),
+    transformation: choix(preset, "TRANSFORMATION-TEXTE", CHOIX.transformation),
+    fondMedia: media && (referentiels.mediaVisible || publiable)(media) ? String(media.id) : null,
+    fondPosition: choix(preset, "FOND-POSITION", CHOIX.fondPosition),
+    fondTaille: choix(preset, "FOND-TAILLE", CHOIX.fondTaille),
+    fondRepetition: choix(preset, "FOND-REPETITION", CHOIX.fondRepetition),
+    fondOpacite: borne(f(preset, "FOND-OPACITE"), 0, 100),
+    couleurDegrade: hexDe("OBJ-COULEUR-DEGRADE"), degradeAngle: borne(f(preset, "DEGRADE-ANGLE"), 0, 360),
     largeur: borne(f(preset, "LARGEUR"), 0, 100), largeurMaximale: borne(f(preset, "LARGEUR-MAXIMALE"), 0, 2400),
+    largeurMinimale: borne(f(preset, "LARGEUR-MINIMALE"), 0, 2400), hauteur: borne(f(preset, "HAUTEUR"), 0, 4000),
+    hauteurMinimale: borne(f(preset, "HAUTEUR-MINIMALE"), 0, 4000), hauteurMaximale: borne(f(preset, "HAUTEUR-MAXIMALE"), 0, 4000),
     marge: espaces(preset, "MARGE"), padding: espaces(preset, "PADDING"),
-    bordureLargeur: borne(f(preset, "BORDURE-LARGEUR"), 0, 20), bordureRayon: borne(f(preset, "BORDURE-RAYON"), 0, 200)
-  };
-
-  return Object.fromEntries(Object.entries(style).filter(([, v]) => v !== null));
+    bordureLargeur: borne(f(preset, "BORDURE-LARGEUR"), 0, 20), bordureRayon: borne(f(preset, "BORDURE-RAYON"), 0, 200),
+    bordureStyle: choix(preset, "BORDURE-STYLE", CHOIX.bordureStyle),
+    ombre: ombreActive ? sansNuls({ x: borne(f(preset, "OMBRE-X"), -100, 100), y: borne(f(preset, "OMBRE-Y"), -100, 100),
+      flou: borne(f(preset, "OMBRE-FLOU"), 0, 200), etalement: borne(f(preset, "OMBRE-ETALEMENT"), -100, 100), couleur: hexDe("OBJ-COULEUR-OMBRE") }) : null,
+    survol: Object.keys(survol).length ? survol : null,
+    justification: choix(preset, "JUSTIFICATION", CHOIX.justification)
+  });
 }
 
-function responsiveDepuisPreset(presetId, responsifs) {
+function responsiveDepuisPreset(presetId, responsifs, referentiels = {}) {
   const sortie = {};
   for (const r of responsifs || []) {
     if (rel(r, "OBJ-STYLE-PRESET")?.id !== presetId || !publiable(r)) continue;
     const appareil = String(rel(r, "OBJ-APPAREIL")?.titre || "").toUpperCase();
     if (!APPAREILS.includes(appareil)) continue;
+    const hexDe = (nom) => {
+      const hex = f(referentiels.couleurs?.get(rel(r, nom)?.id), "VALEUR-HEX");
+      return hex && HEX.test(String(hex).trim()) ? String(hex).trim() : null;
+    };
 
-    sortie[appareil] = Object.fromEntries(Object.entries({
-      largeur: borne(f(r, "LARGEUR"), 0, 100), tailleTexte: borne(f(r, "TAILLE-TEXTE"), 8, 96),
-      alignement: ["GAUCHE", "CENTRE", "DROITE", "JUSTIFIE"].includes(String(rel(r, "ALIGNEMENT")?.titre || "").toUpperCase())
-        ? String(rel(r, "ALIGNEMENT").titre).toUpperCase() : null,
-      marge: espaces(r, "MARGE"), padding: espaces(r, "PADDING"), masque: booleen(r, "MASQUE", false) || null
-    }).filter(([, v]) => v !== null));
+    sortie[appareil] = sansNuls({
+      largeur: borne(f(r, "LARGEUR"), 0, 100), tailleTexte: borne(f(r, "TAILLE-TEXTE"), 8, 96), alignement: alignDe(r),
+      marge: espaces(r, "MARGE"), padding: espaces(r, "PADDING"), masque: booleen(r, "MASQUE", false) || null,
+      couleurTexte: hexDe("OBJ-COULEUR-TEXTE"), couleurFond: hexDe("OBJ-COULEUR-FOND"),
+      hauteurMinimale: borne(f(r, "HAUTEUR-MINIMALE"), 0, 4000), bordureRayon: borne(f(r, "BORDURE-RAYON"), 0, 200),
+      largeurMaximale: borne(f(r, "LARGEUR-MAXIMALE"), 0, 2400)
+    });
   }
   return sortie;
 }
+
+// Fusion : la valeur la plus specifique gagne ; les objets (marge, padding, ombre, survol) se fusionnent cote par cote.
+function fusionner(base, ajout) {
+  const r = { ...base };
+  for (const [k, v] of Object.entries(ajout || {})) {
+    r[k] = v && typeof v === "object" && r[k] && typeof r[k] === "object" ? { ...r[k], ...v } : v;
+  }
+  return r;
+}
+
+const presetDuSite = (preset, site) => {
+  const s = rel(preset, "OBJ-SITE-PUBLIC")?.id;
+  return Boolean(preset) && publiable(preset) && (!s || s === String(site?.id));
+};
+
+// Chaine d'heritage : racine -> ... -> preset (PRESET-PARENT, profondeur bornee, sans boucle).
+function chainePresets(presetId, ctx) {
+  const chaine = [];
+  const vus = new Set();
+  let id = presetId;
+  while (id && !vus.has(id) && chaine.length < 6) {
+    vus.add(id);
+    const p = ctx.presets.get(id);
+    if (!presetDuSite(p, ctx.site)) break;
+    chaine.unshift(p);
+    id = rel(p, "PRESET-PARENT")?.id;
+  }
+  return chaine;
+}
+
+/* Theme du site : type de style -> preset (OBJ-SITE-THEME, relation au site par la colonne titre Lookup). */
+function indexTheme(donnees, site) {
+  const codes = new Map((donnees.styleTypes || []).map((t) => [t.id, String(f(t, "CODE") || f(t, "Title") || "").toUpperCase()]));
+  const theme = new Map();
+  for (const t of donnees.themes || []) {
+    const s = rel(t, "Titre OBJ-SITE-THEME")?.id;
+    if (s !== String(site?.id) || rel(t, "OBJ-THEME")?.id === "2" || !oui(t, "OBJ-VALIDE")) continue;
+    const code = codes.get(rel(t, "OBJ-STYLE-TYPE")?.id);
+    const preset = rel(t, "OBJ-STYLE-PRESET")?.id;
+    if (code && preset && !theme.has(code)) theme.set(code, preset);
+  }
+  return theme;
+}
+
+/*
+ * Style resolu d'un element : THEME SITE (type) -> PRESET (heritage) -> STYLE ELEMENT -> SURCHARGE RESPONSIVE.
+ * Retourne { style, responsive, propre } ; propre = valeurs du seul preset de l'element.
+ */
+function styleResolu(ctx, type, presetId) {
+  const chaine = [];
+  const themeId = ctx.theme?.get(typeStyle(type));
+  for (const p of [...chainePresets(themeId, ctx), ...chainePresets(presetId, ctx)]) if (!chaine.includes(p)) chaine.push(p);
+  let style = {};
+  const responsive = {};
+  for (const p of chaine) {
+    style = fusionner(style, styleDepuisPreset(p, ctx.referentiels));
+    for (const [a, v] of Object.entries(responsiveDepuisPreset(p.id, ctx.donnees.responsifs, ctx.referentiels))) responsive[a] = fusionner(responsive[a] || {}, v);
+  }
+  return { style, responsive };
+}
+
+const styleElement = (ctx, type, el) => styleResolu(ctx, type, rel(el, "OBJ-STYLE-PRESET")?.id);
 
 /* ---------- Contenu ---------- */
 
@@ -151,7 +277,7 @@ function modeleApplicable(module, site, modeles) {
 /* ---------- Composition ---------- */
 
 function composerModule(module, ctx) {
-  const { site, donnees, modules, types, modeles, medias, referentiels } = ctx;
+  const { site, donnees, modules, types, modeles, medias } = ctx;
   const type = String(rel(module, "OBJMODULESITEPUBLICTYPE")?.titre || "").trim().toUpperCase();
   if (!type) return null;
 
@@ -164,9 +290,7 @@ function composerModule(module, ctx) {
   const sourceDesign = synchro("SYNCHRONISE-DESIGN") ? maitre : module;
   const sourceAvance = synchro("SYNCHRONISE-AVANCE") ? maitre : module;
 
-  const presetId = rel(sourceDesign, "OBJ-STYLE-PRESET")?.id;
-  const preset = presetId ? ctx.presets.get(presetId) : null;
-  const responsive = presetId ? responsiveDepuisPreset(presetId, donnees.responsifs) : {};
+  const { style, responsive } = styleResolu(ctx, type, rel(sourceDesign, "OBJ-STYLE-PRESET")?.id);
 
   const visibilite = {
     ORDINATEUR: booleen(module, "VISIBLE-ORDINATEUR", true) && !responsive.ORDINATEUR?.masque,
@@ -182,7 +306,7 @@ function composerModule(module, ctx) {
     type_connu: types.has(type),
     global: sourceContenu !== module || sourceDesign !== module || sourceAvance !== module,
     contenu: contenusDuModule(sourceContenu, type, donnees, medias, ctx.visible || publiable),
-    style: styleDepuisPreset(preset, referentiels),
+    style,
     responsive,
     visibilite,
     avance: {
@@ -196,7 +320,8 @@ function composerModule(module, ctx) {
 function indexReferentiels(donnees) {
   return {
     couleurs: indexer(donnees.couleurs),
-    polices: indexer(donnees.polices)
+    polices: indexer(donnees.polices),
+    medias: indexer(donnees.medias)
   };
 }
 
@@ -214,7 +339,7 @@ function contexteComposition(donnees, site) {
     site, donnees, modules: indexer(donnees.modules),
     types: new Set((donnees.types || []).filter(publiable).map((t) => String(f(t, "Title") || t?._fields?.Title || "").toUpperCase())),
     modeles: indexer(donnees.modeles), presets: indexer(donnees.presets),
-    medias: indexer(donnees.medias), referentiels: indexReferentiels(donnees)
+    medias: indexer(donnees.medias), referentiels: indexReferentiels(donnees), theme: indexTheme(donnees, site)
   };
 }
 
@@ -225,7 +350,13 @@ const appareilDe = (v) => (APPAREILS.includes(String(v || "").toUpperCase()) ? S
  * visible(el) : regle de filtrage (public = actif + valide ; apercu cockpit = non desactive).
  */
 function composerSections(donnees, site, sectionsSource, { appareil = null, visible = publiable, ctx = null } = {}) {
-  const c = { ...(ctx || contexteComposition(donnees, site)), visible };
+  const base = ctx || contexteComposition(donnees, site);
+  const c = { ...base, visible, referentiels: { ...base.referentiels, mediaVisible: visible } };
+  const design = (type, el) => {
+    const { style, responsive } = styleElement(c, type, el);
+    return { style, responsive, _id: el.id };
+  };
+  const masque = (d) => appareil && d.responsive[appareil]?.masque;
   const sections = [];
   for (const section of sectionsSource) {
     if (!visible(section)) continue;
@@ -247,19 +378,25 @@ function composerSections(donnees, site, sectionsSource, { appareil = null, visi
           .filter((m) => m && (!appareil || m.visibilite[appareil]));
 
         const largeur = borne(f(colonne, "LARGEUR"), 1, 100) ?? (parts && parts.length > 1 ? parts[i] ?? null : 100);
+        const dc = design("COLONNE", colonne);
+        if (masque(dc)) continue;
         colonnes.push({
           largeur, largeurTablette: borne(f(colonne, "LARGEUR-TABLETTE"), 1, 100), largeurMobile: borne(f(colonne, "LARGEUR-MOBILE"), 1, 100),
-          modules: mods
+          modules: mods, ...dc
         });
       }
 
-      lignes.push({ structure, espacement: borne(f(ligne, "ESPACEMENT-COLONNES"), 0, 120), colonnes });
+      const dl = design("LIGNE", ligne);
+      if (masque(dl)) continue;
+      lignes.push({ structure, espacement: borne(f(ligne, "ESPACEMENT-COLONNES"), 0, 120), colonnes, ...dl });
     }
 
+    const ds = design("SECTION", section);
+    if (masque(ds)) continue;
     sections.push({
       type: String(rel(section, "OBJ-SECTION-TYPE")?.titre || "STANDARD").toUpperCase(),
       ancrage: /^[a-z][a-z0-9_-]{0,63}$/i.test(String(f(section, "ANCRAGE") || "")) ? String(f(section, "ANCRAGE")) : "",
-      lignes
+      lignes, ...ds
     });
   }
   return sections;
@@ -276,7 +413,8 @@ function composerConteneurPage(donnees, site, page, { liste, relation }, options
   const el = id ? (donnees[liste] || []).find((x) => x.id === id) : null;
   if (!el || !publiable(el) || rel(el, "OBJ-SITE-PUBLIC")?.id !== String(site.id)) return null;
   const sections = composerSections(donnees, site, enfants(donnees.sections, el.id, relation), options);
-  return aDesModules(sections) ? { id: el.id, sections } : null;
+  const ctx = options.ctx || contexteComposition(donnees, site);
+  return aDesModules(sections) ? { id: el.id, sections, ...styleElement(ctx, relation === "OBJ-ENTETE-SITE" ? "ENTETE" : "FOOTER", el) } : null;
 }
 
 /*
@@ -293,7 +431,19 @@ function composerPage(donnees, site, options = {}) {
   const footer = composerConteneurPage(donnees, site, page, { liste: "footers", relation: "OBJ-FOOTER-SITE" }, opts);
 
   if (!aDesModules(sections) && !entete && !footer) return { mode: "historique", page: null, sections: [] };
-  return { mode: "builder", page: { id: page.id }, sections: aDesModules(sections) ? sections : [], entete, footer };
+  return { mode: "builder", page: { id: page.id, ...styleElement(opts.ctx, "PAGE", page) }, sections: aDesModules(sections) ? sections : [], entete, footer,
+    theme: themeGlobal(opts.ctx) };
+}
+
+/* Styles globaux du theme (GLOBAL sur la racine, LIEN sur les liens) : uniquement s'ils sont configures. */
+function themeGlobal(ctx) {
+  const sortie = {};
+  for (const code of ["GLOBAL", "LIEN"]) {
+    if (!ctx.theme?.has(code)) continue;
+    const r = styleResolu(ctx, code, null);
+    if (Object.keys(r.style).length || Object.keys(r.responsive).length) sortie[code] = r;
+  }
+  return sortie;
 }
 
 function listerModeles(donnees, site) {
@@ -307,7 +457,8 @@ function listerTypes(donnees) {
   return (donnees.types || []).filter(publiable).sort(parOrdre).map((t) => String(f(t, "Title") || "").toUpperCase()).filter(Boolean);
 }
 
-module.exports = {
+module.exports = { CHOIX, ALIGNS,
   LISTES_CONTENU, LISTES_BUILDER, POLICES, APPAREILS,
-  composerPage, composerSections, contexteComposition, composerModule, listerModeles, listerTypes, styleDepuisPreset, responsiveDepuisPreset, trouverPage, publiable, enfants, parOrdre
+  composerPage, composerSections, contexteComposition, composerModule, listerModeles, listerTypes, styleDepuisPreset, responsiveDepuisPreset, trouverPage, publiable, enfants, parOrdre,
+  styleResolu, styleElement, themeGlobal, groupesDesign, typeStyle, chainePresets, presetDuSite, GROUPES, GROUPES_REPLI
 };

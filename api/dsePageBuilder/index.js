@@ -54,14 +54,19 @@ function fabrique(construire) {
   };
 }
 
-const nettoyer = (sections) => sections.map((s) => ({ ...s, lignes: s.lignes.map((l) => ({ ...l,
-  colonnes: l.colonnes.map((c) => ({ ...c, modules: c.modules.map(({ _id, ...m }) => m) })) })) }));
+// Retire les ID internes (_id) a tous les niveaux ; seule la reference signee d'apercu (_ref) peut subsister.
+const sansId = ({ _id, ...x }) => x;
+const nettoyer = (sections) => (sections || []).map((s) => ({ ...sansId(s), lignes: (s.lignes || []).map((l) => ({ ...sansId(l),
+  colonnes: (l.colonnes || []).map((c) => ({ ...sansId(c), modules: (c.modules || []).map(sansId) })) })) }));
+const zone = (z) => ({ sections: nettoyer(z.sections), ...(z.style ? { style: z.style } : {}), ...(z.responsive ? { responsive: z.responsive } : {}) });
 const sortie = (r) => ({ mode: r.mode, sections: nettoyer(r.sections),
-  ...(r.entete ? { entete: { sections: nettoyer(r.entete.sections) } } : {}),
-  ...(r.footer ? { footer: { sections: nettoyer(r.footer.sections) } } : {}) });
+  ...(r.page?.style ? { style: r.page.style, responsive: r.page.responsive || {} } : {}),
+  ...(r.theme && Object.keys(r.theme).length ? { theme: r.theme } : {}),
+  ...(r.entete ? { entete: zone(r.entete) } : {}),
+  ...(r.footer ? { footer: zone(r.footer) } : {}) });
 
 module.exports = {
-  nettoyer,
+  nettoyer, zone,
   page: fabrique(({ donnees, site, pageId, req }) => sortie(builder.composerPage(donnees, site, {
     appareil: req.query.appareil,
     pageId: pageId || undefined,

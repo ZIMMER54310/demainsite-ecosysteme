@@ -479,7 +479,8 @@ function rendreSitePublic({
   const footerHistorique = rendreFooter(footer, { nomSite, nettoyerTexte: texteSharePoint });
   // En-tete / Footer construits (Constructeur DSE) : prioritaires s'ils sont affectes a la page, actifs et valides.
   const zone = (z, classe) => {
-    const html = z?.sections?.length ? rendreBuilder({ mode: "builder", sections: z.sections }, { apiBase: CONFIG.API_BASE_URL, adapteurs: {} }) : "";
+    const html = z?.sections?.length ? rendreBuilder({ mode: "builder", sections: z.sections, style: z.style, responsive: z.responsive, theme: composition?.theme },
+      { apiBase: CONFIG.API_BASE_URL, adapteurs: {}, prefixe: classe === "entete" ? "e" : "f", typeConteneur: classe === "entete" ? "ENTETE" : "FOOTER" }) : "";
     return html ? `<${classe === "entete" ? "header" : "footer"} class="dse-b-${classe}"><style>${STYLES_BUILDER}</style>${html}</${classe === "entete" ? "header" : "footer"}>` : "";
   };
   const enteteConstruit = zone(composition?.entete, "entete");
@@ -489,7 +490,7 @@ function rendreSitePublic({
 
   // Mode Builder : prioritaire uniquement si une composition validee existe ; sinon rendu historique.
   const builder = rendreBuilder(composition, {
-    apiBase: CONFIG.API_BASE_URL,
+    apiBase: CONFIG.API_BASE_URL, prefixe: "p", typeConteneur: "PAGE",
     adapteurs: {
       HERO: () => (hero ? rendreHero(hero) : ""),
       FOOTER: () => footerHtml,

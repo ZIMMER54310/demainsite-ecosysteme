@@ -295,6 +295,24 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .constructeur-medias--mini img { width: 48px; height: 48px; object-fit: contain; background: #f6f7f9; border-radius: 4px; }
 .constructeur-dialogue form label { display: grid; gap: 6px; }
 .constructeur-dialogue input, .constructeur-dialogue textarea { padding: 8px; font: inherit; width: 100%; }
+.constructeur-design-zone { display: grid; gap: 16px; align-items: start; }
+.constructeur-design-zone--ouverte { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); }
+.constructeur-apercu-cadre { overflow: hidden; border: 1px solid var(--line, #dde); border-radius: 8px; background: #f6f7f9; min-height: 300px; }
+.constructeur-apercu-cadre .constructeur-apercu { border: 0; border-radius: 0; display: block; }
+.design-panneau { display: grid; gap: 10px; max-height: 80vh; overflow: auto; position: sticky; top: 8px; }
+.design-entete { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.design-onglets { display: flex; flex-wrap: wrap; gap: 4px; }
+.design-groupe { border: 1px solid var(--line, #dde); border-radius: 8px; padding: 6px 10px; }
+.design-groupe summary { cursor: pointer; font-weight: 600; }
+.design-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; }
+.design-champ { display: grid; gap: 4px; font-size: .85rem; }
+.design-champ input, .design-champ select { padding: 4px 6px; font: inherit; font-size: .85rem; width: 100%; min-width: 0; }
+.design-couleur, .design-nombre { display: flex; gap: 4px; align-items: center; }
+.design-couleur input[type=color] { width: 34px; height: 30px; padding: 0; flex: none; }
+.design-herite { font-size: .75rem; }
+.design-appareil { display: grid; gap: 8px; }
+.design-actions { position: sticky; bottom: 0; background: inherit; padding-top: 6px; }
+@media (max-width: 1100px) { .constructeur-design-zone--ouverte { grid-template-columns: 1fr; } .design-panneau { position: static; max-height: none; } }
 .alerte-erreur { color: #a11; } .alerte-succes { color: #0b6b3a; }
 @media (max-width: 640px) { .constructeur-outils { margin-left: 0; } .constructeur-arbre ul { padding-left: 8px; } }
 .cockpit-import-media h2 { display: flex; align-items: center; gap: 8px; }

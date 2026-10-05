@@ -1,9 +1,31 @@
 // Styles du Builder : seules des proprietes CSS explicitement autorisees sont generees. Jamais de CSS arbitraire.
+// Toutes les valeurs viennent de SharePoint (presets, theme, responsive) ; ce module ne fait que les traduire.
 const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 const POLICES = { SANS: "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif", SERIF: "Georgia,'Times New Roman',serif", MONO: "ui-monospace,Menlo,Consolas,monospace" };
+const FAMILLE = /^[A-Za-z0-9 ]{2,40}$/;
 const ALIGNEMENTS = { GAUCHE: "left", CENTRE: "center", DROITE: "right", JUSTIFIE: "justify" };
+const FLEX = { DEBUT: "flex-start", CENTRE: "center", FIN: "flex-end", "ESPACE-ENTRE": "space-between", "ESPACE-AUTOUR": "space-around" };
+const FLEX_ALIGNEMENT = { GAUCHE: "flex-start", CENTRE: "center", DROITE: "flex-end", JUSTIFIE: "space-between" };
+const STYLE_POLICE = { NORMAL: "normal", ITALIQUE: "italic" };
+const TRANSFORMATION = { AUCUNE: "none", MAJUSCULES: "uppercase", MINUSCULES: "lowercase", CAPITALES: "capitalize" };
+const FOND_POSITION = { CENTRE: "center", HAUT: "top", BAS: "bottom", GAUCHE: "left", DROITE: "right" };
+const FOND_TAILLE = { COUVRIR: "cover", CONTENIR: "contain", AUTO: "auto" };
+const FOND_REPETITION = { NON: "no-repeat", OUI: "repeat", HORIZONTALE: "repeat-x", VERTICALE: "repeat-y" };
+const BORDURE_STYLE = { AUCUNE: "none", PLEINE: "solid", TIRETS: "dashed", POINTILLES: "dotted", DOUBLE: "double" };
+// Requetes responsive techniques (memes seuils que la grille du Builder).
+export const REQUETES = { TABLETTE: "(max-width:1024px)", MOBILE: "(max-width:640px)" };
 
-const nb = (v, min, max) => (Number.isFinite(Number(v)) && v !== null && v !== "" ? Math.min(max, Math.max(min, Number(v))) : null);
+const nb = (v, min, max) => (Number.isFinite(Number(v)) && v !== null && v !== "" && typeof v !== "boolean" ? Math.min(max, Math.max(min, Number(v))) : null);
+const hex = (v) => (HEX.test(String(v || "")) ? String(v) : null);
+
+function rgba(couleur, opacite) {
+  const h = hex(couleur);
+  if (!h) return null;
+  if (opacite === null) return h;
+  const x = h.length === 4 ? h.slice(1).split("").map((c) => c + c).join("") : h.slice(1);
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(x.slice(i, i + 2), 16));
+  return `rgba(${r},${g},${b},${Math.round(opacite) / 100})`;
+}
 
 function espaces(propriete, valeurs) {
   if (!valeurs || typeof valeurs !== "object") return [];
@@ -13,38 +35,163 @@ function espaces(propriete, valeurs) {
     .map(([cote, v]) => `${propriete}-${cote}:${v}px`);
 }
 
-export function declarations(style = {}) {
+const urlFond = (id, ctx) => {
+  if (!/^\d{1,12}$/.test(String(id || ""))) return null;
+  const base = /^[A-Za-z0-9:/._-]{0,200}$/.test(String(ctx?.apiBase ?? "")) && ctx?.apiBase ? ctx.apiBase : "/api/v1";
+  return `url("${base}/media/${id}")`;
+};
+
+/* Declarations groupees : typo, fond, dim, marge, padding, bord, ombre, flex. */
+export function groupes(style = {}, ctx = {}) {
   const s = style || {};
-  const d = [];
-  if (HEX.test(s.couleurTexte || "")) d.push(`color:${s.couleurTexte}`);
-  if (HEX.test(s.couleurFond || "")) d.push(`background-color:${s.couleurFond}`);
-  if (POLICES[s.police]) d.push(`font-family:${POLICES[s.police]}`);
-  if (nb(s.tailleTexte, 8, 96) !== null) d.push(`font-size:${nb(s.tailleTexte, 8, 96)}px`);
-  if (nb(s.poidsPolice, 100, 900) !== null) d.push(`font-weight:${Math.round(nb(s.poidsPolice, 100, 900) / 100) * 100}`);
-  if (nb(s.hauteurLigne, 1, 3) !== null) d.push(`line-height:${nb(s.hauteurLigne, 1, 3)}`);
-  if (ALIGNEMENTS[s.alignement]) d.push(`text-align:${ALIGNEMENTS[s.alignement]}`);
-  if (nb(s.largeur, 1, 100) !== null) d.push(`width:${nb(s.largeur, 1, 100)}%`);
-  if (nb(s.largeurMaximale, 1, 2400) !== null) d.push(`max-width:${nb(s.largeurMaximale, 1, 2400)}px`);
-  d.push(...espaces("margin", s.marge), ...espaces("padding", s.padding));
-  if (nb(s.bordureLargeur, 0, 20) !== null) d.push(`border:${nb(s.bordureLargeur, 0, 20)}px solid ${HEX.test(s.couleurBordure || "") ? s.couleurBordure : "currentColor"}`);
-  if (nb(s.bordureRayon, 0, 200) !== null) d.push(`border-radius:${nb(s.bordureRayon, 0, 200)}px`);
-  return d;
+  const g = { typo: [], fond: [], dim: [], marge: [], padding: [], bord: [], ombre: [], flex: [] };
+
+  if (hex(s.couleurTexte)) g.typo.push(`color:${s.couleurTexte}`);
+  if (POLICES[s.police]) g.typo.push(`font-family:${POLICES[s.police]}`);
+  else if (FAMILLE.test(String(s.policeFamille || ""))) g.typo.push(`font-family:"${s.policeFamille}",${POLICES.SANS}`);
+  if (nb(s.tailleTexte, 8, 96) !== null) g.typo.push(`font-size:${nb(s.tailleTexte, 8, 96)}px`);
+  if (nb(s.poidsPolice, 100, 900) !== null) g.typo.push(`font-weight:${Math.round(nb(s.poidsPolice, 100, 900) / 100) * 100}`);
+  if (STYLE_POLICE[s.stylePolice]) g.typo.push(`font-style:${STYLE_POLICE[s.stylePolice]}`);
+  if (nb(s.hauteurLigne, 1, 3) !== null) g.typo.push(`line-height:${nb(s.hauteurLigne, 1, 3)}`);
+  if (nb(s.espacementLettres, -5, 20) !== null) g.typo.push(`letter-spacing:${nb(s.espacementLettres, -5, 20)}px`);
+  if (TRANSFORMATION[s.transformation]) g.typo.push(`text-transform:${TRANSFORMATION[s.transformation]}`);
+  if (ALIGNEMENTS[s.alignement]) g.typo.push(`text-align:${ALIGNEMENTS[s.alignement]}`);
+
+  const opacite = nb(s.fondOpacite, 0, 100);
+  const fond = rgba(s.couleurFond, opacite);
+  const image = urlFond(s.fondMedia, ctx);
+  const degrade = hex(s.couleurDegrade) && hex(s.couleurFond)
+    ? `linear-gradient(${nb(s.degradeAngle, 0, 360) ?? 180}deg,${fond},${rgba(s.couleurDegrade, opacite)})` : null;
+  if (fond) g.fond.push(`background-color:${fond}`);
+  if (image) {
+    // Couleur + opacite au-dessus d'une image : voile ; sinon image seule.
+    const voile = degrade || (fond && opacite !== null ? `linear-gradient(${fond},${fond})` : null);
+    g.fond.push(`background-image:${voile ? `${voile},` : ""}${image}`);
+    g.fond.push(`background-position:${FOND_POSITION[s.fondPosition] || "center"}`);
+    g.fond.push(`background-size:${FOND_TAILLE[s.fondTaille] || "cover"}`);
+    g.fond.push(`background-repeat:${FOND_REPETITION[s.fondRepetition] || "no-repeat"}`);
+  } else if (degrade) g.fond.push(`background-image:${degrade}`);
+
+  if (nb(s.largeur, 1, 100) !== null) g.dim.push(`width:${nb(s.largeur, 1, 100)}%`);
+  if (nb(s.largeurMinimale, 0, 2400) !== null) g.dim.push(`min-width:${nb(s.largeurMinimale, 0, 2400)}px`);
+  if (nb(s.largeurMaximale, 1, 2400) !== null) g.dim.push(`max-width:${nb(s.largeurMaximale, 1, 2400)}px`);
+  if (nb(s.hauteur, 1, 4000) !== null) g.dim.push(`height:${nb(s.hauteur, 1, 4000)}px`);
+  if (nb(s.hauteurMinimale, 0, 4000) !== null) g.dim.push(`min-height:${nb(s.hauteurMinimale, 0, 4000)}px`);
+  if (nb(s.hauteurMaximale, 1, 4000) !== null) g.dim.push(`max-height:${nb(s.hauteurMaximale, 1, 4000)}px`);
+
+  g.marge.push(...espaces("margin", s.marge));
+  g.padding.push(...espaces("padding", s.padding));
+
+  const largeurBord = nb(s.bordureLargeur, 0, 20);
+  const styleBord = BORDURE_STYLE[s.bordureStyle];
+  if (largeurBord !== null) g.bord.push(`border:${largeurBord}px ${styleBord || "solid"} ${hex(s.couleurBordure) || "currentColor"}`);
+  else {
+    if (styleBord) g.bord.push(`border-style:${styleBord}`);
+    if (hex(s.couleurBordure)) g.bord.push(`border-color:${s.couleurBordure}`);
+  }
+  if (nb(s.bordureRayon, 0, 200) !== null) g.bord.push(`border-radius:${nb(s.bordureRayon, 0, 200)}px`);
+
+  const o = s.ombre;
+  if (o && typeof o === "object") {
+    const v = (k, min, max) => nb(o[k], min, max) ?? 0;
+    // Couleur de repli technique si l'ombre est activee sans couleur.
+    g.ombre.push(`box-shadow:${v("x", -100, 100)}px ${v("y", -100, 100)}px ${v("flou", 0, 200)}px ${v("etalement", -100, 100)}px ${hex(o.couleur) || "rgba(0,0,0,.2)"}`);
+  }
+
+  if (FLEX[s.justification]) g.flex.push(`justify-content:${FLEX[s.justification]}`);
+  return g;
 }
 
-export function attributStyle(style) {
-  const d = declarations(style);
+export function declarations(style = {}, ctx = {}) {
+  const g = groupes(style, ctx);
+  return [...g.typo, ...g.fond, ...g.dim, ...g.marge, ...g.padding, ...g.bord, ...g.ombre, ...g.flex];
+}
+
+export function attributStyle(style, ctx) {
+  const d = declarations(style, ctx);
   return d.length ? ` style="${d.join(";")}"` : "";
 }
 
-// Les surcharges tablette/mobile sont portees par des variables et des media queries generees ici, jamais fournies par SharePoint.
-export function reglesResponsive(identifiant, responsive = {}) {
-  const requetes = { TABLETTE: "(max-width:1024px)", MOBILE: "(max-width:640px)" };
-  const sortie = [];
-  for (const [appareil, media] of Object.entries(requetes)) {
-    const r = responsive?.[appareil];
-    if (!r) continue;
-    const d = declarations({ largeur: r.largeur, tailleTexte: r.tailleTexte, alignement: r.alignement, marge: r.marge, padding: r.padding });
-    if (d.length) sortie.push(`@media ${media}{.${identifiant}{${d.map((x) => `${x} !important`).join(";")}}}`);
-  }
-  return sortie.join("");
+function survol(s) {
+  const v = s?.survol;
+  if (!v || typeof v !== "object") return [];
+  return [hex(v.couleurTexte) && `color:${v.couleurTexte}`, hex(v.couleurFond) && `background-color:${v.couleurFond}`,
+    hex(v.couleurBordure) && `border-color:${v.couleurBordure}`].filter(Boolean);
 }
+
+const tout = (g) => [...g.typo, ...g.fond, ...g.dim, ...g.marge, ...g.padding, ...g.bord, ...g.ombre];
+
+/*
+ * Repartition par type d'element : quelles declarations vont sur l'enveloppe, lesquelles sur la cible interne
+ * (le bouton lui-meme, l'image, le titre...). Retourne [[selecteur, declarations[]], ...].
+ */
+function blocs(sel, type, style, ctx) {
+  const g = groupes(style, ctx);
+  const s = style || {};
+  const h = survol(s);
+  const t = String(type || "").toUpperCase();
+  const r = [];
+  const add = (selecteur, d) => { if (d.length) r.push([selecteur, d]); };
+
+  if (t === "BOUTON" || t === "BOUTONS" || t === "CTA") {
+    add(sel, g.marge);
+    const justif = g.flex.length ? g.flex : FLEX_ALIGNEMENT[s.alignement] ? [`justify-content:${FLEX_ALIGNEMENT[s.alignement]}`] : [];
+    add(`${sel} .dse-b-boutons`, justif);
+    add(`${sel} .dse-b-bouton`, [...g.typo.filter((x) => !x.startsWith("text-align")), ...g.fond, ...g.dim, ...g.padding, ...g.bord, ...g.ombre]);
+    add(`${sel} .dse-b-bouton:hover,${sel} .dse-b-bouton:focus-visible`, h);
+  } else if (t === "TITRE") {
+    add(sel, [...g.fond, ...g.dim, ...g.marge, ...g.padding, ...g.bord, ...g.ombre]);
+    add(`${sel} .dse-b-titre`, g.typo);
+    add(`${sel}:hover .dse-b-titre`, h.filter((x) => x.startsWith("color")));
+    add(`${sel}:hover`, h.filter((x) => !x.startsWith("color")));
+  } else if (t === "IMAGE" || t === "IMAGE-TEXTE") {
+    add(sel, [...g.typo, ...g.fond, ...g.marge, ...g.padding]);
+    const dims = g.dim.some((x) => x.startsWith("height")) ? [...g.dim, "object-fit:cover"] : g.dim;
+    add(`${sel} .dse-b-image-img`, [...dims, ...g.bord, ...g.ombre]);
+    add(`${sel} .dse-b-image-img:hover`, h.filter((x) => x.startsWith("border")));
+  } else if (["GALERIE", "CARROUSEL", "VIDEO"].includes(t)) {
+    add(sel, [...g.typo, ...g.fond, ...g.dim, ...g.marge, ...g.padding]);
+    add(`${sel} img,${sel} video,${sel} iframe`, [...g.bord, ...g.ombre]);
+  } else if (t === "SECTION") {
+    add(sel, [...g.typo, ...g.fond, ...g.dim.filter((x) => !/^(width|max-width|min-width)/.test(x)), ...g.marge, ...g.padding, ...g.bord, ...g.ombre]);
+    add(`${sel}>.dse-b-contenu`, g.dim.filter((x) => /^(width|max-width|min-width)/.test(x)));
+    add(`${sel}:hover`, h);
+  } else if (t === "LIGNE") {
+    add(sel, [...tout(g), ...g.flex, ...(g.flex.length ? [] : FLEX_ALIGNEMENT[s.alignement] ? [`justify-content:${FLEX_ALIGNEMENT[s.alignement]}`] : [])]);
+    add(`${sel}:hover`, h);
+  } else if (t === "COLONNE") {
+    add(sel, [...tout(g), ...(g.flex.length ? ["display:flex", "flex-direction:column", ...g.flex] : [])]);
+    add(`${sel}:hover`, h);
+  } else if (t === "LIEN") {
+    add(`${sel} a`, [...g.typo, ...g.fond, ...g.padding, ...g.bord]);
+    add(`${sel} a:hover,${sel} a:focus-visible`, h);
+  } else {
+    add(sel, [...tout(g), ...g.flex]);
+    add(`${sel}:hover`, h);
+  }
+  return r;
+}
+
+const css = (liste, important = false) => liste.map(([s, d]) => `${s}{${d.map((x) => (important ? `${x} !important` : x)).join(";")}}`).join("");
+
+/* CSS complet d'un element : base + surcharges tablette/mobile (la valeur la plus specifique gagne). */
+export function cssElement(identifiant, type, style = {}, responsive = {}, ctx = {}) {
+  if (!/^[a-z][a-z0-9-]{0,40}$/.test(String(identifiant || ""))) return "";
+  const sel = `.${identifiant}`;
+  let sortie = css(blocs(sel, type, style, ctx));
+  for (const [appareil, media] of Object.entries(REQUETES)) {
+    const r = responsive?.[appareil];
+    if (!r || typeof r !== "object") continue;
+    const { masque, ...valeurs } = r;
+    const regles = css(blocs(sel, type, valeurs, ctx), true);
+    if (regles) sortie += `@media ${media}{${regles}}`;
+  }
+  return sortie;
+}
+
+// Compatibilite : surcharges responsive seules (anciens appels).
+export function reglesResponsive(identifiant, responsive = {}, type = "") {
+  return cssElement(identifiant, type, {}, responsive);
+}
+
+export const aDuStyle = (style, responsive) => Boolean((style && Object.keys(style).length) || (responsive && Object.keys(responsive).some((k) => responsive[k] && Object.keys(responsive[k]).some((x) => x !== "masque"))));

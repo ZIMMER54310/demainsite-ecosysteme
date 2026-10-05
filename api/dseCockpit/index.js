@@ -523,11 +523,10 @@ async function construireLire(req, res) {
         return refuser(res, 404, "Élément introuvable dans ce site.");
       }
       donnees.arbre = C.arbre(d, r.type, r.el);
-      const nettoyer = require("../dsePageBuilder").nettoyer;
+      const { zone } = require("../dsePageBuilder");
       const apercu = C.apercu(d, p.info.id, r.type, r.el, req.query.appareil);
-      donnees.apercu = { mode: apercu.mode, sections: nettoyer(apercu.sections),
-        entete: apercu.entete ? { sections: nettoyer(apercu.entete.sections) } : null,
-        footer: apercu.footer ? { sections: nettoyer(apercu.footer.sections) } : null };
+      const z = (x) => (x ? { ...zone(x), _ref: x._ref } : null);
+      donnees.apercu = { mode: apercu.mode, ...z(apercu), theme: apercu.theme || {}, entete: z(apercu.entete), footer: z(apercu.footer) };
     }
     res.set("Cache-Control", "no-store");
     repondre(res, 200, { succes: true, donnees, meta: meta() });
@@ -554,7 +553,7 @@ async function construireAction(req, res) {
     const p = await perimetreConstructeur(ctx, domaine);
     if (!p) return refuserEcriture(res, ctx, domaine, "CONSTRUCTEUR-REFUS", "Site hors de votre périmètre ou fonction non autorisée.");
 
-    const lecture = action === "contenu.formulaire" || (action === "conteneur.modifier" && !params.valeurs);
+    const lecture = action === "contenu.formulaire" || action === "design.lire" || (action === "conteneur.modifier" && !params.valeurs);
     const acteur = `OBJ-UTILISATEUR ${ctx.droits.utilisateurId || "non reconnu"}`;
     const cle = ecriture.hash(["constructeur", acteur, cleClient || Math.random(), action, params]);
     if (!lecture) {

@@ -1,7 +1,7 @@
 // Rendu du DSE Builder (pur, sans DOM) : section > ligne > colonne > module.
 // Le rendu ne montre jamais d'ID SharePoint ni d'information technique ; un element vide ne produit aucune sortie.
 import { escapeHtml } from "../public/outils.js";
-import { attributStyle, reglesResponsive } from "./styles.js";
+import { cssElement } from "./styles.js";
 import { rendreTitre } from "../titre/titre.js";
 import { rendreTexte } from "../texte/texte.js";
 import { rendreBouton } from "../bouton/bouton.js";
@@ -31,6 +31,20 @@ const CATALOGUES = {
 // Modules deja geres par les moteurs existants : adaptateurs fournis par la page (HERO, FOOTER, HEADER...).
 const ADAPTES = new Set(["HERO", "FOOTER", "HEADER", "NAVIGATION"]);
 
+const REF = /^[a-z]+\.[A-Za-z0-9._-]{4,120}$/;
+const PREFIXE = (ctx) => (/^[a-z]{0,3}$/.test(String(ctx.prefixe || "")) ? String(ctx.prefixe || "") : "");
+
+/* Identifiant CSS unique + styles (base, survol, responsive) de l'element ; attribut de reperage en apercu. */
+function habiller(el, type, lettre, ctx) {
+  const identifiant = `dse-b-${PREFIXE(ctx)}${lettre}${ctx.compteur ? ctx.compteur() : 0}`;
+  const regles = cssElement(identifiant, type, el?.style || {}, el?.responsive || {}, ctx);
+  if (regles) (ctx.css ? ctx.css.push(regles) : null);
+  const cache = Object.entries({ ORDINATEUR: "ordinateur", TABLETTE: "tablette", MOBILE: "mobile" })
+    .filter(([a]) => el?.responsive?.[a]?.masque || el?.visibilite?.[a] === false).map(([, n]) => `dse-b-cache-${n}`);
+  const ref = ctx.apercu && REF.test(String(el?._ref || "")) ? ` data-dse-ref="${escapeHtml(el._ref)}"` : "";
+  return { identifiant, cache, ref, enLigne: regles && !ctx.css ? `<style>${regles}</style>` : "" };
+}
+
 export function rendreModule(module, ctx = {}) {
   if (!module?.type) return "";
   let interieur = "";
@@ -43,15 +57,11 @@ export function rendreModule(module, ctx = {}) {
 
   if (!String(interieur).trim()) return "";
 
-  const identifiant = `dse-b-m${ctx.compteur ? ctx.compteur() : 0}`;
-  const v = module.visibilite || {};
-  const classes = ["dse-b-module", `dse-b-module--${String(module.type).toLowerCase()}`, identifiant,
-    v.ORDINATEUR === false ? "dse-b-cache-ordinateur" : "", v.TABLETTE === false ? "dse-b-cache-tablette" : "",
-    v.MOBILE === false ? "dse-b-cache-mobile" : "", module.avance?.classe || ""].filter(Boolean);
+  const h = habiller(module, module.type, "m", ctx);
+  const classes = ["dse-b-module", `dse-b-module--${String(module.type).toLowerCase()}`, h.identifiant, ...h.cache, module.avance?.classe || ""].filter(Boolean);
   const ancre = module.avance?.ancrage ? ` id="${escapeHtml(module.avance.ancrage)}"` : "";
-  const regles = reglesResponsive(identifiant, module.responsive);
 
-  return `${regles ? `<style>${regles}</style>` : ""}<div class="${escapeHtml(classes.join(" "))}"${ancre}${attributStyle(module.style)}>${interieur}</div>`;
+  return `${h.enLigne}<div class="${escapeHtml(classes.join(" "))}"${ancre}${h.ref}>${interieur}</div>`;
 }
 
 export function rendreColonne(colonne, ctx) {
@@ -60,14 +70,16 @@ export function rendreColonne(colonne, ctx) {
   const largeur = Number(colonne.largeur) > 0 ? Math.min(100, Number(colonne.largeur)) : 100;
   const tablette = Number(colonne.largeurTablette) > 0 ? Math.min(100, Number(colonne.largeurTablette)) : "";
   const mobile = Number(colonne.largeurMobile) > 0 ? Math.min(100, Number(colonne.largeurMobile)) : 100;
-  return `<div class="dse-b-colonne" style="--dse-b-l:${largeur};--dse-b-lt:${tablette || largeur};--dse-b-lm:${mobile}">${modules}</div>`;
+  const h = habiller(colonne, "COLONNE", "c", ctx);
+  return `${h.enLigne}<div class="${["dse-b-colonne", h.identifiant, ...h.cache].join(" ")}"${h.ref} style="--dse-b-l:${largeur};--dse-b-lt:${tablette || largeur};--dse-b-lm:${mobile}">${modules}</div>`;
 }
 
 export function rendreLigne(ligne, ctx) {
   const colonnes = (ligne.colonnes || []).map((c) => rendreColonne(c, ctx)).filter(Boolean).join("");
   if (!colonnes) return "";
   const espace = Number(ligne.espacement) >= 0 && ligne.espacement !== null ? ` style="--dse-b-espace:${Math.min(120, Number(ligne.espacement))}px"` : "";
-  return `<div class="dse-b-ligne"${espace}>${colonnes}</div>`;
+  const h = habiller(ligne, "LIGNE", "l", ctx);
+  return `${h.enLigne}<div class="${["dse-b-ligne", h.identifiant, ...h.cache].join(" ")}"${h.ref}${espace}>${colonnes}</div>`;
 }
 
 export function rendreSection(section, ctx) {
@@ -75,16 +87,33 @@ export function rendreSection(section, ctx) {
   if (!lignes) return "";
   const type = String(section.type || "STANDARD").toLowerCase().replace(/[^a-z-]/g, "");
   const ancre = section.ancrage ? ` id="${escapeHtml(section.ancrage)}"` : "";
-  return `<section class="dse-b-section dse-b-section--${type}"${ancre}><div class="dse-b-contenu">${lignes}</div></section>`;
+  const h = habiller(section, "SECTION", "s", ctx);
+  return `${h.enLigne}<section class="${["dse-b-section", `dse-b-section--${type}`, h.identifiant, ...h.cache].join(" ")}"${ancre}${h.ref}><div class="dse-b-contenu">${lignes}</div></section>`;
 }
 
-// Retourne "" si aucune composition Builder valide : la page conserve alors son rendu historique.
+/*
+ * Retourne "" si aucune composition Builder valide : la page conserve alors son rendu historique.
+ * composition.style/responsive (ou page.style) : style du conteneur (Page, En-tete, Footer) ;
+ * composition.theme : styles globaux du site (GLOBAL, LIEN). ctx.prefixe distingue En-tete / Page / Footer.
+ */
 export function rendreBuilder(composition, ctx = {}) {
   if (composition?.mode !== "builder") return "";
   let n = 0;
-  const contexte = { ...ctx, compteur: () => ++n };
+  const css = [];
+  const contexte = { ...ctx, compteur: () => ++n, css };
   const html = (composition.sections || []).map((s) => rendreSection(s, contexte)).filter(Boolean).join("");
-  return html ? `<div class="dse-builder">${html}</div>` : "";
+  if (!html) return "";
+  const racine = composition.style || composition.responsive ? composition : composition.page || {};
+  const type = String(ctx.typeConteneur || "PAGE").toUpperCase();
+  const h = habiller({ style: racine.style, responsive: racine.responsive, _ref: racine._ref }, type, "r", contexte);
+  const theme = composition.theme || {};
+  for (const code of ["GLOBAL", "LIEN"]) {
+    if (!theme[code]) continue;
+    const r = cssElement(h.identifiant, code, theme[code].style || {}, theme[code].responsive || {}, ctx);
+    if (r) css.unshift(r);
+  }
+  const style = css.length ? `<style>${css.join("")}</style>` : "";
+  return `${style}<div class="${["dse-builder", h.identifiant, ...h.cache].join(" ")}"${h.ref}>${html}</div>`;
 }
 
 export const STYLES_BUILDER = `

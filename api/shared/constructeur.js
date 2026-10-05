@@ -202,18 +202,26 @@ function vue(d, perimetre) {
   };
 }
 
-/* Apercu (ordinateur / mobile) : meme moteur que le public, brouillons inclus, elements desactives exclus. */
+/* Apercu (ordinateur / tablette / mobile) : meme moteur que le public, brouillons inclus, elements desactives exclus.
+ * Chaque element recoit sa reference signee (_ref) pour le reperage du panneau Design ; aucun ID natif n'est expose. */
+const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE" };
 function apercu(d, siteId, type, el, appareil) {
   const site = { id: String(siteId) };
-  const options = { appareil: B.APPAREILS.includes(String(appareil || "").toUpperCase()) ? String(appareil).toUpperCase() : null, visible: visibleApercu };
-  const sections = (t, e) => B.composerSections(d, site, enfantsDe(d, t, e), options);
-  if (type !== "page") return { mode: "builder", sections: sections(type, el) };
+  const ctx = B.contexteComposition(d, site);
+  const options = { appareil: B.APPAREILS.includes(String(appareil || "").toUpperCase()) ? String(appareil).toUpperCase() : null, visible: visibleApercu, ctx };
+  const marquer = (t, { _id, ...x }) => ({ ...x, _ref: ref(t, _id) });
+  const sections = (t, e) => B.composerSections(d, site, enfantsDe(d, t, e), options).map((s) => ({ ...marquer("section", s),
+    lignes: s.lignes.map((l) => ({ ...marquer("ligne", l), colonnes: l.colonnes.map((c) => ({ ...marquer("colonne", c),
+      modules: c.modules.map((m) => marquer("module", m)) })) })) }));
+  const zone = (t, e) => ({ sections: sections(t, e), ...B.styleElement(ctx, TYPE_CONTENEUR[t], e), _ref: ref(t, e.id) });
+  const theme = B.themeGlobal(ctx);
+  if (type !== "page") return { mode: "builder", ...zone(type, el), theme };
   const lie = (t) => {
     const r = rel(el, CONTENEURS[t].relation);
     const c = r ? (d[CONTENEURS[t].cle] || []).find((x) => x.id === r.id) : null;
-    return c && !inactif(c) ? { sections: sections(t, c) } : null;
+    return c && !inactif(c) ? zone(t, c) : null;
   };
-  return { mode: "builder", sections: sections("page", el), entete: lie("entete"), footer: lie("footer") };
+  return { mode: "builder", ...zone("page", el), theme, entete: lie("entete"), footer: lie("footer") };
 }
 
 /* ======================================================================
@@ -233,7 +241,7 @@ class Ecrivain {
     const l = this.liste(nom);
     if (!this.colonnes.has(l.id)) {
       this.colonnes.set(l.id, await dse.collecter(this.g.token, `/sites/${this.g.siteGraphId}/lists/${l.id}/columns` +
-        "?$select=id,name,displayName,hidden,readOnly,required,lookup,boolean,text,number,dateTime,calculated,columnGroup"));
+        "?$select=id,name,displayName,hidden,readOnly,required,lookup,boolean,text,number,dateTime,calculated,columnGroup,choice"));
     }
     return this.colonnes.get(l.id);
   }
@@ -437,6 +445,83 @@ function descendants(d, type, el) {
     out.push({ type: t, el: enfant }, ...descendants(d, t, enfant));
   }
   return out;
+}
+
+/* ---------------- Design (OBJ-STYLE-PRESET / OBJ-STYLE-RESPONSIVE) ---------------- */
+
+/*
+ * Reglages Design autorises (liste blanche) : cle d'interface -> [groupe, colonne du preset, nature, bornes].
+ * Les libelles de colonnes sont resolus dynamiquement (nom affiche) ; aucune valeur metier n'est fixee ici.
+ */
+const COTES = [["Haut", "HAUT"], ["Droite", "DROITE"], ["Bas", "BAS"], ["Gauche", "GAUCHE"]];
+const DESIGN = {
+  couleurTexte: ["TYPO", "OBJ-COULEUR-TEXTE", "couleur"], police: ["TYPO", "OBJ-POLICE", "police"],
+  tailleTexte: ["TYPO", "TAILLE-TEXTE", "nombre", 8, 96], poidsPolice: ["TYPO", "POIDS-POLICE", "nombre", 100, 900],
+  stylePolice: ["TYPO", "STYLE-POLICE", "choix"], hauteurLigne: ["TYPO", "HAUTEUR-LIGNE", "nombre", 1, 3],
+  espacementLettres: ["TYPO", "ESPACEMENT-LETTRES", "nombre", -5, 20], transformation: ["TYPO", "TRANSFORMATION-TEXTE", "choix"],
+  alignement: ["TYPO", "ALIGNEMENT", "alignement"],
+  couleurFond: ["FOND", "OBJ-COULEUR-FOND", "couleur"], fondMedia: ["FOND", "OBJ-MEDIA-ARRIERE-PLAN", "media"],
+  fondPosition: ["FOND", "FOND-POSITION", "choix"], fondTaille: ["FOND", "FOND-TAILLE", "choix"], fondRepetition: ["FOND", "FOND-REPETITION", "choix"],
+  fondOpacite: ["FOND", "FOND-OPACITE", "nombre", 0, 100], couleurDegrade: ["FOND", "OBJ-COULEUR-DEGRADE", "couleur"],
+  degradeAngle: ["FOND", "DEGRADE-ANGLE", "nombre", 0, 360],
+  largeur: ["DIMENSIONS", "LARGEUR", "nombre", 0, 100], largeurMinimale: ["DIMENSIONS", "LARGEUR-MINIMALE", "nombre", 0, 2400],
+  largeurMaximale: ["DIMENSIONS", "LARGEUR-MAXIMALE", "nombre", 0, 2400], hauteur: ["DIMENSIONS", "HAUTEUR", "nombre", 0, 4000],
+  hauteurMinimale: ["DIMENSIONS", "HAUTEUR-MINIMALE", "nombre", 0, 4000], hauteurMaximale: ["DIMENSIONS", "HAUTEUR-MAXIMALE", "nombre", 0, 4000],
+  ...Object.fromEntries(COTES.flatMap(([k, c]) => [[`marge${k}`, ["ESPACEMENT", `MARGE-${c}`, "nombre", 0, 400]], [`padding${k}`, ["ESPACEMENT", `PADDING-${c}`, "nombre", 0, 400]]])),
+  bordureLargeur: ["BORDURE", "BORDURE-LARGEUR", "nombre", 0, 20], bordureStyle: ["BORDURE", "BORDURE-STYLE", "choix"],
+  couleurBordure: ["BORDURE", "OBJ-COULEUR-BORDURE", "couleur"], bordureRayon: ["BORDURE", "BORDURE-RAYON", "nombre", 0, 200],
+  ombre: ["OMBRE", "OMBRE", "ouinon"], ombreX: ["OMBRE", "OMBRE-X", "nombre", -100, 100], ombreY: ["OMBRE", "OMBRE-Y", "nombre", -100, 100],
+  ombreFlou: ["OMBRE", "OMBRE-FLOU", "nombre", 0, 200], ombreEtalement: ["OMBRE", "OMBRE-ETALEMENT", "nombre", -100, 100],
+  couleurOmbre: ["OMBRE", "OBJ-COULEUR-OMBRE", "couleur"], justification: ["ALIGNEMENT", "JUSTIFICATION", "choix"],
+  survolTexte: ["SURVOL", "OBJ-COULEUR-TEXTE-SURVOL", "couleur"], survolFond: ["SURVOL", "OBJ-COULEUR-FOND-SURVOL", "couleur"],
+  survolBordure: ["SURVOL", "OBJ-COULEUR-BORDURE-SURVOL", "couleur"]
+};
+// Surcharges responsive disponibles (colonnes de OBJ-STYLE-RESPONSIVE).
+const RESPONSIVE = ["largeur", "largeurMaximale", "hauteurMinimale", "tailleTexte", "alignement", "couleurTexte", "couleurFond", "bordureRayon",
+  ...COTES.flatMap(([k]) => [`marge${k}`, `padding${k}`]), "masque"];
+const DESIGN_RESPONSIVE = { ...DESIGN, masque: ["", "MASQUE", "ouinon"] };
+const APPAREILS_SURCHARGE = ["TABLETTE", "MOBILE"];
+const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+const TYPES_DESIGN = ["entete", "footer", "page", "section", "ligne", "colonne", "module"];
+
+function typeStyleDe(d, type, el) {
+  if (TYPE_CONTENEUR[type]) return TYPE_CONTENEUR[type];
+  if (type === "module") return B.typeStyle(contenuDe(d, el).type);
+  return type.toUpperCase();
+}
+
+/* Style imbrique (moteur) -> valeurs plates (formulaire). */
+function plat(style = {}, polices = []) {
+  const v = {};
+  for (const k of ["couleurTexte", "couleurFond", "couleurBordure", "couleurDegrade", "tailleTexte", "poidsPolice", "stylePolice", "hauteurLigne",
+    "espacementLettres", "transformation", "alignement", "fondPosition", "fondTaille", "fondRepetition", "fondOpacite", "degradeAngle", "largeur",
+    "largeurMinimale", "largeurMaximale", "hauteur", "hauteurMinimale", "hauteurMaximale", "bordureLargeur", "bordureStyle", "bordureRayon", "justification", "masque"]) {
+    if (style[k] !== undefined && style[k] !== null) v[k] = style[k];
+  }
+  const police = style.police || style.policeFamille;
+  if (police) v.police = (polices.find((p) => p.famille.toUpperCase() === String(police).toUpperCase()) || {}).ref || "";
+  for (const [k, c] of COTES) {
+    if (style.marge?.[c.toLowerCase()] !== undefined) v[`marge${k}`] = style.marge[c.toLowerCase()];
+    if (style.padding?.[c.toLowerCase()] !== undefined) v[`padding${k}`] = style.padding[c.toLowerCase()];
+  }
+  if (style.ombre) Object.assign(v, { ombre: true, ombreX: style.ombre.x, ombreY: style.ombre.y, ombreFlou: style.ombre.flou, ombreEtalement: style.ombre.etalement, couleurOmbre: style.ombre.couleur });
+  if (style.survol) Object.assign(v, { survolTexte: style.survol.couleurTexte, survolFond: style.survol.couleurFond, survolBordure: style.survol.couleurBordure });
+  if (style.fondMedia) v.fondMedia = `media.${signer(`media:${style.fondMedia}`)}`;
+  return Object.fromEntries(Object.entries(v).filter(([, x]) => x !== undefined && x !== null));
+}
+
+const policesDe = (d) => (d.polices || []).filter((p) => !inactif(p)).sort(parOrdre).map((p) => ({
+  ref: `police.${signer(`police:${p.id}`)}`, id: p.id, titre: titreDe(p), famille: String(champ(p, ["FAMILLE"]) || champ(p, ["CODE"]) || "").trim()
+})).filter((p) => p.famille);
+
+// Le preset est-il propre a l'element ? (sinon une variante est creee : l'original n'est jamais modifie)
+function presetPropre(d, preset, type, el) {
+  if (!preset || !B.publiable(preset)) return false;
+  const utilisateurs = Object.values(TYPES).flatMap((t) => (d[t.cle] || []).filter((x) => rel(x, "OBJ-STYLE-PRESET")?.id === preset.id).map((x) => `${t.cle}:${x.id}`));
+  if (utilisateurs.some((u) => u !== `${TYPES[type].cle}:${el.id}`)) return false;
+  if ((d.themes || []).some((t) => rel(t, "OBJ-STYLE-PRESET")?.id === preset.id)) return false;
+  if ((d.presets || []).some((p) => rel(p, "PRESET-PARENT")?.id === preset.id)) return false;
+  return true;
 }
 
 /* ---------------- Execution d'une action ---------------- */
@@ -717,9 +802,191 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
       return res("Logo créé en brouillon.");
     }
 
+    case "design.lire": {
+      const c = cible(TYPES_DESIGN, p.ref);
+      if (c.refus) return c;
+      const ctx = B.contexteComposition(d, { id: String(siteId) });
+      const code = typeStyleDe(d, c.type, c.el);
+      const preset = (d.presets || []).find((x) => x.id === rel(c.el, "OBJ-STYLE-PRESET")?.id) || null;
+      const presetOk = preset && B.presetDuSite(preset, ctx.site);
+      const polices = policesDe(d);
+      const herite = B.styleResolu(ctx, code, presetOk ? rel(preset, "PRESET-PARENT")?.id : null);
+      const propre = presetOk ? B.styleDepuisPreset(preset, ctx.referentiels) : {};
+      const propreResp = presetOk ? B.responsiveDepuisPreset(preset.id, d.responsifs, ctx.referentiels) : {};
+      const choix = B.CHOIX;
+      const alignements = (d.alignements || []).filter((a) => !inactif(a)).sort(parOrdre).map((a) => titreDe(a).toUpperCase()).filter((a) => B.ALIGNS.includes(a));
+      const presets = (d.presets || []).filter((x) => B.presetDuSite(x, ctx.site)).sort(parOrdre)
+        .map((x) => ({ ref: `preset.${signer(`preset:${x.id}`)}`, titre: titreDe(x), actuel: x.id === preset?.id }));
+      return {
+        design: {
+          type: code, libelle: TYPES[c.type].libelle, groupes: B.groupesDesign(d, code),
+          valeurs: plat(propre, polices), herite: plat(herite.style, polices),
+          responsive: Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, plat(propreResp[a] || {}, polices)])),
+          responsiveHerite: Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, plat(herite.responsive[a] || {}, polices)])),
+          champsResponsive: RESPONSIVE,
+          options: {
+            polices: polices.map(({ ref: r, titre, famille }) => ({ ref: r, titre: titre || famille, famille })), alignements, choix, presets,
+            medias: (d.medias || []).filter((m) => mediaAutorise(m, perimetre) && /IMAGE|PHOTO|FOND|BANNI/i.test(cleChamp(rel(m, "OBJ-MEDIA-TYPE")?.titre) || "IMAGE"))
+              .map((m) => ({ ref: `media.${signer(`media:${m.id}`)}`, titre: titreDe(m), url: `/api/v1/media/${encodeURIComponent(m.id)}` }))
+          },
+          partage: Boolean(preset) && !presetPropre(d, preset, c.type, c.el)
+        }
+      };
+    }
+
+    case "design.preset": {
+      const c = cible(TYPES_DESIGN, p.ref);
+      if (c.refus) return c;
+      const site = { id: String(siteId) };
+      const preset = p.preset ? (d.presets || []).find((x) => `preset.${signer(`preset:${x.id}`)}` === p.preset) : null;
+      if (p.preset && (!preset || !B.presetDuSite(preset, site))) return { refus: "Style hors de votre périmètre." };
+      const def = TYPES[c.type];
+      const n = await w.lookup(def.liste, "OBJ-STYLE-PRESET");
+      if (!n) return { refus: "Relation au style indisponible." };
+      await w.maj(def.liste, c.el.id, { [n]: preset ? String(preset.id) : null });
+      return res(preset ? `Style « ${titreDe(preset)} » appliqué (le style partagé n'est pas modifié).` : "Style retiré : l'élément suit le thème du site.", { preset: preset?.id || null });
+    }
+
+    case "design.enregistrer": {
+      const c = cible(TYPES_DESIGN, p.ref);
+      if (c.refus) return c;
+      const code = typeStyleDe(d, c.type, c.el);
+      const groupes = new Set(B.groupesDesign(d, code));
+      const v = p.valeurs && typeof p.valeurs === "object" ? p.valeurs : {};
+      const resp = v.responsive && typeof v.responsive === "object" ? v.responsive : {};
+      const polices = policesDe(d);
+      const couleurs = new Map();
+      const erreurs = [];
+
+      const colonneDe = async (liste, colonne, nature) => (["couleur", "police", "alignement", "media"].includes(nature)
+        ? w.lookup(liste, colonne, { couleur: "OBJ-COULEUR", police: "OBJ-POLICE", alignement: "OBJ-ALIGNEMENT", media: "OBJ-MEDIA" }[nature])
+        : w.simple(liste, colonne));
+      const couleurId = async (hex) => {
+        const h = hex.toLowerCase();
+        if (couleurs.has(h)) return couleurs.get(h);
+        const ex = (d.couleurs || []).find((x) => !inactif(x) && String(champ(x, ["VALEURHEX"]) || "").trim().toLowerCase() === h);
+        let id = ex?.id;
+        if (!id) {
+          const champs = { Title: h, ...(await w.etats("OBJ-COULEUR", "actif")) };
+          for (const [n, val] of [["CODE", h], ["VALEUR-HEX", h]]) { const col = await w.simple("OBJ-COULEUR", n); if (col) champs[col] = val; }
+          id = await w.creer("OBJ-COULEUR", champs);
+        }
+        couleurs.set(h, id);
+        return id;
+      };
+      /* Valeur saisie -> champ SharePoint ; "" ou null = retour a la valeur heritee (champ vide). */
+      const convertir = async (liste, table, cle, brut, libelle) => {
+        const [, colonne, nature, min, max] = table[cle];
+        const nom = await colonneDe(liste, colonne, nature);
+        if (!nom) return null;
+        const vide = brut === "" || brut === null || brut === undefined;
+        if (vide) return [nom, null];
+        if (nature === "nombre") {
+          const n = Number(String(brut).replace(",", "."));
+          if (!Number.isFinite(n) || n < min || n > max) { erreurs.push(`${libelle} : valeur entre ${min} et ${max}.`); return null; }
+          return [nom, n];
+        }
+        if (nature === "couleur") {
+          if (!HEX.test(String(brut))) { erreurs.push(`${libelle} : couleur invalide.`); return null; }
+          return [nom, String(await couleurId(String(brut)))];
+        }
+        if (nature === "choix") {
+          const val = String(brut).toUpperCase();
+          if (!(B.CHOIX[cle] || []).includes(val)) { erreurs.push(`${libelle} : choix non autorisé.`); return null; }
+          const col = (await w.cols(liste)).find((x) => x.name === nom);
+          if (col?.choice?.choices?.length && !col.choice.choices.map((x) => String(x).toUpperCase()).includes(val)) { erreurs.push(`${libelle} : choix non disponible.`); return null; }
+          return [nom, col?.choice?.choices?.find((x) => String(x).toUpperCase() === val) || val];
+        }
+        if (nature === "ouinon") {
+          const col = (await w.cols(liste)).find((x) => x.name === nom);
+          const oui = brut === true || /^(OUI|TRUE|1)$/i.test(String(brut));
+          return [nom, col?.boolean ? oui : oui ? "OUI" : "NON"];
+        }
+        if (nature === "police") {
+          const pol = polices.find((x) => x.ref === brut);
+          if (!pol) { erreurs.push(`${libelle} : police inconnue.`); return null; }
+          return [nom, String(pol.id)];
+        }
+        if (nature === "alignement") {
+          const id = await w.valeur("OBJ-ALIGNEMENT", new RegExp(`^${cleChamp(brut)}$`));
+          if (!id) { erreurs.push(`${libelle} : alignement inconnu.`); return null; }
+          return [nom, id];
+        }
+        if (nature === "media") {
+          const m = (d.medias || []).find((x) => `media.${signer(`media:${x.id}`)}` === brut && mediaAutorise(x, perimetre));
+          if (!m) { erreurs.push(`${libelle} : média hors de votre périmètre.`); return null; }
+          return [nom, String(m.id)];
+        }
+        return null;
+      };
+
+      const champsPreset = {};
+      for (const [cle, brut] of Object.entries(v)) {
+        if (cle === "responsive" || !DESIGN[cle] || !groupes.has(DESIGN[cle][0])) continue;
+        const r = await convertir("OBJ-STYLE-PRESET", DESIGN, cle, brut, cle);
+        if (r) champsPreset[r[0]] = r[1];
+      }
+      const champsResp = {};
+      for (const a of APPAREILS_SURCHARGE) {
+        if (!resp[a] || typeof resp[a] !== "object") continue;
+        champsResp[a] = {};
+        for (const [cle, brut] of Object.entries(resp[a])) {
+          if (!RESPONSIVE.includes(cle) || (cle !== "masque" && !groupes.has(DESIGN[cle][0]))) continue;
+          const r = await convertir("OBJ-STYLE-RESPONSIVE", DESIGN_RESPONSIVE, cle, brut, `${a.toLowerCase()} · ${cle}`);
+          if (r) champsResp[a][r[0]] = r[1];
+        }
+      }
+      if (erreurs.length) return { erreur: erreurs.slice(0, 5).join(" "), status: 400 };
+
+      const def = TYPES[c.type];
+      const nLien = await w.lookup(def.liste, "OBJ-STYLE-PRESET");
+      if (!nLien) return { refus: "Relation au style indisponible." };
+      let preset = (d.presets || []).find((x) => x.id === rel(c.el, "OBJ-STYLE-PRESET")?.id) || null;
+      let presetId = preset && presetPropre(d, preset, c.type, c.el) ? preset.id : null;
+      let variante = false;
+      if (presetId) {
+        await w.maj("OBJ-STYLE-PRESET", presetId, champsPreset);
+      } else {
+        // Nouveau style propre a l'element ; l'ancien (partage) devient son parent et reste intact.
+        const titre = `Style · ${def.libelle} · ${titreDe(c.el) || code}`.slice(0, 255);
+        const champs = { Title: titre, ...champsPreset, ...(await w.etats("OBJ-STYLE-PRESET", "actif")) };
+        const nCode = await w.simple("OBJ-STYLE-PRESET", "CODE-STYLE");
+        if (nCode) champs[nCode] = `${code}-${c.type.toUpperCase()}-${c.el.id}`.slice(0, 255);
+        const nSite = await w.lookup("OBJ-STYLE-PRESET", "OBJ-SITE-PUBLIC");
+        if (nSite) champs[nSite] = String(siteDuConteneur(c.racine));
+        const typeEl = (d.styleTypes || []).find((x) => String(champ(x, ["CODE"]) || titreDe(x)).toUpperCase() === code);
+        const nType = await w.lookup("OBJ-STYLE-PRESET", "OBJ-STYLE-TYPE");
+        if (typeEl && nType) champs[nType] = String(typeEl.id);
+        const nParent = await w.lookup("OBJ-STYLE-PRESET", "PRESET-PARENT", "OBJ-STYLE-PRESET");
+        if (preset && B.publiable(preset) && nParent) champs[nParent] = String(preset.id);
+        for (const k of Object.keys(champs)) if (champs[k] === null) delete champs[k];
+        presetId = await w.creer("OBJ-STYLE-PRESET", champs);
+        await w.maj(def.liste, c.el.id, { [nLien]: String(presetId) });
+        variante = Boolean(preset);
+      }
+
+      let surcharges = 0;
+      for (const [a, champs] of Object.entries(champsResp)) {
+        const existant = (d.responsifs || []).find((r) => rel(r, "OBJ-STYLE-PRESET")?.id === presetId && !inactif(r) &&
+          String(rel(r, "OBJ-APPAREIL")?.titre || "").toUpperCase() === a);
+        if (existant) { await w.maj("OBJ-STYLE-RESPONSIVE", existant.id, champs); surcharges++; continue; }
+        const remplis = Object.fromEntries(Object.entries(champs).filter(([, x]) => x !== null));
+        if (!Object.keys(remplis).length) continue;
+        const nPreset = await w.lookup("OBJ-STYLE-RESPONSIVE", "OBJ-STYLE-PRESET");
+        const nApp = await w.lookup("OBJ-STYLE-RESPONSIVE", "OBJ-APPAREIL");
+        const app = await w.valeur("OBJ-APPAREIL", new RegExp(`^${a}`));
+        if (!nPreset || !nApp || !app) return { refus: "Référentiel d'appareil indisponible." };
+        await w.creer("OBJ-STYLE-RESPONSIVE", { Title: `Style ${presetId} · ${a.toLowerCase()}`, ...remplis, [nPreset]: String(presetId), [nApp]: app,
+          ...(await w.etats("OBJ-STYLE-RESPONSIVE", "actif")) });
+        surcharges++;
+      }
+      return res(`Design enregistré${variante ? " (style propre créé : le style partagé d'origine est inchangé)" : ""}${surcharges ? ` — ${surcharges} surcharge(s) responsive` : ""}.`,
+        { preset: presetId, champs: Object.keys(champsPreset).length, surcharges });
+    }
+
     default:
       return { refus: "Action inconnue." };
   }
 }
 
-module.exports = { siteDe, CONTENEURS, NIVEAUX, vue, arbre, apercu, racine, resoudre, executer, ref, mediaAutorise, modeleDisponible, visibleApercu, inactif, brouillon, Ecrivain, signer };
+module.exports = { plat, DESIGN, policesDe, siteDe, CONTENEURS, NIVEAUX, vue, arbre, apercu, racine, resoudre, executer, ref, mediaAutorise, modeleDisponible, visibleApercu, inactif, brouillon, Ecrivain, signer };

@@ -4,6 +4,7 @@ import { escapeHtml as e } from "../public/outils.js";
 import { rendreBuilder, STYLES_BUILDER } from "../builder/rendu.js";
 import { getConstruire, actionConstruire } from "../../services/cockpit.service.js";
 import { rendreEnteteCockpit } from "./cockpit.js";
+import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU } from "./design.js";
 
 export const ONGLETS = Object.freeze([
   { cle: "entetes", libelle: "En-têtes" },
@@ -119,6 +120,7 @@ function actionsNoeud(n, peut, colonnes) {
     ${bouton("▼", "descendre", `${r} title="Descendre" aria-label="Descendre"`, "btn btn-mini")}
     ${n.type === "module" && colonnes.length > 1 ? `<select data-c-deplacer="${e(n.ref)}" aria-label="Déplacer vers une colonne"><option value="">Déplacer vers…</option>${colonnes.map((c) => `<option value="${e(c.ref)}">${e(c.titre)}</option>`).join("")}</select>` : ""}
     ${n.type === "module" && n.formulaire ? bouton("✏️ Contenu", "contenu", r, "btn btn-mini") : ""}
+    ${bouton("🎨", "design", `${r} title="Design" aria-label="Design"`, "btn btn-mini")}
     ${bouton("⧉", "dupliquer-element", `${r} title="Dupliquer / créer une variante" aria-label="Dupliquer"`, "btn btn-mini")}
     ${n.etat.inactif || n.etat.brouillon ? bouton("Activer", "activer", r, "btn btn-mini") : bouton("Désactiver", "desactiver-element", r, "btn btn-mini")}
   </span>`;
@@ -152,11 +154,13 @@ function noeudHtml(d, n, peut, colonnes) {
 
 const colonnesDe = (sections) => sections.flatMap((s) => (s.enfants || []).flatMap((l) => (l.enfants || []).map((c) => ({ ref: c.ref, titre: `${s.titre} › ${c.titre}` }))));
 
-export function documentApercu(composition) {
-  const zone = (z, balise) => z?.sections?.length ? `<${balise}>${rendreBuilder({ mode: "builder", sections: z.sections }, { apiBase: "/api/v1", adapteurs: {} })}</${balise}>` : "";
-  const corps = `${zone(composition?.entete, "header")}${rendreBuilder(composition, { apiBase: "/api/v1", adapteurs: {} })}${zone(composition?.footer, "footer")}`;
+const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE" };
+export function documentApercu(composition, type = "page") {
+  const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: {}, apercu: true, prefixe, typeConteneur });
+  const zone = (z, balise, prefixe, t) => z?.sections?.length ? `<${balise}>${rendreBuilder({ mode: "builder", sections: z.sections, style: z.style, responsive: z.responsive, _ref: z._ref, theme: composition.theme }, options(prefixe, t))}</${balise}>` : "";
+  const corps = `${zone(composition?.entete, "header", "e", "ENTETE")}${rendreBuilder(composition || {}, options(type === "page" ? "p" : type[0], TYPE_CONTENEUR[type] || "PAGE"))}${zone(composition?.footer, "footer", "f", "FOOTER")}`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>body{margin:0;font-family:system-ui,sans-serif}${STYLES_BUILDER}</style></head>
+    <style>body{margin:0;font-family:system-ui,sans-serif}${STYLES_BUILDER}[data-dse-ref].dse-design-cible{outline:2px dashed #7c3aed;outline-offset:2px}</style></head>
     <body>${corps.trim() || `<p style="padding:24px;color:#667">Aperçu vide : ajoutez des modules actifs avec un contenu renseigné.</p>`}</body></html>`;
 }
 
@@ -169,6 +173,7 @@ function editeur(d) {
     <header class="constructeur-editeur-entete">
       <div><span class="constructeur-type">${LIBELLES[type]}</span><h3>${e(a.titre)}</h3>${badgeEtat(a.etat)}</div>
       <div class="constructeur-boutons">${bouton("← Retour à la liste", "fermer")}
+        ${peut ? bouton(`🎨 Design · ${LIBELLES[type]}`, "design", `data-ref="${e(a.ref)}"`) : ""}
         ${peut && !a.etat.publiable ? bouton("✅ Valider et activer", "publier", `data-ref="${e(a.ref)}"`, "btn btn-primary") : ""}
         ${bouton("✨ Demander à Pasc ARA IA", "ia")}</div>
     </header>
@@ -179,11 +184,13 @@ function editeur(d) {
       <button class="btn btn-primary" type="submit">➕ Ajouter une section</button></form>` : ""}
     <p class="muted">Les nouveaux éléments sont créés en brouillon : visibles dans l'aperçu, publiés uniquement après « Valider et activer ».</p>
   </div>
-  <div class="card constructeur-apercus">
-    <h3>Aperçu</h3>
-    <div class="constructeur-apercus-cadres">
-      <figure><figcaption>🖥 Ordinateur</figcaption><iframe class="constructeur-apercu constructeur-apercu--ordinateur" title="Aperçu ordinateur" sandbox="allow-same-origin" data-apercu></iframe></figure>
-      <figure><figcaption>📱 Mobile</figcaption><iframe class="constructeur-apercu constructeur-apercu--mobile" title="Aperçu mobile" sandbox="allow-same-origin" data-apercu></iframe></figure>
+  <div class="constructeur-design-zone">
+    <div data-c-panneau></div>
+    <div class="card constructeur-apercus">
+      <header class="constructeur-editeur-entete"><h3>Aperçu</h3>
+        <div class="constructeur-boutons" role="group" aria-label="Appareil">${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "ORDINATEUR") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}" aria-pressed="${x.cle === (d.appareil || "ORDINATEUR")}">${x.libelle}</button>`).join("")}</div></header>
+      <div class="constructeur-apercu-cadre" data-apercu-cadre><iframe class="constructeur-apercu" title="Aperçu" sandbox="allow-same-origin" data-apercu></iframe></div>
+      ${peut ? `<p class="muted">Astuce : cliquez sur un élément de l'aperçu pour ouvrir son panneau Design.</p>` : ""}
     </div>
   </div>`;
 }
@@ -227,8 +234,85 @@ export function formulaireHtml(f, titre) {
 /* ---------------- Activation (evenements) ---------------- */
 
 export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
-  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false };
+  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "ORDINATEUR", design: null };
   let d = donnees;
+  const iframe = () => racine.querySelector("[data-apercu]");
+  const docApercu = () => { try { return iframe()?.contentDocument || null; } catch { return null; } };
+
+  // Apercu a la largeur reelle de l'appareil (les media queries s'appliquent), reduit pour tenir dans la colonne.
+  const dimensionner = () => {
+    const cadre = racine.querySelector("[data-apercu-cadre]");
+    const f = iframe();
+    if (!cadre || !f) return;
+    const largeur = (APPAREILS_APERCU.find((x) => x.cle === etat.appareil) || APPAREILS_APERCU[0]).largeur;
+    const echelle = Math.min(1, (cadre.clientWidth || largeur) / largeur);
+    const hauteur = Math.max(480, Math.min(4000, docApercu()?.documentElement?.scrollHeight || 640));
+    Object.assign(f.style, { width: `${largeur}px`, height: `${hauteur}px`, transform: `scale(${echelle})`, transformOrigin: "top left" });
+    cadre.style.height = `${Math.min(900, Math.ceil(hauteur * echelle))}px`;
+  };
+  const identifiantDe = (el) => [...(el?.classList || [])].find((c) => /^dse-b-[a-z]{0,3}[mclsr]\d+$/.test(c));
+  const apercuDesign = () => {
+    const doc = docApercu();
+    if (!doc) return;
+    for (const x of doc.querySelectorAll(".dse-design-cible")) x.classList.remove("dse-design-cible");
+    doc.getElementById("dse-design-live")?.remove();
+    const form = racine.querySelector("[data-design-form]");
+    if (!etat.design?.data || !form) return;
+    const el = doc.querySelector(`[data-dse-ref="${CSS.escape(etat.design.ref)}"]`);
+    const id = identifiantDe(el);
+    if (!id) return;
+    el.classList.add("dse-design-cible");
+    const style = doc.createElement("style");
+    style.id = "dse-design-live";
+    style.textContent = cssApercu(id, etat.design.data, lireValeurs(form));
+    doc.head.appendChild(style);
+    dimensionner();
+  };
+  const preparerApercu = () => {
+    const f = iframe();
+    if (!f) return;
+    f.addEventListener("load", () => {
+      dimensionner();
+      apercuDesign();
+      const doc = docApercu();
+      doc?.addEventListener("click", (ev) => {
+        const cibleRef = ev.target.closest?.("[data-dse-ref]");
+        ev.preventDefault();
+        if (cibleRef && d.arbre && ecrit(d, FONCTION[d.arbre.type])) ouvrirDesign(cibleRef.dataset.dseRef);
+      });
+    });
+    f.srcdoc = documentApercu(d.apercu, d.arbre?.type);
+  };
+  const contenuDesign = (ref) => {
+    const trouver = (n) => n.ref === ref ? n : (n.enfants || n.sections || []).map(trouver).find(Boolean);
+    const n = d.arbre ? trouver(d.arbre) : null;
+    if (d.arbre?.ref === ref) return `<p>Titre, adresse et informations de ${e(d.arbre.titre)}.</p>${bouton("✏️ Modifier les informations", "proprietes", `data-ref="${e(ref)}"`)}`;
+    if (n?.type === "module" && n.formulaire) return `<p>Textes, liens et médias du module.</p>${bouton("✏️ Modifier le contenu", "contenu", `data-ref="${e(ref)}"`)}`;
+    return `<p class="muted">Cet élément organise les éléments qu'il contient ; utilisez l'arbre de construction pour ajouter, déplacer ou dupliquer.</p>`;
+  };
+  const afficherPanneau = () => {
+    const zone = racine.querySelector("[data-c-panneau]");
+    if (!zone) return;
+    zone.innerHTML = etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), onglet: etat.design.onglet, appareil: etat.design.appareil })
+      : etat.design ? `<p class="card muted">Chargement des réglages…</p>` : "";
+    zone.closest(".constructeur-design-zone")?.classList.toggle("constructeur-design-zone--ouverte", Boolean(etat.design));
+    apercuDesign();
+  };
+  async function ouvrirDesign(ref, onglet = etat.design?.ref === ref ? etat.design.onglet : "design") {
+    etat.design = { ref, onglet, appareil: etat.design?.appareil || "TABLETTE", data: null };
+    afficherPanneau();
+    try {
+      const r = await actionConstruire(domaine, "design.lire", { ref });
+      if (etat.design?.ref !== ref) return;
+      if (!r?.donnees?.design) throw new Error(r?.donnees?.refus || "Réglages de design indisponibles.");
+      etat.design.data = r.donnees.design;
+    } catch (err) {
+      etat.design = null;
+      message(err.message || "Réglages de design indisponibles.");
+    }
+    afficherPanneau();
+    racine.querySelector("[data-c-panneau]")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
 
   const charger = async () => {
     const r = await getConstruire(domaine, etat.conteneur);
@@ -236,8 +320,10 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (etat.conteneur && !d.arbre) etat.conteneur = "";
   };
   const afficher = () => {
-    racine.innerHTML = rendreConstructeur(moi, d, etat);
-    for (const cadre of racine.querySelectorAll("[data-apercu]")) cadre.srcdoc = documentApercu(d.apercu);
+    racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil }, etat);
+    preparerApercu();
+    if (!d.arbre) etat.design = null;
+    afficherPanneau();
   };
   const executer = async (action, params) => {
     const zone = racine.querySelector("[data-c-message]");
@@ -247,11 +333,13 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       const r = await actionConstruire(domaine, action, params);
       Object.assign(etat, { message: `${r?.donnees?.message || "Action enregistrée."}${r?.donnees?.journal?.enregistre === false ? " (journal OBJ-JRN non confirmé)" : ""}`, erreur: false });
       await charger();
+      if (etat.design) etat.design.data = null;
     } catch (err) {
       Object.assign(etat, { message: err.message || "L'action n'a pas abouti.", erreur: true });
       await charger().catch(() => {});
     }
     afficher();
+    if (etat.design && !etat.design.data) await ouvrirDesign(etat.design.ref, etat.design.onglet);
   };
   const dialogue = () => racine.querySelector("[data-c-dialogue]");
   const ouvrirFormulaire = (f, titre, surValider) => {
@@ -273,6 +361,8 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   };
 
   racine.addEventListener("click", async (ev) => {
+    const d1 = ev.target.closest("[data-c-appareil],[data-design-onglet],[data-design-choix-appareil],[data-design-fermer],[data-design-reset],[data-design-media],[data-design-appliquer]");
+    if (d1 && racine.contains(d1)) return actionDesign(d1);
     const cible = ev.target.closest("[data-c-onglet],[data-c-action]");
     if (!cible || !racine.contains(cible)) return;
     if (cible.dataset.cOnglet) { Object.assign(etat, { onglet: cible.dataset.cOnglet, message: "" }); return afficher(); }
@@ -281,6 +371,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       case "ouvrir": etat.conteneur = ref; etat.message = ""; await charger().catch((err) => Object.assign(etat, { message: err.message, erreur: true })); return afficher();
       case "fermer": etat.conteneur = ""; delete d.arbre; delete d.apercu; await charger().catch(() => {}); return afficher();
       case "ia": return message(MESSAGE_IA);
+      case "design": return ouvrirDesign(ref);
       case "utilisations": { const z = racine.querySelector(`[data-utilisations="${CSS.escape(ref)}"]`); if (z) z.hidden = !z.hidden; return; }
       case "dupliquer": return executer("conteneur.dupliquer", { ref });
       case "publier": return executer("conteneur.publier", { ref });
@@ -314,14 +405,73 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     }
   });
 
+  function actionDesign(b) {
+    const form = racine.querySelector("[data-design-form]");
+    if (b.dataset.cAppareil) {
+      etat.appareil = b.dataset.cAppareil;
+      for (const x of racine.querySelectorAll("[data-c-appareil]")) {
+        x.classList.toggle("btn-primary", x === b); x.classList.toggle("btn-secondary", x !== b); x.setAttribute("aria-pressed", String(x === b));
+      }
+      return dimensionner();
+    }
+    if (b.dataset.designOnglet) {
+      etat.design.onglet = b.dataset.designOnglet;
+      for (const x of form.querySelectorAll("[data-design-volet]")) x.hidden = x.dataset.designVolet !== etat.design.onglet;
+      for (const x of form.querySelectorAll("[data-design-onglet]")) {
+        const actif = x === b; x.classList.toggle("btn-primary", actif); x.classList.toggle("btn-secondary", !actif); x.setAttribute("aria-selected", String(actif));
+      }
+      if (etat.design.onglet === "responsive") racine.querySelector(`[data-c-appareil="${etat.design.appareil}"]`)?.click();
+      return;
+    }
+    if (b.dataset.designChoixAppareil) {
+      etat.design.appareil = b.dataset.designChoixAppareil;
+      for (const x of form.querySelectorAll("[data-design-appareil]")) x.hidden = x.dataset.designAppareil !== etat.design.appareil;
+      for (const x of form.querySelectorAll("[data-design-choix-appareil]")) { x.classList.toggle("btn-primary", x === b); x.classList.toggle("btn-secondary", x !== b); }
+      racine.querySelector(`[data-c-appareil="${etat.design.appareil}"]`)?.click();
+      return;
+    }
+    if (b.dataset.designFermer !== undefined) { etat.design = null; return afficherPanneau(); }
+    if (b.dataset.designReset) {
+      const champ = form.querySelector(`[name="${CSS.escape(b.dataset.designReset)}"]`);
+      if (champ) champ.value = "";
+      return apercuDesign();
+    }
+    if (b.dataset.designMedia) {
+      const champ = form.querySelector(`[name="${CSS.escape(b.dataset.designCible)}"]`);
+      if (champ) champ.value = b.dataset.designMedia;
+      return apercuDesign();
+    }
+    if (b.dataset.designAppliquer !== undefined) {
+      const choix = form.querySelector("[data-design-preset]")?.value || "";
+      return executer("design.preset", { ref: etat.design.ref, preset: choix });
+    }
+  }
+
+  racine.addEventListener("input", (ev) => {
+    const s = ev.target;
+    if (!s.closest?.("[data-design-form]")) return;
+    if (s.dataset.designPipette) {
+      const champ = s.form.querySelector(`[name="${CSS.escape(s.dataset.designPipette)}"]`);
+      if (champ) champ.value = s.value;
+    }
+    apercuDesign();
+  });
+  addEventListener("resize", dimensionner);
+
   racine.addEventListener("change", (ev) => {
     const s = ev.target;
+    if (s.closest?.("[data-design-form]")) return apercuDesign();
     if (s.matches("[data-c-affecter]")) return executer("page.affecter", { page: s.dataset.page, type: s.dataset.cAffecter, ref: s.value });
     if (s.matches("[data-c-deplacer]") && s.value) return executer("element.deplacer", { ref: s.dataset.cDeplacer, colonne: s.value });
   });
 
   racine.addEventListener("submit", (ev) => {
     const f = ev.target;
+    if (f.matches("[data-design-form]")) {
+      ev.preventDefault();
+      if (!f.reportValidity()) return;
+      return executer("design.enregistrer", { ref: f.dataset.ref, valeurs: lireValeurs(f) });
+    }
     if (f.matches("[data-c-creer]")) {
       ev.preventDefault();
       return executer("conteneur.creer", { type: f.dataset.cCreer, titre: f.titre.value.trim() });

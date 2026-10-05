@@ -10,7 +10,9 @@ const TOUT = { pages: "OBJ-PAGES-SITE", sections: "OBJ-SECTION-SITE", lignes: "O
   presets: "OBJ-STYLE-PRESET", responsifs: "OBJ-STYLE-RESPONSIVE", medias: "OBJ-MEDIA", couleurs: "OBJ-COULEUR", polices: "OBJ-POLICE",
   // Constructeur : conteneurs, utilisations, instances, logos et referentiels de structure.
   entetes: "OBJ-ENTETE-SITE", footers: "OBJ-FOOTER-SITE", utilisations: "OBJ-MODULE-UTILISATION", instances: "OBJ-MODELE-INSTANCE",
-  logos: "OBJ-LOGO-SITE", structures: "OBJ-LIGNE-STRUCTURE", typesSection: "OBJ-SECTION-TYPE", actifs: "OBJ-ACTIF", valides: "OBJ-VALIDE" };
+  logos: "OBJ-LOGO-SITE", structures: "OBJ-LIGNE-STRUCTURE", typesSection: "OBJ-SECTION-TYPE", actifs: "OBJ-ACTIF", valides: "OBJ-VALIDE",
+  // Moteur Design : types de style (groupes de reglages), theme du site, referentiels d alignement et d appareil.
+  styleTypes: "OBJ-STYLE-TYPE", themes: "OBJ-SITE-THEME", alignements: "OBJ-ALIGNEMENT", appareils: "OBJ-APPAREIL" };
 
 let cache = null;
 let enCours = null;

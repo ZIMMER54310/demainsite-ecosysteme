@@ -128,7 +128,7 @@ async function main() {
     assert.ok(html.includes("Dupliquer") && html.includes("Affecter aux pages") && html.includes("Voir les utilisations"));
     assert.equal(/HERO/i.test(html), false, "vocabulaire En-tete, jamais HERO");
     const editeur = rendreConstructeur({ fonctions: [] }, { ...donneesFront, arbre: a, apercu: apEntete }, {});
-    assert.ok(editeur.includes("Pasc ARA IA") && editeur.includes("Ajouter une section") && editeur.includes("Aperçu mobile"));
+    assert.ok(editeur.includes("Pasc ARA IA") && editeur.includes("Ajouter une section") && editeur.includes("📱 Mobile") && editeur.includes("🎨 Design"));
     assert.ok(documentApercu({ mode: "builder", sections: [] }).includes("Aperçu vide"));
     assert.ok(badgeEtat({ brouillon: true }).includes("Brouillon"));
   }
@@ -151,7 +151,31 @@ async function main() {
     assert.ok(html.includes("data-import-media") && html.includes('accept=".png"') && html.includes("IMAGE"));
     assert.equal(/OBJ-|Graph|SharePoint/.test(html), false, "aucun terme technique");
   }
-  console.log("Constructeur : perimetre, medias, references opaques, arbre, apercu, En-tete/Footer publics et interface OK");
+  // Moteur Design : aplatissement, liste blanche, panneau et apercu instantane.
+  {
+    const polices = [{ ref: "police.abc", titre: "SANS", famille: "SANS" }];
+    const v = C.plat({ couleurTexte: "#112233", police: "SANS", marge: { haut: 10 }, padding: { gauche: 4 }, bordureRayon: 12,
+      ombre: { x: 1, y: 2, flou: 3, etalement: 0, couleur: "#000000" }, survol: { couleurFond: "#ffffff" }, inconnu: "x" }, polices);
+    assert.deepEqual(v, { couleurTexte: "#112233", bordureRayon: 12, police: "police.abc", margeHaut: 10, paddingGauche: 4,
+      ombre: true, ombreX: 1, ombreY: 2, ombreFlou: 3, ombreEtalement: 0, couleurOmbre: "#000000", survolFond: "#ffffff" });
+    for (const k of ["couleurTexte", "couleurFond", "bordureRayon", "margeHaut", "paddingGauche", "survolFond", "fondMedia"]) assert.ok(C.DESIGN[k], k);
+    const design = await front("cockpit/design.js");
+    const d = { type: "BOUTON", libelle: "Bouton", groupes: ["TYPO", "FOND", "BORDURE", "SURVOL"], valeurs: { couleurFond: "#112233" }, herite: { couleurTexte: "#ffffff" },
+      responsive: { TABLETTE: {}, MOBILE: {} }, responsiveHerite: { TABLETTE: {}, MOBILE: {} }, champsResponsive: ["tailleTexte", "masque"],
+      options: { polices, alignements: [], choix: B.CHOIX, presets: [], medias: [] }, partage: false };
+    const html = design.panneauDesign(d, { ref: "noeud.x" });
+    assert.ok(html.includes("data-design-form") && html.includes("CONTENU") && html.includes("DESIGN") && html.includes("RESPONSIVE") && html.includes("AVANCÉ"));
+    assert.equal(/OBJ-|Graph|SharePoint|Lookup/.test(html), false, "aucun terme technique dans le panneau");
+    assert.equal(html.includes('name="ombreX"'), false, "un bouton sans groupe OMBRE ne voit pas l'ombre");
+    const css = design.cssApercu("dse-b-pm1", d, { couleurFond: "#445566", bordureRayon: 8, survolFond: "#000000", responsive: { MOBILE: { tailleTexte: 14 } } });
+    assert.match(css, /\.dse-b-pm1 \.dse-b-bouton\{[^}]*background-color:#445566/);
+    assert.match(css, /color:#ffffff/);
+    assert.match(css, /border-radius:8px/);
+    assert.match(css, /:focus-visible\{background-color:#000000\}/);
+    assert.match(css, /@media \(max-width:640px\)\{\.dse-b-pm1 \.dse-b-bouton\{[^}]*font-size:14px/);
+    assert.equal(design.cssApercu("dse-b-pm1", d, { couleurFond: "red;}body{x" }).includes("body{"), false, "injection CSS refusee");
+  }
+  console.log("Constructeur : perimetre, medias, references opaques, arbre, apercu, En-tete/Footer, Design et interface OK");
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
