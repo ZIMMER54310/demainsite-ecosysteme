@@ -55,6 +55,15 @@ valide. Aucun compteur de produits, d'utilisateurs, score SEO, activite recente,
 image de banniere ou date fictive n'est utilise pour imiter une maquette.
 Progression et Acces rapides restent deroulants et fermes par defaut.
 
+La section **Medias** du site dispose de sa propre route `/cockpit/site/:domaine/medias`.
+Elle reutilise le catalogue et les controles de perimetre du constructeur, mais
+ne renvoie ni n'affiche les pages, En-tetes, Footer ou modeles. Recherche et types
+proviennent des medias autorises ; le changement de logo reutilise l'action
+securisee et journalisee existante. Les raccourcis medias ouvrent cet ecran.
+La route actuelle de fichiers reste limitee aux images publiques supportees :
+sons, videos et autres types sont catalogues sans faux lecteur ni image cassee.
+L'import reste realise dans la bibliotheque SharePoint existante.
+
 - Branche de travail et de production : `ovh/api-native` (pas de fusion vers `main` pour l'instant).
 - API : service systemd `dse-api.service` (`api/server.js`, ecoute **127.0.0.1:3000**).
 - Recette : port 3001 (reserve, non gere par ce depot).

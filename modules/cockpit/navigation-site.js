@@ -3,7 +3,7 @@ const sections = [
   { fonction: "entete", libelle: "En-tête", icone: "panel", onglet: "entetes" },
   { fonction: "footer", libelle: "Footer", icone: "panel", onglet: "footers" },
   { fonction: "menu", libelle: "Menu", icone: "list", composant: "menu" },
-  { fonction: "logo-medias", libelle: "Médias / Logos", icone: "image", onglet: "bibliotheque" },
+  { fonction: "logo-medias", libelle: "Médias", icone: "image", route: "medias" },
   { fonction: "seo", libelle: "SEO", icone: "search", composant: "seo" }
 ];
 
@@ -19,7 +19,7 @@ export function navigationSite(vue, niveau) {
     ...(construction ? [{ libelle: "Construire le site", icone: "settings", url: `${base}/construire` }] : []),
     ...sections.filter((x) => fonctions.has(x.fonction)).map((x) => ({
       libelle: x.libelle, icone: x.icone,
-      url: x.onglet && construction ? `${base}/construire?onglet=${x.onglet}`
+      url: x.route ? `${base}/${x.route}` : x.onglet && construction ? `${base}/construire?onglet=${x.onglet}`
         : x.composant && ecriture ? `${base}/modifier/${x.composant}` : `${base}?section=${x.fonction === "logo-medias" ? "identite" : x.fonction}`
     })),
     ...(construction ? [{ libelle: "Catalogue / Modèles", icone: "layers", url: `${base}/construire?onglet=catalogue` }] : [])

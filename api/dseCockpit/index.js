@@ -382,7 +382,7 @@ const constructeurExecutees = new Map();
 
 async function perimetreConstructeur(ctx, domaine) {
   const d = ctx.droits;
-  if (!d.reconnu || !FONCTIONS_CONSTRUCTEUR.some((f) => d.fonctions.includes(f))) return null;
+  if (!d.reconnu || ![...FONCTIONS_CONSTRUCTEUR, "logo-medias"].some((f) => d.fonctions.includes(f))) return null;
   const info = await siteDuPerimetre(ctx, domaine);
   if (!info) return null;
   const fiches = new Set((info.fiches || [String(info.id)]).map(String));
@@ -404,11 +404,17 @@ async function construireLire(req, res) {
     if (!ctx) return refuser(res, 401, "Connexion requise.");
     const p = await perimetreConstructeur(ctx, req.query.domaine);
     if (!p) return refuser(res, 403, "Accès non autorisé.");
+    const mediasSeulement = req.query.vue === "medias";
+    if (mediasSeulement ? !p.lecture("logo-medias") : !FONCTIONS_CONSTRUCTEUR.some((f) => p.lecture(f))) return refuser(res, 403, "Accès non autorisé.");
     const C = require("../shared/constructeur");
     const d = await require("../shared/builder-source").obtenirDonnees();
     const donnees = { site: { titre: p.info.titre, domaine: (p.info.domaines || [])[0] || null },
       droits: Object.fromEntries([...FONCTIONS_CONSTRUCTEUR, "logo-medias"].map((f) => [f, { lecture: p.lecture(f), ecriture: p.peut(f) }])),
       superAdmin: p.superAdmin, ...C.vue(d, p) };
+    if (mediasSeulement) return repondre(res, 200, { succes: true, donnees: {
+      site: donnees.site, droits: { "logo-medias": donnees.droits["logo-medias"] },
+      medias: donnees.medias, logo: donnees.logo
+    }, meta: meta() });
     const reference = String(req.query.conteneur || "");
     if (reference) {
       const r = C.resoudre(d, reference, ["entete", "footer", "page"]);

@@ -52,6 +52,20 @@ const perimetre = { sites: new Set(["4"]), clients: new Set(["A"]), superAdmin: 
 async function main() {
   const d = donnees();
   const v = C.vue(d, perimetre);
+  const mediasUI = await front("cockpit/medias.js");
+  const mediasHtml = mediasUI.rendreMedias({ ...v, droits: { "logo-medias": { ecriture: true } },
+    medias: [
+      { ref: "image", titre: "Photo <b>", type: "IMAGE", url: "/api/v1/media/1", portee: "SITE" },
+      { ref: "son", titre: "Son", type: "AUDIO", url: "/api/v1/media/2", portee: "SITE" },
+      { ref: "video", titre: "Vidéo", type: "VIDEO", url: "/api/v1/media/3", portee: "SITE" }
+    ] }, { domaine: "site.example.test" });
+  assert.ok(!mediasHtml.includes("role=\"tab\"") && !mediasHtml.includes("data-c-creer"));
+  assert.ok(!mediasHtml.includes("<b>"));
+  assert.ok(mediasHtml.includes('data-media-logo="image"'));
+  assert.ok(!mediasHtml.includes('data-media-logo="son"') && !mediasHtml.includes('src="/api/v1/media/2"'));
+  assert.ok(mediasHtml.includes("AUDIO") && mediasHtml.includes("VIDEO") && mediasHtml.includes("data-filtres-medias"));
+  assert.ok(!mediasUI.rendreMedias({ ...v, droits: {} }, { domaine: "site.example.test" }).includes("data-media-logo"));
+  assert.equal(mediasUI.imageMedia("FAVICON"), true);
 
   // Seuls les elements du site du perimetre sont visibles.
   assert.deepEqual(v.entetes.map((x) => x.titre), ["En-tête principal"]);

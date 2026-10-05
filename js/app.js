@@ -51,3 +51,9 @@ boot();
 import { accueilPage } from "../pages/accueil.js";
 import { monterCatalogue } from "../modules/catalogue/catalogue.js";
 import { monterAccesPublic } from "../modules/public/acces.js";
+import { cockpitMediasPage, activerMedias } from "../pages/cockpit.js";
+registerRoute("/cockpit/site/:domaine/medias", async p => {
+  const page = await cockpitMediasPage(p);
+  mount(page.html, ["Cockpit", "Mes sites", p.domaine, "Médias"]);
+  activerMedias(document.querySelector("#app-page"), page, p.domaine);
+});

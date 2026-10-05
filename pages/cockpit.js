@@ -10,6 +10,8 @@ import {
   CRITERES_SITES, lienSites, rendreEdition, rendreApercu, rendreResultatEcriture, rendreAdministration, rendreUtilisateurs
 } from "../modules/cockpit/cockpit.js";
 import { escapeHtml } from "../modules/public/outils.js";
+import { getMediasCockpit, actionConstruire } from "../services/cockpit.service.js";
+import { rendreMedias } from "../modules/cockpit/medias.js";
 
 const CLE_ASSISTANT = "dseAssistantSite";
 const MESSAGES_CONNEXION = {
@@ -294,4 +296,50 @@ export async function cockpitConstruirePage(params) {
 export function activerConstruire(racinePage, page, domaine) {
   const racine = racinePage.querySelector("[data-constructeur-racine]");
   if (racine && page.donnees) activerConstructeur(racine, { moi: page.moi, domaine, donnees: page.donnees, onglet: new URLSearchParams(location.hash.split("?")[1] || "").get("onglet") });
+}
+
+export async function cockpitMediasPage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return { html: c.html };
+    const [r] = await Promise.all([getMediasCockpit(params.domaine), vue(params.domaine)]);
+    if (!r?.donnees) throw new Error("Les médias de ce site sont indisponibles.");
+    return { html: rendreMedias(r.donnees, { domaine: params.domaine }), donnees: r.donnees };
+  } catch (err) {
+    console.error("[DSE cockpit] medias", err.message);
+    return { html: `<section class="cockpit card"><p role="alert">${escapeHtml(err.message)}</p></section>` };
+  }
+}
+
+export function activerMedias(racine, page, domaine) {
+  if (!page.donnees) return;
+  const form = racine.querySelector("[data-filtres-medias]");
+  const filtrer = () => {
+    const q = form.elements.q.value.trim().toLocaleLowerCase("fr");
+    const type = form.elements.type.value;
+    let visibles = 0;
+    racine.querySelectorAll("[data-media-titre]").forEach((el) => {
+      el.hidden = !el.dataset.mediaTitre.toLocaleLowerCase("fr").includes(q) || Boolean(type && el.dataset.mediaType !== type);
+      if (!el.hidden) visibles++;
+    });
+    racine.querySelector("[data-medias-vide]").hidden = visibles > 0;
+  };
+  form.addEventListener("input", filtrer);
+  form.addEventListener("submit", (ev) => { ev.preventDefault(); filtrer(); });
+  racine.querySelectorAll("[data-media-logo]").forEach((bouton) => bouton.addEventListener("click", async () => {
+    if (!confirm("Utiliser ce média comme logo du site ? L'ancien média sera conservé.")) return;
+    const boutons = racine.querySelectorAll("[data-media-logo]");
+    boutons.forEach((b) => { b.disabled = true; });
+    const zone = racine.querySelector("[data-medias-message]");
+    zone.textContent = "Enregistrement dans SharePoint…";
+    try {
+      const r = await actionConstruire(domaine, "logo.choisir", { media: bouton.dataset.mediaLogo });
+      const d = (await getMediasCockpit(domaine)).donnees;
+      racine.innerHTML = rendreMedias(d, { domaine, message: `${r.donnees.message}${r.donnees.journal?.enregistre === false ? " Journalisation non confirmée : vérification nécessaire." : ""}` });
+      activerMedias(racine, { donnees: d }, domaine);
+    } catch (err) {
+      zone.textContent = err.message;
+      boutons.forEach((b) => { b.disabled = false; });
+    }
+  }));
 }

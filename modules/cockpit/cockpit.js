@@ -20,7 +20,7 @@ export const CARTES = Object.freeze([
   { fonction: "creer", icone: "✨", titre: "Créer / configurer un site", texte: "Lancer l'assistant de création.", cible: () => "#/cockpit/creer" },
   { fonction: "pages", icone: "📄", titre: "Pages", texte: "Pages et contenus du site.", cible: (d) => lienSite(d, "pages") },
   { fonction: "entete", icone: "🧭", titre: "En-tête", texte: "Haut de page du site.", cible: (d) => lienSite(d, "entete") },
-  { fonction: "logo-medias", icone: "🖼️", titre: "Logo et médias", texte: "Identité visuelle et images.", cible: (d) => lienSite(d, "identite") },
+  { fonction: "logo-medias", icone: "🖼️", titre: "Médias", texte: "Logos, images et fichiers autorisés.", cible: (d) => d ? `#/cockpit/site/${encodeURIComponent(d)}/medias` : "#/cockpit/sites" },
   { fonction: "menu", icone: "☰", titre: "Menu", texte: "Navigation du site.", cible: (d) => lienSite(d, "menu") },
   { fonction: "footer", icone: "⬇️", titre: "Footer", texte: "Bas de page du site.", cible: (d) => lienSite(d, "footer") },
   { fonction: "seo", icone: "🔎", titre: "SEO", texte: "Référencement dans les moteurs.", cible: (d) => lienSite(d, "seo") },
@@ -241,7 +241,7 @@ export function rendreVueSite(moi, vue, section) {
   const etapes = vue.etapes || [];
   const terminees = etapes.filter((x) => x.etat === "termine").length;
   const prochaines = etapes.filter((x) => x.etat !== "termine");
-  const cibleEtape = (x) => nav.find((n) => n.libelle === x.libelle || (x.cle === "identite" && n.libelle === "Médias / Logos")
+  const cibleEtape = (x) => nav.find((n) => n.libelle === x.libelle || (x.cle === "identite" && n.libelle === "Médias")
     || (x.cle === "seo" && n.libelle === "SEO") || (x.cle === "contenus" && n.libelle === "Pages"))?.url || `${base}?section=${encodeURIComponent(x.cle)}`;
   const lien = (url, libelle, i, classe = "btn btn-secondary") => `<a class="${classe}" href="#${e(url)}">${icon(i)}${e(libelle)}</a>`;
   const metriques = ["pages", "identite", "entete", "footer", "seo"].map((cle) => {
