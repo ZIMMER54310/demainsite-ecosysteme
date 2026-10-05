@@ -238,7 +238,8 @@ async function enregistrer({ code, mode, frequence, unite, acteur }) {
     const cree = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${r.listeId}/items`, { fields: { Title: code, ...champs } });
     itemId = cree?.id || null;
   }
-  cache = null;
+  // Graph peut relire l'ancienne valeur quelques secondes : le cache garde directement la valeur ecrite.
+  r.lignes.set(code, { ...(ligne || { derniere: null, resultat: null }), itemId: itemId ? String(itemId) : null, ...voulu });
   const j = await ecriture.journaliser(g, {
     cle: ecriture.hash(["synchro-reglage", code, ancien, voulu, Date.now()]), action: "Synchronisations : réglage",
     nom: `Réglage ${code} · ${voulu.mode === "AUTOMATIQUE" ? `toutes les ${voulu.frequence} ${voulu.unite.toLowerCase()}` : "manuel"}`,
