@@ -593,13 +593,42 @@ async function chargerItemsListe(
   siteGraphId,
   listeId
 ) {
-  return collecter(
+  const items = await collecter(
     token,
     `/sites/${siteGraphId}` +
     `/lists/${listeId}` +
     "/items" +
     "?$expand=fields&$top=200"
   );
+  return completerChampsTronques(token, siteGraphId, listeId, items);
+}
+
+/*
+ * SharePoint tronque les noms internes a 32 caracteres : un nom finissant par un
+ * echappement incomplet (ex. "..._x0") est accepte en ecriture mais omis par
+ * Graph dans items?$expand=fields. On relit ces seules colonnes element par element.
+ */
+const NOM_INTERNE_TRONQUE = /_x[0-9A-Fa-f]{0,4}$/;
+
+async function completerChampsTronques(token, siteGraphId, listeId, items) {
+  if (!items.length) return items;
+  const colonnes = await chargerColonnesListe(token, siteGraphId, listeId);
+  const noms = colonnes
+    .filter((c) => !c.hidden && NOM_INTERNE_TRONQUE.test(String(c.name || "")) && !c.lookup?.primaryLookupColumnId)
+    .flatMap((c) => (c.lookup ? [c.name, `${c.name}LookupId`] : [c.name]));
+  if (!noms.length) return items;
+
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(6, items.length) }, async () => {
+    while (i < items.length) {
+      const item = items[i++];
+      try {
+        const champs = await graph(token, `/sites/${siteGraphId}/lists/${listeId}/items/${item.id}/fields?$select=${noms.join(",")}`);
+        for (const n of noms) if (champs?.[n] !== undefined && champs[n] !== null) (item.fields ||= {})[n] = champs[n];
+      } catch (_) { /* element garde ses champs standards */ }
+    }
+  }));
+  return items;
 }
 
 /**

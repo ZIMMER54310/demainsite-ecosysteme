@@ -96,7 +96,7 @@ export function panneauDesign(design, { ref, contenu = "", onglet = "design", ap
   const presets = design.options?.presets || [];
   const onglets = [["contenu", "CONTENU"], ["design", "DESIGN"], ["responsive", "RESPONSIVE"], ["avance", "AVANCÉ"]];
   return `<form class="card design-panneau" data-design-form data-ref="${e(ref)}">
-    <header class="design-entete"><div><span class="constructeur-type">${e(design.libelle || "")}</span> <strong>🎨 ${e(design.type || "")}</strong></div>
+    <header class="design-entete"><div><span class="constructeur-type">${e(design.libelle || "")}</span> <strong>🎨 ${e(design.titre || "")}</strong></div>
       <button type="button" class="btn btn-mini" data-design-fermer aria-label="Fermer le panneau Design">✕</button></header>
     <nav class="design-onglets" role="tablist">${onglets.map(([k, l]) => `<button type="button" role="tab" class="btn btn-mini ${k === onglet ? "btn-primary" : "btn-secondary"}" aria-selected="${k === onglet}" data-design-onglet="${k}">${l}</button>`).join("")}</nav>
     <section data-design-volet="contenu"${onglet === "contenu" ? "" : " hidden"}>${contenu}</section>

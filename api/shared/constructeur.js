@@ -819,7 +819,7 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
         .map((x) => ({ ref: `preset.${signer(`preset:${x.id}`)}`, titre: titreDe(x), actuel: x.id === preset?.id }));
       return {
         design: {
-          type: code, libelle: TYPES[c.type].libelle, groupes: B.groupesDesign(d, code),
+          type: code, libelle: TYPES[c.type].libelle, titre: titreDe(c.el) || "", groupes: B.groupesDesign(d, code),
           valeurs: plat(propre, polices), herite: plat(herite.style, polices),
           responsive: Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, plat(propreResp[a] || {}, polices)])),
           responsiveHerite: Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, plat(herite.responsive[a] || {}, polices)])),
