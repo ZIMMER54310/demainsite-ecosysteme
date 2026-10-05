@@ -41,6 +41,20 @@ pagination. Elle reste indisponible si un site n'a pas de progression connue.
 Les couleurs de progression restent issues de la configuration SharePoint ;
 aucune couleur specifique a un statut ni aucun chiffre de maquette n'est ajoute.
 
+Dans un site selectionne, la vue d'ensemble affiche son identite, son statut,
+ses etapes reelles, les prochaines etapes non terminees et les acces a sa structure.
+La navigation locale utilise le domaine d'acces verifie par le serveur et reste
+distincte des commandes globales. Pages, En-tete, Footer, Medias et Catalogue
+ouvrent directement l'onglet correspondant du constructeur lorsque disponible.
+Les actions d'edition sont reservees aux niveaux autorises. Le contexte local est
+efface a chaque navigation et recharge sur les ecrans du site ; il ne peut pas
+reprendre les donnees du site precedent.
+
+Les compteurs de pages proviennent des donnees du site, avec le nombre actif et
+valide. Aucun compteur de produits, d'utilisateurs, score SEO, activite recente,
+image de banniere ou date fictive n'est utilise pour imiter une maquette.
+Progression et Acces rapides restent deroulants et fermes par defaut.
+
 - Branche de travail et de production : `ovh/api-native` (pas de fusion vers `main` pour l'instant).
 - API : service systemd `dse-api.service` (`api/server.js`, ecoute **127.0.0.1:3000**).
 - Recette : port 3001 (reserve, non gere par ce depot).

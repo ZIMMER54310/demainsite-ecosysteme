@@ -1,5 +1,6 @@
 import { escapeHtml } from "../public/outils.js";
 import { icon, iconForRoute } from "../../components/icons.js";
+import { navigationSite } from "./navigation-site.js";
 
 /*
  * Cockpit DSE generique : une seule interface qui s'adapte aux fonctions
@@ -234,19 +235,37 @@ export function rendreListeSites(moi, resultat) {
 }
 
 export function rendreVueSite(moi, vue, section) {
-  return `<section class="cockpit">
-    ${rendreEnteteCockpit(moi)}
-    <div class="card cockpit-site-titre">
-      <h2>${e(vue.nom || vue.domaine || vue.acces)}</h2>
-      <p>${e(vue.domaine || "Domaine principal à préciser")} ${badgeStatut(vue.statut)}</p>
-      ${(vue.alias || []).length ? `<p class="muted">Alias : ${(vue.alias || []).map(e).join(", ")}</p>` : ""}
-      ${vue.statut?.message ? `<p class="muted">${e(vue.statut.message)}</p>` : ""}
+  const domaine = vue.acces || vue.domaine;
+  const base = `/cockpit/site/${encodeURIComponent(domaine)}`;
+  const nav = navigationSite(vue, moi?.niveau);
+  const etapes = vue.etapes || [];
+  const terminees = etapes.filter((x) => x.etat === "termine").length;
+  const prochaines = etapes.filter((x) => x.etat !== "termine");
+  const cibleEtape = (x) => nav.find((n) => n.libelle === x.libelle || (x.cle === "identite" && n.libelle === "Médias / Logos")
+    || (x.cle === "seo" && n.libelle === "SEO") || (x.cle === "contenus" && n.libelle === "Pages"))?.url || `${base}?section=${encodeURIComponent(x.cle)}`;
+  const lien = (url, libelle, i, classe = "btn btn-secondary") => `<a class="${classe}" href="#${e(url)}">${icon(i)}${e(libelle)}</a>`;
+  const metriques = ["pages", "identite", "entete", "footer", "seo"].map((cle) => {
+    const etape = etapes.find((x) => x.cle === cle);
+    if (!etape) return "";
+    const pages = cle === "pages" ? vue.statistiques?.pages : null;
+    return `<article class="card cockpit-site-metrique"><span class="cockpit-metrique-icone">${icon(cle === "identite" ? "image" : cle === "seo" ? "search" : "file")}</span><h2>${e(etape.libelle)}</h2>
+      ${pages ? `<strong class="metric">${Number(pages.total) || 0}</strong><p class="muted">${Number(pages.publiees) || 0} active(s) et validée(s)</p>` : `<strong class="cockpit-metrique-etat">${e(LIBELLES_ETAT[etape.etat] || LIBELLES_ETAT.afaire)}</strong><p class="muted">${Number(etape.nombre) || 0} élément(s) associé(s)</p>`}
+      ${lien(cibleEtape(etape), "Consulter", "arrow", "cockpit-lien-texte")}</article>`;
+  }).join("");
+  return `<section class="cockpit cockpit-vue-site">
+    <header class="card cockpit-site-titre cockpit-site-banniere"><div class="cockpit-site-monogramme">${e((vue.nom || domaine || "—").slice(0, 2).toUpperCase())}</div>
+      <div class="cockpit-site-identification"><h1>${e(vue.nom || domaine)} ${badgeStatut(vue.statut)}</h1><p>${e(vue.domaine || "Domaine principal à préciser")}</p>${vue.client ? `<p>Client : ${e(vue.client)}</p>` : ""}${vue.statut?.message ? `<p>${e(vue.statut.message)}</p>` : ""}${moi?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "globe") : ""}</div>
+      ${vue.domaine && vue.fonctions?.includes("apercu") ? `<a class="btn cockpit-public-site" href="https://${e(vue.domaine)}/" target="_blank" rel="noopener noreferrer">Voir le site public ${icon("external")}</a>` : ""}
+    </header>
+    <div class="cockpit-site-metriques"><article class="card cockpit-site-metrique cockpit-site-progression"${styleProgression(vue.progressionVisuelle)}><h2>${icon("chart")} Progression globale</h2><strong class="metric">${Number(vue.progression) || 0} %</strong><div class="cockpit-jauge"><span style="width:${Math.max(0, Math.min(100, Number(vue.progression) || 0))}%"></span></div><p class="muted">${terminees} / ${etapes.length} étapes terminées</p><a class="cockpit-lien-texte" href="#progression-site" data-ouvrir-progression>Voir le détail ${icon("arrow")}</a></article>${metriques}</div>
+    <div class="cockpit-site-pilotage"><article class="card cockpit-site-prochaines"><h2>${icon("chart")} Que dois-je faire maintenant ?</h2><p class="muted">Les étapes non terminées de ce site.</p>
+      ${prochaines.length ? `<ol>${prochaines.map((x) => `<li><div><strong>${e(x.libelle)}</strong><p class="muted">${e(x.alerte || LIBELLES_ETAT[x.etat] || LIBELLES_ETAT.afaire)}</p></div>${lien(cibleEtape(x), "Continuer", "arrow")}</li>`).join("")}</ol>` : "<p>Toutes les étapes de configuration sont terminées.</p>"}</article>
+      <div class="cockpit-site-detail"><article class="card"><h2>${icon("globe")} Situation du site</h2><dl class="cockpit-site-infos"><dt>Statut</dt><dd>${badgeStatut(vue.statut)}</dd><dt>Domaine principal</dt><dd>${e(vue.domaine || "À préciser")}</dd><dt>Alias</dt><dd>${(vue.alias || []).length ? vue.alias.map(e).join(", ") : "Aucun"}</dd>${vue.client ? `<dt>Client</dt><dd>${e(vue.client)}</dd>` : ""}</dl></article>
+      <article class="card"><h2>${icon("layers")} Structure du site</h2><p class="muted">Accéder aux éléments du site sélectionné.</p><div class="cockpit-site-structure">${nav.filter((x) => ["En-tête", "Pages", "Footer"].includes(x.libelle)).map((x) => lien(x.url, x.libelle, x.icone)).join("")}</div>${nav.some((x) => x.url === `${base}/construire`) ? lien(`${base}/construire`, "Ouvrir le constructeur", "arrow", "btn btn-primary") : ""}</article></div>
     </div>
-    ${editionsVisibles(moi, vue.fonctions).length ? `<div class="cockpit-actions">${editionsVisibles(moi, vue.fonctions).map((x) =>
-      `<a class="btn btn-primary" href="#/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}/modifier/${x.composant}">${e(x.libelle)}</a>`).join("")}</div>` : ""}
-    ${["entete", "footer", "pages"].some((f) => (moi.fonctions || []).includes(f)) ? `<div class="cockpit-actions"><a class="btn btn-primary" href="#/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}/construire">🧱 Construire le site</a></div>` : ""}
-    ${rendreProgression(vue, section)}
-    ${rendreAccesRapides(vue.fonctions, vue.acces || vue.domaine)}
+    ${editionsVisibles(moi, vue.fonctions).length ? `<div class="cockpit-actions">${editionsVisibles(moi, vue.fonctions).map((x) => lien(`${base}/modifier/${x.composant}`, x.libelle, "edit")).join("")}</div>` : ""}
+    <div id="progression-site">${rendreProgression(vue, section)}</div>
+    <details class="cockpit-pliant cockpit-raccourcis"><summary>Accès rapides</summary><div class="cockpit-pliant-contenu cockpit-site-raccourcis">${nav.slice(1).map((x) => lien(x.url, x.libelle, x.icone)).join("")}${rendreCartes((vue.fonctions || []).filter((f) => !["sites", "creer", "administration", "utilisateurs", "plateforme"].includes(f)), domaine)}</div></details>
   </section>`;
 }
 

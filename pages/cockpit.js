@@ -29,7 +29,7 @@ const domaineCourant = () => location.hostname.trim().toLowerCase().replace(/^ww
 async function contexte(params = {}) {
   document.body.classList.remove("dse-public");
   const user = await initializeAuth();
-  setState({ user });
+  setState({ user, selectedSite: null });
   if (!user.authenticated) return { html: rendreConnexion({ fournisseurs: user.fournisseurs, message: MESSAGES_CONNEXION[params.connexion] || "" }) };
   if (!user.reconnu || !user.fonctions.length) return { html: rendreSansAcces(moiDepuis(user)) };
   return { moi: moiDepuis(user) };
@@ -37,7 +37,15 @@ async function contexte(params = {}) {
 
 async function vue(domaine) {
   if (!domaine) return null;
-  try { return (await getSiteCockpit(domaine))?.donnees || null; } catch { return null; }
+  try {
+    const site = (await getSiteCockpit(domaine))?.donnees || null;
+    setState({ selectedSite: site });
+    return site;
+  } catch (err) {
+    setState({ selectedSite: null });
+    console.error("[DSE cockpit] site indisponible", err.message);
+    return null;
+  }
 }
 
 export async function cockpitAccueilPage(params) {
@@ -73,6 +81,17 @@ export async function cockpitSitePage(params) {
 
 function lireAssistant() {
   try { return JSON.parse(sessionStorage.getItem(CLE_ASSISTANT) || "{}") || {}; } catch { return {}; }
+}
+
+export function activerVueSite(racine) {
+  racine.querySelector("[data-ouvrir-progression]")?.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    const details = racine.querySelector(".cockpit-progression");
+    if (!details) return;
+    details.open = true;
+    details.querySelector("summary").focus();
+    details.scrollIntoView({ block: "start", behavior: "auto" });
+  });
 }
 
 export async function cockpitAssistantPage(params) {
@@ -159,7 +178,10 @@ export async function cockpitEditionPage(params) {
   try {
     const c = await contexte(params);
     if (c.html) return c.html;
-    const r = await getEdition(params.domaine, params.composant, params.element || "").catch(() => null);
+    const [r] = await Promise.all([
+      getEdition(params.domaine, params.composant, params.element || ""),
+      vue(params.domaine)
+    ]);
     if (!r?.donnees) return nonDisponible("Ce réglage n'est pas disponible dans votre espace.");
     return rendreEdition(c.moi, r.donnees, params);
   } catch { return indisponible; }
@@ -263,7 +285,7 @@ export async function cockpitConstruirePage(params) {
   try {
     const c = await contexte(params);
     if (c.html) return { html: c.html };
-    const r = await getConstruire(params.domaine).catch(() => null);
+    const [r] = await Promise.all([getConstruire(params.domaine), vue(params.domaine)]);
     if (!r?.donnees) return { html: nonDisponible("La construction de ce site n'est pas disponible dans votre espace.") };
     return { html: `<div data-constructeur-racine></div>`, moi: c.moi, donnees: r.donnees };
   } catch { return { html: indisponible }; }
@@ -271,5 +293,5 @@ export async function cockpitConstruirePage(params) {
 
 export function activerConstruire(racinePage, page, domaine) {
   const racine = racinePage.querySelector("[data-constructeur-racine]");
-  if (racine && page.donnees) activerConstructeur(racine, { moi: page.moi, domaine, donnees: page.donnees });
+  if (racine && page.donnees) activerConstructeur(racine, { moi: page.moi, domaine, donnees: page.donnees, onglet: new URLSearchParams(location.hash.split("?")[1] || "").get("onglet") });
 }

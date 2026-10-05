@@ -1,4 +1,5 @@
 const paths = {
+  file: '<path d="M14 3H5v18h14V8Zm0 0v5h5M8 12h8M8 16h8"/>',
   home: '<path d="m3 10 9-7 9 7v10H6V10"/><path d="M9 20v-7h6v7"/>',
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',

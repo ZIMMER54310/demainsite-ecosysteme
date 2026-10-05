@@ -226,8 +226,8 @@ export function formulaireHtml(f, titre) {
 
 /* ---------------- Activation (evenements) ---------------- */
 
-export function activerConstructeur(racine, { moi, domaine, donnees }) {
-  const etat = { domaine, onglet: "entetes", conteneur: "", message: "", erreur: false };
+export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
+  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false };
   let d = donnees;
 
   const charger = async () => {

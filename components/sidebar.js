@@ -1,6 +1,7 @@
 import { getState } from "../js/state.js";
 import { escapeHtml } from "../modules/public/outils.js";
 import { icon, iconForRoute } from "./icons.js";
+import { navigationSite } from "../modules/cockpit/navigation-site.js";
 // Navigation du cockpit unique : construite par le serveur selon utilisateur, role, perimetre et applications.
 const repli = [["/cockpit", "🏠", "Cockpit"]];
 
@@ -36,12 +37,23 @@ export function rendreVoirSite(user, current) {
 }
 
 export function renderSidebar() {
-  const current = (location.hash.slice(1) || "/").split("?")[0];
+  const route = location.hash.slice(1) || "/";
+  const current = route.split("?")[0];
   const user = getState()?.user;
   const menu = user?.menu;
   const entrees = Array.isArray(menu) && menu.length
     ? menu.filter((m) => typeof m.url === "string" && m.url.startsWith("/cockpit")).map((m) => [m.url, m.icone || "•", m.libelle || ""])
     : repli;
-  return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${rendreVoirSite(user, current)}${entrees.map(([p, , l]) => `<a class="nav-link ${current === p ? "active" : ""}"${current === p ? ' aria-current="page"' : ""} href="#${escapeHtml(p)}" title="${escapeHtml(l)}">${icon(iconForRoute(p))}<span>${escapeHtml(l)}</span></a>`).join("")}</div>
+  const selection = /^\/cockpit\/site\/([^/]+)/.exec(current);
+  const vue = getState().selectedSite;
+  const correspond = selection && vue && selection[1] === encodeURIComponent(vue.acces || vue.domaine);
+  const lien = (p, l, i, actif) => `<a class="nav-link ${actif ? "active" : ""}"${actif ? ' aria-current="page"' : ""} href="#${escapeHtml(p)}" title="${escapeHtml(l)}">${icon(i)}<span>${escapeHtml(l)}</span></a>`;
+  const global = (items) => items.map(([p, , l]) => lien(p, correspond && p === "/cockpit" ? "Cockpit général" : l, iconForRoute(p), current === p)).join("");
+  const local = correspond ? `<div class="cockpit-site-selection"><small>Site sélectionné</small><a href="#${escapeHtml(`/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}`)}" title="${escapeHtml(vue.nom || vue.domaine)}">${icon("globe")}<span><strong>${escapeHtml(vue.nom || vue.domaine || vue.acces)}</strong><small>${escapeHtml(vue.domaine || vue.acces)}</small></span></a></div>
+    ${navigationSite(vue, user?.niveau).map((x) => lien(x.url, x.libelle, x.icone, route === x.url)).join("")}
+    ${rendreVoirSite(user, current)}${user?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "arrow", false) : ""}` : "";
+  return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${correspond
+    ? `${global(entrees.filter(([p]) => ["/cockpit", "/cockpit/sites"].includes(p)))}${local}<div class="cockpit-nav-globale">${global(entrees.filter(([p]) => !["/cockpit", "/cockpit/sites"].includes(p)))}</div>`
+    : `${rendreVoirSite(user, current)}${global(entrees)}`}</div>
     <div class="cockpit-sidebar-bas"><button type="button" class="nav-link" data-reduire-menu aria-expanded="true">${icon("panel")}<span>Réduire le menu</span></button><small>${escapeHtml(user?.role?.titre || "Espace de gestion")}</small></div></nav>`;
 }

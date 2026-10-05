@@ -105,7 +105,11 @@ function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT, dom
     statut: statut ? { titre: statut.titre || null, actif, message: statut.noteCourte || null } : null,
     progression: etapes.length ? Math.round((terminees / etapes.length) * 100) : 0,
     etapes: etapes.map(({ fonction, ...e }) => e),
-    fonctions
+    fonctions,
+    client: String(info?.client || "").trim() || null,
+    statistiques: fonctions.includes("pages") && sc.pages?.disponible === true ? {
+      pages: { total: liste(sc.pages.donnees).length, publiees: liste(sc.pages.donnees).filter(publie).length }
+    } : {}
   };
 }
 

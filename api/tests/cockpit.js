@@ -117,6 +117,20 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.ok(pages[0].includes("/api/v1/auth/entra/connexion") && pages[0].includes("Bientôt disponible"));
   assert.ok(pages[2].includes("Bonjour Pascal") && pages[2].includes("exemple.fr") && pages[2].includes("Actif"));
   assert.ok(pages[4].includes("⚠") && pages[4].includes("✅") && pages[4].includes("⬜"));
+  assert.deepStrictEqual(vue.statistiques.pages, { total: 1, publiees: 1 });
+  assert.ok(pages[4].includes("Que dois-je faire maintenant ?") && pages[4].includes("Situation du site"));
+  assert.ok(pages[4].includes('href="https://exemple.fr/"') && pages[4].includes('target="_blank"'));
+  assert.ok(pages[4].includes("data-ouvrir-progression") && pages[4].includes("1 active(s) et validée(s)"));
+  const restreinte = vueSite({ siteComplet, info, statut: actif, fonctions: ["sites"] });
+  assert.deepStrictEqual(restreinte.statistiques, {}, "aucune statistique de pages sans droit");
+  const htmlRestreint = ui.rendreVueSite({ fonctions: ["sites"], niveau: "lecture" }, restreinte);
+  assert.ok(!htmlRestreint.includes("/construire") && !htmlRestreint.includes("/modifier/"));
+  assert.ok(!htmlRestreint.includes("Voir le site public"), "apercu reserve au droit correspondant");
+  const navSite = await import(url("modules/cockpit/navigation-site.js"));
+  const navigationLecture = navSite.navigationSite({ acces: "alias.example.test", fonctions: ["sites", "seo", "pages"] }, "lecture");
+  assert.ok(navigationLecture.every((x) => x.url.startsWith("/cockpit/site/alias.example.test")));
+  assert.ok(navigationLecture.some((x) => x.url.endsWith("?onglet=pages")));
+  assert.ok(!navigationLecture.some((x) => x.url.includes("/modifier/")), "aucune edition dans le menu lecteur");
   // Cartes filtrees par fonctions
   assert.deepStrictEqual(ui.cartesVisibles(["sites", "apercu", "inconnue"]).map((x) => x.fonction), ["sites", "apercu"]);
   assert.ok(!ui.rendreCartes(["apercu"], "exemple.fr").includes("Créer"));
@@ -258,6 +272,14 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   state.setState({ user: publicUser });
   const navigation = sidebar.renderSidebar();
   assert.ok(navigation.indexOf("Voir le site") < navigation.indexOf('href="#/cockpit"'), "sortie publique avant Cockpit");
+  state.setState({ selectedSite: { nom: "Site choisi <b>", acces: "alias.example.test", domaine: "principal.example.test", fonctions: ["pages", "seo"] } });
+  const navigationLocale = sidebar.renderSidebar();
+  assert.ok(navigationLocale.includes("Site sélectionné") && navigationLocale.includes("Vue d&#039;ensemble"));
+  assert.ok(navigationLocale.includes("/cockpit/site/alias.example.test/construire?onglet=pages"));
+  assert.ok(!navigationLocale.includes("<b>"), "nom du site echappe");
+  global.location = { hash: "#/cockpit/site/second.example.test" };
+  assert.ok(!sidebar.renderSidebar().includes("Site choisi"), "jamais de contexte du site precedent");
+  state.setState({ selectedSite: null });
   state.setState({ user: null });
   global.location = ancienLocation;
 
