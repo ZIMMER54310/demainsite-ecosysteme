@@ -722,4 +722,4 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
   }
 }
 
-module.exports = { siteDe, CONTENEURS, NIVEAUX, vue, arbre, apercu, racine, resoudre, executer, ref, mediaAutorise, modeleDisponible, visibleApercu, inactif, brouillon, Ecrivain };
+module.exports = { siteDe, CONTENEURS, NIVEAUX, vue, arbre, apercu, racine, resoudre, executer, ref, mediaAutorise, modeleDisponible, visibleApercu, inactif, brouillon, Ecrivain, signer };

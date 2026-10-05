@@ -132,6 +132,25 @@ async function main() {
     assert.ok(documentApercu({ mode: "builder", sections: [] }).includes("Aperçu vide"));
     assert.ok(badgeEtat({ brouillon: true }).includes("Brouillon"));
   }
+  // Import de medias : nom sur, signature du contenu, refus sans droit (aucun appel Graph), formulaire front.
+  {
+    const M = require("../shared/medias-televersement");
+    assert.deepEqual(M._test.nomSur("../Été 2026 (1).PNG"), { base: "Ete-2026-1", ext: "png" });
+    assert.equal(M._test.nomSur("..").base, "media");
+    assert.equal(M._test.segment("../dseco.fr"), "dseco.fr");
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0]);
+    assert.ok(M._test.SIGNATURES.PNG(png) && !M._test.SIGNATURES.JPG(png) && !M._test.SIGNATURES.PNG(Buffer.from("<html>")));
+    const refus = await M.televerser({ perimetre: { peut: () => false }, contenu: png });
+    assert.ok(refus.refus, "import refuse sans droit d'ecriture");
+    const vide = await M.televerser({ perimetre: { peut: () => true }, contenu: Buffer.alloc(0) });
+    assert.ok(vide.refus, "fichier vide refuse");
+    const { rendreMedias } = await front("cockpit/medias.js");
+    const base = { site: { titre: "Site" }, medias: [], droits: { "logo-medias": { ecriture: true } } };
+    assert.equal(rendreMedias(base, { domaine: "exemple.test" }).includes("data-import-media"), false, "pas de formulaire sans options");
+    const html = rendreMedias({ ...base, televersement: { types: [{ ref: "typeMedia.x", titre: "IMAGE" }], formats: ["PNG"], tailleMaxMo: 50 } }, { domaine: "exemple.test" });
+    assert.ok(html.includes("data-import-media") && html.includes('accept=".png"') && html.includes("IMAGE"));
+    assert.equal(/OBJ-|Graph|SharePoint/.test(html), false, "aucun terme technique");
+  }
   console.log("Constructeur : perimetre, medias, references opaques, arbre, apercu, En-tete/Footer publics et interface OK");
 }
 

@@ -411,10 +411,16 @@ async function construireLire(req, res) {
     const donnees = { site: { titre: p.info.titre, domaine: (p.info.domaines || [])[0] || null },
       droits: Object.fromEntries([...FONCTIONS_CONSTRUCTEUR, "logo-medias"].map((f) => [f, { lecture: p.lecture(f), ecriture: p.peut(f) }])),
       superAdmin: p.superAdmin, ...C.vue(d, p) };
-    if (mediasSeulement) return repondre(res, 200, { succes: true, donnees: {
-      site: donnees.site, droits: { "logo-medias": donnees.droits["logo-medias"] },
-      medias: donnees.medias, logo: donnees.logo
-    }, meta: meta() });
+    if (mediasSeulement) {
+      let televersement = null;
+      if (p.peut("logo-medias")) {
+        try { televersement = await require("../shared/medias-televersement").options(await ecriture.contexteGraph()); } catch (e) { console.error("[DSE cockpit] medias options", e.message); }
+      }
+      return repondre(res, 200, { succes: true, donnees: {
+        site: donnees.site, droits: { "logo-medias": donnees.droits["logo-medias"] },
+        medias: donnees.medias, logo: donnees.logo, televersement
+      }, meta: meta() });
+    }
     const reference = String(req.query.conteneur || "");
     if (reference) {
       const r = C.resoudre(d, reference, ["entete", "footer", "page"]);
@@ -504,8 +510,65 @@ async function construireAction(req, res) {
   }
 }
 
+/*
+ * Import d'un media (corps binaire) : memes garanties que les actions du constructeur
+ * (origine, CSRF via acces.proteger, perimetre, droit d'ecriture, verrou par site, idempotence, OBJ-JRN).
+ */
+async function mediasTeleverser(req, res) {
+  let verrou = null;
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const q = req.query || {};
+    const domaine = String(q.domaine || "").slice(0, 255);
+    const cleClient = String(q.cle || "").slice(0, 80);
+    const nomFichier = String(q.nom || "").slice(0, 200);
+    const titre = String(q.titre || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 255);
+    const p = await perimetreConstructeur(ctx, domaine);
+    if (!p || !p.peut("logo-medias")) return refuserEcriture(res, ctx, domaine, "MEDIA-IMPORT-REFUS", "Site hors de votre périmètre ou fonction non autorisée.");
+    if (!/^[A-Za-z0-9-]{16,80}$/.test(cleClient) || !nomFichier) return refuser(res, 400, "Requête incomplète.");
+    if (!Buffer.isBuffer(req.body) || !req.body.length) return refuser(res, 400, "Aucun fichier reçu.");
+    const acteur = `OBJ-UTILISATEUR ${ctx.droits.utilisateurId || "non reconnu"}`;
+    const cle = ecriture.hash(["media-import", acteur, cleClient, domaine, nomFichier, req.body.length]);
+    if (constructeurExecutees.has(cle)) return repondreResultat(res, { ...constructeurExecutees.get(cle), deja: true });
+    verrou = String(p.info.id);
+    if (constructeurEnCours.has(verrou)) { verrou = null; return refuser(res, 409, "Une autre modification de ce site est en cours. Merci de réessayer."); }
+    constructeurEnCours.set(verrou, cle);
+
+    const g = await ecriture.contexteGraph();
+    let r;
+    try {
+      r = await require("../shared/medias-televersement").televerser({ g, perimetre: p, typeRef: String(q.type || ""), titre, nomFichier, contenu: req.body, acteur });
+    } catch (e) {
+      if (e.refus) r = { refus: e.message };
+      else { console.error("[DSE cockpit] import media", e.message); r = { erreur: "Le dépôt dans la bibliothèque n'a pas abouti. Aucun média n'a été créé.", status: 502, crees: [] }; }
+    }
+    if (r.refus) return refuserEcriture(res, ctx, domaine, "MEDIA-IMPORT-REFUS", r.refus);
+    const succes = !r.erreur;
+    const journal = await ecriture.journaliser(g, {
+      cle, action: "Médias : import", nom: `${p.info.titre || domaine} · import média`,
+      ancien: {}, nouveau: { crees: r.crees || [], ...(r.nouveau || {}) },
+      notes: `Acteur : ${acteur} | Site : ${p.info.id} | ${r.message || r.erreur || ""}`,
+      succes, contexte: { domaine, site: String(p.info.id) }
+    });
+    ecriture.invaliderCaches();
+    require("../shared/builder-source").viderCache();
+    const sortie = succes
+      ? { message: r.message, nouveau: r.nouveau || {}, journal: { enregistre: journal.ok } }
+      : { erreur: r.erreur, status: r.status, journal: { enregistre: journal.ok } };
+    if (succes) constructeurExecutees.set(cle, sortie);
+    if (constructeurExecutees.size > 500) constructeurExecutees.delete(constructeurExecutees.keys().next().value);
+    return repondreResultat(res, sortie);
+  } catch (e) {
+    console.error("[DSE cockpit] import media", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  } finally {
+    if (verrou) constructeurEnCours.delete(verrou);
+  }
+}
+
 module.exports = {
-  moi, sites, site, connexion, retour, deconnexion, inscrire,
+  moi, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser,
   editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide }
 };

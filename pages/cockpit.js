@@ -10,7 +10,7 @@ import {
   CRITERES_SITES, lienSites, rendreEdition, rendreApercu, rendreResultatEcriture, rendreAdministration, rendreUtilisateurs
 } from "../modules/cockpit/cockpit.js";
 import { escapeHtml } from "../modules/public/outils.js";
-import { getMediasCockpit, actionConstruire } from "../services/cockpit.service.js";
+import { getMediasCockpit, actionConstruire, televerserMedia } from "../services/cockpit.service.js";
 import { rendreMedias } from "../modules/cockpit/medias.js";
 
 const CLE_ASSISTANT = "dseAssistantSite";
@@ -326,6 +326,35 @@ export function activerMedias(racine, page, domaine) {
   };
   form.addEventListener("input", filtrer);
   form.addEventListener("submit", (ev) => { ev.preventDefault(); filtrer(); });
+  const importer = racine.querySelector("[data-import-media]");
+  importer?.elements.fichier.addEventListener("change", () => {
+    const f = importer.elements.fichier.files[0];
+    if (f && !importer.elements.titre.value.trim()) importer.elements.titre.value = f.name.replace(/\.[^.]+$/, "");
+  });
+  importer?.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const fichier = importer.elements.fichier.files[0];
+    const zone = racine.querySelector("[data-medias-message]");
+    const barre = importer.querySelector("[data-import-progression]");
+    const max = Number(page.donnees.televersement?.tailleMaxMo) * 1024 * 1024;
+    if (!fichier) return;
+    if (max && fichier.size > max) { zone.innerHTML = `<p class="cockpit-alerte">${escapeHtml("Fichier trop volumineux.")}</p>`; return; }
+    const champs = importer.querySelectorAll("input, select, button");
+    champs.forEach((c) => { c.disabled = true; });
+    barre.hidden = false; barre.value = 0;
+    zone.textContent = "Envoi du fichier…";
+    try {
+      const r = await televerserMedia(domaine, fichier, { type: importer.elements.type.value, titre: importer.elements.titre.value.trim() },
+        (pct) => { barre.value = pct; zone.textContent = pct < 100 ? `Envoi du fichier… ${pct} %` : "Enregistrement dans la bibliothèque…"; });
+      const d = (await getMediasCockpit(domaine)).donnees;
+      racine.innerHTML = rendreMedias(d, { domaine, message: `${r.donnees.message}${r.donnees.journal?.enregistre === false ? " Journalisation non confirmée : vérification nécessaire." : ""}` });
+      activerMedias(racine, { donnees: d }, domaine);
+    } catch (err) {
+      zone.innerHTML = `<p class="cockpit-alerte">${escapeHtml(err.message)}</p>`;
+      champs.forEach((c) => { c.disabled = false; });
+      barre.hidden = true;
+    }
+  });
   racine.querySelectorAll("[data-media-logo]").forEach((bouton) => bouton.addEventListener("click", async () => {
     if (!confirm("Utiliser ce média comme logo du site ? L'ancien média sera conservé.")) return;
     const boutons = racine.querySelectorAll("[data-media-logo]");

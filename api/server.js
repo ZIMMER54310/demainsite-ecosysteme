@@ -243,6 +243,13 @@ application.get("/api/v1/cockpit/sites/statuts", async (req, res) => {
 application.get("/api/v1/cockpit/site", controleurCockpit.site);
 application.get("/api/v1/cockpit/construire", controleurCockpit.construireLire);
 application.post("/api/v1/cockpit/construire/action", controleurCockpit.construireAction);
+application.post("/api/v1/cockpit/medias/televerser",
+  (req, res, next) => express.raw({ type: "application/octet-stream", limit: require("./shared/medias-televersement").tailleMaxOctets() })(req, res, (err) => {
+    if (!err) return next();
+    res.status(err.type === "entity.too.large" ? 413 : 400).set("Cache-Control", "no-store")
+      .json({ succes: false, erreur: { message: err.type === "entity.too.large" ? "Fichier trop volumineux." : "Envoi du fichier invalide." } });
+  }),
+  controleurCockpit.mediasTeleverser);
 application.get("/api/v1/cockpit/edition", controleurCockpit.editionLire);
 application.post("/api/v1/cockpit/edition/apercu", controleurCockpit.editionApercu);
 application.post("/api/v1/cockpit/edition/confirmer", controleurCockpit.confirmer);
