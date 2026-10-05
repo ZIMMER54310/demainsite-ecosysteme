@@ -131,7 +131,7 @@ export function rendreEnteteCockpit(moi) {
     <a class="btn btn-secondary" href="/api/v1/auth/deconnexion">Se déconnecter</a></div>`;
 }
 
-export function rendreAccueil({ moi, vueCourante = null, domaineCourant = "" }) {
+export function rendreAccueil({ moi, vueCourante = null, domaineCourant = "", complement = "" }) {
   const domaine = vueCourante?.acces || vueCourante?.domaine || null;
   return `<section class="cockpit">
     ${rendreEnteteCockpit(moi)}
@@ -144,6 +144,7 @@ export function rendreAccueil({ moi, vueCourante = null, domaineCourant = "" }) 
         : `<p class="muted">Choisissez un site pour suivre sa progression.</p>`}</div>
       <div class="card"><h2>Mes sites</h2><p class="metric">${Number(moi?.nombreSites) || 0}</p><p class="muted">site(s) dans votre espace</p></div>
     </div>
+    ${complement}
     ${vueCourante ? rendreProgression(vueCourante) : ""}
     ${rendreAccesRapides(moi?.fonctions, domaine)}
   </section>`;
@@ -175,7 +176,7 @@ function jaugeCourte(valeur, visuel) {
   return `<span class="cockpit-mini-jauge"${styleProgression(visuel)} title="${e(visuel?.libelle ? `${valeur} % · ${visuel.libelle}` : `${valeur} %`)}"><span class="cockpit-jauge"><span style="width:${Math.max(0, Math.min(100, valeur))}%"></span></span><small>${valeur} %</small></span>`;
 }
 
-export function rendreListeSites(moi, resultat) {
+export function rendreListeSites(moi, resultat, { complement = "" } = {}) {
   const r = Array.isArray(resultat)
     ? { elements: resultat, total: resultat.length, totalSites: resultat.length, page: 1, pages: 1, compteurs: [], options: {}, criteres: {} }
     : (resultat || { elements: [], total: 0, totalSites: 0, page: 1, pages: 1, compteurs: [], options: {}, criteres: {} });
@@ -241,6 +242,7 @@ export function rendreListeSites(moi, resultat) {
     ${r.avertissementProgression ? `<p class="cockpit-alerte" role="status">${e(r.avertissementProgression)}</p>` : ""}
     ${compteurs}
     ${synthese}
+    ${complement}
     ${clients}
     ${filtres}
     ${lignes}

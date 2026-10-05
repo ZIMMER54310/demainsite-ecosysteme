@@ -16,6 +16,7 @@ export async function initializeAuth() {
       nombreSites: Number(moi.nombreSites) || 0,
       sitesPublics: Array.isArray(moi.sitesPublics) ? moi.sitesPublics : [],
       clients: Array.isArray(moi.clients) ? moi.clients : [],
+      porteeGlobale: moi.porteeGlobale === true,
       fournisseurs: Array.isArray(moi.fournisseurs) ? moi.fournisseurs : []
     };
   } catch {

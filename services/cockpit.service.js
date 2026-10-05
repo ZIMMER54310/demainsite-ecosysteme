@@ -2,6 +2,7 @@ import { apiGet, apiPost, ApiError } from "../js/api.js";
 import { CONFIG } from "../js/config.js";
 export const getMoi = () => apiGet("/moi");
 export const getSitesCockpit = (criteres = {}) => apiGet("/cockpit/sites", criteres);
+export const getContenusCockpit = (criteres = {}) => apiGet("/cockpit/contenus", criteres);
 export const getClientCockpit = (id, criteres = {}) => apiGet("/cockpit/client", { ...criteres, id });
 export const getStatutsSite = (domaine) => apiGet("/cockpit/sites/statuts", { domaine });
 export const getSiteCockpit = (domaine) => apiGet("/cockpit/site", { domaine });

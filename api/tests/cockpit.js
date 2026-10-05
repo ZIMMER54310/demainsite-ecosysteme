@@ -364,6 +364,54 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     assert.strictEqual(ui.lienSites({ statut: "Actif" }, {}, "/cockpit/client/2"), "#/cockpit/client/2?statut=Actif");
   }
 
+  // Gestion transverse : inventaire borne au perimetre, rendu sans terme technique.
+  {
+    const inv = require("../shared/inventaire");
+    const r = (nom, id, titre) => ({ [nom]: { id, titre } });
+    const groupes = [{ id: "4", titre: "Site A", domaines: ["a.fr"], fiches: ["4", "40"], clientId: "2" }, { id: "9", titre: "Site B", domaines: ["b.fr"], fiches: ["9"], clientId: "3" }];
+    const d = {
+      medias: [
+        { id: "m1", _fields: { Title: "Logo A" }, relations: { ...r("OBJ-SITE-PUBLIC", "40", "A") } },
+        { id: "m2", _fields: { Title: "Logo client B" }, relations: { ...r("OBJ-CLIENT", "3", "B") } },
+        { id: "m3", _fields: { Title: "Commun" }, relations: {} }
+      ],
+      pages: [{ id: "p1", _fields: { Title: "Accueil", URL: "/" }, relations: { "OBJ-SITE-PUBLIC": [{ id: "4" }, { id: "9" }], ...r("OBJ-ENTETE-SITE", "e1", "Haut") } }],
+      entetes: [{ id: "e1", _fields: { Title: "Haut" }, relations: { ...r("OBJ-SITE-PUBLIC", "4", "A") } }, { id: "e2", _fields: { Title: "Autre" }, relations: { ...r("OBJ-SITE-PUBLIC", "77", "Z") } }],
+      footers: []
+    };
+    const tous = inv.construire({ type: "medias", perimetre: { global: true, groupes }, donneesBuilder: d });
+    assert.deepStrictEqual(tous.map((m) => m.titre).sort(), ["Commun", "Logo A", "Logo client B"], "administration globale : tous les medias");
+    const clientA = inv.construire({ type: "medias", perimetre: { global: false, groupes: [groupes[0]] }, donneesBuilder: d });
+    assert.deepStrictEqual(clientA.map((m) => m.titre), ["Logo A"], "jamais les medias d'un autre client ni les medias non rattaches");
+    assert.strictEqual(clientA[0].sites[0].domaine, "a.fr", "alias rattache au bon site");
+    const pages = inv.construire({ type: "pages", perimetre: { global: true, groupes }, donneesBuilder: d });
+    assert.deepStrictEqual(pages[0].sites.map((x) => x.domaine), ["a.fr", "b.fr"], "page multi-sites");
+    assert.strictEqual(pages[0].entete, "Haut");
+    const pagesB = inv.construire({ type: "pages", perimetre: { global: false, groupes: [groupes[1]] }, donneesBuilder: d });
+    assert.deepStrictEqual(pagesB[0].sites.map((x) => x.domaine), ["b.fr"], "seuls les sites du perimetre sont affiches");
+    const entetes = inv.construire({ type: "entetes", perimetre: { global: true, groupes }, donneesBuilder: d });
+    assert.deepStrictEqual(entetes.map((x) => [x.titre, x.pages]), [["Haut", 1]], "En-tete hors sites connus exclu");
+    const articles = inv.construire({ type: "articles", perimetre: { global: false, groupes: [groupes[1]] }, indexCatalogue: { items: [
+      { type: "article", titre: "Nouvelles", url: "/blog/n", plateformes: [{ id: "9" }], etat: { actif: true, valide: true, public: true } },
+      { type: "article", titre: "Prive A", url: "/blog/p", plateformes: [{ id: "4" }], etat: { actif: true, valide: true, public: true } }
+    ] } });
+    assert.deepStrictEqual(articles.map((a) => a.titre), ["Nouvelles"]);
+
+    const uc = await import(url("modules/cockpit/contenus.js"));
+    const htmlC = uc.rendreContenus({ type: "medias", global: true, nombreSites: 2, onglets: [["medias", "Médias"], ["pages", "Pages"], ["entetes", "En-têtes"], ["footers", "Footer"], ["articles", "Articles"]].map(([cle, libelle]) => ({ cle, libelle })), compteurs: { medias: 3, pages: 1, entetes: 1, footers: 0, articles: 0 }, lignes: tous });
+    assert.ok(!TERMES_TECHNIQUES.test(htmlC.replace(/\/api\/v1\/media\/[^"]+/g, "")), `terme technique visible : ${htmlC.match(TERMES_TECHNIQUES)?.[0]}`);
+    assert.ok(htmlC.includes("#/cockpit/site/a.fr/medias") && htmlC.includes("En-têtes") && !/HERO/i.test(htmlC));
+    const htmlP = uc.rendreContenus({ type: "pages", global: false, nombreSites: 2, onglets: [{ cle: "pages", libelle: "Pages" }], compteurs: { pages: 1 }, lignes: pages });
+    assert.ok(htmlP.includes("https://a.fr/") && htmlP.includes("onglet=pages") && htmlP.includes("b.fr"));
+    assert.strictEqual(uc.rendreRaccourcisContenus({ fonctions: ["pages"] }), "", "pas de raccourci sans la fonction sites");
+    assert.ok(uc.rendreRaccourcisContenus({ fonctions: ["sites", "logo-medias"], porteeGlobale: true }).includes("type=medias"));
+
+    const { contenus } = require("../dseCockpit");
+    const reponse = () => { const o = { code: 200 }; o.status = (c) => { o.code = c; return o; }; o.json = (j) => { o.corps = j; return o; }; o.set = () => o; o.setHeader = () => o; return o; };
+    const sansSession = reponse(); await contenus({ query: {}, cookies: {}, headers: {}, get: () => undefined }, sansSession);
+    assert.strictEqual(sansSession.code, 401, "gestion globale refusee sans session");
+  }
+
   // Validation serveur des valeurs
   const champs = ecriture.champsModifiables([
     { name: "Title", displayName: "Titre", text: { maxLength: 20 } },

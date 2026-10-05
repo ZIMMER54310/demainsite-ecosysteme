@@ -12,6 +12,8 @@ import {
 import { escapeHtml } from "../modules/public/outils.js";
 import { getMediasCockpit, actionConstruire, televerserMedia } from "../services/cockpit.service.js";
 import { rendreMedias } from "../modules/cockpit/medias.js";
+import { rendreContenus, rendreRaccourcisContenus, activerContenus } from "../modules/cockpit/contenus.js";
+import { getContenusCockpit } from "../services/cockpit.service.js";
 
 const CLE_ASSISTANT = "dseAssistantSite";
 const MESSAGES_CONNEXION = {
@@ -24,7 +26,7 @@ const indisponible = `<section class="cockpit card"><p>Le cockpit est momentané
 
 const moiDepuis = (u) => ({
   nom: u.displayName, role: u.role, fonctions: u.fonctions, niveau: u.niveau, menu: u.menu,
-  domaineAccueil: u.domaineAccueil, nombreSites: u.nombreSites, clients: u.clients || [], fournisseurs: u.fournisseurs
+  domaineAccueil: u.domaineAccueil, nombreSites: u.nombreSites, clients: u.clients || [], porteeGlobale: u.porteeGlobale === true, fournisseurs: u.fournisseurs
 });
 const domaineCourant = () => location.hostname.trim().toLowerCase().replace(/^www\./, "");
 
@@ -57,7 +59,7 @@ export async function cockpitAccueilPage(params) {
     // Domaine d'accueil decide par le serveur (domaine courant du perimetre, sinon site principal).
     // Aucun choix par ordre : sans site principal designe, l'utilisateur choisit dans sa liste.
     const vueCourante = c.moi.fonctions.includes("sites") ? await vue(c.moi.domaineAccueil) : null;
-    return rendreAccueil({ moi: c.moi, vueCourante, domaineCourant: domaineCourant() });
+    return rendreAccueil({ moi: c.moi, vueCourante, domaineCourant: domaineCourant(), complement: rendreRaccourcisContenus(c.moi) });
   } catch { return indisponible; }
 }
 
@@ -67,7 +69,7 @@ export async function cockpitSitesPage(params) {
     if (c.html) return c.html;
     const criteres = Object.fromEntries(CRITERES_SITES.filter((k) => params?.[k]).map((k) => [k, params[k]]));
     const resultat = (await getSitesCockpit(criteres).catch(() => null))?.donnees || null;
-    return rendreListeSites(c.moi, resultat);
+    return rendreListeSites(c.moi, resultat, { complement: rendreRaccourcisContenus(c.moi) });
   } catch { return indisponible; }
 }
 
@@ -78,9 +80,22 @@ export async function cockpitClientPage(params) {
     const criteres = Object.fromEntries(CRITERES_SITES.filter((k) => k !== "client" && params?.[k]).map((k) => [k, params[k]]));
     const resultat = (await getClientCockpit(params.id, criteres).catch(() => null))?.donnees || null;
     if (!resultat?.client) return `<section class="cockpit card"><p>Cet espace client n'est pas disponible.</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
-    return rendreListeSites(c.moi, resultat);
+    return rendreListeSites(c.moi, resultat, { complement: rendreRaccourcisContenus(c.moi, { client: resultat.client.id }) });
   } catch { return indisponible; }
 }
+
+export async function cockpitContenusPage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return c.html;
+    const criteres = { type: params?.type || "medias" };
+    if (params?.client) criteres.client = params.client;
+    const r = (await getContenusCockpit(criteres).catch(() => null))?.donnees || null;
+    return rendreContenus(r);
+  } catch { return indisponible; }
+}
+
+export { activerContenus };
 
 export async function cockpitSitePage(params) {
   try {

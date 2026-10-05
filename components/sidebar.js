@@ -45,6 +45,12 @@ export function rendreEspacesClients(user, current, lien) {
     current === `/cockpit/client/${encodeURIComponent(c.id)}`)).join("");
 }
 
+// Gestion transverse (medias, pages, En-tetes, Footer, articles de tous les sites du perimetre).
+export function rendreGestionContenus(user, current, lien) {
+  if (!user?.fonctions?.includes("sites") || !["logo-medias", "pages", "entete", "footer"].some((f) => user.fonctions.includes(f))) return "";
+  return lien("/cockpit/contenus", user.porteeGlobale ? "Gérer tous les sites" : "Gérer mes sites", "grid", current === "/cockpit/contenus");
+}
+
 export function renderSidebar() {
   const route = location.hash.slice(1) || "/";
   const current = route.split("?")[0];
@@ -62,7 +68,7 @@ export function renderSidebar() {
     ${navigationSite(vue, user?.niveau).map((x) => lien(x.url, x.libelle, x.icone, route === x.url)).join("")}
     ${rendreVoirSite(user, current)}${user?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "arrow", false) : ""}` : "";
   return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${correspond
-    ? `${global(entrees.filter(([p]) => ["/cockpit", "/cockpit/sites"].includes(p)))}${rendreEspacesClients(user, current, lien)}${local}<div class="cockpit-nav-globale">${global(entrees.filter(([p]) => !["/cockpit", "/cockpit/sites"].includes(p)))}</div>`
-    : `${rendreVoirSite(user, current)}${global(entrees)}${rendreEspacesClients(user, current, lien)}`}</div>
+    ? `${global(entrees.filter(([p]) => ["/cockpit", "/cockpit/sites"].includes(p)))}${rendreGestionContenus(user, current, lien)}${rendreEspacesClients(user, current, lien)}${local}<div class="cockpit-nav-globale">${global(entrees.filter(([p]) => !["/cockpit", "/cockpit/sites"].includes(p)))}</div>`
+    : `${rendreVoirSite(user, current)}${global(entrees)}${rendreGestionContenus(user, current, lien)}${rendreEspacesClients(user, current, lien)}`}</div>
     <div class="cockpit-sidebar-bas"><button type="button" class="nav-link" data-reduire-menu aria-expanded="true">${icon("panel")}<span>Réduire le menu</span></button><small>${escapeHtml(user?.role?.titre || "Espace de gestion")}</small></div></nav>`;
 }

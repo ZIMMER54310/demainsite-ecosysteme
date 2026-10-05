@@ -104,6 +104,7 @@ async function moi(req, res) {
         menu: await administration.menu(ctx.droits),
         nombreSites: groupes.length,
         clients: clientsDuPerimetre(ctx, groupes),
+        porteeGlobale: ctx.droits.reconnu && ctx.droits.portee === "tous",
         sitesPublics: groupes.map((g) => {
           const domaines = perimetre.domainesDuSite(g);
           return { nom: g.titre || domaines.principal || "Site sans nom",
@@ -186,6 +187,48 @@ async function client(req, res) {
     repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] client", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+/*
+ * Gestion transverse : medias, pages, En-tetes, Footer, articles de tous les sites du perimetre.
+ * Administration globale : tous les sites ; espace client (?client=ID) : les sites de ce client ;
+ * autres profils : leurs sites uniquement. Chaque onglet exige la fonction correspondante.
+ */
+async function contenus(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const inventaire = require("../shared/inventaire");
+    const d = ctx.droits;
+    const type = Object.hasOwn(inventaire.TYPES, String(req.query.type || "")) ? String(req.query.type) : "medias";
+    if (!d.reconnu || !d.fonctions.includes("sites")) return refuser(res, 403, "Accès non autorisé.");
+    let { groupes } = await groupesAutorises(ctx);
+    let client = null;
+    if (req.query.client !== undefined && req.query.client !== "") {
+      const id = /^\d{1,12}$/.test(String(req.query.client)) ? String(req.query.client) : null;
+      client = id ? clientsDuPerimetre(ctx, groupes).find((c) => c.id === id) : null;
+      if (!client) return refuser(res, 403, "Cet espace client n'est pas disponible.");
+      groupes = groupes.filter((g) => String(g.clientId) === id);
+    }
+    const onglets = Object.entries(inventaire.TYPES).filter(([, t]) => d.fonctions.includes(t.fonction))
+      .map(([cle, t]) => ({ cle, libelle: t.libelle }));
+    if (!onglets.some((o) => o.cle === type)) return refuser(res, 403, "Accès non autorisé.");
+    const perim = { global: !client && d.portee === "tous", groupes };
+    const [donneesBuilder, indexCatalogue] = await Promise.all([
+      require("../shared/builder-source").obtenirDonnees(),
+      onglets.some((o) => o.cle === "articles") ? require("../shared/catalogue-source").obtenirIndex().catch(() => null) : null
+    ]);
+    const compteurs = Object.fromEntries(onglets.map((o) => [o.cle,
+      inventaire.construire({ type: o.cle, perimetre: perim, donneesBuilder, indexCatalogue }).length]));
+    const lignes = inventaire.construire({ type, perimetre: perim, donneesBuilder, indexCatalogue });
+    res.set("Cache-Control", "no-store");
+    repondre(res, 200, { succes: true, donnees: {
+      type, onglets, compteurs, lignes, client, global: perim.global, nombreSites: groupes.length
+    }, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] contenus", e.message);
     refuser(res, 503, "Le service est momentanément indisponible.");
   }
 }
@@ -621,6 +664,6 @@ async function mediasTeleverser(req, res) {
 module.exports = {
   client,
   moi, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser,
-  editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
+  contenus, editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide, clientsDuPerimetre }
 };
