@@ -225,7 +225,8 @@ async function contenus(req, res) {
     const lignes = inventaire.construire({ type, perimetre: perim, donneesBuilder, indexCatalogue });
     res.set("Cache-Control", "no-store");
     repondre(res, 200, { succes: true, donnees: {
-      type, onglets, compteurs, lignes, client, global: perim.global, nombreSites: groupes.length
+      type, onglets, compteurs, lignes, client, global: perim.global, nombreSites: groupes.length,
+      synchro: perim.global && type === "medias" && require("../shared/statut-sites").autorise(d) ? vueSynchro(require("../shared/medias-synchro").etat()) : null
     }, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] contenus", e.message);
@@ -661,9 +662,40 @@ async function mediasTeleverser(req, res) {
   }
 }
 
+/* Resume affichable de la synchronisation bibliotheque -> catalogue des medias (sans identifiant technique). */
+function vueSynchro(etat) {
+  const d = etat.dernier;
+  return {
+    enCours: etat.enCours,
+    dernier: d ? {
+      le: d.le, ok: d.ok, erreur: d.erreur || null, fichiers: d.fichiers || 0, dejaReferences: d.dejaReferences || 0,
+      crees: (d.crees || []).map((c) => ({ chemin: c.chemin, type: c.type, portee: c.portee, aClasser: c.aClasser })),
+      ignores: d.ignores || [], erreurs: d.erreurs || [], reste: Boolean(d.reste)
+    } : null
+  };
+}
+
+/* Synchronisation manuelle : administration globale uniquement (meme verrou que la planification). */
+async function mediasSynchroniser(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    if (!require("../shared/statut-sites").autorise(ctx.droits)) {
+      return refuserEcriture(res, ctx, "", "MEDIA-SYNCHRO-REFUS", "Synchronisation réservée à l'administration globale.");
+    }
+    const synchro = require("../shared/medias-synchro");
+    await synchro.synchroniser({ acteur: `OBJ-UTILISATEUR ${ctx.droits.utilisateurId || "non reconnu"}` });
+    res.set("Cache-Control", "no-store");
+    repondre(res, 200, { succes: true, donnees: vueSynchro(synchro.etat()), meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] synchro medias", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
 module.exports = {
   client,
-  moi, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser,
+  moi, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
   contenus, editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide, clientsDuPerimetre }
 };

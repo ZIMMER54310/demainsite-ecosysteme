@@ -316,6 +316,11 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .cockpit-contenus-tuile small { opacity: .75; }
 .cockpit-contenus-onglets { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .cockpit-contenus-onglets .badge { margin-left: 6px; }
+.cockpit-synchro { margin-bottom: 12px; }
+.cockpit-synchro-entete { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start; }
+.cockpit-synchro-entete h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
+.cockpit-synchro-detail { margin-top: 8px; }
+.cockpit-synchro-detail ul { margin: 6px 0 0; padding-left: 18px; max-height: 240px; overflow: auto; overflow-wrap: anywhere; }
 .cockpit-contenus-site { display: block; }
 .cockpit-contenus-site small { display: block; opacity: .7; }
 .cockpit-contenus-vignette img { width: 56px; height: 56px; object-fit: contain; border-radius: 6px; background: #f1f5f9; }

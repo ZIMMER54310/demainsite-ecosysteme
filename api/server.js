@@ -252,6 +252,7 @@ application.post("/api/v1/cockpit/medias/televerser",
       .json({ succes: false, erreur: { message: err.type === "entity.too.large" ? "Fichier trop volumineux." : "Envoi du fichier invalide." } });
   }),
   controleurCockpit.mediasTeleverser);
+application.post("/api/v1/cockpit/medias/synchroniser", controleurCockpit.mediasSynchroniser);
 application.get("/api/v1/cockpit/edition", controleurCockpit.editionLire);
 application.post("/api/v1/cockpit/edition/apercu", controleurCockpit.editionApercu);
 application.post("/api/v1/cockpit/edition/confirmer", controleurCockpit.confirmer);
@@ -358,6 +359,7 @@ const serveur =
       console.log(
         `[DSE API OVH] Disponible sur 127.0.0.1:${port}`
       );
+      require("./shared/medias-synchro").demarrerPlanification();
     }
   );
 

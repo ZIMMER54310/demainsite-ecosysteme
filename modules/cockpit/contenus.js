@@ -2,6 +2,7 @@ import { escapeHtml as e } from "../public/outils.js";
 import { icon } from "../../components/icons.js";
 import { badgeEtat } from "./constructeur.js";
 import { imageMedia } from "./medias.js";
+import { synchroniserMedias } from "../../services/cockpit.service.js";
 
 /*
  * Gestion transverse : medias, pages, En-tetes, Footer et articles de tous les sites du perimetre.
@@ -67,6 +68,26 @@ function detail(type, l) {
   return l.url ? e(l.url) : `<span class="muted">Adresse non renseignée</span>`;
 }
 
+const dateCourte = (iso) => { try { return new Date(iso).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }); } catch { return ""; } };
+
+/* Bloc d'administration globale : rattachement des fichiers deposes dans la bibliotheque des medias. */
+export function rendreSynchro(s) {
+  if (!s) return "";
+  const d = s.dernier;
+  const liste = (titre, items, texte) => items.length ? `<details class="cockpit-synchro-detail"><summary>${e(titre)} (${items.length})</summary><ul>${items.map((x) => `<li>${texte(x)}</li>`).join("")}</ul></details>` : "";
+  const resume = !d ? `<p class="muted">Aucune synchronisation depuis le dernier démarrage du service. Un passage automatique a lieu régulièrement.</p>`
+    : !d.ok ? `<p role="alert">Dernière synchronisation (${e(dateCourte(d.le))}) : ${e(d.erreur || "non aboutie")}.</p>`
+      : `<p>Dernière synchronisation : <strong>${e(dateCourte(d.le))}</strong> · ${Number(d.fichiers)} fichier(s) analysé(s) · ${Number(d.dejaReferences)} déjà référencé(s) · <strong>${d.crees.length}</strong> ajouté(s)${d.ignores.length ? ` · ${d.ignores.length} ignoré(s)` : ""}${d.erreurs.length ? ` · ${d.erreurs.length} en erreur` : ""}${d.reste ? " · suite au prochain passage" : ""}</p>
+        ${liste("Médias ajoutés (en brouillon, à valider)", d.crees, (c) => `${e(c.chemin)} <small class="muted">${e(c.type || "")} · ${e(c.portee || "")}${c.aClasser ? " · type à classer" : ""}</small>`)}
+        ${liste("Fichiers ignorés", d.ignores, (c) => `${e(c.chemin)} <small class="muted">${e(c.raison)}</small>`)}
+        ${liste("Fichiers en erreur", d.erreurs, (c) => `${e(c.chemin)} <small class="muted">${e(c.raison)}</small>`)}`;
+  return `<article class="card cockpit-synchro" data-synchro-medias>
+    <div class="cockpit-synchro-entete"><div><h2>${icon("layers")} Bibliothèque des médias</h2>
+      <p class="muted">Les fichiers déposés directement dans le dossier des sites publics sont ajoutés automatiquement au catalogue des médias, en brouillon. Aucun fichier n'est supprimé ni déplacé.</p></div>
+      <button type="button" class="btn btn-primary" data-synchroniser${s.enCours ? " disabled" : ""}>${icon("layers")} ${s.enCours ? "Synchronisation en cours…" : "Synchroniser maintenant"}</button></div>
+    <div data-synchro-resume aria-live="polite">${resume}</div></article>`;
+}
+
 export function rendreContenus(r) {
   if (!r) return `<section class="cockpit card"><p role="alert">Ces contenus ne sont pas disponibles dans votre espace.</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
   const type = r.type;
@@ -87,6 +108,7 @@ export function rendreContenus(r) {
       <p class="muted">${Number(r.nombreSites) || 0} site(s) concerné(s). La modification se fait dans le cockpit du site, avec les mêmes contrôles qu'aujourd'hui.</p></div>
       ${r.client ? `<a class="btn btn-secondary" href="#/cockpit/client/${encodeURIComponent(r.client.id)}">${icon("users")} Retour à l'espace client</a>` : `<a class="btn btn-secondary" href="#/cockpit/sites">${icon("globe")} Mes sites</a>`}</div>
     <nav class="cockpit-contenus-onglets" aria-label="Type de contenu">${r.onglets.map((o) => `<a class="btn ${o.cle === type ? "btn-primary" : "btn-secondary"}"${o.cle === type ? ' aria-current="page"' : ""} href="${e(lienContenus(o.cle, r.client?.id))}">${e(o.libelle)} <span class="badge">${Number(r.compteurs?.[o.cle]) || 0}</span></a>`).join("")}</nav>
+    ${rendreSynchro(r.synchro)}
     <form class="card cockpit-filtres" data-filtres-contenus role="search">
       <label class="cockpit-champ"><span>Rechercher</span><input type="search" name="q" placeholder="Nom…"></label>
       <label class="cockpit-champ"><span>Site</span><select name="site"><option value="">Tous les sites</option>${sites.map((s) => `<option value="${e(s.domaine || s.titre)}">${e(s.titre || s.domaine)}</option>`).join("")}</select></label>
@@ -100,7 +122,33 @@ export function rendreContenus(r) {
   </section>`;
 }
 
+function activerSynchro(racine) {
+  const bouton = racine?.querySelector("[data-synchroniser]");
+  if (!bouton) return;
+  bouton.addEventListener("click", async () => {
+    bouton.disabled = true;
+    const libelle = bouton.innerHTML;
+    bouton.textContent = "Synchronisation en cours…";
+    const resume = racine.querySelector("[data-synchro-resume]");
+    try {
+      const r = await synchroniserMedias();
+      if (r?.donnees?.dernier?.crees?.length) {
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+        return;
+      }
+      const bloc = document.createElement("div");
+      bloc.innerHTML = rendreSynchro(r?.donnees);
+      resume.replaceWith(bloc.querySelector("[data-synchro-resume]"));
+    } catch (err) {
+      resume.innerHTML = `<p role="alert">${e(err?.message || "La synchronisation n'a pas abouti.")}</p>`;
+    }
+    bouton.disabled = false;
+    bouton.innerHTML = libelle;
+  });
+}
+
 export function activerContenus(racine) {
+  activerSynchro(racine);
   const form = racine?.querySelector("[data-filtres-contenus]");
   if (!form) return;
   const filtrer = () => {

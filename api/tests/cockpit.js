@@ -405,11 +405,31 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     assert.ok(htmlP.includes("https://a.fr/") && htmlP.includes("onglet=pages") && htmlP.includes("b.fr"));
     assert.strictEqual(uc.rendreRaccourcisContenus({ fonctions: ["pages"] }), "", "pas de raccourci sans la fonction sites");
     assert.ok(uc.rendreRaccourcisContenus({ fonctions: ["sites", "logo-medias"], porteeGlobale: true }).includes("type=medias"));
+    assert.ok(!htmlC.includes("data-synchroniser"), "pas de synchronisation sans autorisation serveur");
+    const htmlS = uc.rendreContenus({ type: "medias", global: true, nombreSites: 2, onglets: [{ cle: "medias", libelle: "Médias" }], compteurs: { medias: 0 }, lignes: [],
+      synchro: { enCours: false, dernier: { le: "2026-01-01T10:00:00Z", ok: true, fichiers: 3, dejaReferences: 1, crees: [{ chemin: "SITE-PUBLIC/a.fr/IMAGE/<b>.png", type: "IMAGE", portee: "SITE" }], ignores: [{ chemin: "SITE-PUBLIC/x.gif", raison: "format non référencé" }], erreurs: [] } } });
+    assert.ok(htmlS.includes("data-synchroniser") && htmlS.includes("&lt;b&gt;") && htmlS.includes("1</strong> ajouté") && !TERMES_TECHNIQUES.test(htmlS));
+
+    // Synchronisation bibliotheque -> catalogue : deduction depuis le chemin et les referentiels uniquement
+    const { analyser } = require("../shared/medias-synchro")._test;
+    const refs = { types: [{ id: "1", titre: "IMAGE" }, { id: "3", titre: "VIDEO" }, { id: "12", titre: "LOGO" }, { id: "18", titre: "AUTRE" }],
+      formats: [{ id: "p", titre: "PNG" }, { id: "m", titre: "MP4" }], sites: [{ id: "7", clientId: "2", domaines: ["a.fr", "www.a.fr"] }] };
+    const s1 = analyser({ chemin: "SITE-PUBLIC/a.fr/LOGO/x.png", nom: "x.png" }, refs);
+    assert.ok(s1.site.id === "7" && s1.portee === "SITE" && s1.type.id === "12" && s1.format.id === "p" && s1.titre === "x" && !s1.aClasser);
+    const s2 = analyser({ chemin: "SITE-PUBLIC/Vidéos/v.mp4", nom: "v.mp4" }, refs);
+    assert.ok(s2.portee === "GLOBAL" && !s2.site && s2.type.id === "3", "dossier au pluriel reconnu");
+    const s3 = analyser({ chemin: "SITE-PUBLIC/Divers/d.png", nom: "d.png" }, refs);
+    assert.ok(s3.type.id === "18" && s3.aClasser, "type inconnu : AUTRE a classer");
+    assert.ok(analyser({ chemin: "SITE-PUBLIC/a.fr/x.gif", nom: "x.gif" }, refs).ignore, "format non reference ignore");
+    assert.ok(analyser({ chemin: "SITE-PUBLIC/a.fr/x", nom: "x" }, refs).ignore, "sans extension ignore");
 
     const { contenus } = require("../dseCockpit");
     const reponse = () => { const o = { code: 200 }; o.status = (c) => { o.code = c; return o; }; o.json = (j) => { o.corps = j; return o; }; o.set = () => o; o.setHeader = () => o; return o; };
     const sansSession = reponse(); await contenus({ query: {}, cookies: {}, headers: {}, get: () => undefined }, sansSession);
     assert.strictEqual(sansSession.code, 401, "gestion globale refusee sans session");
+    const { mediasSynchroniser } = require("../dseCockpit");
+    const refusSync = reponse(); await mediasSynchroniser({ query: {}, cookies: {}, headers: {}, get: (h) => ({ origin: "https://evil.fr", host: "dseco.fr" }[h.toLowerCase()]) }, refusSync);
+    assert.strictEqual(refusSync.code, 403, "synchronisation refusee hors origine");
   }
 
   // Validation serveur des valeurs
