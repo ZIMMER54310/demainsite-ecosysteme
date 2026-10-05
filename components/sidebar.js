@@ -36,6 +36,15 @@ export function rendreVoirSite(user, current) {
     ).join("")}</div></details>`;
 }
 
+// Espaces clients du perimetre (fournis par le serveur) : lien direct si peu nombreux, sinon via « Mes sites ».
+export function rendreEspacesClients(user, current, lien) {
+  const clients = Array.isArray(user?.clients) ? user.clients : [];
+  if (!clients.length) return "";
+  if (clients.length > 3) return lien("/cockpit/sites", "Espaces clients", "users", false);
+  return clients.map((c) => lien(`/cockpit/client/${encodeURIComponent(c.id)}`, `Espace ${c.titre || "client"}`, "users",
+    current === `/cockpit/client/${encodeURIComponent(c.id)}`)).join("");
+}
+
 export function renderSidebar() {
   const route = location.hash.slice(1) || "/";
   const current = route.split("?")[0];
@@ -53,7 +62,7 @@ export function renderSidebar() {
     ${navigationSite(vue, user?.niveau).map((x) => lien(x.url, x.libelle, x.icone, route === x.url)).join("")}
     ${rendreVoirSite(user, current)}${user?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "arrow", false) : ""}` : "";
   return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${correspond
-    ? `${global(entrees.filter(([p]) => ["/cockpit", "/cockpit/sites"].includes(p)))}${local}<div class="cockpit-nav-globale">${global(entrees.filter(([p]) => !["/cockpit", "/cockpit/sites"].includes(p)))}</div>`
-    : `${rendreVoirSite(user, current)}${global(entrees)}`}</div>
+    ? `${global(entrees.filter(([p]) => ["/cockpit", "/cockpit/sites"].includes(p)))}${rendreEspacesClients(user, current, lien)}${local}<div class="cockpit-nav-globale">${global(entrees.filter(([p]) => !["/cockpit", "/cockpit/sites"].includes(p)))}</div>`
+    : `${rendreVoirSite(user, current)}${global(entrees)}${rendreEspacesClients(user, current, lien)}`}</div>
     <div class="cockpit-sidebar-bas"><button type="button" class="nav-link" data-reduire-menu aria-expanded="true">${icon("panel")}<span>Réduire le menu</span></button><small>${escapeHtml(user?.role?.titre || "Espace de gestion")}</small></div></nav>`;
 }

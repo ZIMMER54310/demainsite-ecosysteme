@@ -347,6 +347,23 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   } finally { droitsMod.donneesDroits = origDonnees; droitsMod.sitesIndex = origIndex; }
   assert.strictEqual(admin.applications, origApps);
 
+  // Espaces clients : portee tous => tous les clients ayant des sites ; portee client => son client seul ; lecteur attribue => aucun.
+  {
+    const { clientsDuPerimetre } = require("../dseCockpit")._test;
+    const groupes = [{ id: "4", clientId: "2", client: "Client A" }, { id: "10", clientId: "2", client: "Client A" }, { id: "9", clientId: "3", client: "Client B" }, { id: "11" }];
+    const avecSites = (d) => ({ droits: { ...d, fonctions: [...new Set([...(d.fonctions || []), "sites"])] } });
+    assert.deepStrictEqual(clientsDuPerimetre(avecSites(dSuper), groupes).map((c) => [c.id, c.nombreSites]), [["2", 2], ["3", 1]]);
+    assert.deepStrictEqual(clientsDuPerimetre(avecSites(dClient), groupes.filter((g) => g.id !== "9")).map((c) => c.id), ["2"]);
+    assert.deepStrictEqual(clientsDuPerimetre(avecSites(dClient), groupes).map((c) => c.id), ["2"], "jamais le client d'un autre");
+    assert.deepStrictEqual(clientsDuPerimetre(avecSites(dLecteur), groupes), [], "portee sites attribues : pas d'espace client");
+    const htmlClient = ui.rendreListeSites({ fonctions: ["sites"], clients: [{ id: "2" }] }, { ...filtrerSites([{ ...resumeSite(info, actif, siteComplet), clientCockpit: "2" }], {}), client: { id: "2", titre: "Client <A>", nombreSites: 1 } });
+    assert.ok(htmlClient.includes("Espace client") && htmlClient.includes("Client &lt;A&gt;") && htmlClient.includes('data-base="/cockpit/client/2"'));
+    assert.ok(!htmlClient.includes('<th>Client</th>') && !htmlClient.includes("Espaces clients"), "pas de colonne client dans l'espace client");
+    const htmlTous = ui.rendreListeSites({ fonctions: ["sites"] }, { ...filtrerSites([{ ...resumeSite(info, actif, siteComplet), client: "A", clientCockpit: "2" }, { ...resumeSite(info, null), client: "B" }], {}), clientsCockpit: [{ id: "2", titre: "A", nombreSites: 1 }] });
+    assert.ok(htmlTous.includes("Espaces clients") && htmlTous.includes('href="#/cockpit/client/2"'));
+    assert.strictEqual(ui.lienSites({ statut: "Actif" }, {}, "/cockpit/client/2"), "#/cockpit/client/2?statut=Actif");
+  }
+
   // Validation serveur des valeurs
   const champs = ecriture.champsModifiables([
     { name: "Title", displayName: "Titre", text: { maxLength: 20 } },

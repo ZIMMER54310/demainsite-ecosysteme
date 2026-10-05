@@ -103,6 +103,7 @@ async function moi(req, res) {
         accesCommun: ctx.droits.reconnu && (ctx.droits.sitesCommuns || []).length > 0,
         menu: await administration.menu(ctx.droits),
         nombreSites: groupes.length,
+        clients: clientsDuPerimetre(ctx, groupes),
         sitesPublics: groupes.map((g) => {
           const domaines = perimetre.domainesDuSite(g);
           return { nom: g.titre || domaines.principal || "Site sans nom",
@@ -119,24 +120,72 @@ async function moi(req, res) {
   }
 }
 
+/*
+ * Cockpit client : uniquement pour une portee « tous » ou « client » ; seuls les clients
+ * du perimetre (ID natifs) ayant au moins un site autorise sont proposes.
+ */
+function clientsDuPerimetre(ctx, groupes) {
+  if (!ctx.droits.reconnu || !ctx.droits.fonctions.includes("sites") || !["tous", "client"].includes(ctx.droits.portee)) return [];
+  const autorises = new Set((ctx.droits.clientIds || []).map(String));
+  const parClient = new Map();
+  for (const g of groupes) {
+    if (!g.clientId || !autorises.has(String(g.clientId))) continue;
+    const id = String(g.clientId);
+    if (!parClient.has(id)) parClient.set(id, { id, titre: g.client || null, nombreSites: 0 });
+    parClient.get(id).nombreSites += 1;
+  }
+  return [...parClient.values()].sort((a, b) => String(a.titre || "").localeCompare(String(b.titre || ""), "fr"));
+}
+
+async function listeSites(ctx, query, groupes, statuts) {
+  // Resume leger : chaque liste est lue une seule fois pour tous les sites.
+  const resumes = await resumeSites.obtenirResumes();
+  const configuration = await progressionVisuelle.lire();
+  const clientParAcces = new Map(groupes.map((g) => [perimetre.domaineAcces(g), g.clientId ? String(g.clientId) : null]));
+  const liste = cockpit.filtrerSites(groupes
+    .map((g) => cockpit.resumeSite(g, statuts.get(String(g.statutId)) || null, resumes.get(String(g.id))))
+    .filter((s) => s.acces), query, progressionVisuelle.tranches(configuration));
+  const clients = new Set(clientsDuPerimetre(ctx, groupes).map((c) => c.id));
+  for (const s of liste.elements) {
+    s.progressionVisuelle = progressionVisuelle.pourcentage(configuration, s.progression);
+    const clientId = clientParAcces.get(s.acces);
+    s.clientCockpit = clientId && clients.has(clientId) ? clientId : null;
+  }
+  liste.avertissementProgression = configuration.message || configuration.avertissement || null;
+  liste.peutChangerStatut = require("../shared/statut-sites").autorise(ctx.droits);
+  return liste;
+}
+
 async function sites(req, res) {
   try {
     const ctx = await contexteUtilisateur(req);
     if (!ctx) return refuser(res, 401, "Connexion requise.");
     if (!ctx.droits.fonctions.includes("sites")) return refuser(res, 403, "Accès non autorisé.");
     const { groupes, statuts } = await groupesAutorises(ctx);
-    // Resume leger : chaque liste est lue une seule fois pour tous les sites.
-    const resumes = await resumeSites.obtenirResumes();
-    const configuration = await progressionVisuelle.lire();
-    const liste = cockpit.filtrerSites(groupes
-      .map((g) => cockpit.resumeSite(g, statuts.get(String(g.statutId)) || null, resumes.get(String(g.id))))
-      .filter((s) => s.acces), req.query, progressionVisuelle.tranches(configuration));
-    for (const s of liste.elements) s.progressionVisuelle = progressionVisuelle.pourcentage(configuration, s.progression);
-    liste.avertissementProgression = configuration.message || configuration.avertissement || null;
-    liste.peutChangerStatut = require("../shared/statut-sites").autorise(ctx.droits);
+    const liste = await listeSites(ctx, req.query, groupes, statuts);
+    liste.clientsCockpit = clientsDuPerimetre(ctx, groupes);
     repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] sites", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+async function client(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const id = /^\d{1,12}$/.test(String(req.query.id || "")) ? String(req.query.id) : null;
+    const { groupes, statuts } = await groupesAutorises(ctx);
+    const fiche = id ? clientsDuPerimetre(ctx, groupes).find((c) => c.id === id) : null;
+    // Meme reponse pour un client inexistant, sans site ou hors perimetre : rien n'est divulgue.
+    if (!fiche) return refuser(res, 403, "Cet espace client n'est pas disponible.");
+    const { client: _ignore, ...query } = req.query;
+    const liste = await listeSites(ctx, query, groupes.filter((g) => String(g.clientId) === id), statuts);
+    liste.client = fiche;
+    repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] client", e.message);
     refuser(res, 503, "Le service est momentanément indisponible.");
   }
 }
@@ -162,6 +211,8 @@ async function site(req, res) {
       domaineDemande: domaine
     });
     vue.progressionVisuelle = progressionVisuelle.pourcentage(await progressionVisuelle.lire(), vue.progression);
+    const espaceClient = info.clientId && clientsDuPerimetre(ctx, (await groupesAutorises(ctx)).groupes).find((c) => c.id === String(info.clientId));
+    vue.clientCockpit = espaceClient ? espaceClient.id : null;
     repondre(res, 200, { succes: true, donnees: vue, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] site", e.message);
@@ -568,7 +619,8 @@ async function mediasTeleverser(req, res) {
 }
 
 module.exports = {
+  client,
   moi, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser,
   editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
-  _test: { origineValide }
+  _test: { origineValide, clientsDuPerimetre }
 };

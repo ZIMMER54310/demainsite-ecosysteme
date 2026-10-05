@@ -1,7 +1,7 @@
 import { initializeAuth } from "../js/auth.js";
 import { setState, getState } from "../js/state.js";
 import {
-  getSitesCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
+  getSitesCockpit, getClientCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
   getAdminTableau, getAdminUtilisateurs, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident, getStatutsSite, getConstruire
 } from "../services/cockpit.service.js";
 import { activerConstructeur } from "../modules/cockpit/constructeur.js";
@@ -24,7 +24,7 @@ const indisponible = `<section class="cockpit card"><p>Le cockpit est momentané
 
 const moiDepuis = (u) => ({
   nom: u.displayName, role: u.role, fonctions: u.fonctions, niveau: u.niveau, menu: u.menu,
-  domaineAccueil: u.domaineAccueil, nombreSites: u.nombreSites, fournisseurs: u.fournisseurs
+  domaineAccueil: u.domaineAccueil, nombreSites: u.nombreSites, clients: u.clients || [], fournisseurs: u.fournisseurs
 });
 const domaineCourant = () => location.hostname.trim().toLowerCase().replace(/^www\./, "");
 
@@ -67,6 +67,17 @@ export async function cockpitSitesPage(params) {
     if (c.html) return c.html;
     const criteres = Object.fromEntries(CRITERES_SITES.filter((k) => params?.[k]).map((k) => [k, params[k]]));
     const resultat = (await getSitesCockpit(criteres).catch(() => null))?.donnees || null;
+    return rendreListeSites(c.moi, resultat);
+  } catch { return indisponible; }
+}
+
+export async function cockpitClientPage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return c.html;
+    const criteres = Object.fromEntries(CRITERES_SITES.filter((k) => k !== "client" && params?.[k]).map((k) => [k, params[k]]));
+    const resultat = (await getClientCockpit(params.id, criteres).catch(() => null))?.donnees || null;
+    if (!resultat?.client) return `<section class="cockpit card"><p>Cet espace client n'est pas disponible.</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
     return rendreListeSites(c.moi, resultat);
   } catch { return indisponible; }
 }
@@ -135,7 +146,8 @@ export function activerFiltresSites(racine = document) {
         const lancer = brancherConfirmation(zone, (p) => apercuAdmin("changer-statut-site", p), confirmerAdmin, async (resultat) => {
           const criteres = Object.fromEntries(new URLSearchParams(location.hash.split("?")[1] || ""));
           try {
-            const r = (await getSitesCockpit(criteres)).donnees;
+            const clientId = /^#\/cockpit\/client\/(\d+)/.exec(location.hash)?.[1];
+            const r = (await (clientId ? getClientCockpit(clientId, criteres) : getSitesCockpit(criteres))).donnees;
             const user = getState().user;
             racine.innerHTML = rendreListeSites(moiDepuis(user), r);
             activerFiltresSites(racine);
@@ -155,7 +167,7 @@ export function activerFiltresSites(racine = document) {
   });
   const form = racine.querySelector("[data-filtres-sites]");
   if (!form) return;
-  const appliquer = () => { location.hash = lienSites(Object.fromEntries(new FormData(form))); };
+  const appliquer = () => { location.hash = lienSites(Object.fromEntries(new FormData(form)), {}, form.dataset.base); };
   form.addEventListener("submit", (ev) => { ev.preventDefault(); appliquer(); });
   form.addEventListener("change", (ev) => { if (ev.target.tagName === "SELECT") appliquer(); });
 }
