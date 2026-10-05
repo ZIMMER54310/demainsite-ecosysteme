@@ -283,7 +283,8 @@ const ENTREES_MOTEUR = [
   { cle: "sites", libelle: "Mes sites", icone: "🌐", url: "/cockpit/sites", ordre: 20, niveau: "lecture", fonction: "sites" },
   { cle: "creer", libelle: "Créer un site", icone: "➕", url: "/cockpit/creer", ordre: 30, niveau: "ecriture", fonction: "creer" },
   { cle: "administration", libelle: "Administration", icone: "🛡️", url: "/cockpit/administration", ordre: 80, niveau: "administration", fonction: "administration" },
-  { cle: "utilisateurs", libelle: "Utilisateurs et accès", icone: "👥", url: "/cockpit/utilisateurs", ordre: 90, niveau: "administration", fonction: "utilisateurs" }
+  { cle: "utilisateurs", libelle: "Utilisateurs et accès", icone: "👥", url: "/cockpit/utilisateurs", ordre: 90, niveau: "administration", fonction: "utilisateurs" },
+  { cle: "synchronisations", libelle: "Synchronisations", icone: "🔄", url: "/cockpit/synchronisations", ordre: 95, niveau: "administration", fonction: "administration", global: true }
 ];
 
 /*
@@ -348,7 +349,8 @@ async function applications(d) {
 async function menu(d) {
   if (!d.reconnu) return [ENTREES_MOTEUR[0]].map(({ fonction, ...e }) => e);
   const R = droits.RANG_NIVEAU;
-  const base = ENTREES_MOTEUR.filter((e) => (!e.fonction || d.fonctions.includes(e.fonction)) && R[e.niveau] <= R[d.niveau || "lecture"]);
+  const base = ENTREES_MOTEUR.filter((e) => (!e.fonction || d.fonctions.includes(e.fonction)) && R[e.niveau] <= R[d.niveau || "lecture"]
+    && (!e.global || require("./statut-sites").autorise(d)));
   let apps = [];
   try {
     apps = (await applications(d)).liste
@@ -357,7 +359,7 @@ async function menu(d) {
   } catch (e) {
     console.warn("[DSE cockpit] applications", e.message);
   }
-  return [...base.map(({ fonction, ...e }) => e), ...apps].sort((a, b) => a.ordre - b.ordre);
+  return [...base.map(({ fonction, global, ...e }) => e), ...apps].sort((a, b) => a.ordre - b.ordre);
 }
 
 /* ---------------- Tableau de bord ---------------- */

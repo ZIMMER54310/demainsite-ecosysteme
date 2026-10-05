@@ -158,14 +158,7 @@ function synchroniser({ acteur = "Synchronisation automatique" } = {}) {
   return enCours;
 }
 
-function demarrerPlanification() {
-  const minutes = Number(process.env.DSE_MEDIA_SYNCHRO_MINUTES ?? 15);
-  if (!Number.isFinite(minutes) || minutes <= 0) return null;
-  const periode = Math.max(5, minutes) * 60 * 1000;
-  setTimeout(() => synchroniser(), 2 * 60 * 1000).unref();
-  return setInterval(() => synchroniser(), periode).unref();
-}
-
+/* Planification : voir ./synchronisations (reglages OBJ-SYNCHRO). */
 const etat = () => ({ enCours: Boolean(enCours), dernier });
 
-module.exports = { synchroniser, demarrerPlanification, etat, _test: { analyser } };
+module.exports = { synchroniser, etat, _test: { analyser } };

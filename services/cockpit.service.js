@@ -17,6 +17,13 @@ export const getIncidents = () => apiGet("/cockpit/incidents");
 export const deciderIncident = (incident, decision) => apiPost("/cockpit/incidents/decision", { incident, decision });
 export const getConstruire = (domaine, conteneur = "") => apiGet("/cockpit/construire", { domaine, conteneur });
 export const synchroniserMedias = () => apiPost("/cockpit/medias/synchroniser", {});
+export const getSynchronisations = () => apiGet("/cockpit/admin/synchronisations");
+export const reglerSynchronisation = (code, mode, frequence, unite) => apiPost("/cockpit/admin/synchronisations/reglage", { code, mode, frequence, unite });
+export const lancerSynchronisation = (code) => apiPost("/cockpit/admin/synchronisations/lancer", { code });
+export const getSauvegardes = () => apiGet("/cockpit/admin/synchronisations/sauvegardes");
+export const getListesSauvegarde = (manifeste) => apiGet("/cockpit/admin/synchronisations/sauvegardes", { manifeste });
+export const apercuRestauration = (manifeste, liste) => apiPost("/cockpit/admin/synchronisations/restauration/apercu", { manifeste, liste });
+export const confirmerRestauration = (jeton, selection) => apiPost("/cockpit/admin/synchronisations/restauration/confirmer", { jeton, selection });
 export const getMediasCockpit = (domaine) => apiGet("/cockpit/construire", { domaine, vue: "medias" });
 // Cle d'idempotence par action : un double clic ou une relance reseau ne cree jamais de doublon.
 export const actionConstruire = (domaine, action, params = {}) =>

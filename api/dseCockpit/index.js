@@ -684,7 +684,7 @@ async function mediasSynchroniser(req, res) {
       return refuserEcriture(res, ctx, "", "MEDIA-SYNCHRO-REFUS", "Synchronisation réservée à l'administration globale.");
     }
     const synchro = require("../shared/medias-synchro");
-    await synchro.synchroniser({ acteur: `OBJ-UTILISATEUR ${ctx.droits.utilisateurId || "non reconnu"}` });
+    await require("../shared/synchronisations").lancer("MEDIAS-BIBLIOTHEQUE", `OBJ-UTILISATEUR ${ctx.droits.utilisateurId || "non reconnu"}`);
     res.set("Cache-Control", "no-store");
     repondre(res, 200, { succes: true, donnees: vueSynchro(synchro.etat()), meta: meta() });
   } catch (e) {
@@ -693,8 +693,63 @@ async function mediasSynchroniser(req, res) {
   }
 }
 
+/* ---------------- Synchronisations (administration globale uniquement) ---------------- */
+
+const acteurDe = (ctx) => `OBJ-UTILISATEUR ${ctx.droits.utilisateurId || "non reconnu"}`;
+const superAdmin = (ctx) => require("../shared/statut-sites").autorise(ctx.droits);
+
+async function synchroLecture(req, res, traiter) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    if (!superAdmin(ctx)) return refuser(res, 403, "Accès réservé à l'administration globale.");
+    const r = await traiter(ctx);
+    if (r?.refus) return refuser(res, 400, r.refus);
+    repondre(res, 200, { succes: true, donnees: r, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] synchronisations", e.message);
+    refuser(res, e.refus ? 400 : 503, e.refus ? e.message : "Le service est momentanément indisponible.");
+  }
+}
+
+async function synchroEcriture(req, res, action, traiter) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    if (!superAdmin(ctx)) return refuserEcriture(res, ctx, "", action, "Synchronisations réservées à l'administration globale.");
+    const r = await traiter(ctx);
+    if (r?.refus) return refuser(res, 400, r.refus);
+    repondre(res, 200, { succes: true, donnees: r, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] synchronisations", e.message, e.detailGraph || "");
+    refuser(res, e.refus ? 400 : 503, e.refus ? e.message : "Le service est momentanément indisponible.");
+  }
+}
+
+const synchroVue = (req, res) => synchroLecture(req, res, () => require("../shared/synchronisations").vue());
+const synchroSauvegardes = (req, res) => synchroLecture(req, res, async () => {
+  const s = require("../shared/sauvegarde-listes");
+  if (req.query.manifeste) return s.listesDeSauvegarde(String(req.query.manifeste));
+  return { sauvegardes: (await s.sauvegardes()).slice(0, 60) };
+});
+const synchroReglage = (req, res) => synchroEcriture(req, res, "SYNCHRO-REGLAGE-REFUS", (ctx) =>
+  require("../shared/synchronisations").enregistrer({ code: String(req.body?.code || ""), mode: req.body?.mode,
+    frequence: req.body?.frequence, unite: req.body?.unite, acteur: acteurDe(ctx) }));
+const synchroLancer = (req, res) => synchroEcriture(req, res, "SYNCHRO-LANCEMENT-REFUS", async (ctx) => {
+  const s = require("../shared/synchronisations");
+  const p = s.lancer(String(req.body?.code || ""), acteurDe(ctx));
+  if (!p) return { refus: "Synchronisation inconnue." };
+  // Les passages longs continuent en arriere-plan : l'interface suit l'etat via la lecture.
+  const fini = await Promise.race([p, new Promise((r) => setTimeout(() => r(null), 20000))]);
+  return { termine: Boolean(fini), resultat: fini, ...(await s.vue()) };
+});
+const synchroApercu = (req, res) => synchroEcriture(req, res, "SYNCHRO-RESTAURATION-REFUS", (ctx) =>
+  require("../shared/sauvegarde-listes").apercu({ identite: ctx.identite, manifeste: String(req.body?.manifeste || ""), listeId: String(req.body?.liste || "") }));
+const synchroConfirmer = (req, res) => synchroEcriture(req, res, "SYNCHRO-RESTAURATION-REFUS", (ctx) =>
+  require("../shared/sauvegarde-listes").confirmer({ identite: ctx.identite, jeton: req.body?.jeton, selection: req.body?.selection, acteur: acteurDe(ctx) }));
+
 module.exports = {
-  client,
+  client, synchroVue, synchroSauvegardes, synchroReglage, synchroLancer, synchroApercu, synchroConfirmer,
   moi, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
   contenus, editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide, clientsDuPerimetre }

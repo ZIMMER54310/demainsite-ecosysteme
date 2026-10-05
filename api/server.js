@@ -260,6 +260,12 @@ application.get("/api/v1/cockpit/admin/tableau", controleurCockpit.adminTableau)
 application.get("/api/v1/cockpit/admin/utilisateurs", controleurCockpit.adminUtilisateurs);
 application.post("/api/v1/cockpit/admin/apercu", controleurCockpit.adminApercu);
 application.post("/api/v1/cockpit/admin/confirmer", controleurCockpit.confirmer);
+application.get("/api/v1/cockpit/admin/synchronisations", controleurCockpit.synchroVue);
+application.post("/api/v1/cockpit/admin/synchronisations/reglage", controleurCockpit.synchroReglage);
+application.post("/api/v1/cockpit/admin/synchronisations/lancer", controleurCockpit.synchroLancer);
+application.get("/api/v1/cockpit/admin/synchronisations/sauvegardes", controleurCockpit.synchroSauvegardes);
+application.post("/api/v1/cockpit/admin/synchronisations/restauration/apercu", controleurCockpit.synchroApercu);
+application.post("/api/v1/cockpit/admin/synchronisations/restauration/confirmer", controleurCockpit.synchroConfirmer);
 
 application.get(
   "/api/v1/sites/par-domaine",
@@ -359,7 +365,7 @@ const serveur =
       console.log(
         `[DSE API OVH] Disponible sur 127.0.0.1:${port}`
       );
-      require("./shared/medias-synchro").demarrerPlanification();
+      require("./shared/synchronisations").demarrer();
     }
   );
 

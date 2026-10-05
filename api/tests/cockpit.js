@@ -305,6 +305,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   const urls = async (d) => (await admin.menu(d)).map((m) => m.url);
   const origApps = admin.applications;
   assert.ok((await urls(dSuper)).includes("/cockpit/administration") && (await urls(dSuper)).includes("/cockpit/utilisateurs"));
+  assert.ok((await urls(dSuper)).includes("/cockpit/synchronisations") && !(await urls(dClient)).includes("/cockpit/synchronisations"), "synchronisations reservees au super admin");
   assert.ok(!(await urls(dLecteur)).includes("/cockpit/utilisateurs") && !(await urls(dLecteur)).includes("/cockpit/creer"));
   assert.deepStrictEqual(await urls({ reconnu: false, fonctions: [] }), ["/cockpit"]);
 
@@ -410,6 +411,37 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
       synchro: { enCours: false, dernier: { le: "2026-01-01T10:00:00Z", ok: true, fichiers: 3, dejaReferences: 1, crees: [{ chemin: "SITE-PUBLIC/a.fr/IMAGE/<b>.png", type: "IMAGE", portee: "SITE" }], ignores: [{ chemin: "SITE-PUBLIC/x.gif", raison: "format non référencé" }], erreurs: [] } } });
     assert.ok(htmlS.includes("data-synchroniser") && htmlS.includes("&lt;b&gt;") && htmlS.includes("1</strong> ajouté") && !TERMES_TECHNIQUES.test(htmlS));
 
+    // Synchronisations (administration globale) : reglages, restauration, rendu sans termes techniques
+    const sy = require("../shared/synchronisations")._test;
+    assert.strictEqual(sy.valider({ mode: "AUTOMATIQUE", frequence: 15, unite: "MINUTES" }), null);
+    assert.ok(sy.valider({ mode: "AUTOMATIQUE", frequence: 4, unite: "MINUTES" }), "minimum 5 minutes");
+    assert.ok(sy.valider({ mode: "AUTOMATIQUE", frequence: 366, unite: "JOURS" }), "maximum 365 jours");
+    assert.ok(sy.valider({ mode: "AUTOMATIQUE", frequence: 1.5, unite: "HEURES" }) && sy.valider({ mode: "X", frequence: 1, unite: "JOURS" }));
+    assert.strictEqual(sy.periodeMs({ frequence: 2, unite: "HEURES" }), 7200000);
+    assert.strictEqual(sy.periodeMs({ frequence: 1, unite: "X" }), null);
+    const reg = require("../shared/synchronisations").REGISTRE;
+    assert.ok(sy.effectif(reg[0], { mode: "MANUEL", frequence: 1, unite: "MINUTES" }).invalide, "reglage enregistre invalide => defaut");
+    assert.strictEqual(sy.effectif(reg[0], { mode: "MANUEL", frequence: 2, unite: "JOURS" }).mode, "MANUEL");
+    const sv = require("../shared/sauvegarde-listes")._test;
+    const cLk = { name: "SITE", lookup: { multi: false } }, cLkM = { name: "SITES", lookup: { multi: true } };
+    assert.strictEqual(sv.valeur(cLk, { SITELookupId: 7 }), "7");
+    assert.deepStrictEqual(sv.valeur(cLkM, { SITES: [{ LookupId: 9 }, { LookupId: 2 }] }), [2, 9]);
+    assert.strictEqual(sv.valeur({ name: "T" }, { T: "" }), null);
+    assert.deepStrictEqual(sv.champEcriture(cLk, "7"), { SITELookupId: "7" });
+    assert.deepStrictEqual(sv.champEcriture(cLkM, [2]), { "SITESLookupId@odata.type": "Collection(Edm.Int32)", SITESLookupId: [2] });
+    assert.ok(sv.nomManifesteValide("20260101120000.json") && !sv.nomManifesteValide("../x.json"));
+    const us = await import(url("modules/cockpit/synchronisations.js"));
+    const vueS = { reglagesDisponibles: true, modes: ["AUTOMATIQUE", "MANUEL"], unites: ["MINUTES", "HEURES", "JOURS"], synchronisations: [
+      { code: "SAUVEGARDE-LISTES", titre: "Sauvegarde <b>", description: "d", mode: "AUTOMATIQUE", frequence: 1, unite: "JOURS", enregistre: false, enCours: false,
+        derniere: { le: "2026-01-01T10:00:00Z", ok: true, resume: "ok" }, prochaine: "2026-01-02T10:00:00Z", historique: [{ le: "2026-01-01T10:00:00Z", ok: true, resume: "r", acteur: "Synchronisation automatique" }] }] };
+    const htmlSy = us.rendreSynchronisations(vueS);
+    assert.ok(htmlSy.includes("data-lancer=\"SAUVEGARDE-LISTES\"") && htmlSy.includes("&lt;b&gt;") && htmlSy.includes("par défaut") && htmlSy.includes("data-restauration"));
+    assert.ok(!TERMES_TECHNIQUES.test(htmlSy), `terme technique visible : ${htmlSy.match(TERMES_TECHNIQUES)?.[0]}`);
+    assert.ok(us.rendreSynchronisations(null).includes("réservées"));
+    const htmlAp = us.rendreApercuRestauration({ jeton: "j", liste: "OBJ-PAGES-SITE", sauvegardeDu: "2026-01-01T10:00:00Z", identiques: 3, ajouteesDepuis: 1,
+      modifiees: [{ id: "4", titre: "<i>", champs: [{ libelle: "Titre", actuel: "a", sauvegarde: "b" }] }], manquantes: [{ id: "5", titre: "Accueil", champs: 2, homonyme: true }] });
+    assert.ok(htmlAp.includes("&lt;i&gt;") && htmlAp.includes("PAGES-SITE") && /value="5" disabled/.test(htmlAp) && !TERMES_TECHNIQUES.test(htmlAp));
+
     // Synchronisation bibliotheque -> catalogue : deduction depuis le chemin et les referentiels uniquement
     const { analyser } = require("../shared/medias-synchro")._test;
     const refs = { types: [{ id: "1", titre: "IMAGE" }, { id: "3", titre: "VIDEO" }, { id: "12", titre: "LOGO" }, { id: "18", titre: "AUTRE" }],
@@ -430,6 +462,13 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     const { mediasSynchroniser } = require("../dseCockpit");
     const refusSync = reponse(); await mediasSynchroniser({ query: {}, cookies: {}, headers: {}, get: (h) => ({ origin: "https://evil.fr", host: "dseco.fr" }[h.toLowerCase()]) }, refusSync);
     assert.strictEqual(refusSync.code, 403, "synchronisation refusee hors origine");
+    const { synchroVue, synchroLancer, synchroConfirmer } = require("../dseCockpit");
+    const r1 = reponse(); await synchroVue({ query: {}, cookies: {}, headers: {}, get: () => undefined }, r1);
+    assert.strictEqual(r1.code, 401, "reglages des synchronisations refuses sans session");
+    for (const ctrl of [synchroLancer, synchroConfirmer]) {
+      const r2 = reponse(); await ctrl({ query: {}, body: { code: "SAUVEGARDE-LISTES" }, cookies: {}, headers: {}, get: (h) => ({ origin: "https://evil.fr", host: "dseco.fr" }[h.toLowerCase()]) }, r2);
+      assert.strictEqual(r2.code, 403, "lancement/restauration refuses hors origine");
+    }
   }
 
   // Validation serveur des valeurs

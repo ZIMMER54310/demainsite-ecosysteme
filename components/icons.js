@@ -14,7 +14,8 @@ const paths = {
   grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   external: '<path d="M14 3h7v7M21 3l-11 11M10 3H3v18h18v-7"/>',
   panel: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18m7-13-3 4 3 4"/>',
-  arrow: '<path d="M4 12h16m-6-6 6 6-6 6"/>'
+  arrow: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
+  sync: '<path d="M20 11a8 8 0 0 0-14.5-4.5L3 9m0-5v5h5M4 13a8 8 0 0 0 14.5 4.5L21 15m0 5v-5h-5"/>'
 };
 
 export function icon(name) {
@@ -22,6 +23,7 @@ export function icon(name) {
 }
 
 export function iconForRoute(route) {
+  if (route.includes("/synchronisations")) return "sync";
   if (route.includes("/utilisateurs")) return "users";
   if (route.includes("/administration")) return "settings";
   if (route.includes("/creer")) return "plus";

@@ -57,6 +57,11 @@ registerRoute("/cockpit/contenus", async p => {
   mount(await cockpitContenusPage(p), ["Cockpit", "Gestion des contenus"]);
   activerContenus(document.querySelector("#app-page"));
 });
+import { cockpitSynchronisationsPage, activerSynchronisations } from "../pages/cockpit.js";
+registerRoute("/cockpit/synchronisations", async p => {
+  mount(await cockpitSynchronisationsPage(p), ["Cockpit", "Synchronisations"]);
+  activerSynchronisations(document.querySelector("#app-page"));
+});
 registerRoute("/cockpit/site/:domaine/medias", async p => {
   const page = await cockpitMediasPage(p);
   mount(page.html, ["Cockpit", "Mes sites", p.domaine, "Médias"]);

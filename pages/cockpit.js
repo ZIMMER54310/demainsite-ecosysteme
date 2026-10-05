@@ -12,6 +12,8 @@ import {
 import { escapeHtml } from "../modules/public/outils.js";
 import { getMediasCockpit, actionConstruire, televerserMedia } from "../services/cockpit.service.js";
 import { rendreMedias } from "../modules/cockpit/medias.js";
+import { rendreSynchronisations, activerSynchronisations } from "../modules/cockpit/synchronisations.js";
+import { getSynchronisations } from "../services/cockpit.service.js";
 import { rendreContenus, rendreRaccourcisContenus, activerContenus } from "../modules/cockpit/contenus.js";
 import { getContenusCockpit } from "../services/cockpit.service.js";
 
@@ -96,6 +98,21 @@ export async function cockpitContenusPage(params) {
 }
 
 export { activerContenus };
+
+export async function cockpitSynchronisationsPage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return c.html;
+    try {
+      return rendreSynchronisations((await getSynchronisations())?.donnees || null);
+    } catch (err) {
+      if (err?.status === 403 || err?.status === 401) return rendreSynchronisations(null);
+      throw err;
+    }
+  } catch { return indisponible; }
+}
+
+export { activerSynchronisations };
 
 export async function cockpitSitePage(params) {
   try {

@@ -328,3 +328,13 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .cockpit-contenus-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .cockpit-contenus-actions .btn { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 .cockpit-contenus-actions svg { width: 16px; height: 16px; }
+
+/* Synchronisations (administration globale) */
+.cockpit-synchro-reglage { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin: 12px 0 6px; }
+.cockpit-synchro-reglage .cockpit-champ { min-width: 140px; flex: 1 1 140px; }
+.cockpit-synchro-reglage [hidden] { display: none; }
+.cockpit-restauration-apercu ul ul { margin: 4px 0 8px; font-size: .9rem; }
+.cockpit-restauration-apercu del { color: #a33; }
+.cockpit-restauration-apercu ins { color: #17663a; text-decoration: none; font-weight: 600; }
+.cockpit-restauration-apercu li { overflow-wrap: anywhere; }
+@media (max-width: 640px) { .cockpit-synchro-entete .btn, .cockpit-synchro-reglage .btn { width: 100%; } }
