@@ -46,6 +46,7 @@ function etatFiltre(etat = {}) {
 }
 
 function cellulesSites(sites) {
+  if (!sites.length) return `<span class="muted">Non rattaché à un site</span>`;
   return sites.map((s) => `<span class="cockpit-contenus-site">${e(s.titre || s.domaine || "Site")}${s.domaine ? `<small>${e(s.domaine)}</small>` : ""}</span>`).join("");
 }
 
