@@ -25,7 +25,7 @@ export async function initializeAuth(domaine = "") {
     };
   } catch (err) {
     console.error("[DSE compte]", err.message);
-    return { authenticated: false, erreur: err.message, displayName: null, reconnu: false, role: null, fonctions: [], niveau: null, menu: [], nombreSites: 0, fournisseurs: [] };
+    return { authenticated: false, erreur: err.message, statut: err.status || 0, displayName: null, reconnu: false, role: null, fonctions: [], niveau: null, menu: [], nombreSites: 0, fournisseurs: [] };
   }
 }
 

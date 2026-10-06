@@ -42,7 +42,8 @@ async function contexte(params = {}) {
   document.body.classList.remove("dse-public");
   const user = await initializeAuth(params.domaine || "");
   setState({ user, selectedSite: null });
-  if (user.erreur) return { html: `<section class="cockpit card"><p role="alert">${escapeHtml(user.erreur)}</p><a href="#/cockpit/sites">Mes sites</a></section>` };
+  if (user.erreur) return { html: `<section class="cockpit card"><p role="alert">${escapeHtml(user.erreur)}</p><div class="cockpit-actions">${
+    user.statut === 401 || user.statut === 403 ? "" : `<a class="btn btn-primary" href="${escapeHtml(location.hash || "#/cockpit")}" data-reessayer-site>Réessayer</a>`}<a class="btn btn-secondary" href="#/cockpit/sites">Mes sites</a></div></section>` };
   if (!user.authenticated) return { html: rendreConnexion({ fournisseurs: user.fournisseurs, message: MESSAGES_CONNEXION[params.connexion] || "" }) };
   if (!user.reconnu) return { html: rendreSansAcces(moiDepuis(user)) + (user.identification?.codeLiaison
     ? `<section class="cockpit card"><h2>Lier votre compte existant</h2><p>${escapeHtml(user.identification.message)}</p>
@@ -51,16 +52,50 @@ async function contexte(params = {}) {
   return { moi: moiDepuis(user) };
 }
 
+/*
+ * Etats explicites d'ouverture d'un site : READY, FORBIDDEN (refus definitif du serveur, 401/403)
+ * ou ERROR (delai, reseau, indisponibilite). Une reponse absente ou en cours n'est jamais un refus.
+ */
+export function etatOuverture(resultat) {
+  if (resultat?.erreur) {
+    const statut = resultat.erreur.status;
+    return statut === 403 || statut === 401 ? { etat: "FORBIDDEN", message: resultat.erreur.message || "" } : { etat: "ERROR" };
+  }
+  return resultat?.site ? { etat: "READY", site: resultat.site } : { etat: "ERROR" };
+}
+
+function appliquerVue(site) {
+  setState({ selectedSite: site });
+  if (site?.contexteUtilisateur) {
+    const user = { ...getState().user, ...site.contexteUtilisateur,
+      porteeGlobale: site.contexteUtilisateur.porteeGlobale === true };
+    setState({ user });
+  }
+}
+
+export function rendreOuverture(nom) {
+  return `<section class="cockpit cockpit-ouverture" aria-busy="true">
+    <div class="card cockpit-ouverture-statut" role="status" aria-live="polite">
+      <span class="dse-spinner" aria-hidden="true"></span>
+      <div><p class="cockpit-ouverture-titre">Ouverture de ${escapeHtml(nom || "votre site")}…</p>
+      <p class="muted">Vérification de vos droits et chargement du cockpit.</p></div></div>
+    <div class="cockpit-squelette" aria-hidden="true">
+      <div class="cockpit-squelette-bloc cockpit-squelette-entete"></div>
+      <div class="cockpit-squelette-grille">${"<div class=\"cockpit-squelette-bloc\"></div>".repeat(4)}</div>
+      <div class="cockpit-squelette-bloc cockpit-squelette-large"></div></div></section>`;
+}
+
+const refusSite = `<section class="cockpit card"><p>Ce site n'est pas disponible dans votre espace.</p><a class="btn btn-secondary" href="#/cockpit/sites">Retour à Mes sites</a></section>`;
+const erreurSite = (domaine) => `<section class="cockpit card" role="alert"><h2>Le cockpit n'a pas pu être chargé</h2>
+  <p>DemainSite Écosystème n'a pas reçu de réponse complète à temps. Vos droits ne sont pas en cause.</p>
+  <div class="cockpit-actions"><a class="btn btn-primary" href="#/cockpit/site/${encodeURIComponent(domaine || "")}" data-reessayer-site>Réessayer</a>
+  <a class="btn btn-secondary" href="#/cockpit/sites">Retour à Mes sites</a></div></section>`;
+
 async function vue(domaine) {
   if (!domaine) return null;
   try {
     const site = (await getSiteCockpit(domaine))?.donnees || null;
-    setState({ selectedSite: site });
-    if (site?.contexteUtilisateur) {
-      const user = { ...getState().user, ...site.contexteUtilisateur,
-        porteeGlobale: site.contexteUtilisateur.porteeGlobale === true };
-      setState({ user });
-    }
+    appliquerVue(site);
     return site;
   } catch (err) {
     setState({ selectedSite: null });
@@ -114,14 +149,24 @@ export function activerGalerie(racine = document) {
   racine.querySelector("[data-galerie-reessayer]")?.addEventListener("click", () => location.reload());
   racine.querySelectorAll("[data-ouvrir-cockpit]").forEach((bouton) => {
     bouton.addEventListener("click", async () => {
+      if (bouton.disabled) return;
       const message = racine.querySelector("[data-galerie-message]");
+      const libelle = bouton.innerHTML;
+      const nom = bouton.dataset.nom || bouton.dataset.ouvrirCockpit;
       bouton.disabled = true;
+      bouton.setAttribute("aria-busy", "true");
+      bouton.innerHTML = `<span class="dse-spinner dse-spinner-petit" aria-hidden="true"></span> Ouverture…`;
+      if (message) message.textContent = `Ouverture de ${nom}… Vérification de vos droits et chargement du cockpit.`;
       try {
         const r = (await getGalerieCockpit(bouton.dataset.ouvrirCockpit)).donnees;
+        try { sessionStorage.setItem(`dseOuverture:${bouton.dataset.ouvrirCockpit}`, nom); } catch { /* stockage indisponible */ }
         location.hash = `#${r.url}`;
       } catch (e) {
-        if (message) message.textContent = e.status === 403 ? "Le cockpit de ce site n’est pas disponible pour votre compte." : "Ouverture impossible pour le moment. Merci de réessayer.";
+        // Refus uniquement sur reponse definitive du serveur ; sinon incident temporaire.
+        if (message) message.textContent = e.status === 403 || e.status === 401 ? "Le cockpit de ce site n’est pas disponible pour votre compte." : "Ouverture impossible pour le moment. Merci de réessayer.";
         bouton.disabled = false;
+        bouton.removeAttribute("aria-busy");
+        bouton.innerHTML = libelle;
       }
     });
   });
@@ -169,11 +214,24 @@ export { activerSynchronisations };
 
 export async function cockpitSitePage(params) {
   try {
+    // Lectures independantes lancees ensemble ; le serveur controle chacune (identite, droits, perimetre).
+    const chargement = params.domaine
+      ? getSiteCockpit(params.domaine).then((r) => ({ site: r?.donnees || null }), (erreur) => ({ erreur }))
+      : Promise.resolve({ erreur: { status: 403 } });
     const c = await contexte(params);
-    if (c.html) return c.html;
-    const v = await vue(params.domaine);
-    if (!v) return `<section class="cockpit card"><p>Ce site n'est pas disponible dans votre espace.</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
-    return rendreVueSite(c.moi, v, params.section);
+    if (c.html) {
+      chargement.catch(() => {});
+      return c.html;
+    }
+    const resultat = etatOuverture(await chargement);
+    if (resultat.etat === "READY") {
+      appliquerVue(resultat.site);
+      return rendreVueSite(c.moi, resultat.site, params.section);
+    }
+    setState({ selectedSite: null });
+    if (resultat.etat === "FORBIDDEN") return refusSite;
+    console.error("[DSE cockpit] ouverture du site interrompue");
+    return erreurSite(params.domaine);
   } catch { return indisponible; }
 }
 

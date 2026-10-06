@@ -241,7 +241,7 @@ export function rendreListeSites(moi, resultat, { complement = "" } = {}) {
       ${colonneClient ? `<td data-label="Client">${s.clientCockpit ? `<a href="${e(lienClient(s.clientCockpit))}" title="Ouvrir l'espace client">${e(s.client || "Non renseigné")}</a>` : e(s.client || "Non renseigné")}</td>` : ""}
       <td>${s.contexte?.etat === "CONTEXTE INCOMPLET" ? `<p role="status">CONTEXTE INCOMPLET : ${e(s.contexte.message)}</p>` :
         `<p class="muted">${e(s.role || "")}${s.accesType ? ` / ${e(s.accesType)}` : ""}</p>`}
-        <div class="cockpit-actions"><a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}">Ouvrir ${icon("arrow")}</a>${s.domaine ? `<a class="btn btn-primary" href="https://${e(s.domaine)}/" target="_blank" rel="noopener noreferrer">${icon("external")} Voir le site</a>` : ""}</div></td></tr>`).join("")}</tbody></table></div>`
+        <div class="cockpit-actions"><a class="btn btn-secondary" data-ouvrir-site data-nom="${e(s.nom || s.domaine || "")}" href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}">Ouvrir ${icon("arrow")}</a>${s.domaine ? `<a class="btn btn-primary" href="https://${e(s.domaine)}/" target="_blank" rel="noopener noreferrer">${icon("external")} Voir le site</a>` : ""}</div></td></tr>`).join("")}</tbody></table></div>`
     : `<div class="empty">${filtre ? "Aucun site ne correspond à votre recherche." : "Aucun site dans votre espace pour le moment."}</div>`;
 
   const pagination = (r.pages || 1) > 1 ? `<nav class="cockpit-pagination" aria-label="Pages de résultats">
@@ -576,6 +576,6 @@ export function rendreMonCompte(moi, d) {
     <h3>Mes contextes de site</h3>${(d.sites || []).map((s) => `<article><h4>${e(s.nom || s.domaine || "Site")}</h4>
       <p>${e(s.contexte?.etat || "CONTEXTE INCOMPLET")}</p>
       ${s.contexte?.message ? `<p role="status">${e(s.contexte.message)}</p>` : `<p>${e(s.role?.titre || "")} / ${e(s.accesType?.titre || "")}</p>`}
-      ${s.domaine ? `<a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.domaine)}">Ouvrir</a>` : ""}</article>`).join("") || "<p>Aucun site attribué.</p>"}
+      ${s.domaine ? `<a class="btn btn-secondary" data-ouvrir-site data-nom="${e(s.nom || s.domaine || "")}" href="#/cockpit/site/${encodeURIComponent(s.domaine)}">Ouvrir</a>` : ""}</article>`).join("") || "<p>Aucun site attribué.</p>"}
     <a class="btn btn-secondary" href="#/cockpit/sites">Mes sites</a></article></section>`;
 }

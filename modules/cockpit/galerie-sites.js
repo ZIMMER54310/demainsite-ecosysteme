@@ -33,7 +33,7 @@ function carte(c) {
     <div class="galerie-actions">
       ${c.urlSite ? `<a class="btn btn-secondary" href="${escapeHtml(c.urlSite)}" target="_blank" rel="noopener noreferrer"
         aria-label="Voir le site ${escapeHtml(c.nom)} (nouvel onglet)">Voir le site</a>` : ""}
-      ${c.cockpit ? `<button class="btn btn-primary" type="button" data-ouvrir-cockpit="${escapeHtml(decodeURIComponent(c.cockpit.url.split("/").pop()))}"
+      ${c.cockpit ? `<button class="btn btn-primary" type="button" data-ouvrir-cockpit="${escapeHtml(decodeURIComponent(c.cockpit.url.split("/").pop()))}" data-nom="${escapeHtml(c.nom)}"
         aria-label="Ouvrir le cockpit de ${escapeHtml(c.nom)}">Ouvrir le cockpit</button>` : ""}
     </div>
   </li>`;

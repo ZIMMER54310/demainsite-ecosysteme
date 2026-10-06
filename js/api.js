@@ -10,9 +10,9 @@ function buildUrl(path, query = {}) {
   return url;
 }
 
-export async function apiGet(path, query = {}) {
+export async function apiGet(path, query = {}, options = {}) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs || CONFIG.REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch(buildUrl(path, query), { headers: { Accept: "application/json" }, signal: controller.signal, cache: "no-store" });
     const payload = await response.json().catch(() => null);

@@ -1,14 +1,15 @@
 import { apiGet, apiPost, ApiError } from "../js/api.js";
 import { CONFIG } from "../js/config.js";
-export const getMoi = (domaine = "") => apiGet("/moi", { domaine });
+export const getMoi = (domaine = "") => apiGet("/moi", { domaine }, { timeoutMs: 30000 });
 export const getMonCompte = () => apiGet("/cockpit/compte");
 export const getSitesCockpit = (criteres = {}) => apiGet("/cockpit/sites", criteres);
 export const getGalerie = (criteres = {}) => apiGet("/cockpit/galerie", criteres);
-export const getGalerieCockpit = (domaine) => apiGet("/cockpit/galerie/cockpit", { domaine });
+// Ouverture d'un cockpit : delai elargi, un depassement est un incident et jamais un refus.
+export const getGalerieCockpit = (domaine) => apiGet("/cockpit/galerie/cockpit", { domaine }, { timeoutMs: 45000 });
 export const getContenusCockpit = (criteres = {}) => apiGet("/cockpit/contenus", criteres);
 export const getClientCockpit = (id, criteres = {}) => apiGet("/cockpit/client", { ...criteres, id });
 export const getStatutsSite = (domaine) => apiGet("/cockpit/sites/statuts", { domaine });
-export const getSiteCockpit = (domaine) => apiGet("/cockpit/site", { domaine });
+export const getSiteCockpit = (domaine) => apiGet("/cockpit/site", { domaine }, { timeoutMs: 45000 });
 export const getEdition = (domaine, composant, element = "") => apiGet("/cockpit/edition", { domaine, composant, element });
 export const apercuEdition = (domaine, composant, valeurs, element = "") => apiPost("/cockpit/edition/apercu", { domaine, composant, valeurs, element });
 export const confirmerEdition = (jeton) => apiPost("/cockpit/edition/confirmer", { jeton });

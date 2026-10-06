@@ -39,11 +39,47 @@ async function refuserEcriture(res, ctx, domaine, action, message) {
   return refuser(res, 403, message);
 }
 
+/*
+ * Fraicheur des droits : SharePoint reste relu, mais au plus une fois par fenetre courte
+ * (DSE_DROITS_FRAICHEUR_MS, 10 s par defaut) au lieu d'une fois par requete. Les requetes
+ * d'une meme navigation (/moi puis /cockpit/site) partagent ainsi la meme lecture en cours.
+ * Les ecritures du cockpit invalident toujours explicitement les caches (shared/ecriture.js).
+ */
+let dernierRafraichissement = 0;
+function fraicheurDroitsMs() {
+  const v = Number(process.env.DSE_DROITS_FRAICHEUR_MS);
+  return Number.isFinite(v) && v >= 0 ? v : 10000;
+}
+function rafraichirLectures() {
+  const maintenant = Date.now();
+  if (maintenant - dernierRafraichissement < fraicheurDroitsMs()) return;
+  dernierRafraichissement = maintenant;
+  dse.viderCacheGraph();
+  droits.viderCache();
+  require("../shared/catalogue-source").viderCache();
+}
+
+/* Mesure des etapes, exposee en en-tete Server-Timing (durees uniquement, aucune donnee). */
+function chrono() {
+  const debut = Date.now();
+  const etapes = [];
+  return {
+    async etape(nom, fn) {
+      const t = Date.now();
+      try { return await fn(); } finally { etapes.push([nom, Date.now() - t]); }
+    },
+    appliquer(res) {
+      const valeur = [...etapes, ["total", Date.now() - debut]].map(([n, d]) => `${n};dur=${d}`).join(", ");
+      res.set("Server-Timing", valeur);
+      if (process.env.DSE_TRACE_PERF === "1") console.log("[DSE perf]", valeur);
+    }
+  };
+}
+
 async function contexteUtilisateur(req) {
   const identite = session.identiteSession(req);
   if (!identite) return null;
-  dse.viderCacheGraph();
-  droits.viderCache();
+  rafraichirLectures();
   return { identite, droits: await droits.droitsPour(identite) };
 }
 
@@ -100,17 +136,23 @@ async function domaineAccueil(req, ctx, groupes = null) {
 
 async function moi(req, res) {
   try {
-    const ctx = await contexteUtilisateur(req);
+    const t = chrono();
+    const ctx = await t.etape("droits", () => contexteUtilisateur(req));
     if (!ctx) {
       return repondre(res, 200, { succes: true, donnees: { connecte: false, fournisseurs: fournisseurs.lister() }, meta: meta() });
     }
     if (req.query.domaine) {
-      if (!await siteDuPerimetre(ctx, req.query.domaine)) return refuser(res, 403, ctx.droits.contexte?.message || "Site non autorisé.");
+      if (!await t.etape("perimetre", () => siteDuPerimetre(ctx, req.query.domaine))) return refuser(res, 403, ctx.droits.contexte?.message || "Site non autorisé.");
     }
     const groupes = ctx.droits.reconnu ? (await groupesAutorises(ctx)).groupes : [];
     const attribues = new Set(ctx.droits.sitesAttribues || ctx.droits.siteIds);
     const nombreSites = ctx.droits.reconnu
       ? perimetre.regrouperSites([...(await droits.sitesIndex()).sites.values()]).filter((g) => attribues.has(String(g.id))).length : 0;
+    const [menu, accueil] = await Promise.all([
+      t.etape("menu", async () => administration.menu(ctx.droits, req.query.domaine || null, { galerie: await galerieVisible(ctx, groupes) })),
+      domaineAccueil(req, ctx, groupes)
+    ]);
+    t.appliquer(res);
     return repondre(res, 200, {
       succes: true,
       donnees: {
@@ -127,7 +169,7 @@ async function moi(req, res) {
         niveau: ctx.droits.niveau,
         ...contextePublic(ctx.droits),
         accesCommun: ctx.droits.reconnu && (ctx.droits.sitesCommuns || []).length > 0,
-        menu: await administration.menu(ctx.droits, req.query.domaine || null, { galerie: await galerieVisible(ctx) }),
+        menu,
         nombreSites,
         clients: ctx.droits.global || ctx.droits.contexte?.etat === "COMPLET" ? clientsDuPerimetre(ctx, groupes) : [],
         porteeGlobale: ctx.droits.global === true,
@@ -136,7 +178,7 @@ async function moi(req, res) {
           return { nom: g.titre || domaines.principal || "Site sans nom",
             domainePrincipal: domaines.principal, domaines: domaines.tous };
         }),
-        domaineAccueil: await domaineAccueil(req, ctx, groupes),
+        domaineAccueil: accueil,
         fournisseurs: fournisseurs.lister()
       },
       meta: meta()
@@ -223,10 +265,10 @@ async function cartesGalerie(ctx) {
     contexte: (g) => droits.contexteSite(ctx.droits, donnees, g.id) });
 }
 
-async function galerieVisible(ctx) {
+async function galerieVisible(ctx, groupesConnus = null) {
   try {
     if (!ctx.droits.reconnu) return false;
-    const { groupes } = await groupesAutorises(ctx);
+    const groupes = groupesConnus || (await groupesAutorises(ctx)).groupes;
     const donnees = await droits.donneesDroits();
     return groupes.some((g) => galerie.peutLire(droits.contexteSite(ctx.droits, donnees, g.id), galerie.OPERATION_GALERIE, "galerie"));
   } catch (e) {
@@ -333,17 +375,29 @@ async function contenus(req, res) {
 
 async function site(req, res) {
   try {
-    const ctx = await contexteUtilisateur(req);
+    const t = chrono();
+    const ctx = await t.etape("droits", () => contexteUtilisateur(req));
     if (!ctx) return refuser(res, 401, "Connexion requise.");
     const domaine = normaliserDomaine(req.query.domaine);
     const { statuts } = await droits.sitesIndex();
     // Un alias ouvre son site principal ; le controle porte sur l'ID natif du site principal.
-    const info = await siteDuPerimetre(ctx, domaine);
+    const info = await t.etape("perimetre", () => siteDuPerimetre(ctx, domaine));
     // Meme reponse pour un site inexistant ou hors perimetre : rien n'est divulgue.
     if (!info || !ctx.droits.fonctions.includes("sites")) {
       return refuser(res, 403, ctx.droits.contexte?.message || "Ce site n'est pas disponible dans votre espace.");
     }
-    const siteComplet = await chargerSiteComplet(info.id);
+    // Lectures independantes une fois l'autorisation acquise : executees en parallele.
+    const [siteComplet, experience, progression, groupes] = await Promise.all([
+      t.etape("site", () => chargerSiteComplet(info.id)),
+      t.etape("experience", () => experienceCockpit.lire()),
+      t.etape("progression", () => progressionVisuelle.lire()),
+      groupesAutorises(ctx).then((g) => g.groupes)
+    ]);
+    const [donneesBuilder, menu] = await Promise.all([
+      experience.realisations.etat === "configuree"
+        ? t.etape("builder", () => require("../shared/builder-source").obtenirDonnees()) : null,
+      t.etape("menu", async () => administration.menu(ctx.droits, domaine, { galerie: await galerieVisible(ctx, groupes) }))
+    ]);
     const vue = cockpit.vueSite({
       siteComplet,
       info,
@@ -351,9 +405,7 @@ async function site(req, res) {
       fonctions: ctx.droits.fonctions,
       domaineDemande: domaine
     });
-    const experience = await experienceCockpit.lire();
-    if (experience.realisations.etat === "configuree") {
-      const donneesBuilder = await require("../shared/builder-source").obtenirDonnees();
+    if (donneesBuilder) {
       experienceCockpit.appliquerProgression(vue, experience.realisations, donneesBuilder, info.id, ctx.droits.autorisations);
     }
     vue.accompagnement = experience.accompagnement;
@@ -363,10 +415,11 @@ async function site(req, res) {
       realisations: { etat: experience.realisations.etat, message: experience.realisations.message },
       accompagnement: { etat: experience.accompagnement.etat, message: experience.accompagnement.message }
     };
-    vue.progressionVisuelle = progressionVisuelle.pourcentage(await progressionVisuelle.lire(), vue.progression);
-    const espaceClient = info.clientId && clientsDuPerimetre(ctx, (await groupesAutorises(ctx)).groupes).find((c) => c.id === String(info.clientId));
+    vue.progressionVisuelle = progressionVisuelle.pourcentage(progression, vue.progression);
+    const espaceClient = info.clientId && clientsDuPerimetre(ctx, groupes).find((c) => c.id === String(info.clientId));
     vue.clientCockpit = espaceClient ? espaceClient.id : null;
-    vue.contexteUtilisateur = { ...contextePublic(ctx.droits), menu: await administration.menu(ctx.droits, domaine, { galerie: await galerieVisible(ctx) }) };
+    vue.contexteUtilisateur = { ...contextePublic(ctx.droits), menu };
+    t.appliquer(res);
     repondre(res, 200, { succes: true, donnees: vue, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] site", e.message);
@@ -394,7 +447,6 @@ const peutEcrire = (d, fonction) => peutOperation(d, `${fonction}.modifier`, fon
 async function siteDuPerimetre(ctx, domaineBrut) {
   const domaine = normaliserDomaine(domaineBrut);
   if (!domaine) return null;
-  require("../shared/catalogue-source").viderCache();
   const { sites: index } = await droits.sitesIndex();
   const info = perimetre.groupeParDomaine(perimetre.regrouperSites([...index.values()]), domaine);
   if (!info) return null;

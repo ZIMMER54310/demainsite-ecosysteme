@@ -410,3 +410,18 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
   .galerie-filtres .btn { width: 100%; }
   .galerie-grille { grid-template-columns: 1fr; }
 }
+
+/* Ouverture d'un site : retour immediat, etat LOADING et squelette progressif. */
+.dse-spinner{display:inline-block;width:22px;height:22px;flex:0 0 auto;border:3px solid #dce5ee;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+.dse-spinner-petit{width:14px;height:14px;border-width:2px}
+a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:progress}
+.cockpit-ouverture-statut{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.cockpit-ouverture-statut p{margin:0}
+.cockpit-ouverture-titre{font-weight:600;font-size:1.05rem}
+.cockpit-squelette{display:grid;gap:14px}
+.cockpit-squelette-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.cockpit-squelette-bloc{height:96px;border-radius:12px;background:linear-gradient(90deg,#eef2f6 25%,#f7f9fb 50%,#eef2f6 75%);background-size:200% 100%;animation:dse-squelette 1.4s ease-in-out infinite}
+.cockpit-squelette-entete{height:64px}
+.cockpit-squelette-large{height:180px}
+@keyframes dse-squelette{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media (prefers-reduced-motion: reduce){.dse-spinner,.cockpit-squelette-bloc{animation-duration:3s}}

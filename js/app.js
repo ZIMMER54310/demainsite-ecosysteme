@@ -1,4 +1,4 @@
-import { getHealth } from "../services/health.service.js"; import { initializeAuth } from "./auth.js"; import { setState,getState } from "./state.js"; import { registerRoute,startRouter } from "./router.js"; import { renderHeader } from "../components/header.js"; import { renderSidebar } from "../components/sidebar.js"; import { renderBreadcrumb } from "../components/breadcrumb.js"; import { renderFooter } from "../components/footer.js"; import { showAlert,clearAlert } from "../components/alert.js"; import { notFoundPage } from "../pages/generic.js"; import { cockpitAccueilPage,cockpitSitesPage,cockpitClientPage,cockpitSitePage,activerVueSite,cockpitAssistantPage,activerAssistant,activerFiltresSites,cockpitEditionPage,activerEdition,cockpitAdministrationPage,cockpitUtilisateursPage,activerUtilisateurs,cockpitConstruirePage,activerConstruire } from "../pages/cockpit.js";
+import { getHealth } from "../services/health.service.js"; import { initializeAuth } from "./auth.js"; import { setState,getState } from "./state.js"; import { registerRoute,startRouter,navigationCourante,resolveRoute } from "./router.js"; import { renderHeader } from "../components/header.js"; import { renderSidebar } from "../components/sidebar.js"; import { renderBreadcrumb } from "../components/breadcrumb.js"; import { renderFooter } from "../components/footer.js"; import { showAlert,clearAlert } from "../components/alert.js"; import { notFoundPage } from "../pages/generic.js"; import { cockpitAccueilPage,cockpitSitesPage,cockpitClientPage,cockpitSitePage,activerVueSite,cockpitAssistantPage,activerAssistant,activerFiltresSites,cockpitEditionPage,activerEdition,cockpitAdministrationPage,cockpitUtilisateursPage,activerUtilisateurs,cockpitConstruirePage,activerConstruire,rendreOuverture } from "../pages/cockpit.js";
 function mount(page,breadcrumb){ clearAlert(); document.querySelector("#app-header").innerHTML=renderHeader(getState().apiStatus,getState().user); document.querySelector("#app-sidebar").innerHTML=renderSidebar(); activerCadre(); document.querySelector("#app-breadcrumb").innerHTML=renderBreadcrumb(breadcrumb); document.querySelector("#app-page").innerHTML=page; document.querySelector("#app-page").insertAdjacentHTML("beforeend",renderFooter()); document.querySelector("#main").focus(); }
 function activerCadre() {
   const bouton = document.querySelector("[data-reduire-menu]");
@@ -40,7 +40,14 @@ registerRoute("/cockpit/sites",async p=>{ mount(await cockpitSitesPage(p),["Cock
 registerRoute("/cockpit/galerie",async p=>{ const {cockpitGaleriePage,activerGalerie}=await import("../pages/cockpit.js"); mount(await cockpitGaleriePage(p),["Cockpit","Galerie"]); activerGalerie(document.querySelector("#app-page")); });
 registerRoute("/cockpit/compte",async p=>{ const {cockpitMonComptePage}=await import("../pages/cockpit.js"); mount(await cockpitMonComptePage(p),["Cockpit","Mon compte"]); });
 registerRoute("/cockpit/client/:id",async p=>{ const html=await cockpitClientPage(p); mount(html,["Cockpit","Espace client"]); activerFiltresSites(document.querySelector("#app-page")); });
-registerRoute("/cockpit/site/:domaine",async p=>{ mount(await cockpitSitePage(p),["Cockpit","Mes sites",p.domaine]); activerVueSite(document.querySelector("#app-page")); });
+registerRoute("/cockpit/site/:domaine",async p=>{
+  // Etat LOADING immediat ; seul le resultat de la navigation courante est monte.
+  const jeton=navigationCourante(); const fil=["Cockpit","Mes sites",p.domaine];
+  mount(rendreOuverture(nomOuverture(p.domaine)),fil);
+  const page=await cockpitSitePage(p);
+  if(jeton!==navigationCourante()) return;
+  mount(page,fil); activerVueSite(document.querySelector("#app-page"));
+});
 registerRoute("/cockpit/site/:domaine/modifier/:composant",async p=>{ mount(await cockpitEditionPage(p),["Cockpit","Mes sites",p.domaine,"Modifier"]); activerEdition(document.querySelector("#app-page")); });
 registerRoute("/cockpit/site/:domaine/construire",async p=>{ const page=await cockpitConstruirePage(p); mount(page.html,["Cockpit","Mes sites",p.domaine,"Construire"]); activerConstruire(document.querySelector("#app-page"),page,p.domaine); });
 registerRoute("/cockpit/administration",async p=>mount(await cockpitAdministrationPage(p),["Cockpit","Administration"]));
@@ -69,4 +76,25 @@ registerRoute("/cockpit/site/:domaine/medias", async p => {
   const page = await cockpitMediasPage(p);
   mount(page.html, ["Cockpit", "Mes sites", p.domaine, "Médias"]);
   activerMedias(document.querySelector("#app-page"), page, p.domaine);
+});
+/* Retour immediat sur « Ouvrir » : bouton desactive (aucun double clic) et nom du site memorise pour l'ecran d'ouverture. */
+const OUVERTURE_SITE = /^#\/cockpit\/site\/([^/?]+)(\?.*)?$/;
+function nomOuverture(domaine) {
+  try { return sessionStorage.getItem(`dseOuverture:${domaine}`) || domaine; } catch { return domaine; }
+}
+document.addEventListener("click", (ev) => {
+  const reessai = ev.target.closest?.("[data-reessayer-site]");
+  if (reessai && reessai.getAttribute("href") === location.hash) { ev.preventDefault(); resolveRoute(); return; }
+  const lien = ev.target.closest?.("a[href^='#/cockpit/site/']");
+  if (!lien || ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
+  const correspondance = OUVERTURE_SITE.exec(lien.getAttribute("href") || "");
+  if (!correspondance) return;
+  if (lien.getAttribute("aria-disabled") === "true") { ev.preventDefault(); return; }
+  const domaine = decodeURIComponent(correspondance[1]);
+  try { if (lien.dataset.nom) sessionStorage.setItem(`dseOuverture:${domaine}`, lien.dataset.nom); } catch { /* stockage indisponible */ }
+  lien.setAttribute("aria-disabled", "true");
+  lien.classList.add("is-chargement");
+  if (lien.hasAttribute("data-ouvrir-site")) lien.innerHTML = `<span class="dse-spinner dse-spinner-petit" aria-hidden="true"></span> Ouverture…`;
+  // Meme adresse (ex. « Réessayer ») : aucun hashchange, la route est relancee explicitement.
+  if (lien.getAttribute("href") === location.hash) { ev.preventDefault(); resolveRoute(); }
 });
