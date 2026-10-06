@@ -236,6 +236,18 @@ async function graphEcriture(token, methode, chemin, corps, etag = null) {
   return resultat.body;
 }
 
+// Lecture idempotente : un seul nouvel essai si Graph ne repond pas a temps ou si la connexion est coupee.
+const ERREURS_RESEAU_LECTURE = new Set(["DSE-HTTP-TIMEOUT", "ECONNRESET", "ETIMEDOUT", "EPIPE", "EAI_AGAIN", "ECONNREFUSED"]);
+async function requeteLecture(url, options) {
+  try {
+    return await requete(url, options);
+  } catch (e) {
+    if (!ERREURS_RESEAU_LECTURE.has(e.message) && !ERREURS_RESEAU_LECTURE.has(e.code)) throw e;
+    console.warn("[DSE graph] lecture relancee", e.code || e.message);
+    return requete(url, options);
+  }
+}
+
 async function graphSansCache(
   token,
   pathOuUrl
@@ -257,7 +269,7 @@ async function graphSansCache(
   };
 
   let resultat =
-    await requete(url, options);
+    await requeteLecture(url, options);
 
   // Reessais limites sur 429/503 : Retry-After respecte, plafonne.
   for (
@@ -285,7 +297,7 @@ async function graphSansCache(
     );
 
     resultat =
-      await requete(url, options);
+      await requeteLecture(url, options);
   }
 
   if (

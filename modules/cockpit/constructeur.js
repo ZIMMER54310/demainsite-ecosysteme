@@ -733,7 +733,14 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       if (n && !ev.target.closest("input,select,textarea,button,a")) return ouvrirDesign(n.dataset.cNoeud);
     }
     if (!cible || !racine.contains(cible)) return;
-    if (cible.dataset.cOnglet) { Object.assign(etat, { onglet: cible.dataset.cOnglet, message: "" }); return afficher(); }
+    if (cible.dataset.cOnglet) {
+      Object.assign(etat, { onglet: cible.dataset.cOnglet, message: "" });
+      afficher();
+      // Adresse et menu alignes sur l'onglet actif, sans relecture des donnees deja chargees.
+      history.pushState(null, "", `#/cockpit/site/${encodeURIComponent(domaine)}/construire?onglet=${encodeURIComponent(etat.onglet)}`);
+      document.dispatchEvent(new CustomEvent("dse:navigation-locale"));
+      return;
+    }
     const ref = cible.dataset.ref;
     switch (cible.dataset.cAction) {
       case "annuler-design": if (d.arbre?.generique) return changerHistorique(false); if (positionHistorique > 0) appliquerValeurs(historique[--positionHistorique]); return;
@@ -1006,5 +1013,14 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   racine.addEventListener("drop", deposer);
   racine.addEventListener("dragend", terminerGlisse);
 
+  // Changement d'onglet depuis le menu : sur place si aucun travail en cours, sinon navigation complete.
+  racine.dseDomaine = domaine;
+  racine.dseChangerOnglet = (onglet) => {
+    if (d.arbre || enCours || brouillons.size || brouillonGenerique) return false;
+    etat.onglet = ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes";
+    etat.message = "";
+    afficher();
+    return true;
+  };
   afficher();
 }

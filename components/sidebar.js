@@ -1,7 +1,7 @@
 import { getState } from "../js/state.js";
 import { escapeHtml } from "../modules/public/outils.js";
 import { icon, iconForRoute } from "./icons.js";
-import { navigationSite } from "../modules/cockpit/navigation-site.js";
+import { navigationSite, elementActif } from "../modules/cockpit/navigation-site.js";
 // Navigation du cockpit unique : construite par le serveur selon utilisateur, role, perimetre et applications.
 const repli = [["/cockpit", "🏠", "Cockpit"]];
 
@@ -52,6 +52,36 @@ export function rendreGestionContenus(user, current, lien) {
   return lien(`/cockpit/contenus${user.contexte?.domaine ? `?domaine=${encodeURIComponent(user.contexte.domaine)}` : ""}`, user.porteeGlobale ? "Gérer tous les sites" : "Gérer ce site", "grid", current === "/cockpit/contenus");
 }
 
+const titreGroupe = (texte) => `<p class="cockpit-nav-titre">${escapeHtml(texte)}</p>`;
+const GENERAL = ["/cockpit", "/cockpit/sites"];
+
+/*
+ * Menu du site selectionne : carte du site (conservee pendant LOADING et ERROR), Vue d'ensemble,
+ * « Construire le site » et ses fonctions autorisees (ouvertes dans la partie construction),
+ * puis Voir le site / Changer de site. Les entrees viennent des droits renvoyes par le serveur.
+ */
+function rendreSiteSelectionne(vue, user, route, current, lien) {
+  const items = navigationSite(vue, user?.niveau);
+  const { actif, parent } = elementActif(items, route);
+  const enfants = items.filter((x) => x.enfant);
+  const ouvert = Boolean(parent) || (actif && actif.enfant);
+  const statut = vue.provisoire ? `<em class="cockpit-site-statut">Chargement…</em>`
+    : vue.statut?.titre ? `<em class="cockpit-site-statut${vue.statut.actif ? " est-actif" : ""}">${escapeHtml(vue.statut.titre)}</em>` : "";
+  const entree = (x) => {
+    if (x.enfant) return "";
+    if (/\/construire$/.test(x.url) && enfants.length) {
+      const estParent = parent === x;
+      return `<div class="cockpit-nav-construire${ouvert ? " est-ouvert" : ""}">${lien(x.url, x.libelle, x.icone, estParent && !actif, estParent && actif ? "is-parent-actif" : "", ` aria-expanded="${ouvert ? "true" : "false"}"`)}
+        <div class="cockpit-nav-enfants" role="group" aria-label="${escapeHtml(x.libelle)}"${ouvert ? "" : " hidden"}>${enfants.map((y) => lien(y.url, y.libelle, y.icone, actif === y)).join("")}</div></div>`;
+    }
+    return lien(x.url, x.libelle, x.icone, actif === x || (parent === x && !actif));
+  };
+  return `<div class="cockpit-nav-groupe cockpit-nav-site">${titreGroupe("Site sélectionné")}
+    <div class="cockpit-site-selection"><a href="#${escapeHtml(`/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}`)}" title="${escapeHtml(vue.nom || vue.domaine)}">${icon("globe")}<span><strong>${escapeHtml(vue.nom || vue.domaine || vue.acces)}</strong><small>${escapeHtml(vue.domaine || vue.acces)}</small>${statut}</span></a></div>
+    ${items.map(entree).join("")}
+    ${rendreVoirSite(user, current)}${user?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "arrow", false) : ""}</div>`;
+}
+
 export function renderSidebar() {
   const route = location.hash.slice(1) || "/";
   const current = route.split("?")[0];
@@ -63,13 +93,14 @@ export function renderSidebar() {
   const selection = /^\/cockpit\/site\/([^/]+)/.exec(current);
   const vue = getState().selectedSite;
   const correspond = selection && vue && selection[1] === encodeURIComponent(vue.acces || vue.domaine);
-  const lien = (p, l, i, actif) => `<a class="nav-link ${actif ? "active" : ""}"${actif ? ' aria-current="page"' : ""} href="#${escapeHtml(p)}" title="${escapeHtml(l)}">${icon(i)}<span>${escapeHtml(l)}</span></a>`;
+  const lien = (p, l, i, actif, classe = "", attributs = "") => `<a class="nav-link ${actif ? "active" : ""} ${classe}"${actif ? ' aria-current="page"' : ""}${attributs} href="#${escapeHtml(p)}" title="${escapeHtml(l)}">${icon(i)}<span>${escapeHtml(l)}</span></a>`;
   const global = (items) => items.map(([p, , l]) => lien(p, correspond && p === "/cockpit" ? "Cockpit général" : l, iconForRoute(p.split("?")[0]), current === p.split("?")[0])).join("");
-  const local = correspond ? `<div class="cockpit-site-selection"><small>Site sélectionné</small><a href="#${escapeHtml(`/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}`)}" title="${escapeHtml(vue.nom || vue.domaine)}">${icon("globe")}<span><strong>${escapeHtml(vue.nom || vue.domaine || vue.acces)}</strong><small>${escapeHtml(vue.domaine || vue.acces)}</small></span></a></div>
-    ${navigationSite(vue, user?.niveau).map((x) => lien(x.url, x.libelle, x.icone, route === x.url)).join("")}
-    ${rendreVoirSite(user, current)}${user?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "arrow", false) : ""}` : "";
+  const generales = entrees.filter(([p]) => GENERAL.includes(p));
+  const globales = entrees.filter(([p]) => !GENERAL.includes(p));
   return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${correspond
-    ? `${global(entrees.filter(([p]) => ["/cockpit", "/cockpit/sites"].includes(p)))}${rendreGestionContenus(user, current, lien)}${rendreEspacesClients(user, current, lien)}${local}<div class="cockpit-nav-globale">${global(entrees.filter(([p]) => !["/cockpit", "/cockpit/sites"].includes(p)))}</div>`
+    ? `<div class="cockpit-nav-groupe">${titreGroupe("Navigation générale")}${global(generales)}</div>
+      ${rendreSiteSelectionne(vue, user, route, current, lien)}
+      <div class="cockpit-nav-groupe cockpit-nav-globale">${titreGroupe("Fonctions globales")}${global(globales)}${rendreGestionContenus(user, current, lien)}${rendreEspacesClients(user, current, lien)}</div>`
     : `${rendreVoirSite(user, current)}${global(entrees)}${rendreGestionContenus(user, current, lien)}${rendreEspacesClients(user, current, lien)}`}</div>
     <div class="cockpit-sidebar-bas"><button type="button" class="nav-link" data-reduire-menu aria-expanded="true">${icon("panel")}<span>Réduire le menu</span></button><small>Espace de gestion</small><small>${escapeHtml(user?.displayName || "")}</small></div></nav>`;
 }

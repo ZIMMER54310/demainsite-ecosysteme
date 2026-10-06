@@ -1,4 +1,5 @@
 import { CONFIG } from "./config.js";
+import { suivreAppel } from "./chargement.js";
 
 export class ApiError extends Error {
   constructor(message, status = 0, details = null) { super(message); this.name = "ApiError"; this.status = status; this.details = details; }
@@ -11,6 +12,7 @@ function buildUrl(path, query = {}) {
 }
 
 export async function apiGet(path, query = {}, options = {}) {
+  const fin = suivreAppel();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), options.timeoutMs || CONFIG.REQUEST_TIMEOUT_MS);
   try {
@@ -22,11 +24,12 @@ export async function apiGet(path, query = {}, options = {}) {
     if (error.name === "AbortError") throw new ApiError("Le délai de réponse de l’API est dépassé.");
     if (error instanceof ApiError) throw error;
     throw new ApiError("Connexion à l’API DSE impossible.", 0, error);
-  } finally { clearTimeout(timer); }
+  } finally { clearTimeout(timer); fin(); }
 }
 
 // Ecritures du cockpit : meme origine, cookie de session HttpOnly, corps JSON.
 export async function apiPost(path, corps = {}) {
+  const fin = suivreAppel();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.max(CONFIG.REQUEST_TIMEOUT_MS, 30000));
   try {
@@ -43,5 +46,5 @@ export async function apiPost(path, corps = {}) {
     if (error.name === "AbortError") throw new ApiError("Le délai de réponse est dépassé. Vérifiez le résultat avant de recommencer.");
     if (error instanceof ApiError) throw error;
     throw new ApiError("Connexion à l’API DSE impossible.", 0, error);
-  } finally { clearTimeout(timer); }
+  } finally { clearTimeout(timer); fin(); }
 }

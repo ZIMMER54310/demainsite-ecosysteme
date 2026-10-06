@@ -1,4 +1,5 @@
 import { initializeAuth } from "../js/auth.js";
+import { classerErreur, ETATS } from "../js/chargement.js";
 import { setState, getState } from "../js/state.js";
 import {
   getSitesCockpit, getClientCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
@@ -29,7 +30,16 @@ const MESSAGES_CONNEXION = {
   securise: "Accès temporairement sécurisé. Contactez votre administrateur pour vérification.",
   indisponible: "Ce mode de connexion n'est pas encore disponible."
 };
-const indisponible = `<section class="cockpit card"><p>Le cockpit est momentanément indisponible. Merci de réessayer dans quelques instants.</p></section>`;
+// ERROR : echec reel (delai, reseau, 5xx) avec Reessayer ; jamais un refus d'acces.
+export const echecChargement = () => `<section class="cockpit card" role="alert" data-dse-etat="${ETATS.ERROR}"><h2>Le chargement n'a pas abouti</h2>
+  <p>DemainSite Écosystème n'a pas reçu de réponse complète à temps. Vos droits ne sont pas en cause.</p>
+  <div class="cockpit-actions"><a class="btn btn-primary" href="${escapeHtml(location.hash || "#/cockpit")}" data-reessayer-site>Réessayer</a>
+  <a class="btn btn-secondary" href="#/cockpit/sites">Mes sites</a></div></section>`;
+// FORBIDDEN : uniquement apres un refus definitif du serveur (401/403).
+const refusAcces = (texte) => `<section class="cockpit card" data-dse-etat="${ETATS.FORBIDDEN}"><p>${escapeHtml(texte || "Cette fonction n'est pas disponible dans votre espace.")}</p><a class="btn btn-secondary" href="#/cockpit/sites">Retour à Mes sites</a></section>`;
+// Lance une lecture sans rejet non capture : { r } ou { erreur }.
+const lancer = (appel) => Promise.resolve().then(appel).then((r) => ({ r }), (erreur) => ({ erreur }));
+export const echec = (err, texteRefus) => (classerErreur(err) === ETATS.FORBIDDEN ? refusAcces(texteRefus || err?.message) : echecChargement());
 
 const moiDepuis = (u) => ({
   nom: u.displayName, role: u.role, fonctions: u.fonctions, niveau: u.niveau, menu: u.menu,
@@ -38,12 +48,34 @@ const moiDepuis = (u) => ({
 });
 const domaineCourant = () => location.hostname.trim().toLowerCase().replace(/^www\./, "");
 
-async function contexte(params = {}) {
+/*
+ * Reutilisation pendant une meme navigation (affichage uniquement) : le contexte /moi et la vue
+ * du site deja charges sont reutilises peu de temps. Chaque donnee metier reste controlee par le
+ * serveur (identite, droits, perimetre) a chaque appel.
+ */
+const REUTILISATION_MOI_MS = 30000;
+const REUTILISATION_VUE_MS = 60000;
+let moiCharge = null;
+let vueChargee = null;
+
+async function contexte(params = {}, { reutiliser = false } = {}) {
   document.body.classList.remove("dse-public");
-  const user = await initializeAuth(params.domaine || "");
-  setState({ user, selectedSite: null });
-  if (user.erreur) return { html: `<section class="cockpit card"><p role="alert">${escapeHtml(user.erreur)}</p><div class="cockpit-actions">${
-    user.statut === 401 || user.statut === 403 ? "" : `<a class="btn btn-primary" href="${escapeHtml(location.hash || "#/cockpit")}" data-reessayer-site>Réessayer</a>`}<a class="btn btn-secondary" href="#/cockpit/sites">Mes sites</a></div></section>` };
+  const domaine = params.domaine || "";
+  const precedent = getState().user;
+  const etabli = Boolean(precedent?.authenticated && precedent.reconnu && !precedent.erreur);
+  let user;
+  if (reutiliser && etabli && moiCharge?.domaine === domaine && Date.now() - moiCharge.t < REUTILISATION_MOI_MS) user = precedent;
+  else {
+    user = await initializeAuth(domaine);
+    if (!user.erreur) moiCharge = { domaine, t: Date.now() };
+    else if (etabli && user.statut !== 401 && user.statut !== 403) {
+      // Incident temporaire : le contexte deja etabli (menu, site selectionne) reste affiche.
+      console.warn("[DSE cockpit] contexte conserve apres incident temporaire");
+      user = precedent;
+    }
+  }
+  setState({ user });
+  if (user.erreur) return { html: user.statut === 401 || user.statut === 403 ? refusAcces(user.erreur) : echecChargement() };
   if (!user.authenticated) return { html: rendreConnexion({ fournisseurs: user.fournisseurs, message: MESSAGES_CONNEXION[params.connexion] || "" }) };
   if (!user.reconnu) return { html: rendreSansAcces(moiDepuis(user)) + (user.identification?.codeLiaison
     ? `<section class="cockpit card"><h2>Lier votre compte existant</h2><p>${escapeHtml(user.identification.message)}</p>
@@ -64,8 +96,9 @@ export function etatOuverture(resultat) {
   return resultat?.site ? { etat: "READY", site: resultat.site } : { etat: "ERROR" };
 }
 
-function appliquerVue(site) {
+function appliquerVue(site, domaine) {
   setState({ selectedSite: site });
+  vueChargee = site ? { domaine, t: Date.now() } : null;
   if (site?.contexteUtilisateur) {
     const user = { ...getState().user, ...site.contexteUtilisateur,
       porteeGlobale: site.contexteUtilisateur.porteeGlobale === true };
@@ -85,23 +118,40 @@ export function rendreOuverture(nom) {
       <div class="cockpit-squelette-bloc cockpit-squelette-large"></div></div></section>`;
 }
 
-const refusSite = `<section class="cockpit card"><p>Ce site n'est pas disponible dans votre espace.</p><a class="btn btn-secondary" href="#/cockpit/sites">Retour à Mes sites</a></section>`;
-const erreurSite = (domaine) => `<section class="cockpit card" role="alert"><h2>Le cockpit n'a pas pu être chargé</h2>
+const refusSite = `<section class="cockpit card" data-dse-etat="${ETATS.FORBIDDEN}"><p>Ce site n'est pas disponible dans votre espace.</p><a class="btn btn-secondary" href="#/cockpit/sites">Retour à Mes sites</a></section>`;
+const erreurSite = (domaine) => `<section class="cockpit card" role="alert" data-dse-etat="${ETATS.ERROR}"><h2>Le cockpit n'a pas pu être chargé</h2>
   <p>DemainSite Écosystème n'a pas reçu de réponse complète à temps. Vos droits ne sont pas en cause.</p>
   <div class="cockpit-actions"><a class="btn btn-primary" href="#/cockpit/site/${encodeURIComponent(domaine || "")}" data-reessayer-site>Réessayer</a>
   <a class="btn btn-secondary" href="#/cockpit/sites">Retour à Mes sites</a></div></section>`;
 
-async function vue(domaine) {
+/*
+ * Contexte du site pour le menu. Pendant une navigation interne au site, la vue deja chargee
+ * (meme domaine, recente) est reutilisee. Seul un refus definitif retire le site selectionne :
+ * un incident temporaire conserve le contexte affiche.
+ */
+async function vue(domaine, { recente = false } = {}) {
   if (!domaine) return null;
+  const courant = getState().selectedSite;
+  if (recente && courant && !courant.provisoire && vueChargee?.domaine === domaine && Date.now() - vueChargee.t < REUTILISATION_VUE_MS) return courant;
   try {
     const site = (await getSiteCockpit(domaine))?.donnees || null;
-    appliquerVue(site);
+    appliquerVue(site, domaine);
     return site;
   } catch (err) {
-    setState({ selectedSite: null });
-    console.error("[DSE cockpit] site indisponible", err.message);
+    if (classerErreur(err) === ETATS.FORBIDDEN) setState({ selectedSite: null });
+    console.error("[DSE cockpit] contexte du site non actualise", err.message);
     return null;
   }
+}
+
+// Contexte visuel immediat du site demande (nom deja connu) en attendant la reponse du serveur.
+export function preparerContexteSite(domaine) {
+  if (!domaine) return;
+  const courant = getState().selectedSite;
+  if (courant && (courant.acces === domaine || courant.domaine === domaine)) return;
+  let nom = domaine;
+  try { nom = sessionStorage.getItem(`dseOuverture:${domaine}`) || domaine; } catch { /* stockage indisponible */ }
+  setState({ selectedSite: { acces: domaine, domaine, nom, provisoire: true, fonctions: [] } });
 }
 
 export async function cockpitAccueilPage(params) {
@@ -112,7 +162,7 @@ export async function cockpitAccueilPage(params) {
     // Aucun choix par ordre : sans site principal designe, l'utilisateur choisit dans sa liste.
     const vueCourante = c.moi.fonctions.includes("sites") ? await vue(c.moi.domaineAccueil) : null;
     return rendreAccueil({ moi: c.moi, vueCourante, domaineCourant: domaineCourant(), complement: rendreRaccourcisContenus(c.moi) });
-  } catch { return indisponible; }
+  } catch (err) { return echec(err); }
 }
 
 export async function cockpitSitesPage(params) {
@@ -120,9 +170,9 @@ export async function cockpitSitesPage(params) {
     const c = await contexte(params);
     if (c.html) return c.html;
     const criteres = Object.fromEntries(CRITERES_SITES.filter((k) => params?.[k]).map((k) => [k, params[k]]));
-    const resultat = (await getSitesCockpit(criteres).catch(() => null))?.donnees || null;
+    const resultat = (await getSitesCockpit(criteres))?.donnees || null;
     return rendreListeSites(c.moi, resultat, { complement: rendreRaccourcisContenus(c.moi) });
-  } catch { return indisponible; }
+  } catch (err) { return echec(err); }
 }
 
 export async function cockpitGaleriePage(params) {
@@ -135,7 +185,7 @@ export async function cockpitGaleriePage(params) {
     } catch (e) {
       return rendreGalerie(null, e);
     }
-  } catch { return indisponible; }
+  } catch (err) { return echec(err); }
 }
 
 // Le bouton cockpit est verifie par l'API (droit + relation SharePoint) avant toute navigation.
@@ -177,10 +227,13 @@ export async function cockpitClientPage(params) {
     const c = await contexte(params);
     if (c.html) return c.html;
     const criteres = Object.fromEntries(CRITERES_SITES.filter((k) => k !== "client" && params?.[k]).map((k) => [k, params[k]]));
-    const resultat = (await getClientCockpit(params.id, { ...criteres, contexteDomaine: params.domaine || "" }).catch(() => null))?.donnees || null;
+    const resultat = (await getClientCockpit(params.id, { ...criteres, contexteDomaine: params.domaine || "" }).catch((err) => {
+      if (err?.status === 403 || err?.status === 404) return null;
+      throw err;
+    }))?.donnees || null;
     if (!resultat?.client) return `<section class="cockpit card"><p>Cet espace client n'est pas disponible.</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
     return rendreListeSites(c.moi, resultat, { complement: rendreRaccourcisContenus(c.moi, { client: resultat.client.id }) });
-  } catch { return indisponible; }
+  } catch (err) { return echec(err); }
 }
 
 export async function cockpitContenusPage(params) {
@@ -190,9 +243,9 @@ export async function cockpitContenusPage(params) {
     const criteres = { type: params?.type || "medias" };
     if (params?.client) criteres.client = params.client;
     criteres.contexteDomaine = params.domaine || "";
-    const r = (await getContenusCockpit(criteres).catch(() => null))?.donnees || null;
+    const r = (await getContenusCockpit(criteres))?.donnees || null;
     return rendreContenus(r);
-  } catch { return indisponible; }
+  } catch (err) { return echec(err); }
 }
 
 export { activerContenus };
@@ -207,7 +260,7 @@ export async function cockpitSynchronisationsPage(params) {
       if (err?.status === 403 || err?.status === 401) return rendreSynchronisations(null);
       throw err;
     }
-  } catch { return indisponible; }
+  } catch (err) { return echec(err); }
 }
 
 export { activerSynchronisations };
@@ -225,14 +278,16 @@ export async function cockpitSitePage(params) {
     }
     const resultat = etatOuverture(await chargement);
     if (resultat.etat === "READY") {
-      appliquerVue(resultat.site);
+      appliquerVue(resultat.site, params.domaine);
       return rendreVueSite(c.moi, resultat.site, params.section);
     }
-    setState({ selectedSite: null });
-    if (resultat.etat === "FORBIDDEN") return refusSite;
+    if (resultat.etat === "FORBIDDEN") {
+      setState({ selectedSite: null });
+      return refusSite;
+    }
     console.error("[DSE cockpit] ouverture du site interrompue");
     return erreurSite(params.domaine);
-  } catch { return indisponible; }
+  } catch (err) { return echec(err); }
 }
 
 function lireAssistant() {
@@ -296,7 +351,7 @@ export async function cockpitAssistantPage(params) {
     if (c.html) return c.html;
     if (!c.moi.fonctions.includes("creer")) return `<section class="cockpit card"><p>La création de site n'est pas disponible pour votre profil.</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
     return rendreAssistant({ moi: c.moi, numero: params.etape, valeurs: lireAssistant() });
-  } catch { return indisponible; }
+  } catch (err) { return echec(err); }
 }
 
 // Saisies conservees uniquement dans la session du navigateur : aucune ecriture serveur.
@@ -369,19 +424,19 @@ export function activerAssistant(racine = document) {
 
 /* ---------------- Edition : formulaire -> apercu -> confirmation -> resultat ---------------- */
 
-const nonDisponible = (texte) => `<section class="cockpit card"><p>${texte}</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
+const nonDisponible = (texte) => `<section class="cockpit card" data-dse-etat="${ETATS.FORBIDDEN}"><p>${texte}</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
 
 export async function cockpitEditionPage(params) {
   try {
-    const c = await contexte(params);
+    const refus = "Ce réglage n'est pas disponible dans votre espace.";
+    const donnees = lancer(() => getEdition(params.domaine, params.composant, params.element || ""));
+    const c = await contexte(params, { reutiliser: true });
     if (c.html) return c.html;
-    const [r] = await Promise.all([
-      getEdition(params.domaine, params.composant, params.element || ""),
-      vue(params.domaine)
-    ]);
-    if (!r?.donnees) return nonDisponible("Ce réglage n'est pas disponible dans votre espace.");
+    const [{ r, erreur }] = await Promise.all([donnees, vue(params.domaine, { recente: true })]);
+    if (erreur) return echec(erreur, refus);
+    if (!r?.donnees) return echecChargement();
     return rendreEdition(c.moi, r.donnees, params);
-  } catch { return indisponible; }
+  } catch (err) { return echec(err); }
 }
 
 /*
@@ -438,10 +493,10 @@ export async function cockpitAdministrationPage(params) {
     const c = await contexte(params);
     if (c.html) return c.html;
     if (!c.moi.fonctions.includes("administration")) return nonDisponible("L'administration n'est pas disponible pour votre profil.");
-    const r = await getAdminTableau(params.domaine || "").catch(() => null);
-    if (!r?.donnees) return indisponible;
+    const r = await getAdminTableau(params.domaine || "");
+    if (!r?.donnees) return echecChargement();
     return rendreAdministration(c.moi, r.donnees);
-  } catch { return indisponible; }
+  } catch (err) { return echec(err); }
 }
 
 export async function cockpitUtilisateursPage(params) {
@@ -450,12 +505,12 @@ export async function cockpitUtilisateursPage(params) {
     if (c.html) return c.html;
     if (!c.moi.fonctions.includes("utilisateurs")) return nonDisponible("La gestion des utilisateurs n'est pas disponible pour votre profil.");
     const r = await getAdminUtilisateurs(params.domaine || "", params);
-    if (!r?.donnees) return indisponible;
+    if (!r?.donnees) return echecChargement();
     if (r.donnees.peutGererIncidents) r.donnees.incidents = (await getIncidents()).donnees;
     return rendreComptes(c.moi, r.donnees, params);
   } catch (err) {
     console.error("[DSE Comptes]", err.message);
-    return `<section class="cockpit card"><p role="alert">${escapeHtml(err.message)}</p></section>`;
+    return echec(err);
   }
 }
 
@@ -497,7 +552,7 @@ export async function cockpitEspacesPage(params) {
     return rendreEspaces(c.moi, (await getEspaces(params)).donnees, params);
   } catch (err) {
     console.error("[DSE Espaces]", err.message);
-    return `<section class="cockpit card"><p role="alert">${escapeHtml(err.message)}</p></section>`;
+    return echec(err);
   }
 }
 
@@ -510,19 +565,22 @@ export async function cockpitMonComptePage(params) {
     return rendreMonCompte(c.moi, (await getMonCompte()).donnees);
   } catch (err) {
     console.error("[DSE mon compte]", err.message);
-    return `<section class="cockpit card"><p role="alert">${escapeHtml(err.message)}</p></section>`;
+    return echec(err);
   }
 }
 
 /* Constructeur DSE : les donnees et droits viennent du serveur (aucune page, aucun role code en dur). */
 export async function cockpitConstruirePage(params) {
   try {
-    const c = await contexte(params);
+    // Lectures independantes lancees ensemble ; le serveur controle chacune (identite, droits, perimetre).
+    const donnees = lancer(() => getConstruire(params.domaine));
+    const c = await contexte(params, { reutiliser: true });
     if (c.html) return { html: c.html };
-    const [r] = await Promise.all([getConstruire(params.domaine), vue(params.domaine)]);
-    if (!r?.donnees) return { html: nonDisponible("La construction de ce site n'est pas disponible dans votre espace.") };
+    const [{ r, erreur }] = await Promise.all([donnees, vue(params.domaine, { recente: true })]);
+    if (erreur) return { html: echec(erreur, "La construction de ce site n'est pas disponible dans votre espace.") };
+    if (!r?.donnees) return { html: echecChargement() };
     return { html: `<div data-constructeur-racine></div>`, moi: c.moi, donnees: r.donnees };
-  } catch { return { html: indisponible }; }
+  } catch (err) { return { html: echec(err) }; }
 }
 
 export function activerConstruire(racinePage, page, domaine) {
@@ -532,14 +590,16 @@ export function activerConstruire(racinePage, page, domaine) {
 
 export async function cockpitMediasPage(params) {
   try {
-    const c = await contexte(params);
+    const donnees = lancer(() => getMediasCockpit(params.domaine));
+    const c = await contexte(params, { reutiliser: true });
     if (c.html) return { html: c.html };
-    const [r] = await Promise.all([getMediasCockpit(params.domaine), vue(params.domaine)]);
-    if (!r?.donnees) throw new Error("Les médias de ce site sont indisponibles.");
+    const [{ r, erreur }] = await Promise.all([donnees, vue(params.domaine, { recente: true })]);
+    if (erreur) return { html: echec(erreur, "Les médias de ce site ne sont pas disponibles dans votre espace.") };
+    if (!r?.donnees) return { html: echecChargement() };
     return { html: rendreMedias(r.donnees, { domaine: params.domaine }), donnees: r.donnees };
   } catch (err) {
     console.error("[DSE cockpit] medias", err.message);
-    return { html: `<section class="cockpit card"><p role="alert">${escapeHtml(err.message)}</p></section>` };
+    return { html: echec(err) };
   }
 }
 

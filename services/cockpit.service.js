@@ -10,7 +10,7 @@ export const getContenusCockpit = (criteres = {}) => apiGet("/cockpit/contenus",
 export const getClientCockpit = (id, criteres = {}) => apiGet("/cockpit/client", { ...criteres, id });
 export const getStatutsSite = (domaine) => apiGet("/cockpit/sites/statuts", { domaine });
 export const getSiteCockpit = (domaine) => apiGet("/cockpit/site", { domaine }, { timeoutMs: 45000 });
-export const getEdition = (domaine, composant, element = "") => apiGet("/cockpit/edition", { domaine, composant, element });
+export const getEdition = (domaine, composant, element = "") => apiGet("/cockpit/edition", { domaine, composant, element }, { timeoutMs: 45000 });
 export const apercuEdition = (domaine, composant, valeurs, element = "") => apiPost("/cockpit/edition/apercu", { domaine, composant, valeurs, element });
 export const confirmerEdition = (jeton) => apiPost("/cockpit/edition/confirmer", { jeton });
 export const apercuDemandeAcces = (domaine, operation, motif) => apiPost("/cockpit/demandes-acces/apercu", { domaine, operation, motif });
@@ -22,7 +22,7 @@ export const apercuAdmin = (action, params) => apiPost("/cockpit/admin/apercu", 
 export const confirmerAdmin = (jeton) => apiPost("/cockpit/admin/confirmer", { jeton });
 export const getIncidents = () => apiGet("/cockpit/incidents");
 export const deciderIncident = (incident, decision) => apiPost("/cockpit/incidents/decision", { incident, decision });
-export const getConstruire = (domaine, conteneur = "") => apiGet("/cockpit/construire", { domaine, conteneur });
+export const getConstruire = (domaine, conteneur = "") => apiGet("/cockpit/construire", { domaine, conteneur }, { timeoutMs: 45000 });
 export const synchroniserMedias = () => apiPost("/cockpit/medias/synchroniser", {});
 export const getSynchronisations = () => apiGet("/cockpit/admin/synchronisations");
 export const reglerSynchronisation = (code, mode, frequence, unite) => apiPost("/cockpit/admin/synchronisations/reglage", { code, mode, frequence, unite });
@@ -31,7 +31,7 @@ export const getSauvegardes = () => apiGet("/cockpit/admin/synchronisations/sauv
 export const getListesSauvegarde = (manifeste) => apiGet("/cockpit/admin/synchronisations/sauvegardes", { manifeste });
 export const apercuRestauration = (manifeste, liste) => apiPost("/cockpit/admin/synchronisations/restauration/apercu", { manifeste, liste });
 export const confirmerRestauration = (jeton, selection) => apiPost("/cockpit/admin/synchronisations/restauration/confirmer", { jeton, selection });
-export const getMediasCockpit = (domaine) => apiGet("/cockpit/construire", { domaine, vue: "medias" });
+export const getMediasCockpit = (domaine) => apiGet("/cockpit/construire", { domaine, vue: "medias" }, { timeoutMs: 45000 });
 // Cle d'idempotence par action : un double clic ou une relance reseau ne cree jamais de doublon.
 export const actionConstruire = (domaine, action, params = {}, confirmation = {}) =>
   apiPost("/cockpit/construire/action", { domaine, action, params, cle: crypto.randomUUID(), ...confirmation });

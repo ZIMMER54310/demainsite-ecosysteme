@@ -40,23 +40,35 @@ async function refuserEcriture(res, ctx, domaine, action, message) {
 }
 
 /*
- * Fraicheur des droits : SharePoint reste relu, mais au plus une fois par fenetre courte
- * (DSE_DROITS_FRAICHEUR_MS, 10 s par defaut) au lieu d'une fois par requete. Les requetes
- * d'une meme navigation (/moi puis /cockpit/site) partagent ainsi la meme lecture en cours.
- * Les ecritures du cockpit invalident toujours explicitement les caches (shared/ecriture.js).
+ * Fraicheur des droits : SharePoint reste relu, mais au plus une fois par fenetre
+ * (DSE_DROITS_FRAICHEUR_MS, 30 s par defaut) au lieu d'une fois par requete. La fenetre court
+ * a partir de la FIN du rechargement : une relecture lente (Graph froid) n'est jamais videe
+ * pendant qu'elle est en cours, ce qui provoquait des rechargements en cascade (droits > 18 s).
+ * Les ecritures du cockpit invalident toujours explicitement les caches (shared/ecriture.js)
+ * et recontrolent les droits ; un changement de droits SharePoint est visible sous 30 s.
  */
-let dernierRafraichissement = 0;
+const RECHARGEMENT_MAX_MS = 60000;
+let debutRafraichissement = 0;
+let finRafraichissement = 0;
+let rechargementEnCours = false;
 function fraicheurDroitsMs() {
   const v = Number(process.env.DSE_DROITS_FRAICHEUR_MS);
-  return Number.isFinite(v) && v >= 0 ? v : 10000;
+  return Number.isFinite(v) && v >= 0 ? v : 30000;
 }
 function rafraichirLectures() {
   const maintenant = Date.now();
-  if (maintenant - dernierRafraichissement < fraicheurDroitsMs()) return;
-  dernierRafraichissement = maintenant;
+  if (rechargementEnCours && maintenant - debutRafraichissement < RECHARGEMENT_MAX_MS) return;
+  if (!rechargementEnCours && maintenant - Math.max(debutRafraichissement, finRafraichissement) < fraicheurDroitsMs()) return;
+  debutRafraichissement = maintenant;
+  rechargementEnCours = true;
   dse.viderCacheGraph();
   droits.viderCache();
   require("../shared/catalogue-source").viderCache();
+}
+function lecturesRechargees() {
+  if (!rechargementEnCours) return;
+  rechargementEnCours = false;
+  finRafraichissement = Date.now();
 }
 
 /* Mesure des etapes, exposee en en-tete Server-Timing (durees uniquement, aucune donnee). */
@@ -80,7 +92,11 @@ async function contexteUtilisateur(req) {
   const identite = session.identiteSession(req);
   if (!identite) return null;
   rafraichirLectures();
-  return { identite, droits: await droits.droitsPour(identite) };
+  try {
+    return { identite, droits: await droits.droitsPour(identite) };
+  } finally {
+    lecturesRechargees();
+  }
 }
 
 const contextePublic = (d) => ({ role: d.role, niveau: d.niveau, fonctions: d.fonctions,
@@ -473,14 +489,16 @@ async function contexteEcriture(req, res) {
 
 async function editionLire(req, res) {
   try {
-    const ctx = await contexteUtilisateur(req);
+    const t = chrono();
+    const ctx = await t.etape("droits", () => contexteUtilisateur(req));
     if (!ctx) return refuser(res, 401, "Connexion requise.");
     const composant = String(req.query.composant || "");
     const def = edition.COMPOSANTS_EDITABLES[composant];
     const info = await siteDuPerimetre(ctx, req.query.domaine);
     const suffixe = req.query.element === "nouveau" ? "creer" : "modifier";
     if (!info || !def || !peutOperation(ctx.droits, `${def.fonction}.${suffixe}`, def.fonction)) return refuser(res, 403, "Ce réglage n'est pas disponible dans votre espace.");
-    const r = await edition.lire({ composant, siteId: info.id, element: String(req.query.element || "") });
+    const r = await t.etape("edition", () => edition.lire({ composant, siteId: info.id, element: String(req.query.element || "") }));
+    t.appliquer(res);
     repondre(res, 200, { succes: true, donnees: { site: info.titre, domaine: perimetre.domaineAcces(info),
       peutCreer: !!def.creation && peutOperation(ctx.droits, `${def.fonction}.creer`, def.fonction), ...r }, meta: meta() });
   } catch (e) {
@@ -739,26 +757,28 @@ async function perimetreConstructeur(ctx, domaine) {
 
 async function construireLire(req, res) {
   try {
-    const ctx = await contexteUtilisateur(req);
+    const t = chrono();
+    const ctx = await t.etape("droits", () => contexteUtilisateur(req));
     if (!ctx) return refuser(res, 401, "Connexion requise.");
-    const p = await perimetreConstructeur(ctx, req.query.domaine);
+    const p = await t.etape("perimetre", () => perimetreConstructeur(ctx, req.query.domaine));
     if (!p) return refuser(res, 403, "Accès non autorisé.");
     const mediasSeulement = req.query.vue === "medias";
     if (mediasSeulement ? !p.lecture("logo-medias") : !FONCTIONS_CONSTRUCTEUR.some((f) => p.lecture(f))) return refuser(res, 403, "Accès non autorisé.");
     const C = require("../shared/constructeur");
-    const d = await require("../shared/builder-source").obtenirDonnees();
+    const d = await t.etape("builder", () => require("../shared/builder-source").obtenirDonnees());
     const donnees = { site: { titre: p.info.titre, domaine: (p.info.domaines || [])[0] || null },
       operations: ctx.droits.autorisations ? ctx.droits.autorisations.operations.map((o) => o.operation) : null,
       operationsInterdites: ctx.droits.contraintesOperations || [],
       droits: Object.fromEntries([...FONCTIONS_CONSTRUCTEUR, "logo-medias"].map((f) => [f, { lecture: p.lecture(f), ecriture: p.peut(f) }])),
       superAdmin: p.superAdmin, ...C.vue(d, p) };
-    const experience = await experienceCockpit.lire();
+    const experience = await t.etape("experience", () => experienceCockpit.lire());
     donnees.accompagnement = experience.accompagnement;
     if (mediasSeulement) {
       let televersement = null;
       if (p.peut("logo-medias")) {
         try { televersement = await require("../shared/medias-televersement").options(await ecriture.contexteGraph()); } catch (e) { console.error("[DSE cockpit] medias options", e.message); }
       }
+      t.appliquer(res);
       return repondre(res, 200, { succes: true, donnees: {
         site: donnees.site, droits: { "logo-medias": donnees.droits["logo-medias"] },
         medias: donnees.medias, logo: donnees.logo, televersement
@@ -778,6 +798,7 @@ async function construireLire(req, res) {
     }
     experienceCockpit.decorerConstruction(donnees, experience.realisations);
     res.set("Cache-Control", "no-store");
+    t.appliquer(res);
     repondre(res, 200, { succes: true, donnees, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] constructeur lire", e.message);

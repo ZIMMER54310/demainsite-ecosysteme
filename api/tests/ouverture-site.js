@@ -57,6 +57,79 @@ function simuler(site) {
   simuler(() => reponse(403, { succes: false, erreur: { message: REFUS } }));
   assert.ok((await pages.cockpitSitePage({ domaine: "autre.example" })).includes(REFUS));
 
+
+  // Etat global : 401/403 = FORBIDDEN, tout autre echec = ERROR ; une navigation ancienne ne termine jamais la plus recente.
+  const ch = await import("../../js/chargement.js");
+  assert.strictEqual(ch.classerErreur({ status: 403 }), "FORBIDDEN");
+  assert.strictEqual(ch.classerErreur({ status: 401 }), "FORBIDDEN");
+  for (const status of [0, 500, 503, 504, undefined]) assert.strictEqual(ch.classerErreur({ status }), "ERROR");
+  ch.commencerNavigation("Chargement de En-tête pour DemainSite", 1);
+  ch.commencerNavigation("Chargement de Pages pour DemainSite", 2);
+  assert.strictEqual(ch.terminerNavigation(1, "READY"), false);
+  assert.strictEqual(ch.etatChargement(), "LOADING");
+  assert.strictEqual(ch.terminerNavigation(2, "READY"), true);
+  assert.strictEqual(ch.etatChargement(), "READY");
+  const attente = ch.rendreChargement("Chargement de En-tête pour DemainSite");
+  assert.ok(attente.includes("DemainSite Écosystème travaille") && attente.includes("Chargement de En-tête pour DemainSite"));
+  assert.ok(attente.includes(`data-dse-etat="LOADING"`) && !["FORBIDDEN", "ERROR"].includes(ch.etatPage(attente)));
+  assert.ok(!/indisponible|pas disponible/.test(attente));
+  assert.strictEqual(ch.etatPage(pages.echecChargement()), "ERROR");
+  assert.strictEqual(ch.etatPage(pages.echec({ status: 403, message: REFUS })), "FORBIDDEN");
+  assert.strictEqual(ch.etatPage(pages.echec({ status: 503 })), "ERROR");
+  assert.ok(!pages.echec({ status: 503 }).includes(REFUS) && !pages.echec({ status: 503 }).includes("momentanément indisponible"));
+
+  // Construire : un 503 ou un delai donne ERROR (jamais FORBIDDEN), le site selectionne est conserve.
+  const { getState, setState } = await import("../../js/state.js");
+  const siteDemo = { acces: "demainsite.fr", domaine: "demainsite.fr", nom: "DemainSite", fonctions: ["pages", "entete", "footer"] };
+  for (const panne of [
+    () => reponse(503, { succes: false, erreur: { message: "Le service est momentanément indisponible." } }),
+    () => { const e = new Error("abort"); e.name = "AbortError"; throw e; }
+  ]) {
+    setState({ selectedSite: siteDemo });
+    global.fetch = async (url) => {
+      const u = String(url);
+      if (u.includes("/moi")) return reponse(200, moi);
+      if (u.includes("/construire")) return panne();
+      if (u.includes("/cockpit/site")) return panne();
+      throw new Error(`appel inattendu ${u}`);
+    };
+    const page = await pages.cockpitConstruirePage({ domaine: "demainsite.fr", onglet: "entetes" });
+    assert.strictEqual(ch.etatPage(page.html), "ERROR");
+    assert.ok(!page.html.includes(REFUS) && !page.html.includes("momentanément indisponible"));
+    assert.strictEqual(getState().selectedSite?.nom, "DemainSite", "contexte du site perdu pendant un incident");
+  }
+  // /moi temporairement en echec apres un contexte etabli : utilisateur et menu conserves.
+  setState({ user: { authenticated: true, reconnu: true, displayName: "Pilote", fonctions: ["sites"], menu: [{ url: "/cockpit/galerie", libelle: "Galerie" }] } });
+  global.fetch = async (url) => (String(url).includes("/moi") ? reponse(503, { succes: false, erreur: { message: "Le service est momentanément indisponible." } }) : reponse(200, { succes: true, donnees: { sites: [] } }));
+  await pages.cockpitSitesPage({});
+  assert.strictEqual(getState().user.menu.length, 1, "menu perdu apres un /moi en echec temporaire");
+
+  // Preparation immediate du contexte visuel avant la reponse du serveur.
+  setState({ selectedSite: null });
+  memoire.set("dseOuverture:demainsite.fr", "DemainSite");
+  pages.preparerContexteSite("demainsite.fr");
+  assert.deepStrictEqual([getState().selectedSite.nom, getState().selectedSite.provisoire], ["DemainSite", true]);
+
+  // Menu du site selectionne : groupes, Construire le site parent, element actif exact.
+  const nav = await import("../../modules/cockpit/navigation-site.js");
+  const items = nav.navigationSite(siteDemo, "lecture");
+  assert.ok(items.filter((x) => x.enfant).map((x) => x.libelle).join() === "Pages,En-tête,Footer,Catalogue / Modèles");
+  const { actif, parent } = nav.elementActif(items, "/cockpit/site/demainsite.fr/construire?onglet=entetes");
+  assert.strictEqual(actif.libelle, "En-tête");
+  assert.ok(/\/construire$/.test(parent.url));
+  assert.strictEqual(nav.elementActif(items, "/cockpit/site/demainsite.fr/construire").actif.libelle, "En-tête");
+  assert.strictEqual(nav.elementActif(items, "/cockpit/site/demainsite.fr").actif.libelle, "Vue d'ensemble");
+  const { renderSidebar } = await import("../../components/sidebar.js");
+  for (const s of [siteDemo, { ...siteDemo, provisoire: true }]) {
+    setState({ selectedSite: s, user: { authenticated: true, reconnu: true, fonctions: ["sites"], menu: [
+      { url: "/cockpit", libelle: "Cockpit" }, { url: "/cockpit/sites", libelle: "Mes sites" }, { url: "/cockpit/galerie", libelle: "Galerie" }, { url: "/cockpit/compte", libelle: "Mon compte" }] } });
+    global.location.hash = "#/cockpit/site/demainsite.fr/construire?onglet=entetes";
+    const html = renderSidebar();
+    for (const t of ["Navigation générale", "Cockpit général", "Site sélectionné", "DemainSite", "demainsite.fr", "Construire le site", "Fonctions globales", "Galerie", "Mon compte", "Changer de site"]) assert.ok(html.includes(t), `menu sans ${t}`);
+    assert.ok(/class="nav-link active[^"]*"[^>]*aria-current="page"[^>]*href="#\/cockpit\/site\/demainsite\.fr\/construire\?onglet=entetes"/.test(html), "En-tête non actif");
+    assert.ok(html.includes("is-parent-actif"));
+  }
+
   // Jeton de navigation : chaque resolution invalide la precedente.
   router.registerRoute("/x", async () => {});
   global.location.hash = "#/x";

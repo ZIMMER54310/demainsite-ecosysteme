@@ -1,4 +1,4 @@
-import { getHealth } from "../services/health.service.js"; import { initializeAuth } from "./auth.js"; import { setState,getState } from "./state.js"; import { registerRoute,startRouter,navigationCourante,resolveRoute } from "./router.js"; import { renderHeader } from "../components/header.js"; import { renderSidebar } from "../components/sidebar.js"; import { renderBreadcrumb } from "../components/breadcrumb.js"; import { renderFooter } from "../components/footer.js"; import { showAlert,clearAlert } from "../components/alert.js"; import { notFoundPage } from "../pages/generic.js"; import { cockpitAccueilPage,cockpitSitesPage,cockpitClientPage,cockpitSitePage,activerVueSite,cockpitAssistantPage,activerAssistant,activerFiltresSites,cockpitEditionPage,activerEdition,cockpitAdministrationPage,cockpitUtilisateursPage,activerUtilisateurs,cockpitConstruirePage,activerConstruire,rendreOuverture } from "../pages/cockpit.js";
+import { getHealth } from "../services/health.service.js"; import { initializeAuth } from "./auth.js"; import { setState,getState } from "./state.js"; import { registerRoute,startRouter,navigationCourante,resolveRoute } from "./router.js"; import { renderHeader } from "../components/header.js"; import { renderSidebar } from "../components/sidebar.js"; import { renderBreadcrumb } from "../components/breadcrumb.js"; import { renderFooter } from "../components/footer.js"; import { showAlert,clearAlert } from "../components/alert.js"; import { notFoundPage } from "../pages/generic.js"; import { cockpitAccueilPage,cockpitSitesPage,cockpitClientPage,cockpitSitePage,activerVueSite,cockpitAssistantPage,activerAssistant,activerFiltresSites,cockpitEditionPage,activerEdition,cockpitAdministrationPage,cockpitUtilisateursPage,activerUtilisateurs,cockpitConstruirePage,activerConstruire,rendreOuverture,preparerContexteSite,echecChargement,activerGalerie,activerFiltresEspaces } from "../pages/cockpit.js"; import { commencerNavigation,terminerNavigation,rendreChargement,etatPage } from "./chargement.js";
 function mount(page,breadcrumb){ clearAlert(); document.querySelector("#app-header").innerHTML=renderHeader(getState().apiStatus,getState().user); document.querySelector("#app-sidebar").innerHTML=renderSidebar(); activerCadre(); document.querySelector("#app-breadcrumb").innerHTML=renderBreadcrumb(breadcrumb); document.querySelector("#app-page").innerHTML=page; document.querySelector("#app-page").insertAdjacentHTML("beforeend",renderFooter()); document.querySelector("#main").focus(); }
 function activerCadre() {
   const bouton = document.querySelector("[data-reduire-menu]");
@@ -35,25 +35,62 @@ registerRoute("/", async () => {
     });
   }
 }); // Cockpit unique : l'interface s'adapte aux droits renvoyes par le serveur.
-registerRoute("/cockpit",async p=>mount(await cockpitAccueilPage(p),["Cockpit"]));
-registerRoute("/cockpit/sites",async p=>{ mount(await cockpitSitesPage(p),["Cockpit","Mes sites"]); activerFiltresSites(document.querySelector("#app-page")); });
-registerRoute("/cockpit/galerie",async p=>{ const {cockpitGaleriePage,activerGalerie}=await import("../pages/cockpit.js"); mount(await cockpitGaleriePage(p),["Cockpit","Galerie"]); activerGalerie(document.querySelector("#app-page")); });
-registerRoute("/cockpit/compte",async p=>{ const {cockpitMonComptePage}=await import("../pages/cockpit.js"); mount(await cockpitMonComptePage(p),["Cockpit","Mon compte"]); });
-registerRoute("/cockpit/client/:id",async p=>{ const html=await cockpitClientPage(p); mount(html,["Cockpit","Espace client"]); activerFiltresSites(document.querySelector("#app-page")); });
-registerRoute("/cockpit/site/:domaine",async p=>{
-  // Etat LOADING immediat ; seul le resultat de la navigation courante est monte.
-  const jeton=navigationCourante(); const fil=["Cockpit","Mes sites",p.domaine];
-  mount(rendreOuverture(nomOuverture(p.domaine)),fil);
-  const page=await cockpitSitePage(p);
-  if(jeton!==navigationCourante()) return;
-  mount(page,fil); activerVueSite(document.querySelector("#app-page"));
+/*
+ * Navigation cockpit commune : etat LOADING immediat (indicateur global + squelette), menu et site
+ * selectionne conserves, puis seule la reponse de la navigation la plus recente est montee.
+ */
+const page$ = () => document.querySelector("#app-page");
+function monterAttente(html, fil) {
+  clearAlert();
+  document.querySelector("#app-sidebar").innerHTML = renderSidebar();
+  activerCadre();
+  document.querySelector("#app-breadcrumb").innerHTML = renderBreadcrumb(fil);
+  page$().innerHTML = html;
+}
+function rafraichirNavigation(fil) {
+  document.querySelector("#app-sidebar").innerHTML = renderSidebar();
+  activerCadre();
+  if (fil) document.querySelector("#app-breadcrumb").innerHTML = renderBreadcrumb(fil);
+}
+async function naviguer(p, fil, detail, charger, activer, attente) {
+  const jeton = navigationCourante();
+  if (/^#\/cockpit\/site\//.test(location.hash)) preparerContexteSite(p.domaine);
+  commencerNavigation(detail, jeton);
+  monterAttente(attente || rendreChargement(detail), fil);
+  let page;
+  try { page = await charger(); } catch (err) { console.error("[DSE navigation]", err?.message); page = echecChargement(); }
+  if (jeton !== navigationCourante()) return;
+  const html = typeof page === "string" ? page : page?.html || "";
+  mount(html, fil);
+  try { activer?.(page$(), page); } finally { terminerNavigation(jeton, etatPage(html)); }
+}
+const nomSite = (d) => {
+  const s = getState().selectedSite;
+  return s && !s.provisoire && (s.acces === d || s.domaine === d) && s.nom ? s.nom : nomOuverture(d);
+};
+const ONGLETS = { entetes: "En-tête", pages: "Pages", footers: "Footer", bibliotheque: "Bibliothèque", catalogue: "Catalogue / Modèles" };
+const COMPOSANTS = { articles: "Articles", menu: "Menu", seo: "SEO", entete: "En-tête", footer: "Footer" };
+registerRoute("/cockpit",p=>naviguer(p,["Cockpit"],"Chargement du cockpit",()=>cockpitAccueilPage(p)));
+registerRoute("/cockpit/sites",p=>naviguer(p,["Cockpit","Mes sites"],"Chargement de Mes sites",()=>cockpitSitesPage(p),activerFiltresSites));
+registerRoute("/cockpit/galerie",p=>naviguer(p,["Cockpit","Galerie"],"Chargement de la Galerie",async()=>{ const {cockpitGaleriePage}=await import("../pages/cockpit.js"); return cockpitGaleriePage(p); },(r)=>activerGalerie(r)));
+registerRoute("/cockpit/compte",p=>naviguer(p,["Cockpit","Mon compte"],"Chargement de Mon compte",async()=>{ const {cockpitMonComptePage}=await import("../pages/cockpit.js"); return cockpitMonComptePage(p); }));
+registerRoute("/cockpit/client/:id",p=>naviguer(p,["Cockpit","Espace client"],"Chargement de l'espace client",()=>cockpitClientPage(p),activerFiltresSites));
+registerRoute("/cockpit/site/:domaine",p=>{
+  const nom=nomSite(p.domaine);
+  return naviguer(p,["Cockpit","Mes sites",p.domaine],`Ouverture de ${nom}`,()=>cockpitSitePage(p),activerVueSite,rendreOuverture(nom));
 });
-registerRoute("/cockpit/site/:domaine/modifier/:composant",async p=>{ mount(await cockpitEditionPage(p),["Cockpit","Mes sites",p.domaine,"Modifier"]); activerEdition(document.querySelector("#app-page")); });
-registerRoute("/cockpit/site/:domaine/construire",async p=>{ const page=await cockpitConstruirePage(p); mount(page.html,["Cockpit","Mes sites",p.domaine,"Construire"]); activerConstruire(document.querySelector("#app-page"),page,p.domaine); });
-registerRoute("/cockpit/administration",async p=>mount(await cockpitAdministrationPage(p),["Cockpit","Administration"]));
-registerRoute("/cockpit/utilisateurs",async p=>{ mount(await cockpitUtilisateursPage(p),["Cockpit","Utilisateurs et accès"]); activerUtilisateurs(document.querySelector("#app-page")); });
-registerRoute("/cockpit/espaces",async p=>{ const {cockpitEspacesPage,activerFiltresEspaces}=await import("../pages/cockpit.js"); mount(await cockpitEspacesPage(p),["Cockpit","Espaces"]); activerFiltresEspaces(document.querySelector("#app-page")); });
-registerRoute("/cockpit/creer",async p=>{ mount(await cockpitAssistantPage(p),["Cockpit","Créer un site"]); activerAssistant(document.querySelector("#app-page")); });
+registerRoute("/cockpit/site/:domaine/modifier/:composant",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Modifier"],`Chargement de ${COMPOSANTS[p.composant]||"la fonction"} pour ${nomSite(p.domaine)}`,()=>cockpitEditionPage(p),activerEdition));
+registerRoute("/cockpit/site/:domaine/construire",p=>{
+  const fil=["Cockpit","Mes sites",p.domaine,"Construire"];
+  // Changement d'onglet dans le constructeur deja ouvert pour ce site : aucune relecture complete.
+  const racine=document.querySelector("#app-page [data-constructeur-racine]");
+  if(racine?.dseDomaine===p.domaine&&racine.dseChangerOnglet?.(p.onglet)){ rafraichirNavigation(fil); return; }
+  return naviguer(p,fil,`Chargement de ${ONGLETS[p.onglet||"entetes"]||"Construire le site"} pour ${nomSite(p.domaine)}`,()=>cockpitConstruirePage(p),(r,page)=>activerConstruire(r,page,p.domaine));
+});
+registerRoute("/cockpit/administration",p=>naviguer(p,["Cockpit","Administration"],"Chargement de l'administration",()=>cockpitAdministrationPage(p)));
+registerRoute("/cockpit/utilisateurs",p=>naviguer(p,["Cockpit","Utilisateurs et accès"],"Chargement des comptes",()=>cockpitUtilisateursPage(p),activerUtilisateurs));
+registerRoute("/cockpit/espaces",p=>naviguer(p,["Cockpit","Espaces"],"Chargement des espaces",async()=>{ const {cockpitEspacesPage}=await import("../pages/cockpit.js"); return cockpitEspacesPage(p); },(r)=>activerFiltresEspaces(r)));
+registerRoute("/cockpit/creer",p=>naviguer(p,["Cockpit","Créer un site"],"Chargement de l'assistant",()=>cockpitAssistantPage(p),activerAssistant));
 // Anciennes entrees : redirigees vers le cockpit unique.
 for (const ancienne of ["/sites","/site/:id","/domaines","/pages","/modules","/medias","/seo","/parametres","/journal"]) registerRoute(ancienne,()=>{ location.replace("#/cockpit"); });
 registerRoute("/404",()=>{ document.body.classList.remove("dse-public"); mount(notFoundPage(),["Erreur"]); });
@@ -63,20 +100,12 @@ import { accueilPage } from "../pages/accueil.js";
 import { monterCatalogue } from "../modules/catalogue/catalogue.js";
 import { monterAccesPublic } from "../modules/public/acces.js";
 import { cockpitMediasPage, activerMedias, cockpitContenusPage, activerContenus } from "../pages/cockpit.js";
-registerRoute("/cockpit/contenus", async p => {
-  mount(await cockpitContenusPage(p), ["Cockpit", "Gestion des contenus"]);
-  activerContenus(document.querySelector("#app-page"));
-});
+registerRoute("/cockpit/contenus", p => naviguer(p, ["Cockpit", "Gestion des contenus"], "Chargement des contenus", () => cockpitContenusPage(p), activerContenus));
 import { cockpitSynchronisationsPage, activerSynchronisations } from "../pages/cockpit.js";
-registerRoute("/cockpit/synchronisations", async p => {
-  mount(await cockpitSynchronisationsPage(p), ["Cockpit", "Synchronisations"]);
-  activerSynchronisations(document.querySelector("#app-page"));
-});
-registerRoute("/cockpit/site/:domaine/medias", async p => {
-  const page = await cockpitMediasPage(p);
-  mount(page.html, ["Cockpit", "Mes sites", p.domaine, "Médias"]);
-  activerMedias(document.querySelector("#app-page"), page, p.domaine);
-});
+registerRoute("/cockpit/synchronisations", p => naviguer(p, ["Cockpit", "Synchronisations"], "Chargement des synchronisations", () => cockpitSynchronisationsPage(p), activerSynchronisations));
+registerRoute("/cockpit/site/:domaine/medias", p => naviguer(p, ["Cockpit", "Mes sites", p.domaine, "Médias"], `Chargement des médias pour ${nomSite(p.domaine)}`, () => cockpitMediasPage(p), (r, page) => activerMedias(r, page, p.domaine)));
+// Onglet change sur place par le constructeur : le menu suit la fonction active.
+document.addEventListener("dse:navigation-locale", () => rafraichirNavigation());
 /* Retour immediat sur « Ouvrir » : bouton desactive (aucun double clic) et nom du site memorise pour l'ecran d'ouverture. */
 const OUVERTURE_SITE = /^#\/cockpit\/site\/([^/?]+)(\?.*)?$/;
 function nomOuverture(domaine) {

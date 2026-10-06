@@ -19,14 +19,36 @@ export function navigationSite(vue, niveau) {
   return [
     { libelle: "Vue d'ensemble", icone: "home", url: base },
     ...(construction ? [{ libelle: "Construire le site", icone: "settings", url: `${base}/construire` }] : []),
+    // Avec la construction autorisee, les fonctions du site sont regroupees sous « Construire le site ».
     ...sections.filter((x) => fonctions.has(x.fonction)).map((x) => ({
-      libelle: operations?.find((o) => o.fonction === x.fonction)?.libelle || x.libelle, icone: x.icone,
+      libelle: operations?.find((o) => o.fonction === x.fonction)?.libelle || x.libelle, icone: x.icone, enfant: construction,
       url: x.route ? `${base}/${x.route}` : x.onglet && construction ? `${base}/construire?onglet=${x.onglet}`
         : x.composant && ecriture ? `${base}/modifier/${x.composant}${operations &&
           !operations.some((o) => o.operation === `${x.fonction}.modifier`) &&
           operations.some((o) => o.operation === `${x.fonction}.creer`) ? "?element=nouveau" : ""}`
           : `${base}?section=${x.fonction === "logo-medias" ? "identite" : x.fonction}`
     })),
-    ...(construction ? [{ libelle: "Catalogue / Modèles", icone: "layers", url: `${base}/construire?onglet=catalogue` }] : [])
+    ...(construction ? [{ libelle: "Catalogue / Modèles", icone: "layers", url: `${base}/construire?onglet=catalogue`, enfant: true }] : [])
   ];
+}
+
+// Cle de comparaison d'une adresse du menu : chemin, onglet du constructeur (En-tetes par defaut) ou section.
+export function cleNavigation(url) {
+  const [chemin, requete = ""] = String(url || "").split("?");
+  const params = new URLSearchParams(requete);
+  if (/\/construire$/.test(chemin)) return `${chemin}?onglet=${params.get("onglet") || "entetes"}`;
+  if (params.get("section")) return `${chemin}?section=${params.get("section")}`;
+  return chemin;
+}
+
+// Element actif : correspondance exacte de la page ouverte ; le parent « Construire le site » suit ses enfants.
+export function elementActif(items, route) {
+  const cle = cleNavigation(route);
+  const enfant = items.find((x) => x.enfant && cleNavigation(x.url) === cle);
+  if (enfant) return { actif: enfant, parent: items.find((x) => /\/construire$/.test(x.url)) || null };
+  const direct = items.find((x) => !x.enfant && !/\/construire$/.test(x.url) && cleNavigation(x.url) === cle);
+  if (direct) return { actif: direct, parent: null };
+  const construire = items.find((x) => /\/construire$/.test(x.url));
+  if (construire && /\/(construire|modifier\/[^/?]+|medias)(\?|$)/.test(route)) return { actif: null, parent: construire };
+  return { actif: null, parent: null };
 }
