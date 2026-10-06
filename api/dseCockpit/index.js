@@ -500,6 +500,7 @@ async function editionLire(req, res) {
     const r = await t.etape("edition", () => edition.lire({ composant, siteId: info.id, element: String(req.query.element || "") }));
     t.appliquer(res);
     repondre(res, 200, { succes: true, donnees: { site: info.titre, domaine: perimetre.domaineAcces(info),
+      domainePrincipal: perimetre.domainesDuSite(info).principal || null,
       peutCreer: !!def.creation && peutOperation(ctx.droits, `${def.fonction}.creer`, def.fonction), ...r }, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] edition", e.message);

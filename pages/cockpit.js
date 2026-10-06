@@ -9,7 +9,7 @@ import {
 import { activerConstructeur } from "../modules/cockpit/constructeur.js";
 import {
   rendreConnexion, rendreSansAcces, rendreAccueil, rendreListeSites, rendreVueSite, rendreAssistant,
-  CRITERES_SITES, lienSites, rendreEdition, rendreApercu, rendreResultatEcriture, rendreAdministration, rendreUtilisateurs, rendreMonCompte
+  CRITERES_SITES, lienSites, rendreEdition, adressePublique, rendreApercu, rendreResultatEcriture, rendreAdministration, rendreUtilisateurs, rendreMonCompte
 } from "../modules/cockpit/cockpit.js";
 import { escapeHtml } from "../modules/public/outils.js";
 import { getMediasCockpit, actionConstruire, televerserMedia } from "../services/cockpit.service.js";
@@ -477,6 +477,10 @@ export function activerEdition(racine = document) {
   if (!form || !zone) return;
   const lancer = brancherConfirmation(zone, (d) => apercuEdition(d.domaine, d.composant, d.valeurs, d.element), confirmerEdition, () => {
     form.querySelectorAll("[data-champ]").forEach((c) => { c.defaultValue = c.value; });
+  });
+  form.querySelectorAll("[data-chemin]").forEach((champ) => {
+    const apercu = champ.closest(".cockpit-chemin")?.querySelector("[data-chemin-apercu]");
+    if (apercu) champ.addEventListener("input", () => { apercu.textContent = adressePublique(champ.dataset.domainePrincipal, champ.value); });
   });
   form.addEventListener("submit", (ev) => {
     ev.preventDefault();

@@ -19,6 +19,30 @@ const COMPOSANTS_EDITABLES = {
 };
 
 const referenceElement = (listeId, id) => ecriture.hash([listeId, String(id)]).slice(0, 24);
+
+/*
+ * Articles : la colonne texte URL de OBJ-ARTICLE contient le chemin de l'article sur son site.
+ * Le domaine vient toujours du DOMAIN-PRINCIPAL du site selectionne, jamais d'une saisie.
+ */
+const MESSAGE_CHEMIN = "Chemin de l'article : saisissez uniquement le chemin (exemple /actualites/mon-article). Le domaine principal du site est ajouté automatiquement.";
+
+function champsDuComposant(composant, champs) {
+  if (composant !== "articles") return champs;
+  return champs.map((c) => /^URL$/i.test(c.nom) ? { ...c, libelle: "Chemin de l'article", chemin: true } : c);
+}
+
+function normaliserChemin(brut) {
+  const v = String(brut ?? "").trim();
+  if (!v) return { valeur: "" };
+  if (/^[a-z][a-z0-9+.-]*:/i.test(v) || v.startsWith("//") || (!v.startsWith("/") && v.split("/")[0].includes("."))) {
+    return { erreur: MESSAGE_CHEMIN };
+  }
+  const chemin = `/${v.replace(/^\/+/, "")}`.replace(/\/{2,}/g, "/");
+  if (!/^\/[A-Za-z0-9/_.-]*$/.test(chemin) || chemin.split("/").some((s) => s === "." || s === "..")) {
+    return { erreur: "Chemin de l'article : utilisez uniquement des lettres sans accent, chiffres, tirets, soulignés et barres obliques." };
+  }
+  return { valeur: chemin };
+}
 const cibleArticle = dse.trouverColonneSiteCible;
 
 function sitesArticle(fields, colonnes, listeSiteId) {
@@ -71,7 +95,7 @@ async function resoudre(g, composant, siteId, element = "") {
   const selectionChamps = composant === "articles" ? selectionArticle(colonnes, listeSite.id) : null;
   const items = bruts || await ecriture.collecterFrais(g,
     `/sites/${g.siteGraphId}/lists/${liste.id}/items?$expand=fields($select=${selectionChamps.join(",")})&$top=200`);
-  const champs = ecriture.champsModifiables(colonnes);
+  const champs = champsDuComposant(composant, ecriture.champsModifiables(colonnes));
   if (!champs.length) return { indisponible: `${def.libelle} : aucun champ modifiable.` };
   const lies = elementsLies(items, colonnes, siteId, listeSite.id, composant);
   if (lies.length === 0 || def.creation && element === "nouveau") {
@@ -106,7 +130,8 @@ async function resoudre(g, composant, siteId, element = "") {
 
 const formulaire = (r) => ({
   libelle: r.def.libelle,
-  champs: r.champs.map((c) => ({ cle: c.cle, libelle: c.libelle, multiligne: c.multiligne, max: c.max, valeur: r.actuel[c.nom] ?? "" }))
+  champs: r.champs.map((c) => ({ cle: c.cle, libelle: c.libelle, multiligne: c.multiligne, max: c.max, valeur: r.actuel[c.nom] ?? "",
+    ...(c.chemin ? { chemin: true } : {}) }))
 });
 
 async function champsCreation(g, r, siteId, composant) {
@@ -154,6 +179,13 @@ async function preparer({ identite, composant, siteId, siteNom, valeurs, element
     return { status: 403, erreur: "Cet élément est verrouillé et protégé contre les modifications." };
   }
   const { erreurs, propres } = ecriture.validerValeurs(r.champs, valeurs);
+  for (const c of r.champs.filter((x) => x.chemin && Object.hasOwn(propres, x.nom))) {
+    // Une valeur historique non modifiee est conservee telle quelle.
+    if (propres[c.nom] === String(r.actuel[c.nom] ?? "").trim()) continue;
+    const n = normaliserChemin(propres[c.nom]);
+    if (n.erreur) erreurs.push(n.erreur);
+    else propres[c.nom] = n.valeur;
+  }
   if (!r.itemId && !String(propres.Title || "").trim()) erreurs.push("Un titre est nécessaire pour créer ce réglage.");
   if (erreurs.length) return { status: 422, erreur: erreurs.join(" "), erreurs };
   const diff = ecriture.differences(r.champs, r.actuel, propres);
@@ -194,4 +226,5 @@ async function preparer({ identite, composant, siteId, siteNom, valeurs, element
   return { status: 200, jeton, changements: diff.map(({ libelle, avant: a, apres }) => ({ libelle, avant: a, apres })) };
 }
 
-module.exports = { COMPOSANTS_EDITABLES, lire, preparer, resoudre, elementsLies, champsCreation };
+module.exports = { COMPOSANTS_EDITABLES, lire, preparer, resoudre, elementsLies, champsCreation,
+  _test: { normaliserChemin, champsDuComposant } };

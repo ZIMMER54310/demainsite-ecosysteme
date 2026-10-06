@@ -452,3 +452,14 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
   .cockpit-nav-construire{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%}
   .cockpit-nav-enfants{display:flex;flex-wrap:wrap;margin-left:0;padding-left:8px}
 }
+
+/* Articles : chemin relatif au domaine principal du site selectionne */
+.cockpit-chemin-saisie { display: flex; align-items: stretch; flex-wrap: wrap; gap: 0; }
+.cockpit-chemin-domaine { display: inline-flex; align-items: center; padding: 0 .6rem; border: 1px solid var(--border, #d0d5dd); border-right: 0; border-radius: 8px 0 0 8px; background: var(--surface-2, #f2f4f7); color: var(--muted, #475467); font-size: .9rem; white-space: nowrap; }
+.cockpit-chemin-saisie input { flex: 1 1 12rem; min-width: 0; }
+.cockpit-chemin-domaine + input { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.cockpit-chemin [data-chemin-apercu] { word-break: break-all; font-weight: 600; }
+@media (max-width: 480px) {
+  .cockpit-chemin-domaine { border-right: 1px solid var(--border, #d0d5dd); border-bottom: 0; border-radius: 8px 8px 0 0; width: 100%; }
+  .cockpit-chemin-domaine + input { border-radius: 0 0 8px 8px; }
+}

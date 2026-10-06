@@ -406,6 +406,15 @@ export function rendreAssistant({ moi, numero = 1, valeurs = {} }) {
 
 /* ---------------- Ecriture : formulaire, apercu, resultat ---------------- */
 
+/* Adresse publique d'un article : domaine principal officiel + chemin (jamais saisi par l'utilisateur). */
+export function adressePublique(domaine, chemin) {
+  const v = String(chemin || "").trim();
+  if (!v) return "(aucun chemin)";
+  if (/^https?:\/\//i.test(v)) return v;
+  if (!domaine) return "(domaine principal non renseigné)";
+  return `https://${domaine}/${v.replace(/^\/+/, "")}`;
+}
+
 export function rendreEdition(moi, d, params = {}) {
   const retour = `#/cockpit/site/${encodeURIComponent(d.domaine || params.domaine)}`;
   if (d.selection) return `<section class="cockpit">${rendreEnteteCockpit(moi)}<div class="card"><h2>${e(d.libelle)}</h2>
@@ -417,9 +426,19 @@ export function rendreEdition(moi, d, params = {}) {
       <p>⚠ ${e(d.raison || "Ce réglage n'est pas encore modifiable.")}</p>
       <a class="btn btn-secondary" href="${retour}">Retour au site</a></div></section>`;
   }
+  const domaine = d.domainePrincipal || "";
   const champs = (d.champs || []).map((c) => {
     const id = `ed-${e(c.cle)}`;
     const commun = `id="${id}" name="${e(c.cle)}" data-champ maxlength="${Number(c.max) || 255}"`;
+    if (c.chemin) {
+      return `<div class="form-field cockpit-chemin"><label for="${id}">${e(c.libelle)}</label>
+        <div class="cockpit-chemin-saisie">${domaine ? `<span class="cockpit-chemin-domaine" aria-hidden="true">https://${e(domaine)}</span>` : ""}
+        <input type="text" ${commun} value="${e(c.valeur || "")}" placeholder="/actualites/mon-article" spellcheck="false" autocomplete="off" aria-describedby="${id}-aide" data-chemin data-domaine-principal="${e(domaine)}"></div>
+        <small id="${id}-aide" class="muted">${domaine
+          ? `Saisissez seulement le chemin : le domaine principal du site (${e(domaine)}) est ajouté automatiquement.`
+          : "Le domaine principal de ce site n'est pas renseigné dans SharePoint : l'adresse publique sera calculée dès qu'il le sera."}
+        <br>Adresse publique : <span data-chemin-apercu>${e(adressePublique(domaine, c.valeur))}</span></small></div>`;
+    }
     return `<div class="form-field"><label for="${id}">${e(c.libelle)}</label>${c.multiligne
       ? `<textarea ${commun} rows="5">${e(c.valeur || "")}</textarea>`
       : `<input type="text" ${commun} value="${e(c.valeur || "")}">`}</div>`;
