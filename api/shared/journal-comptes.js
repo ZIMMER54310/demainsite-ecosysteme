@@ -26,11 +26,12 @@ async function enregistrer(g, { cle, action, avant, apres, contexte }) {
     return { id: String(existants[0].id), relecture: "conforme", deja: true };
   }
   const champs = { [C.title]: action.slice(0, 255), [C.cle]: cle, [C.action]: action.slice(0, 255),
-    [C.avant]: JSON.stringify(avant), [C.apres]: nouveau, [C.date]: new Date().toISOString(),
+    [C.avant]: JSON.stringify(avant), [C.apres]: nouveau, [C.date]: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
     [C.notes]: "Opération DSE réussie et relue. Relations par ID SharePoint natifs ; aucune suppression." };
   const item = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${liste.id}/items`, { fields: champs });
   const relu = await ecriture.lireItemFrais(g, liste.id, item.id, Object.keys(champs));
-  if (!Object.entries(champs).every(([c, v]) => String(relu[c]) === String(v))) {
+  if (!Object.entries(champs).every(([c, v]) => c === C.date
+    ? Date.parse(relu[c]) === Date.parse(v) : String(relu[c]) === String(v))) {
     throw new Error("OBJ-JRN : relecture de l'opération différente.");
   }
   return { id: String(item.id), relecture: "conforme" };
