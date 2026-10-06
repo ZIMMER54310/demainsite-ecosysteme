@@ -15,6 +15,7 @@ import { rendreFaq } from "../faq/faq.js";
 import { rendreCarte } from "../carte/carte.js";
 import { rendreCarrousel } from "../carrousel/carrousel.js";
 import { rendreFormulaire } from "../formulaire/formulaire.js";
+import { codeChamp, declarationsGeneriques, erreurValeur } from "./proprietes.js";
 
 const MODULES = {
   TITRE: rendreTitre, TEXTE: rendreTexte, "TEXTE-ENRICHI": rendreTexte, BOUTON: rendreBouton, BOUTONS: rendreBouton,
@@ -93,30 +94,53 @@ export function rendreSection(section, ctx) {
 
 export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
   if (!noeud || profondeur >= 64) return "";
-  const champs = {};
-  const media = [];
-  const style = {};
-  const clesStyle = ["couleurTexte", "couleurFond", "couleurDegrade", "degradeAngle", "tailleTexte", "poidsPolice",
-    "hauteurLigne", "alignement", "largeur", "hauteur", "largeurMinimale", "largeurMaximale", "hauteurMinimale",
-    "hauteurMaximale", "bordureRayon", "bordureLargeur", "couleurBordure", "display", "direction", "retourLigne",
-    "gap", "gapLigne", "gapColonne", "colonnesGrille", "alignItems", "justification", "position", "ordre"];
-  const normaliser = (v) => String(v || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-  for (const c of noeud.champs || []) {
-    const valeur = c.surcharges?.[ctx.appareil] ?? c.valeur;
-    const code = normaliser(c.cle);
-    const cle = clesStyle.find((k) => normaliser(k) === code || `DESIGN${normaliser(k)}` === code);
-    if (c.categorie === "DESIGN" && cle && valeur !== null) style[cle] = valeur;
-    else if (c.categorie !== "AVANCE" && c.nature === "MEDIA" && /^\d{1,12}$/.test(String(valeur || ""))) media.push({ id: String(valeur), titre: c.libelle });
-    else if (c.categorie === "CONTENU") champs[code] = valeur;
-  }
+  const definitions = noeud.champs || [];
+  const valeursPour = (appareil) => Object.fromEntries(definitions.filter((c) => c.categorie === "CONTENU").map((c) =>
+    [codeChamp(c.cle), c.surcharges?.[appareil] ?? c.valeur]));
+  const avancePour = (appareil) => Object.fromEntries(definitions.filter((c) => c.categorie === "AVANCE").filter((c) =>
+    !erreurValeur(c, c.surcharges?.[appareil] ?? c.valeur)).map((c) => [codeChamp(c.cle), c.surcharges?.[appareil] ?? c.valeur]));
   const type = String(noeud.rendu || "").toUpperCase();
   const enfants = (noeud.enfants || []).map((x) => rendreNoeud(x, ctx, profondeur + 1)).join("");
-  const module = MODULES[type] ? MODULES[type]([{ champs, media }], ctx) : "";
-  const vide = !module && !enfants;
+  const contenus = ["ORDINATEUR", "TABLETTE", "MOBILE"].map((appareil) => {
+    const champs = valeursPour(appareil);
+    const media = definitions.filter((c) => c.categorie === "CONTENU" && c.nature === "MEDIA")
+      .map((c) => { const id = c.surcharges?.[appareil] ?? c.valeur; return { id, titre: c.libelle, type: c.mediaTypes?.[id] || "" }; })
+      .filter((m) => /^\d{1,12}$/.test(String(m.id)));
+    const contenu = [{ champs, media }];
+    const module = type === "MODULE" ? [
+      champs.TITRE ? rendreTitre([{ champs: { TEXTE: champs.TITRE } }]) : "",
+      champs.TEXTE ? rendreTexte([{ champs: { CONTENU: champs.TEXTE } }]) : "",
+      ...media.map((m) => {
+        const rendre = /VIDEO|VIDÉO/i.test(m.type) ? rendreVideo : /AUDIO|SON/i.test(m.type) ? rendreAudio :
+          /DOCUMENT|PDF|FICHIER/i.test(m.type) ? rendreDocument : rendreImage;
+        return rendre([{ champs, media: [m] }], ctx);
+      }),
+      champs.LIBELLEBOUTON && champs.LIEN ? rendreBouton([{ champs: { LIBELLE: champs.LIBELLEBOUTON, URL: champs.LIEN } }]) : ""
+    ].join("") : MODULES[type] ? MODULES[type](contenu, ctx) : "";
+    return { appareil, module };
+  });
+  const vide = !contenus.some((x) => x.module) && !enfants;
   if (vide && !ctx.apercu) return "";
-  const h = habiller({ style, _ref: noeud.ref }, type, "m", ctx);
-  const tag = type === "SECTION" ? "section" : "div";
-  return `${h.enLigne}<${tag} class="dse-b-module dse-b-recursif ${h.identifiant}"${h.ref}>${module}${enfants}${vide ? `<span class="dse-b-vide">${escapeHtml(noeud.titre || "Élément vide")}</span>` : ""}</${tag}>`;
+  const h = habiller({ _ref: noeud.ref }, type, "m", ctx);
+  const mediasQueries = { ORDINATEUR: "(min-width:1025px)", TABLETTE: "(min-width:641px) and (max-width:1024px)", MOBILE: "(max-width:640px)" };
+  for (const { appareil } of contenus) {
+    const declarations = declarationsGeneriques(definitions, appareil, ctx.apiBase);
+    if (avancePour(appareil).VISIBILITE === false) declarations.push("display:none");
+    if (declarations.length) ctx.css?.push(`@media ${mediasQueries[appareil]}{.${h.identifiant}{${declarations.join(";")}}}`);
+    const boutonCss = declarations.filter((x) => /^(color|background-|border|font-|text-align)/.test(x));
+    if (type === "MODULE" && boutonCss.length) ctx.css?.push(`@media ${mediasQueries[appareil]}{.${h.identifiant} .dse-b-bouton{${boutonCss.join(";")}}}`);
+  }
+  const avance = avancePour("");
+  const id = avance.IDCSS ? ` id="${escapeHtml(avance.IDCSS)}"` : "";
+  const classe = avance.CLASSECSS ? ` ${escapeHtml(avance.CLASSECSS)}` : "";
+  const tag = { SECTION: "section", "EN-TETE": "header", ENTETE: "header", FOOTER: "footer" }[type] || "div";
+  const barre = ctx.apercu ? `<div class="dse-b-outils" data-dse-outils="${escapeHtml(noeud.ref)}">
+    ${(noeud.ajouts || []).length ? `<button type="button" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}">Ajouter</button>` : ""}
+    ${profondeur ? `<button type="button" data-builder-canvas="dupliquer" data-ref="${escapeHtml(noeud.ref)}">Dupliquer</button>
+    <button type="button" data-builder-canvas="retirer" data-ref="${escapeHtml(noeud.ref)}">Retirer</button>` : ""}</div>` : "";
+  const variants = contenus.filter((x) => x.module).map((x) => `<div class="dse-b-appareil dse-b-appareil--${x.appareil.toLowerCase()}">${x.module}</div>`).join("");
+  const depot = (position) => ctx.apercu ? `<div class="dse-b-depot" data-builder-depot="${position}" data-ref="${escapeHtml(noeud.ref)}">${{ avant: "Déposer avant", apres: "Déposer après", dans: "Déposer ici" }[position]}</div>` : "";
+  return `${depot("avant")}${h.enLigne}<${tag}${id} class="dse-b-module dse-b-recursif ${h.identifiant}${classe}"${h.ref}>${barre}${variants}${enfants}${vide && ctx.apercu ? `<span class="dse-b-vide">${escapeHtml(noeud.titre || "Élément vide")}</span>` : ""}${noeud.conteneur ? depot("dans") : ""}</${tag}>${depot("apres")}`;
 }
 
 /*
@@ -130,9 +154,7 @@ export function rendreBuilder(composition, ctx = {}) {
   const css = [];
   const contexte = { ...ctx, compteur: () => ++n, css };
   const html = composition.noeuds
-    ? ["ORDINATEUR", "TABLETTE", "MOBILE"].map((appareil) =>
-      `<div class="dse-b-appareil dse-b-appareil--${appareil.toLowerCase()}">${composition.noeuds.map((x) =>
-        rendreNoeud(x, { ...contexte, appareil })).join("")}</div>`).join("")
+    ? composition.noeuds.map((x) => rendreNoeud(x, contexte)).join("")
     : (composition.sections || []).map((s) => rendreSection(s, contexte)).filter(Boolean).join("");
   if (!html) return "";
   const racine = composition.style || composition.responsive ? composition : composition.page || {};
@@ -151,8 +173,10 @@ export function rendreBuilder(composition, ctx = {}) {
 export const STYLES_BUILDER = `
 .dse-builder{display:block}.dse-b-section{padding:clamp(24px,5vw,64px) 16px}.dse-b-section--pleine-largeur{padding-left:0;padding-right:0}
 .dse-b-appareil--tablette,.dse-b-appareil--mobile{display:none}
-@media(min-width:641px) and (max-width:1024px){.dse-b-appareil--ordinateur{display:none}.dse-b-appareil--tablette{display:block}}
-@media(max-width:640px){.dse-b-appareil--ordinateur{display:none}.dse-b-appareil--mobile{display:block}}
+.dse-b-appareil--ordinateur{display:contents}.dse-b-recursif .dse-b-titre{font-size:inherit;font-weight:inherit;color:inherit}.dse-b-recursif .dse-b-texte{color:inherit}
+.dse-b-outils,.dse-b-depot{display:none}
+@media(min-width:641px) and (max-width:1024px){.dse-b-appareil--ordinateur{display:none}.dse-b-appareil--tablette{display:contents}}
+@media(max-width:640px){.dse-b-appareil--ordinateur{display:none}.dse-b-appareil--mobile{display:contents}}
 .dse-b-contenu{max-width:1200px;margin:0 auto}.dse-b-section--pleine-largeur>.dse-b-contenu{max-width:none}
 .dse-b-ligne{display:flex;flex-wrap:wrap;gap:var(--dse-b-espace,24px)}
 .dse-b-colonne{flex:0 0 calc(var(--dse-b-l)*1% - var(--dse-b-espace,24px));min-width:0;max-width:100%}

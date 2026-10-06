@@ -45,6 +45,7 @@ const brouillon = (el) => /^BROUILLON/.test(cleChamp(rel(el, "OBJ-ACTIF")?.titre
 const visibleApercu = (el) => !inactif(el);
 
 const ref = (type, id) => `${type}.${signer(`${type}:${id}`)}`;
+const referenceBuilder = (id, sorte) => ref(sorte === "media" ? "media" : `builder${sorte}`, id);
 function resoudre(d, reference, typesAutorises = Object.keys(TYPES)) {
   const [type] = String(reference || "").split(".");
   if (!typesAutorises.includes(type) || !TYPES[type]) return null;
@@ -127,8 +128,8 @@ function noeud(d, type, el) {
 function arbre(d, type, el, perimetre) {
   const root = R.trouverRacine(d, siteDuConteneur({ el }), type, el.id);
   return { ref: ref(type, el.id), type, titre: titreDe(el), etat: etat(el),
-    ...(root ? { generique: R.arbre(d, root, { reference: (id, sorte) => ref(`builder${sorte}`, id),
-      mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetre)) }) } : {}),
+    ...(root ? { generique: R.arbre(d, root, { reference: referenceBuilder,
+      mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetreBuilder(perimetre, siteDuConteneur({ el })))) }) } : {}),
     sections: enfantsDe(d, type, el).map((s) => noeud(d, "section", s)) };
 }
 
@@ -148,6 +149,8 @@ function mediaAutorise(m, perimetre) {
   return false;
 }
 
+const perimetreBuilder = (p, siteId) => ({ ...p, superAdmin: false, sites: siteId ? new Set([String(siteId)]) : p.sites });
+
 function modeleDisponible(m, perimetre) {
   if (!B.publiable(m)) return false;
   const sites = rels(m, "OBJ-SITE-PUBLIC").map((s) => s.id);
@@ -159,10 +162,17 @@ function modeleDisponible(m, perimetre) {
 function vue(d, perimetre) {
   const duSite = (el) => perimetre.sites.has(rel(el, "OBJ-SITE-PUBLIC")?.id);
   const pages = (d.pages || []).filter((p) => rels(p, "OBJ-SITE-PUBLIC").some((s) => perimetre.sites.has(s.id))).sort(parOrdre);
+  const nombreSections = (type, el) => {
+    const root = rels(el, "OBJ-SITE-PUBLIC").filter((s) => perimetre.sites.has(s.id))
+      .map((s) => R.trouverRacine(d, s.id, type, el.id)).find(Boolean);
+    if (!root) return enfantsDe(d, type, el).length;
+    const types = R.index(d).types;
+    return R.sousArbre(d, root).filter((x) => R.f(types.get(R.lien(x, "OBJ-BUILDER-TYPE")), "CLE-RENDU") === "SECTION").length;
+  };
   const conteneur = (type) => (d[CONTENEURS[type].cle] || []).filter(duSite).sort(parOrdre).map((el) => ({
     ref: ref(type, el.id), titre: titreDe(el) || `${CONTENEURS[type].libelle} sans titre`, etat: etat(el),
     noteCourte: texte(el, "NOTE-COURTE"),
-    sections: enfantsDe(d, type, el).length,
+    sections: nombreSections(type, el),
     pages: pages.filter((p) => rel(p, CONTENEURS[type].relation)?.id === el.id).map((p) => ({ ref: ref("page", p.id), titre: titreDe(p) }))
   }));
   const parId = (cle, type) => (id) => { const el = (d[cle] || []).find((x) => x.id === id); return el ? { ref: ref(type, el.id), titre: titreDe(el) } : null; };
@@ -185,7 +195,7 @@ function vue(d, perimetre) {
     footers: conteneur("footer"),
     pages: pages.map((p) => ({
       ref: ref("page", p.id), titre: titreDe(p), url: texte(p, "URL") || "/", etat: etat(p),
-      sections: enfantsDe(d, "page", p).length,
+      sections: nombreSections("page", p),
       entete: rel(p, "OBJ-ENTETE-SITE") ? enteteDe(rel(p, "OBJ-ENTETE-SITE").id) : null,
       footer: rel(p, "OBJ-FOOTER-SITE") ? footerDe(rel(p, "OBJ-FOOTER-SITE").id) : null
     })),
@@ -206,7 +216,8 @@ function vue(d, perimetre) {
     },
     medias: medias.map((m) => ({
       ref: `media.${signer(`media:${m.id}`)}`, titre: titreDe(m), type: rel(m, "OBJ-MEDIA-TYPE")?.titre || null,
-      portee: rel(m, "OBJ-MEDIA-PORTEE")?.titre || null, url: `/api/v1/media/${encodeURIComponent(m.id)}`
+      portee: rel(m, "OBJ-MEDIA-PORTEE")?.titre || null, url: `/api/v1/media/${encodeURIComponent(m.id)}`,
+      builderAutorise: mediaAutorise(m, perimetreBuilder(perimetre, perimetre.info?.id))
     })),
     logo: logo ? {
       titre: titreDe(logo), etat: etat(logo),
@@ -229,8 +240,8 @@ function apercu(d, siteId, type, el, appareil, perimetre) {
   const zone = (t, e) => {
     const root = R.trouverRacine(d, siteId, t, e.id);
     return { sections: root ? [] : sections(t, e),
-      ...(root ? { noeuds: [R.arbre(d, root, { reference: (id, sorte) => ref(`builder${sorte}`, id),
-        mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetre)) })] } : {}),
+      ...(root ? { noeuds: [R.arbre(d, root, { reference: referenceBuilder,
+        mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetreBuilder(perimetre, siteId))) })] } : {}),
       ...B.styleElement(ctx, TYPE_CONTENEUR[t], e), _ref: ref(t, e.id) };
   };
   const theme = B.themeGlobal(ctx);
@@ -584,12 +595,12 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
     }
     return require("./builder-recursif-ecriture").executer({
       d, w, p: parametres, action, siteId,
-      reference: (id, sorte) => ref(`builder${sorte}`, id),
+      reference: referenceBuilder,
       autoriser: (type, id) => {
         const c = cible([type], ref(type, id));
         return !c.refus;
       },
-      mediaAutorise: (m) => mediaAutorise(m, perimetre)
+      mediaAutorise: (m) => mediaAutorise(m, perimetreBuilder(perimetre, siteId))
     });
   }
 
@@ -632,13 +643,46 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
     }
 
     case "conteneur.dupliquer": {
-      const c = cible(["entete", "footer"], p.ref);
+      const c = cible(["entete", "footer", "page"], p.ref);
       if (c.refus) return c;
-      if (R.trouverRacine(d, siteId, c.type, c.el.id)) return { refus: "La duplication d'une composition générique n'est pas encore disponible." };
       const def = CONTENEURS[c.type];
-      const extra = await w.copiables(def.liste, c.el, ["OBJ-SITE-PUBLIC"]);
+      const extra = await w.copiables(def.liste, c.el, ["OBJ-SITE-PUBLIC", ...(c.type === "page" ? ["URL"] : [])]);
+      const siteSource = siteDuConteneur(c.racine);
       const nSite = await w.lookup(def.liste, "OBJ-SITE-PUBLIC");
-      const id = await w.creer(def.liste, { Title: `${titreDe(c.el)} (variante)`.slice(0, 255), ...extra, [nSite]: String(siteDuConteneur(c.racine)), ...(await w.etats(def.liste, "brouillon")) });
+      if (!nSite) return { refus: "Relation au site indisponible." };
+      if (c.type === "page") {
+        const url = String(p.url || "").trim();
+        if (!/^\/[A-Za-z0-9/_-]*$/.test(url) || (d.pages || []).some((x) =>
+          rels(x, "OBJ-SITE-PUBLIC").some((s) => s.id === siteSource) && texte(x, "URL") === url)) {
+          return { refus: "Choisissez une adresse de page unique pour cette copie." };
+        }
+        const nUrl = await w.simple(def.liste, "URL");
+        if (!nUrl) return { refus: "Colonne URL indisponible." };
+        extra[nUrl] = url;
+      }
+      const champs = { Title: `${titreDe(c.el)} (variante)`.slice(0, 255), ...extra,
+        [nSite]: String(siteDuConteneur(c.racine)), ...(await w.etats(def.liste, "brouillon")) };
+      const root = R.trouverRacine(d, siteSource, c.type, c.el.id);
+      if (root) {
+        let nouveau;
+        const resultat = await require("./builder-recursif-ecriture").executer({
+          d, w, p: { ref: referenceBuilder(root.id, "element"), attendu: p.attendu }, action: "builder.dupliquer", siteId: siteSource,
+          reference: referenceBuilder,
+          autoriser: (t, id) => !cible([t], ref(t, id)).refus,
+          mediaAutorise: (m) => mediaAutorise(m, perimetreBuilder(perimetre, siteSource)),
+          dupliquerRacine: async () => {
+            const id = await w.creer(def.liste, champs);
+            const frais = await ecriture.lireItemFrais(w.g, w.liste(def.liste).id, id);
+            if (!Object.entries(champs).every(([k, v]) => v === null ? frais[k] == null || frais[k] === "" : String(frais[k]) === String(v))) throw new Error("Relecture du conteneur dupliqué non conforme.");
+            nouveau = { id, type: c.type };
+            return nouveau;
+          }
+        });
+        if (resultat.refus) return resultat;
+        return res("Conteneur et composition générique dupliqués en brouillon ; original inchangé.",
+          { ref: ref(c.type, nouveau.id), origine: titreDe(c.el) });
+      }
+      const id = await w.creer(def.liste, champs);
       for (const s of enfantsDe(d, c.type, c.el)) await copierArbre(w, d, "section", s, c.type, id, ordreDe(s), "");
       return res(`Variante créée en brouillon ; l'original n'a pas été modifié.`, { ref: ref(c.type, id), origine: titreDe(c.el) });
     }
@@ -656,9 +700,9 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
       if (root) {
         const resultat = await require("./builder-recursif-ecriture").executer({
           d, w, p: { ref: ref("builderelement", root.id) }, action: "builder.publier", siteId,
-          reference: (id, sorte) => ref(`builder${sorte}`, id),
+          reference: referenceBuilder,
           autoriser: (t, id) => !cible([t], ref(t, id)).refus,
-          mediaAutorise: (m) => mediaAutorise(m, perimetre)
+          mediaAutorise: (m) => mediaAutorise(m, perimetreBuilder(perimetre, siteId))
         });
         if (resultat.refus) return resultat;
       }
@@ -1075,4 +1119,4 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
   }
 }
 
-module.exports = { plat, DESIGN, policesDe, siteDe, CONTENEURS, NIVEAUX, vue, arbre, apercu, racine, resoudre, executer, ref, mediaAutorise, modeleDisponible, visibleApercu, inactif, brouillon, Ecrivain, signer };
+module.exports = { plat, DESIGN, policesDe, siteDe, CONTENEURS, NIVEAUX, vue, arbre, apercu, racine, resoudre, executer, ref, referenceBuilder, mediaAutorise, modeleDisponible, visibleApercu, inactif, brouillon, Ecrivain, signer };

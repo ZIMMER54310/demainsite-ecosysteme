@@ -156,8 +156,15 @@ L'editeur s'ouvre en plein ecran avec barre d'actions, arbre a gauche, Canvas ce
 et reglages a droite. Le Canvas partage le renderer public et change immediatement
 de largeur ordinateur/tablette/mobile. Selection et drag-and-drop sont disponibles
 dans l'arbre et le Canvas. Les retraits sont logiques et confirmes.
-Annuler/retablir et copier/coller concernent les reglages Design non enregistres de
-l'element selectionne ; les commandes structurelles sont enregistrees immediatement.
+Les commandes structurelles sont enregistrees immediatement. Un historique temporaire
+de 100 commandes permet annuler/retablir ajout, duplication, deplacement et retrait
+generiques. Les inverses sont recontroles cote serveur (droits, verrouillage,
+imbrication, minimum/maximum, profondeur, medias et empreinte de composition).
+L'historique est perdu en quittant la page ; aucun stockage metier parallele n'existe.
+Une modification concurrente refuse l'inverse plutot que d'ecraser une autre edition.
+Annuler/retablir les reglages locaux actualise le Canvas ; Enregistrer applique ensuite
+ces reglages. Copier/coller style ou reglages est limite aux definitions compatibles
+du meme type natif. L'identifiant CSS unique n'est jamais colle.
 La creation de pages utilise une URL unique au site et un etat brouillon.
 
 OBJ-BUILDER-TYPE, OBJ-BUILDER-ELEMENT, OBJ-BUILDER-REGLE-IMBRICATION,
@@ -186,12 +193,33 @@ appareils avant sauvegarde ; toutes les valeurs sont validees avant toute mutati
 puis relues. Le Canvas et le rendu public partagent ces valeurs et les seuils techniques
 existants (tablette <= 1024 px, mobile <= 640 px).
 OBJ-STYLE-RESPONSIVE reste utilisee pour les elements historiques.
-Duplication generique et undo structurel restent a raccorder.
+La duplication generique recree le sous-arbre et ses valeurs configurees, y compris
+les surcharges, avec de nouveaux ID natifs, en brouillon. Les cycles, cardinalites,
+verrous descendants et references externes incoherentes refusent la duplication
+avant mutation. Un identifiant CSS deja configure doit etre retire avant duplication.
+La duplication de conteneur copie aussi la racine generique vers le nouveau conteneur
+et reconstitue ELEMENTRACINE/ELEMENTPARENT. Une page exige une nouvelle URL unique
+choisie par l'utilisateur. Les compositions historiques restent duplicables.
+EST-RACINE definit les types de racine autorises ; les relations natives vers Page,
+En-tete ou Footer definissent le perimetre, sans imposer une correspondance de noms.
+PROFONDEUR et ORDRE sont ecrits a la creation et recalcules lors des deplacements.
+Les boutons du Canvas et de l'arbre restent synchronises ; la palette lit les enfants
+autorises et les zones de depot permettent avant/apres/dans, avec validation serveur.
+Les brouillons de reglages restent disponibles en changeant de selection ; ils doivent
+etre enregistres avant une commande structurelle. Enregistrer traite tous les elements
+configures et relit chaque enregistrement. Une erreur ne masque pas les brouillons restants.
 La publication controle la composition et les champs obligatoires,
 puis valide les enfants avant la racine, avec relecture apres chaque ecriture.
-Les definitions Layout generiques peuvent traduire block/flex/grid, direction,
-retour ligne, alignement, justification, gap et nombre de colonnes via des valeurs
-CSS bornees. L'emplacement PascAra IA reste une popup facultative, sans service IA.
+Les 29 codes de proprietes generiques ont un contrat partage navigateur/serveur :
+contenu, medias autorises (TYPE-DONNEE OBJMEDIA), couleurs hexadecimales, fond/media,
+degrade lineaire, police, taille/unite, graisse, alignement, dimensions, quatre cotes,
+bordure, rayon, ombre, opacite, Flex, Grid, Gap, position, visibilite, classes et ID CSS.
+Le module generique rend uniquement le titre, texte, medias et bouton reellement
+configures. Classes et ID CSS sont generaux, la visibilite est responsive.
+Les conteneurs partagent un seul DOM : un ID CSS n'est pas triple par appareil.
+Les champs rattaches uniquement au type MODULE ne sont pas inventes pour les autres
+types. De meme, aucune regle enfant EN-TETE/FOOTER n'est ajoutee artificiellement.
+L'emplacement PascAra IA reste une popup facultative, sans service IA.
 
 `site-complet` agrege OBJ-SITE-PUBLIC avec menu, logo, entete, theme, SEO, pages, modules, contenus
 et OBJ-MEDIA en suivant les relations par **ID natifs SharePoint**.

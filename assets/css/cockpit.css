@@ -373,3 +373,13 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .cockpit-restauration-apercu ins { color: #17663a; text-decoration: none; font-weight: 600; }
 .cockpit-restauration-apercu li { overflow-wrap: anywhere; }
 @media (max-width: 640px) { .cockpit-synchro-entete .btn, .cockpit-synchro-reglage .btn { width: 100%; } }
+.constructeur-selection{outline:2px solid var(--couleur-primaire,#7c3aed);outline-offset:2px}
+.constructeur-cotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+.constructeur-cotes input{width:100%;min-width:0}
+[data-builder-palette]{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+[data-builder-palette] p{flex-basis:100%;margin:.25rem 0}
+[data-builder-volet]{padding-top:1rem}
+[data-builder-volet][hidden]{display:none}
+[data-builder-valeurs] .design-actions{border:0;margin:0;padding:0}
+[data-builder-valeurs] textarea{width:100%;min-width:0;font:inherit}
+.constructeur--plein-ecran > .cockpit-entete{display:none}

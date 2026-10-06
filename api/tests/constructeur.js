@@ -76,6 +76,7 @@ async function main() {
 
   // Portee des medias : GLOBAL + client du site ; jamais un autre client, un autre site ou un media inactif.
   assert.deepEqual(v.medias.map((m) => m.titre), ["Global", "Client A"]);
+  assert.equal(C.referenceBuilder("1", "media"), v.medias[0].ref, "le Builder réutilise la référence média signée du cockpit");
   assert.equal(C.vue(d, { ...perimetre, superAdmin: true }).medias.length, 4, "Super Administrateur : tous les medias publies");
   assert.equal(v.logo.media.titre, "Global");
 
@@ -178,7 +179,60 @@ async function main() {
     assert.match(css, /@media \(max-width:640px\)\{\.dse-b-pm1 \.dse-b-bouton\{[^}]*font-size:14px/);
     assert.equal(design.cssApercu("dse-b-pm1", d, { couleurFond: "red;}body{x" }).includes("body{"), false, "injection CSS refusee");
   }
-  console.log("Constructeur : perimetre, medias, references opaques, arbre, apercu, En-tete/Footer, Design et interface OK");
+  {
+    const ecriture = require("../shared/ecriture");
+    const originalGraph = ecriture.contexteGraph, originalLecture = ecriture.lireItemFrais;
+    const proto = C.Ecrivain.prototype;
+    const methodes = ["copiables", "lookup", "simple", "etats", "liste", "creer", "maj"];
+    const originaux = Object.fromEntries(methodes.map((k) => [k, proto[k]]));
+    const copies = donnees(), writes = [], stores = new Map();
+    copies.builderTypes = [el(41, "Racine", {}, { ACTIF: true, "EST-RACINE": true, "EST-CONTENEUR": true, "CLE-RENDU": "PAGE" })];
+    copies.builderElements = [el(501, "Page source", {
+      "OBJ-SITE-PUBLIC": lien(4), "OBJ-PAGES-SITE": lien(2),
+      "OBJ-BUILDER-TYPE": lien(41), "ELEMENT-RACINE": lien(501)
+    }, { ACTIF: true, PROFONDEUR: 0, ORDRE: 10 })];
+    const executerCopie = (url) => C.executer({ d: copies, perimetre, siteId: "4",
+      action: "conteneur.dupliquer", params: { ref: C.ref("page", 2), url } });
+    try {
+      ecriture.contexteGraph = async () => ({});
+      ecriture.lireItemFrais = async (_g, liste, id) => stores.get(`${liste}/${id}`);
+      proto.copiables = async () => ({});
+      proto.lookup = async (_liste, nom) => `${nom.replace(/-/g, "")}LookupId`;
+      proto.simple = async (_liste, nom) => nom.replace(/-/g, "");
+      proto.etats = async () => ({ OBJACTIFLookupId: "3", OBJVALIDELookupId: "2" });
+      proto.liste = (nom) => ({ id: nom });
+      proto.creer = async function (liste, champs) {
+        const id = String(700 + writes.length);
+        writes.push({ liste, id, champs });
+        stores.set(`${liste}/${id}`, champs);
+        this.crees.push({ liste, id });
+        return id;
+      };
+      proto.maj = async (liste, id, champs) => stores.set(`${liste}/${id}`, { ...stores.get(`${liste}/${id}`), ...champs });
+      assert.ok((await executerCopie("")).refus);
+      assert.ok((await executerCopie("/")).refus);
+      assert.equal(writes.length, 0, "URL absente ou existante : aucune création");
+      const resultat = await executerCopie("/copie-native");
+      assert.equal(resultat.nouveau.ref, C.ref("page", 700));
+      assert.equal(writes.length, 2, "conteneur puis racine, sans valeur de démonstration");
+      assert.equal(writes[0].champs.URL, "/copie-native");
+      assert.equal(writes[0].champs.OBJACTIFLookupId, "3");
+      assert.equal(writes[1].champs.OBJPAGESSITELookupId, "700");
+      assert.equal(stores.get("OBJ-BUILDER-ELEMENT/701").ELEMENTRACINELookupId, "701");
+      assert.equal(copies.builderElements[0].relations["OBJ-PAGES-SITE"].id, "2");
+      copies.builderTypes.push(el(42, "Section", {}, { ACTIF: true, "CLE-RENDU": "SECTION" }));
+      copies.builderElements.push(el(502, "Section native", {
+        "OBJ-SITE-PUBLIC": lien(4), "OBJ-BUILDER-TYPE": lien(42),
+        "ELEMENT-RACINE": lien(501), "ELEMENT-PARENT": lien(501)
+      }, { ACTIF: true }));
+      assert.equal(C.vue(copies, perimetre).pages.find((p) => p.ref === C.ref("page", 2)).sections, 1);
+    } finally {
+      ecriture.contexteGraph = originalGraph;
+      ecriture.lireItemFrais = originalLecture;
+      for (const k of methodes) proto[k] = originaux[k];
+    }
+  }
+  console.log("Constructeur : perimetre, medias, references opaques, arbre, apercu, En-tete/Footer, Design, duplication de page et interface OK");
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

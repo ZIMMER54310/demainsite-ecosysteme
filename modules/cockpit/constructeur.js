@@ -5,6 +5,7 @@ import { rendreBuilder, STYLES_BUILDER } from "../builder/rendu.js";
 import { getConstruire, actionConstruire } from "../../services/cockpit.service.js";
 import { rendreEnteteCockpit } from "./cockpit.js";
 import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU } from "./design.js";
+import { codeChamp, controleChamp, erreurValeur } from "../builder/proprietes.js";
 
 export const ONGLETS = Object.freeze([
   { cle: "entetes", libelle: "En-têtes" },
@@ -75,7 +76,7 @@ function ongletPages(d) {
     <label>En-tête ${peut("entete") ? `<select data-c-affecter="entete" data-page="${e(p.ref)}">${options(d.entetes, p.entete)}</select>` : `<strong>${e(p.entete?.titre || "Aucun")}</strong>`}</label>
     <label>Footer ${peut("footer") ? `<select data-c-affecter="footer" data-page="${e(p.ref)}">${options(d.footers, p.footer)}</select>` : `<strong>${e(p.footer?.titre || "Aucun")}</strong>`}</label>
     <div class="constructeur-boutons">${bouton("🧱 Construire / aperçu", "ouvrir", `data-ref="${e(p.ref)}"`, "btn btn-primary")}
-      ${peut("pages") ? bouton("✏️ Modifier", "proprietes", `data-ref="${e(p.ref)}"`) : ""}</div>
+      ${peut("pages") ? `${bouton("✏️ Modifier", "proprietes", `data-ref="${e(p.ref)}"`)}${bouton("Dupliquer", "dupliquer", `data-ref="${e(p.ref)}" data-type="page"`)}` : ""}</div>
   </article>`).join("") || '<p class="card muted">Aucune page pour ce site dans SharePoint.</p>'}</div>
   <p class="muted">Une page utilise au maximum un En-tête et un Footer actifs et validés ; choisir un autre élément remplace le précédent sans suppression.</p>`;
 }
@@ -158,32 +159,52 @@ function noeudHtml(d, n, peut, colonnes) {
 const colonnesDe = (sections) => sections.flatMap((s) => (s.enfants || []).flatMap((l) => (l.enfants || []).map((c) => ({ ref: c.ref, titre: `${s.titre} › ${c.titre}` }))));
 
 const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE" };
-function arbreGeneriqueHtml(n, peut) {
+function arbreGeneriqueHtml(n, peut, racine = true) {
   return `<li class="constructeur-noeud"><div class="constructeur-noeud-entete" data-c-noeud="${e(n.ref)}" data-c-type="builder"${peut && !n.verrouille ? ' draggable="true"' : ""}>
     <button type="button" class="btn btn-mini" data-c-action="design" data-ref="${e(n.ref)}">${e(n.titre)}</button>
     <span class="badge">${e(n.rendu)}</span>${n.verrouille ? "🔒" : ""}
-    ${peut ? `<button type="button" class="btn btn-mini" data-c-action="builder-ajouter" data-ref="${e(n.ref)}">Ajouter dans</button>
-      <button type="button" class="btn btn-mini" data-c-action="builder-retirer" data-ref="${e(n.ref)}">Retirer</button>` : ""}</div>
-    <ul>${(n.enfants || []).map((x) => arbreGeneriqueHtml(x, peut)).join("")}</ul></li>`;
+    ${peut && !n.verrouille ? `${n.ajouts?.length ? bouton("Ajouter dans", "builder-ajouter", `data-ref="${e(n.ref)}"`, "btn btn-mini") : ""}
+      ${!racine ? ["monter", "descendre", "deplacer", "dupliquer", "retirer"].map((a) =>
+        bouton({ monter: "↑", descendre: "↓", deplacer: "Déplacer", dupliquer: "Dupliquer", retirer: "Retirer" }[a],
+          `builder-${a}`, `data-ref="${e(n.ref)}"`, "btn btn-mini")).join("") : ""}` : ""}</div>
+    <ul>${(n.enfants || []).map((x) => arbreGeneriqueHtml(x, peut, false)).join("")}</ul></li>`;
 }
 
-export function panneauGenerique(n, medias, appareil = "") {
+export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU") {
   const controle = (c) => {
     const nom = `name="${e(c.ref)}"`;
     const v = (appareil ? c.surcharges?.[appareil] : c.valeur) ?? "";
-    const input = c.nature === "NOMBRE" ? `<input type="number" ${nom} value="${e(v)}" step="any">` :
-      c.nature === "BOOLEEN" ? `<select ${nom}><option value="">Hériter</option><option value="true"${v === true ? " selected" : ""}>Oui</option><option value="false"${v === false ? " selected" : ""}>Non</option></select>` :
-      c.nature === "MEDIA" ? `<select ${nom}><option value="">Aucun média</option>${medias.map((m) => `<option value="${e(m.ref)}"${m.url === `/api/v1/media/${v}` ? " selected" : ""}>${e(m.titre)}</option>`).join("")}</select>` :
-      `<textarea ${nom} rows="2">${e(v)}</textarea>`;
-    return `<label>${e(c.libelle)}${c.obligatoire ? " *" : ""}${input}<small>${e(c.aide)}</small></label>`;
+    const t = controleChamp(c);
+    const globalSeulement = c.categorie === "AVANCE" && ["IDCSS", "CLASSECSS"].includes(codeChamp(c.cle));
+    if (appareil && globalSeulement) return `<p class="muted">${e(c.libelle)} : réglage général uniquement.</p>`;
+    let input;
+    if (t.type === "number") input = `<input type="number" ${nom} value="${e(v)}" step="any"${t.min !== undefined ? ` min="${t.min}" max="${t.max}"` : ""}>`;
+    else if (t.type === "booleen") input = `<select ${nom}><option value="">Hériter</option><option value="true"${v === true ? " selected" : ""}>Oui</option><option value="false"${v === false ? " selected" : ""}>Non</option></select>`;
+    else if (t.type === "media") input = `<select ${nom}><option value="">Aucun média / hériter</option>${medias.map((m) => `<option value="${e(m.ref)}"${m.url === `/api/v1/media/${v}` ? " selected" : ""}>${e(m.titre)}</option>`).join("")}</select>`;
+    else if (t.type === "select") input = `<select ${nom}><option value="">Hériter</option>${t.options.map((x) => `<option value="${x}"${v === x ? " selected" : ""}>${x}</option>`).join("")}</select>`;
+    else if (t.type === "couleur") input = `<span class="design-couleur"><input type="color" data-builder-couleur="${e(c.ref)}" value="${/^#[0-9a-f]{6}$/i.test(v) ? v : "#000000"}" aria-label="Choisir ${e(c.libelle)}"><input ${nom} value="${e(v)}" placeholder="Hériter"></span>`;
+    else if (t.type === "cotes") {
+      const x = String(v).trim().split(/\s+/);
+      const valeurs = v ? [x[0], x[1] || x[0], x[2] || x[0], x[3] || x[1] || x[0]] : ["", "", "", ""];
+      input = `<span class="constructeur-cotes">${["Haut", "Droite", "Bas", "Gauche"].map((cote, i) =>
+        `<span>${cote}<input data-builder-cote="${e(c.ref)}" data-cote="${i}" value="${e(valeurs[i])}" placeholder="Unité / hériter"></span>`).join("")}</span><input type="hidden" ${nom} value="${e(v)}">`;
+    } else input = t.type === "textarea" ? `<textarea ${nom} rows="4">${e(v)}</textarea>` :
+      `<input ${nom} value="${e(v)}" placeholder="${e(t.aide || "Hériter")}">`;
+    const herite = appareil && (v === "" || v === null) ? `<small>Valeur générale : ${e(c.valeur ?? "non configurée")}</small>` : "";
+    return `<label class="design-champ">${e(c.libelle)}${c.obligatoire ? " *" : ""}${input}${herite}<small>${e(c.aide || t.aide || "")}</small></label>`;
   };
   return `<form class="card design-panneau" data-builder-valeurs data-appareil="${e(appareil)}" data-ref="${e(n.ref)}"><h3>${e(n.titre)}</h3>
-    <label>Valeurs à modifier<select data-builder-appareil>${[["", "Général / par défaut"], ...APPAREILS_APERCU.map((x) => [x.cle, x.libelle])].map(([cle, libelle]) =>
+    <label class="design-champ">Valeurs à modifier<select data-builder-appareil>${[["", "Général / par défaut"], ...APPAREILS_APERCU.map((x) => [x.cle, x.libelle])].map(([cle, libelle]) =>
       `<option value="${cle}"${appareil === cle ? " selected" : ""}>${e(libelle)}</option>`).join("")}</select></label>
-    ${[["CONTENU", "CONTENU"], ["DESIGN", "DESIGN"], ["AVANCE", "AVANCÉ"]].map(([categorie, libelle]) =>
-      `<details open><summary>${libelle}</summary>${n.champs.filter((c) => c.categorie === categorie).map(controle).join("") || '<p class="muted">Aucun champ déclaré dans SharePoint.</p>'}</details>`).join("")}
+    <div class="design-onglets" role="tablist" aria-label="Réglages">${["CONTENU", "DESIGN", "AVANCE"].map((c) =>
+      `<button type="button" role="tab" data-builder-onglet="${c}" aria-selected="${c === onglet}" class="btn ${c === onglet ? "btn-primary" : "btn-secondary"}">${c === "AVANCE" ? "AVANCÉ" : c}</button>`).join("")}</div>
+    ${["CONTENU", "DESIGN", "AVANCE"].map((categorie) =>
+      `<div class="design-grille" data-builder-volet="${categorie}"${categorie !== onglet ? " hidden" : ""}>${n.champs.filter((c) => c.categorie === categorie).map(controle).join("") || '<p class="muted">Aucun champ déclaré dans SharePoint pour ce type.</p>'}</div>`).join("")}
     <p class="muted">Une surcharge vide hérite de la valeur générale. Les autres appareils ne sont pas modifiés.</p>
-    <button type="submit" class="btn btn-primary"${n.verrouille ? " disabled" : ""}>Enregistrer</button></form>`;
+    <fieldset class="design-actions"${n.verrouille ? " disabled" : ""}><div class="constructeur-boutons">
+      ${bouton("Copier réglages", "copier-reglages")}${bouton("Coller réglages", "coller-reglages")}
+      ${bouton("Réinitialiser les valeurs", "builder-reset")}
+      <button type="submit" class="btn btn-primary">Enregistrer</button></div></fieldset></form>`;
 }
 
 export function documentApercu(composition, type = "page") {
@@ -191,8 +212,26 @@ export function documentApercu(composition, type = "page") {
   const zone = (z, balise, prefixe, t) => z?.sections?.length || z?.noeuds?.length ? `<${balise}>${rendreBuilder({ mode: "builder", sections: z.sections, noeuds: z.noeuds, style: z.style, responsive: z.responsive, _ref: z._ref, theme: composition.theme }, options(prefixe, t))}</${balise}>` : "";
   const corps = `${zone(composition?.entete, "header", "e", "ENTETE")}${rendreBuilder(composition || {}, options(type === "page" ? "p" : type[0], TYPE_CONTENEUR[type] || "PAGE"))}${zone(composition?.footer, "footer", "f", "FOOTER")}`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>body{margin:0;font-family:system-ui,sans-serif}${STYLES_BUILDER}[data-dse-ref].dse-design-cible{outline:2px dashed #7c3aed;outline-offset:2px}</style></head>
+    <style>body{margin:0;font-family:system-ui,sans-serif}${STYLES_BUILDER}[data-dse-ref].dse-design-cible{outline:2px dashed #7c3aed;outline-offset:2px}
+    [data-dse-ref]{min-height:24px}.dse-b-recursif{position:relative}.dse-b-recursif:hover{outline:1px dashed #7c3aed}
+    .dse-b-recursif:hover>.dse-b-outils,.dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:relative;z-index:2}
+    .dse-builder-glisse .dse-b-depot{display:block;border:1px dashed #7c3aed;padding:5px;font:12px system-ui;color:#4c1d95;background:#f5f3ff}
+    .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot{display:none}
+    </style></head>
     <body>${corps.trim() || `<p style="padding:24px;color:#667">Aperçu vide : ajoutez des modules actifs avec un contenu renseigné.</p>`}</body></html>`;
+}
+
+export function historiqueStructure(avant, apres, racine) {
+  const precedents = new Map((avant || []).map((n) => [n.ref, n]));
+  const annuler = [], retablir = [];
+  for (const n of apres || []) {
+    const origine = precedents.get(n.ref) || { ...n, actif: false };
+    if (n.ref === racine || JSON.stringify(origine) === JSON.stringify(n)) continue;
+    annuler.push(origine);
+    retablir.push(n);
+  }
+  return annuler.length ? { genre: "structure", annuler: { action: "builder.restaurer", params: { ref: racine, elements: annuler } },
+    retablir: { action: "builder.restaurer", params: { ref: racine, elements: retablir } } } : null;
 }
 
 function editeur(d) {
@@ -202,8 +241,8 @@ function editeur(d) {
   const colonnes = colonnesDe(a.sections);
   return `<header class="constructeur-barre-visuelle"><strong>${e(d.site?.titre || "")} · ${e(a.titre)}</strong>
     <div class="constructeur-boutons">${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini" data-c-appareil="${x.cle}">${x.libelle}</button>`).join("")}
-      <button type="button" class="btn btn-mini" data-c-action="annuler-design">↶ Annuler Design</button>
-      <button type="button" class="btn btn-mini" data-c-action="retablir-design">↷ Rétablir Design</button>
+      <button type="button" class="btn btn-mini" data-c-action="annuler-design">↶ Annuler</button>
+      <button type="button" class="btn btn-mini" data-c-action="retablir-design">↷ Rétablir</button>
       <button type="button" class="btn btn-mini" data-c-action="copier-style">Copier style</button>
       <button type="button" class="btn btn-mini" data-c-action="coller-style">Coller style</button>
       <button type="button" class="btn btn-mini" data-c-action="apercu-seul">Aperçu</button>
@@ -214,10 +253,13 @@ function editeur(d) {
       <div><span class="constructeur-type">${LIBELLES[type]}</span><h3>${e(a.titre)}</h3>${badgeEtat(a.etat)}</div>
       <div class="constructeur-boutons">${bouton("← Retour à la liste", "fermer")}
         ${peut ? bouton(`🎨 Design · ${LIBELLES[type]}`, "design", `data-ref="${e(a.ref)}"`) : ""}
+        ${peut ? bouton("Dupliquer le conteneur", "dupliquer", `data-ref="${e(a.ref)}" data-type="${type}"`) : ""}
         ${peut && (!a.etat.publiable || a.generique) ? bouton("✅ Valider et activer", "publier", `data-ref="${e(a.ref)}"`, "btn btn-primary") : ""}
         ${bouton("✨ Demander à Pasc ARA IA", "ia")}</div>
     </header>
     <h3>Arborescence · Ajouter</h3>
+    ${a.generique ? '<div data-builder-palette aria-label="Éléments autorisés"></div>' : ""}
+    ${bouton("Médias du site", "builder-medias")}
     ${d.builder?.message ? `<p class="alerte-info">${e(d.builder.message)}</p>` : ""}
     ${peut && !a.generique && !a.sections.length && d.builder?.types?.some((x) => x.racine) ?
       bouton("Initialiser la racine générique", "builder-initialiser", `data-ref="${e(a.ref)}"`) : ""}
@@ -287,12 +329,47 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   let historique = [];
   let positionHistorique = -1;
   let brouillonGenerique = false;
-  const appareilsModifies = new Set();
+  const brouillons = new Map();
+  let historiqueBuilder = [], positionBuilder = -1, empreinteHistorique = "";
+  let copieReglages = null;
+  let enCours = false;
   let glisse = null;
   const trouverNoeud = (reference) => {
     const chercher = (n, parent = null) => n?.ref === reference ? { n, parent } :
       (n?.enfants || n?.sections || []).map((x) => chercher(x, n)).find(Boolean);
     return chercher(d.arbre?.generique || d.arbre);
+  };
+  const marquerBrouillon = (ref, appareil) => {
+    if (!brouillons.has(ref)) brouillons.set(ref, new Set());
+    brouillons.get(ref).add(appareil || "");
+    brouillonGenerique = true;
+  };
+  const ajouterHistorique = (commande) => {
+    historiqueBuilder = historiqueBuilder.slice(0, positionBuilder + 1);
+    historiqueBuilder.push(commande);
+    if (historiqueBuilder.length > 100) historiqueBuilder.shift();
+    positionBuilder = historiqueBuilder.length - 1;
+  };
+  const actualiserCanvas = () => {
+    const f = iframe();
+    if (f) f.srcdoc = documentApercu({ ...d.apercu, noeuds: [d.arbre.generique] }, d.arbre.type);
+  };
+  const modifierChamps = (node, modifier) => {
+    const avant = structuredClone(node.champs);
+    modifier();
+    const apres = structuredClone(node.champs);
+    if (JSON.stringify(avant) === JSON.stringify(apres)) return;
+    ajouterHistorique({ genre: "reglages", ref: node.ref, avant, apres });
+    actualiserCanvas();
+  };
+  const changerAppareil = (appareil) => {
+    etat.appareil = appareil;
+    for (const b of racine.querySelectorAll("[data-c-appareil]")) {
+      b.classList.toggle("btn-primary", b.dataset.cAppareil === appareil);
+      b.classList.toggle("btn-secondary", b.dataset.cAppareil !== appareil);
+      b.setAttribute("aria-pressed", String(b.dataset.cAppareil === appareil));
+    }
+    dimensionner();
   };
   const valeursFormulaire = () => {
     const f = racine.querySelector("[data-design-form]");
@@ -332,8 +409,9 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const largeur = (APPAREILS_APERCU.find((x) => x.cle === etat.appareil) || APPAREILS_APERCU[0]).largeur;
     const echelle = Math.min(1, (cadre.clientWidth || largeur) / largeur);
     const hauteur = Math.max(480, Math.min(4000, docApercu()?.documentElement?.scrollHeight || 640));
-    Object.assign(f.style, { width: `${largeur}px`, height: `${hauteur}px`, transform: `scale(${echelle})`, transformOrigin: "top left" });
-    cadre.style.height = `${Math.min(900, Math.ceil(hauteur * echelle))}px`;
+    const hauteurViewport = Math.min(hauteur, 900 / echelle);
+    Object.assign(f.style, { width: `${largeur}px`, height: `${hauteurViewport}px`, transform: `scale(${echelle})`, transformOrigin: "top left" });
+    cadre.style.height = `${Math.ceil(hauteurViewport * echelle)}px`;
   };
   const identifiantDe = (el) => [...(el?.classList || [])].find((c) => /^dse-b-[a-z]{0,3}[mclsr]\d+$/.test(c));
   const apercuDesign = () => {
@@ -341,6 +419,9 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (!doc) return;
     for (const x of doc.querySelectorAll(".dse-design-cible")) x.classList.remove("dse-design-cible");
     doc.getElementById("dse-design-live")?.remove();
+    const selection = etat.design?.ref;
+    for (const n of racine.querySelectorAll("[data-c-noeud]")) n.classList.toggle("constructeur-selection", n.dataset.cNoeud === selection);
+    if (selection) doc.querySelector(`[data-dse-ref="${CSS.escape(selection)}"]`)?.classList.add("dse-design-cible");
     const form = racine.querySelector("[data-design-form]");
     if (!etat.design?.data || !form) return;
     const el = doc.querySelector(`[data-dse-ref="${CSS.escape(etat.design.ref)}"]`);
@@ -361,14 +442,22 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       apercuDesign();
       const doc = docApercu();
       doc?.addEventListener("click", (ev) => {
+        const commande = ev.target.closest?.("[data-builder-canvas]");
         const cibleRef = ev.target.closest?.("[data-dse-ref]");
         ev.preventDefault();
+        if (commande && !enCours) return racine.querySelector(`[data-c-action="builder-${CSS.escape(commande.dataset.builderCanvas)}"][data-ref="${CSS.escape(commande.dataset.ref)}"]`)?.click();
         if (cibleRef && d.arbre && ecrit(d, FONCTION[d.arbre.type])) ouvrirDesign(cibleRef.dataset.dseRef);
       });
-      for (const el of doc?.querySelectorAll("[data-dse-ref]") || []) el.draggable = true;
+      for (const el of doc?.querySelectorAll("[data-dse-ref]") || []) {
+        const node = trouverNoeud(el.dataset.dseRef);
+        el.draggable = Boolean(node?.parent && !node.n.verrouille && ecrit(d, FONCTION[d.arbre.type]));
+      }
       doc?.addEventListener("dragstart", demarrerGlisse);
       doc?.addEventListener("dragover", autoriserDepot);
       doc?.addEventListener("drop", deposer);
+      doc?.addEventListener("dragend", terminerGlisse);
+      doc?.addEventListener("load", dimensionner, true);
+      doc?.body.classList.toggle("dse-apercu-seul", Boolean(etat.apercuSeul));
     });
     f.srcdoc = documentApercu(d.apercu, d.arbre?.type);
   };
@@ -383,24 +472,33 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const zone = racine.querySelector("[data-c-panneau]");
     if (!zone) return;
     const generic = etat.design?.ref?.startsWith("builderelement.") ? trouverNoeud(etat.design.ref)?.n : null;
-    zone.innerHTML = generic ? panneauGenerique(generic, d.medias || [], etat.design.appareilValeurs || "") : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), onglet: etat.design.onglet, appareil: etat.design.appareil })
+    zone.innerHTML = generic ? panneauGenerique(generic, (d.medias || []).filter((m) => m.builderAutorise !== false), etat.design.appareilValeurs || "", etat.design.ongletGenerique || "CONTENU") : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), onglet: etat.design.onglet, appareil: etat.design.appareil })
       : etat.design ? `<p class="card muted">Chargement des réglages…</p>` : "";
     zone.closest(".constructeur-design-zone")?.classList.toggle("constructeur-design-zone--ouverte", Boolean(etat.design));
+    if (generic?.verrouille) for (const champ of zone.querySelectorAll("input,select,textarea,button[type=submit]")) champ.disabled = true;
+    const palette = racine.querySelector("[data-builder-palette]");
+    const selection = generic || d.arbre?.generique;
+    if (palette && selection) palette.innerHTML = `<p class="muted">Ajouter dans : ${e(selection.titre)}</p>${
+      ecrit(d, FONCTION[d.arbre.type]) && !selection.verrouille && selection.ajouts?.length ?
+        selection.ajouts.map((t) => bouton(`＋ ${e(t.titre)}`, "builder-ajout-direct",
+          `data-ref="${e(selection.ref)}" data-type-ref="${e(t.ref)}"`, "btn btn-mini")).join("") :
+        '<p class="muted">Aucun ajout autorisé pour cette sélection.</p>'}`;
     apercuDesign();
   };
   async function ouvrirDesign(ref, onglet = etat.design?.ref === ref ? etat.design.onglet : "design") {
-    if (etat.design?.ref !== ref && modificationsLocales()) {
+    if (!ref.startsWith("builderelement.") && etat.design?.ref !== ref && modificationsLocales()) {
       if (!confirmerAbandon()) return;
       if (brouillonGenerique) {
         await charger();
         brouillonGenerique = false;
-        appareilsModifies.clear();
+        brouillons.clear();
         const f = iframe();
         if (f) f.srcdoc = documentApercu(d.apercu, d.arbre.type);
       }
     }
     if (ref.startsWith("builderelement.")) {
-      etat.design = { ref, onglet };
+      etat.design = { ref, onglet, appareilValeurs: etat.design?.appareilValeurs || "",
+        ongletGenerique: etat.design?.ongletGenerique || "CONTENU" };
       afficherPanneau();
       historique = [];
       positionHistorique = -1;
@@ -436,24 +534,56 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (!d.arbre) etat.design = null;
     afficherPanneau();
   };
-  const executer = async (action, params) => {
-    if (!["design.enregistrer", "builder.enregistrer"].includes(action) && !confirmerAbandon()) return;
+  const executer = async (action, params, { historiqueCommande = false } = {}) => {
+    if (enCours) return false;
+    if (action.startsWith("builder.") && action !== "builder.enregistrer" && brouillons.size) {
+      message("Enregistrez les réglages en attente avant de modifier la structure.");
+      return false;
+    }
+    if (!action.startsWith("builder.") && !["design.enregistrer"].includes(action) && !confirmerAbandon()) return false;
+    const structureAvant = d.arbre?.generique?.structure;
+    if ((action.startsWith("builder.") || action === "conteneur.dupliquer" && params.ref === etat.conteneur) && d.arbre?.generique) params = { ...params,
+      attendu: historiqueCommande ? empreinteHistorique : d.arbre.generique.empreinte };
+    enCours = true;
     const zone = racine.querySelector("[data-c-message]");
     if (zone) zone.innerHTML = `<p class="muted">Enregistrement dans SharePoint…</p>`;
     for (const b of racine.querySelectorAll("button")) b.disabled = true;
     try {
       const r = await actionConstruire(domaine, action, params);
+      if (!r?.donnees || r.donnees.refus || r.donnees.erreur) throw new Error(r?.donnees?.refus || r?.donnees?.erreur || "Réponse d'enregistrement invalide.");
       Object.assign(etat, { message: r?.donnees?.message || "Action enregistrée.", erreur: false });
+      if (action === "conteneur.dupliquer" && etat.conteneur && r.donnees.nouveau?.ref) {
+        etat.conteneur = r.donnees.nouveau.ref;
+        etat.design = null;
+        historiqueBuilder = [];
+        positionBuilder = -1;
+      }
       await charger();
       brouillonGenerique = false;
-      appareilsModifies.clear();
+      brouillons.clear();
+      empreinteHistorique = d.arbre?.generique?.empreinte || "";
+      if (!historiqueCommande) {
+        const nouveau = r.donnees.nouveau?.ref;
+        if (["builder.ajouter", "builder.dupliquer", "builder.deplacer", "builder.desactiver"].includes(action)) {
+          const commande = historiqueStructure(structureAvant, d.arbre.generique.structure, d.arbre.generique.ref);
+          if (commande) ajouterHistorique(commande);
+        }
+        if (["builder.ajouter", "builder.dupliquer"].includes(action) && nouveau) etat.design = { ref: nouveau };
+        if (action === "builder.desactiver") etat.design = null;
+        if (action === "builder.initialiser") { historiqueBuilder = []; positionBuilder = -1; }
+      }
       if (etat.design) etat.design.data = null;
+      if (etat.design?.ref.startsWith("builderelement.") && !trouverNoeud(etat.design.ref)) etat.design = { ref: d.arbre.generique.ref };
     } catch (err) {
       Object.assign(etat, { message: err.message || "L'action n'a pas abouti.", erreur: true });
-      await charger().catch(() => {});
+      enCours = false;
+      afficher();
+      return false;
     }
+    enCours = false;
     afficher();
     if (etat.design && !etat.design.data) await ouvrirDesign(etat.design.ref, etat.design.onglet);
+    return true;
   };
   const dialogue = () => racine.querySelector("[data-c-dialogue]");
   const ouvrirFormulaire = (f, titre, surValider) => {
@@ -473,8 +603,106 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     dlg.innerHTML = `<form method="dialog"><p>${e(texte)}</p><div class="constructeur-boutons"><button class="btn btn-primary" value="ok">Fermer</button></div></form>`;
     dlg.showModal();
   };
+  const changerHistorique = async (retablir) => {
+    const position = retablir ? positionBuilder + 1 : positionBuilder;
+    const commande = historiqueBuilder[position];
+    if (!commande) return message("Aucune action disponible dans cet historique temporaire.");
+    if (commande.genre === "reglages") {
+      const node = trouverNoeud(commande.ref)?.n;
+      if (!node || node.verrouille) return message("La cible de ces réglages n'est plus disponible.");
+      node.champs = structuredClone(retablir ? commande.apres : commande.avant);
+      for (const appareil of ["", ...APPAREILS_APERCU.map((a) => a.cle)]) marquerBrouillon(node.ref, appareil);
+      etat.design = { ref: node.ref };
+      afficherPanneau();
+      actualiserCanvas();
+    } else {
+      const c = retablir ? commande.retablir : commande.annuler;
+      if (!await executer(c.action, c.params, { historiqueCommande: true })) return;
+    }
+    positionBuilder += retablir ? 1 : -1;
+  };
+  const copierGenerique = (styleSeulement) => {
+    const node = trouverNoeud(etat.design?.ref)?.n;
+    if (!node?.champs) return message("Sélectionnez un élément générique.");
+    copieReglages = { typeRef: node.typeRef, champs: structuredClone(node.champs.filter((c) =>
+      (!styleSeulement || c.categorie === "DESIGN") && codeChamp(c.cle) !== "IDCSS")) };
+  };
+  const collerGenerique = () => {
+    const node = trouverNoeud(etat.design?.ref)?.n;
+    if (!copieReglages || !node?.champs || node.verrouille) return message("Copiez les réglages puis sélectionnez une cible modifiable.");
+    if (node.typeRef !== copieReglages.typeRef) return message("Copie incompatible : les types natifs SharePoint doivent correspondre.");
+    const correspondances = copieReglages.champs.map((source) => ({ source, cible: node.champs.find((c) =>
+      c.ref === source.ref && c.categorie === source.categorie && c.nature === source.nature) }));
+    if (correspondances.some((c) => !c.cible)) return message("Les définitions SharePoint ont changé ; recopiez les réglages.");
+    modifierChamps(node, () => {
+      for (const { source, cible } of correspondances) {
+        cible.valeur = source.valeur;
+        cible.surcharges = structuredClone(source.surcharges);
+        cible.mediaTypes = structuredClone(source.mediaTypes || {});
+      }
+      for (const appareil of ["", ...APPAREILS_APERCU.map((a) => a.cle)]) marquerBrouillon(node.ref, appareil);
+    });
+    afficherPanneau();
+  };
+  const enregistrerBrouillons = async () => {
+    if (enCours || !brouillons.size) return;
+    const recettes = [...brouillons].map(([ref, appareils]) => {
+      const node = trouverNoeud(ref)?.n;
+      if (!node) throw new Error("Élément en attente introuvable.");
+      const lots = Object.fromEntries([...appareils].map((appareil) => [appareil, Object.fromEntries(node.champs.map((c) => {
+        const v = (appareil ? c.surcharges?.[appareil] : c.valeur) ?? "";
+        const erreur = erreurValeur(c, v);
+        if (erreur) throw new Error(`${c.libelle} : ${erreur}`);
+        const media = c.nature === "MEDIA" && v ? d.medias.find((m) => m.url === `/api/v1/media/${v}`)?.ref : v;
+        if (c.nature === "MEDIA" && v && !media) throw new Error(`${c.libelle} : média hors périmètre.`);
+        return [c.ref, media ?? ""];
+      }))]));
+      return { ref, appareil: "", valeurs: lots[""] || {}, surcharges: Object.fromEntries(Object.entries(lots).filter(([a]) => a)),
+        champs: structuredClone(node.champs) };
+    });
+    enCours = true;
+    for (const b of racine.querySelectorAll("button,input,textarea,select")) b.disabled = true;
+    let frais = d;
+    try {
+      for (const { champs, ...params } of recettes) {
+        const r = await actionConstruire(domaine, "builder.enregistrer", { ...params, attendu: frais.arbre.generique.empreinte });
+        if (!r?.donnees || r.donnees.refus || r.donnees.erreur) throw new Error(r?.donnees?.refus || r?.donnees?.erreur || "Enregistrement non confirmé.");
+        brouillons.delete(params.ref);
+        frais = (await getConstruire(domaine, etat.conteneur))?.donnees;
+        if (!frais?.arbre?.generique) throw new Error("Relecture de la composition indisponible.");
+      }
+      d = frais;
+      empreinteHistorique = d.arbre.generique.empreinte;
+      brouillonGenerique = false;
+      Object.assign(etat, { message: "Tous les réglages configurés ont été enregistrés et relus dans SharePoint.", erreur: false });
+    } catch (err) {
+      Object.assign(etat, { message: err.message, erreur: true });
+      try {
+        const relecture = (await getConstruire(domaine, etat.conteneur))?.donnees;
+        if (!relecture?.arbre?.generique) throw new Error("Composition relue introuvable.");
+        frais = relecture;
+      } catch (relectureErreur) {
+        etat.message += ` Relecture impossible : ${relectureErreur.message}`;
+      }
+      d = frais;
+      for (const recette of recettes.filter((r) => brouillons.has(r.ref))) {
+        const node = trouverNoeud(recette.ref)?.n;
+        if (node) node.champs = recette.champs;
+      }
+      brouillonGenerique = Boolean(brouillons.size);
+    } finally {
+      enCours = false;
+      afficher();
+    }
+  };
 
   racine.addEventListener("click", async (ev) => {
+    if (enCours) return;
+    const ongletBuilder = ev.target.closest("[data-builder-onglet]");
+    if (ongletBuilder && etat.design) {
+      etat.design.ongletGenerique = ongletBuilder.dataset.builderOnglet;
+      return afficherPanneau();
+    }
     const d1 = ev.target.closest("[data-c-appareil],[data-design-onglet],[data-design-choix-appareil],[data-design-fermer],[data-design-reset],[data-design-media],[data-design-appliquer]");
     if (d1 && racine.contains(d1)) return actionDesign(d1);
     const cible = ev.target.closest("[data-c-onglet],[data-c-action]");
@@ -486,32 +714,77 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (cible.dataset.cOnglet) { Object.assign(etat, { onglet: cible.dataset.cOnglet, message: "" }); return afficher(); }
     const ref = cible.dataset.ref;
     switch (cible.dataset.cAction) {
-      case "annuler-design": if (positionHistorique > 0) appliquerValeurs(historique[--positionHistorique]); return;
-      case "retablir-design": if (positionHistorique + 1 < historique.length) appliquerValeurs(historique[++positionHistorique]); return;
-      case "copier-style": copieStyle = valeursFormulaire(); if (!copieStyle) message("Sélectionnez un élément et ouvrez son Design."); return;
-      case "coller-style": if (copieStyle && valeursFormulaire()) { appliquerValeurs(copieStyle); memoriser(); } else message("Copiez d'abord un style, puis sélectionnez une cible."); return;
+      case "annuler-design": if (d.arbre?.generique) return changerHistorique(false); if (positionHistorique > 0) appliquerValeurs(historique[--positionHistorique]); return;
+      case "retablir-design": if (d.arbre?.generique) return changerHistorique(true); if (positionHistorique + 1 < historique.length) appliquerValeurs(historique[++positionHistorique]); return;
+      case "copier-reglages": return copierGenerique(false);
+      case "coller-reglages": return collerGenerique();
+      case "copier-style": if (d.arbre?.generique) return copierGenerique(true); copieStyle = valeursFormulaire(); if (!copieStyle) message("Sélectionnez un élément et ouvrez son Design."); return;
+      case "coller-style": if (d.arbre?.generique) return collerGenerique(); if (copieStyle && valeursFormulaire()) { appliquerValeurs(copieStyle); memoriser(); } else message("Copiez d'abord un style, puis sélectionnez une cible."); return;
+      case "builder-reset": {
+        if (!confirm("Rétablir l'héritage pour les valeurs de cet appareil ? Enregistrez ensuite pour appliquer.")) return;
+        const node = trouverNoeud(etat.design?.ref)?.n, appareil = etat.design?.appareilValeurs || "";
+        if (!node || node.verrouille) return;
+        modifierChamps(node, () => {
+          for (const c of node.champs) { if (appareil) (c.surcharges ||= {})[appareil] = null; else c.valeur = null; }
+          marquerBrouillon(node.ref, appareil);
+        });
+        return afficherPanneau();
+      }
       case "enregistrer-design": {
-        const f = racine.querySelector("[data-design-form],[data-builder-valeurs]");
+        if (d.arbre?.generique) {
+          try { await enregistrerBrouillons(); } catch (err) { message(err.message); }
+          return;
+        }
+        const f = racine.querySelector("[data-design-form]");
         if (f) f.requestSubmit(); else message("Sélectionnez un élément à modifier. Les actions structurelles sont déjà enregistrées dans SharePoint.");
         return;
       }
-      case "apercu-seul": racine.querySelector("[data-constructeur]")?.classList.toggle("constructeur--apercu-seul"); dimensionner(); return;
+      case "apercu-seul": etat.apercuSeul = !etat.apercuSeul; racine.querySelector("[data-constructeur]")?.classList.toggle("constructeur--apercu-seul", etat.apercuSeul); docApercu()?.body.classList.toggle("dse-apercu-seul", etat.apercuSeul); dimensionner(); return;
+      case "builder-medias": return ouvrirFormulaire({ textes: [], listes: [{ cle: "media", libelle: "Médias SharePoint autorisés", options: d.medias || [] }] }, "Médias du site", () => {});
+      case "builder-ajout-direct": return executer("builder.ajouter", { ref, typeRef: cible.dataset.typeRef });
       case "builder-ajouter": {
-        const options = (d.builder?.types || []).filter((t) => !t.racine);
+        const options = trouverNoeud(ref)?.n?.ajouts || [];
         if (!options.length) return message("Aucun type d'enfant actif n'est configuré dans SharePoint.");
         return ouvrirFormulaire({ textes: [], listes: [{ cle: "typeRef", libelle: "Type d'élément", options }] },
           "Ajouter un élément", (v) => executer("builder.ajouter", { ref, ...v }));
+      }
+      case "builder-dupliquer": return executer("builder.dupliquer", { ref });
+      case "builder-monter":
+      case "builder-descendre": {
+        const source = trouverNoeud(ref);
+        const freres = source?.parent?.enfants || [], i = freres.findIndex((n) => n.ref === ref);
+        const haut = cible.dataset.cAction === "builder-monter", voisin = freres[i + (haut ? -1 : 1)];
+        if (!source?.parent || !voisin) return;
+        return executer("builder.deplacer", { ref, parent: source.parent.ref, [haut ? "avant" : "apres"]: voisin.ref });
+      }
+      case "builder-deplacer": {
+        const source = trouverNoeud(ref), options = [];
+        const parcourir = (n, chemin = "") => {
+          if (n.ref === ref) return;
+          const titre = `${chemin}${n.titre}`;
+          if (!n.verrouille && n.ajouts?.some((t) => t.ref === source?.n.typeRef)) options.push({ ref: n.ref, titre });
+          for (const x of n.enfants || []) parcourir(x, `${titre} › `);
+        };
+        parcourir(d.arbre.generique);
+        if (!options.length) return message("Aucun parent autorisé dans cette composition.");
+        return ouvrirFormulaire({ textes: [], listes: [{ cle: "parent", libelle: "Destination", obligatoire: true, options }] },
+          "Déplacer l'élément", (v) => executer("builder.deplacer", { ref, ...v }));
       }
       case "builder-initialiser": return ouvrirFormulaire({
         textes: [], listes: [{ cle: "typeRef", libelle: "Type de racine", options: (d.builder?.types || []).filter((t) => t.racine) }]
       }, "Initialiser ce conteneur vide", (v) => executer("builder.initialiser", { ref, ...v }));
       case "builder-retirer": if (confirm("Retirer logiquement cet élément et son sous-arbre ? Aucune donnée ne sera supprimée.")) return executer("builder.desactiver", { ref }); return;
-      case "ouvrir": etat.conteneur = ref; etat.message = ""; await charger().catch((err) => Object.assign(etat, { message: err.message, erreur: true })); return afficher();
-      case "fermer": if (!confirmerAbandon()) return; etat.conteneur = ""; delete d.arbre; delete d.apercu; await charger().catch(() => {}); brouillonGenerique = false; return afficher();
+      case "ouvrir": if (!confirmerAbandon()) return; etat.conteneur = ref; etat.message = ""; historiqueBuilder = []; positionBuilder = -1; brouillons.clear(); brouillonGenerique = false; await charger().catch((err) => Object.assign(etat, { message: err.message, erreur: true })); empreinteHistorique = d.arbre?.generique?.empreinte || ""; return afficher();
+      case "fermer": if (!confirmerAbandon()) return; etat.conteneur = ""; delete d.arbre; delete d.apercu; try { await charger(); } catch (err) { Object.assign(etat, { message: err.message, erreur: true }); } brouillonGenerique = false; brouillons.clear(); return afficher();
       case "ia": return message(MESSAGE_IA);
       case "design": return ouvrirDesign(ref);
       case "utilisations": { const z = racine.querySelector(`[data-utilisations="${CSS.escape(ref)}"]`); if (z) z.hidden = !z.hidden; return; }
-      case "dupliquer": return executer("conteneur.dupliquer", { ref });
+      case "dupliquer": {
+        const page = d.pages.find((p) => p.ref === ref);
+        if (!page) return executer("conteneur.dupliquer", { ref });
+        return ouvrirFormulaire({ textes: [{ cle: "url", libelle: "Adresse unique de la copie", valeur: "", max: 255 }], listes: [] },
+          `Dupliquer « ${page.titre} » en brouillon`, (v) => executer("conteneur.dupliquer", { ref, url: v.url }));
+      }
       case "publier": return executer("conteneur.publier", { ref });
       case "desactiver": if (confirm("Désactiver cet élément ? Il ne sera pas supprimé.")) return executer("conteneur.desactiver", { ref }); return;
       case "monter": return executer("element.deplacer", { ref, sens: "haut" });
@@ -546,11 +819,11 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   function actionDesign(b) {
     const form = racine.querySelector("[data-design-form]");
     if (b.dataset.cAppareil) {
-      etat.appareil = b.dataset.cAppareil;
-      for (const x of racine.querySelectorAll("[data-c-appareil]")) {
-        x.classList.toggle("btn-primary", x === b); x.classList.toggle("btn-secondary", x !== b); x.setAttribute("aria-pressed", String(x === b));
+      if (d.arbre?.generique && etat.design) {
+        etat.design.appareilValeurs = b.dataset.cAppareil;
+        afficherPanneau();
       }
-      return dimensionner();
+      return changerAppareil(b.dataset.cAppareil);
     }
     if (b.dataset.designOnglet) {
       etat.design.onglet = b.dataset.designOnglet;
@@ -591,31 +864,32 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const s = ev.target;
     const fg = s.closest?.("[data-builder-valeurs]");
     if (fg) {
+      if (enCours) return;
       if (s.matches("[data-builder-appareil]")) {
         etat.design.appareilValeurs = s.value;
-        if (s.value) {
-          etat.appareil = s.value;
-          for (const b of racine.querySelectorAll("[data-c-appareil]")) {
-            b.classList.toggle("btn-primary", b.dataset.cAppareil === s.value);
-            b.classList.toggle("btn-secondary", b.dataset.cAppareil !== s.value);
-            b.setAttribute("aria-pressed", String(b.dataset.cAppareil === s.value));
-          }
-        }
+        if (s.value) changerAppareil(s.value);
         afficherPanneau();
         return dimensionner();
       }
       const node = trouverNoeud(fg.dataset.ref)?.n;
-      const c = node?.champs.find((x) => x.ref === s.name);
-      if (c) {
-        brouillonGenerique = true;
-        appareilsModifies.add(fg.dataset.appareil || "");
+      const c = node?.champs.find((x) => x.ref === (s.name || s.dataset.builderCouleur || s.dataset.builderCote));
+      if (c && !node.verrouille) {
+        const input = fg.elements.namedItem(c.ref);
+        if (s.dataset.builderCouleur) input.value = s.value;
+        if (s.dataset.builderCote) {
+          const cotes = [...fg.querySelectorAll(`[data-builder-cote="${CSS.escape(c.ref)}"]`)].map((x) => x.value.trim());
+          input.value = cotes.every((x) => !x) ? "" : cotes.join(" ");
+        }
         const valeur = c.nature === "BOOLEEN" ? (s.value === "" ? null : s.value === "true") :
           c.nature === "MEDIA" ? /\/media\/(\d+)$/.exec(d.medias.find((m) => m.ref === s.value)?.url || "")?.[1] || null :
-            s.value === "" ? null : s.value;
-        if (fg.dataset.appareil) (c.surcharges ||= {})[fg.dataset.appareil] = valeur;
-        else c.valeur = valeur;
-        const f = iframe();
-        if (f) f.srcdoc = documentApercu({ ...d.apercu, noeuds: [d.arbre.generique] }, d.arbre.type);
+          c.nature === "NOMBRE" ? input.value === "" ? null : Number(input.value) : input.value || null;
+        s.setCustomValidity?.(erreurValeur(c, valeur) || "");
+        modifierChamps(node, () => {
+          if (fg.dataset.appareil) (c.surcharges ||= {})[fg.dataset.appareil] = valeur;
+          else c.valeur = valeur;
+          if (c.nature === "MEDIA" && valeur) (c.mediaTypes ||= {})[valeur] = d.medias.find((m) => m.ref === s.value)?.type || "";
+          marquerBrouillon(node.ref, fg.dataset.appareil);
+        });
       }
       return;
     }
@@ -640,15 +914,8 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const f = ev.target;
     if (f.matches("[data-builder-valeurs]")) {
       ev.preventDefault();
-      const node = trouverNoeud(f.dataset.ref)?.n;
-      const valeursPour = (appareil) => Object.fromEntries(node.champs.map((c) => {
-        const v = (appareil ? c.surcharges?.[appareil] : c.valeur) ?? "";
-        const valeur = c.nature === "MEDIA" && v ? d.medias.find((m) => m.url === `/api/v1/media/${v}`)?.ref : v;
-        return [c.ref, valeur ?? ""];
-      }));
-      const appareil = f.dataset.appareil;
-      const surcharges = Object.fromEntries([...appareilsModifies].filter((a) => a !== appareil).map((a) => [a, valeursPour(a)]));
-      return executer("builder.enregistrer", { ref: f.dataset.ref, appareil, valeurs: valeursPour(appareil), surcharges });
+      enregistrerBrouillons().catch((err) => message(err.message));
+      return;
     }
     if (f.matches("[data-design-form]")) {
       ev.preventDefault();
@@ -675,26 +942,47 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     glisse = source;
     ev.dataTransfer.setData("text/plain", reference);
     ev.dataTransfer.effectAllowed = "move";
+    docApercu()?.body.classList.add("dse-builder-glisse");
+  }
+  function terminerGlisse() {
+    glisse = null;
+    docApercu()?.body.classList.remove("dse-builder-glisse");
+    for (const x of docApercu()?.querySelectorAll(".dse-depot-actif") || []) x.classList.remove("dse-depot-actif");
+  }
+  function destinationDepot(ev) {
+    const zone = ev.target.closest?.("[data-builder-depot]");
+    const cible = zone || ev.target.closest?.("[data-c-noeud],[data-dse-ref]");
+    const dest = trouverNoeud(cible?.dataset.ref || cible?.dataset.cNoeud || cible?.dataset.dseRef);
+    if (!glisse || !dest || glisse.n.ref === dest.n.ref || dest.n.verrouille) return null;
+    const position = zone?.dataset.builderDepot || (dest.n.typeRef === glisse.n.typeRef ? "avant" : "dans");
+    const parent = position === "dans" ? dest.n : dest.parent;
+    if (!parent || parent.verrouille) return null;
+    if (glisse.n.type === "builder" && !parent.ajouts?.some((t) => t.ref === glisse.n.typeRef)) return null;
+    let courant = trouverNoeud(parent.ref);
+    while (courant) { if (courant.n.ref === glisse.n.ref) return null; courant = courant.parent ? trouverNoeud(courant.parent.ref) : null; }
+    return { zone, parent, dest, position };
   }
   function autoriserDepot(ev) {
-    if (glisse && ev.target.closest?.("[data-c-noeud],[data-dse-ref]")) ev.preventDefault();
+    for (const x of docApercu()?.querySelectorAll(".dse-depot-actif") || []) x.classList.remove("dse-depot-actif");
+    const dest = destinationDepot(ev);
+    if (!dest || enCours) return;
+    ev.preventDefault();
+    dest.zone?.classList.add("dse-depot-actif");
+    if (ev.dataTransfer) ev.dataTransfer.dropEffect = "move";
   }
   function deposer(ev) {
-    const target = ev.target.closest?.("[data-c-noeud],[data-dse-ref]");
-    const dest = trouverNoeud(target?.dataset.cNoeud || target?.dataset.dseRef);
-    if (!glisse || !dest || glisse.n.ref === dest.n.ref) return;
+    const depot = destinationDepot(ev);
+    if (!glisse || !depot || enCours) { terminerGlisse(); return; }
     ev.preventDefault();
     const source = glisse;
-    glisse = null;
-    const avant = source.n.type === dest.n.type && (source.n.type !== "builder" || source.n.typeRef === dest.n.typeRef);
-    const parent = avant ? dest.parent : dest.n;
-    if (!parent) return;
+    terminerGlisse();
     return executer(source.n.type === "builder" ? "builder.deplacer" : "element.deplacer",
-      { ref: source.n.ref, parent: parent.ref, ...(avant ? { avant: dest.n.ref } : {}) });
+      { ref: source.n.ref, parent: depot.parent.ref, ...(depot.position !== "dans" ? { [depot.position]: depot.dest.n.ref } : {}) });
   }
   racine.addEventListener("dragstart", demarrerGlisse);
   racine.addEventListener("dragover", autoriserDepot);
   racine.addEventListener("drop", deposer);
+  racine.addEventListener("dragend", terminerGlisse);
 
   afficher();
 }
