@@ -6,6 +6,7 @@ const dse = require("../shared/dse");
 const ecriture = require("../shared/ecriture");
 const droits = require("../auth/droits");
 const inscription = require("../auth/inscription");
+require("../auth/autorisations").charger = async () => null;
 
 (async () => {
   const noms = ["OBJ-NOM DE DOMAINE", "OBJ-SITE-PUBLIC", "OBJ-CLIENT", "OBJ-ROLE", "OBJ-ACTIF", "OBJ-VALIDE",

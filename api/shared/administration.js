@@ -217,7 +217,7 @@ async function construireAction(d, action, params, g) {
       return { refus: "Saisie de politique invalide." };
     }
     const candidat = { ...role, portee: params.portee, niveau: params.niveau, fonctions: params.fonctions };
-    const p = politiqueDepuisRoles([candidat]);
+    const p = politiqueDepuisRoles([candidat], donnees.correspondances || []);
     if (!droits.peutAttribuer(d, role.id, p)) return { refus: "Politique incomplète, inconnue ou supérieure à vos droits." };
     if (!S.listes.role) return { refus: "Gestion des politiques indisponible." };
     const champs = { PORTEE: candidat.portee, NIVEAUACCES: candidat.niveau, FONCTIONS: candidat.fonctions };

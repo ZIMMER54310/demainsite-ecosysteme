@@ -12,6 +12,68 @@ Le cockpit utilise une session native Entra et des controles de perimetre cote s
 
 ## Droits et edition cockpit
 
+### Autorisations atomiques SharePoint
+
+Le service central [auth/autorisations.js](auth/autorisations.js) lit les comptes,
+affectations, roles, capacites, actions, permissions et appartenances depuis SharePoint.
+Les relations sont comparees par IDs natifs ; Title ne sert pas d'identite.
+Les Lookups sont lus par projections bornees, puis les champs omis par Graph sont
+relus individuellement. Les ETags doivent rester coherents entre projections.
+Une valeur absente n'est jamais interpretee comme une colonne absente.
+
+OBJ-DROIT-OPERATION contient uniquement les correspondances operations techniques /
+fonctions du cockpit / Lookups capacite et action. OBJ-DROIT-PERIMETRE contient
+les Lookups type et origine, colonne cible, liste cible, mode technique de resolution,
+colonnes d'appartenance et IDs des types de cibles admissibles.
+Ces listes ne sont pas des attributions utilisateur.
+
+Une capacite du role et une permission atomique active/valide Autorisation=Oui
+sont necessaires. OBJ-CAPACITE-ACTION valide la paire mais n'accorde jamais
+l'action. Un Non explicite applicable prime sur les Oui cumules.
+Les verrous des affectations ne retirent pas leurs droits de lecture ; les
+elements editoriaux verrouilles restent proteges contre les ecritures.
+CLIENT et groupements resolvent leurs membres natifs ; une boutique ne donne
+aucun droit implicite sur son parent. Le type de cible doit etre renseigne.
+
+Les affectations typees utilisent ce moteur sans exiger l'ancien profil
+OBJ-ACCES-TYPE. Les relations non migrees et le role global conservent leur
+compatibilite, dont les traductions sont elles aussi dans OBJ-DROIT-OPERATION
+(mode technique compatibility). Aucun code de role ne donne un acces par lui-meme.
+Un contexte dynamique direct declare pour un site mais incomplet ne retombe
+jamais sur une ancienne affectation de ce meme site.
+
+Les routes edition/aperçu/confirmation et construire/action controlent l'action
+atomique sur la cible relue. La confirmation reutilise la session, la version
+ETag, l'anti-doublon et la relecture existants. Articles utilise le meme flux
+editorial sur OBJ-ARTICLE et journalise les succes avec cle d'idempotence.
+Les controles internes du Builder ne sont pas modifies.
+
+Outils :
+
+```sh
+node tools/provision-autorisations.js
+node tools/provision-autorisations.js --apply
+node tools/provision-autorisations.js --configure --apply
+node tests/droits-dynamiques-reels.js
+```
+
+Le provisionnement est additif et idempotent, sans suppression. Une correspondance
+existante differente est refusee, pas remplacee automatiquement. Graph peut
+autoriser les items et refuser la creation de listes/colonnes (403) ; aucune
+modification Azure n'est entreprise. Les deux structures peuvent alors etre
+ajoutees par une session SharePoint administrateur reellement authentifiee.
+
+Le test natif est en lecture seule : il verifie les donnees du pilote et les
+refus calcules, mais **ne constitue ni une preuve OAuth ni une ecriture metier**.
+La recette fonctionnelle exige une session Microsoft reelle du pilote :
+modifier En-tete/Footer, consulter Pages, creer/modifier un article utile reel,
+et verifier les refus Page/admin/boutique/autre cible/API directe.
+Ne pas creer d'article fictif pour la recette. Pour le test dynamique, changer
+une permission ou capacite dans SharePoint, relire le contexte et refaire l'action
+dans la meme session : aucune modification de code n'est necessaire. Faire
+approuver la modification metier et sa restauration ; ne pas modifier
+arbitrairement des permissions de production pour tester.
+
 La politique est lue dans OBJ-ROLE : PORTEE, NIVEAUACCES, FONCTIONS, avec activation
 et validation. OBJ-UTILISATEUR utilise exclusivement le Lookup client `_x002d_CLIENT`.
 Un role inconnu, incomplet ou desactive n'accorde aucun droit. La politique JSON historique

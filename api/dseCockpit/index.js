@@ -19,6 +19,7 @@ const ecriture = require("../shared/ecriture");
 const administration = require("../shared/administration");
 const inscription = require("../auth/inscription");
 const progressionVisuelle = require("../shared/progression-visuelle");
+const autorisations = require("../auth/autorisations");
 
 const meta = () => ({ genereLe: new Date().toISOString() });
 
@@ -44,6 +45,7 @@ async function contexteUtilisateur(req) {
 }
 
 const contextePublic = (d) => ({ role: d.role, niveau: d.niveau, fonctions: d.fonctions,
+  autorisations: d.autorisations ? { operations: d.autorisations.operations, affectations: d.autorisations.affectations } : null,
   accesType: d.accesType ? { titre: d.accesType.titre } : null,
   contexte: d.contexte ? { etat: d.contexte.etat, message: d.contexte.message, client: d.contexte.client,
     domaine: d.contexte.domaine,
@@ -189,10 +191,10 @@ async function sites(req, res) {
     if (!ctx.droits.reconnu) return refuser(res, 403, "Accès non autorisé.");
     const { groupes: tousGroupes, statuts } = await groupesAutorises(ctx);
     const donnees = await droits.donneesDroits();
-    const attribues = new Set(donnees.liens.filter((l) => l.actif && l.valide &&
+    const attribues = new Set([...(ctx.droits.sitesAttribues || []), ...donnees.liens.filter((l) => l.actif && l.valide &&
       String(l.utilisateurId) === ctx.droits.utilisateurId && l.siteId && l.clientId &&
       donnees.clients.some((c) => String(c.id) === String(l.clientId)) &&
-      donnees.sites.some((s) => String(s.id) === String(l.siteId) && String(s.clientId) === String(l.clientId))).map((l) => String(l.siteId)));
+      donnees.sites.some((s) => String(s.id) === String(l.siteId) && String(s.clientId) === String(l.clientId))).map((l) => String(l.siteId))]);
     const groupes = tousGroupes.filter((g) => attribues.has(String(g.id)));
     const liste = await listeSites(ctx, req.query, groupes, statuts);
     liste.clientsCockpit = clientsDuPerimetre(ctx, groupes);
@@ -246,7 +248,8 @@ async function contenus(req, res) {
       if (!client) return refuser(res, 403, "Cet espace client n'est pas disponible.");
       groupes = groupes.filter((g) => String(g.clientId) === id);
     }
-    const onglets = Object.entries(inventaire.TYPES).filter(([, t]) => d.fonctions.includes(t.fonction))
+    const onglets = Object.entries(inventaire.TYPES).filter(([cle, t]) =>
+      d.fonctions.includes(d.autorisations && cle === "articles" ? "articles" : t.fonction))
       .map(([cle, t]) => ({ cle, libelle: t.libelle }));
     if (!onglets.some((o) => o.cle === type)) return refuser(res, 403, "Accès non autorisé.");
     const perim = { global: !client && d.portee === "tous", groupes };
@@ -310,7 +313,10 @@ function origineValide(req) {
 }
 
 const RANG = { lecture: 0, ecriture: 1, administration: 2 };
-const peutEcrire = (d, fonction) => d.reconnu && d.fonctions.includes(fonction) && RANG[d.niveau] >= RANG.ecriture;
+const peutOperation = (d, operation, fonction) => d.autorisations
+  ? autorisations.autoriser(d.autorisations, operation).autorise
+  : d.reconnu && d.fonctions.includes(fonction) && RANG[d.niveau] >= RANG.ecriture;
+const peutEcrire = (d, fonction) => peutOperation(d, `${fonction}.modifier`, fonction);
 
 /* Site demande -> site principal (ID natif) dans le perimetre, sinon null (aucune divulgation). */
 async function siteDuPerimetre(ctx, domaineBrut) {
@@ -348,9 +354,11 @@ async function editionLire(req, res) {
     const composant = String(req.query.composant || "");
     const def = edition.COMPOSANTS_EDITABLES[composant];
     const info = await siteDuPerimetre(ctx, req.query.domaine);
-    if (!info || !def || !peutEcrire(ctx.droits, def.fonction)) return refuser(res, 403, "Ce réglage n'est pas disponible dans votre espace.");
+    const suffixe = req.query.element === "nouveau" ? "creer" : "modifier";
+    if (!info || !def || !peutOperation(ctx.droits, `${def.fonction}.${suffixe}`, def.fonction)) return refuser(res, 403, "Ce réglage n'est pas disponible dans votre espace.");
     const r = await edition.lire({ composant, siteId: info.id, element: String(req.query.element || "") });
-    repondre(res, 200, { succes: true, donnees: { site: info.titre, domaine: perimetre.domaineAcces(info), ...r }, meta: meta() });
+    repondre(res, 200, { succes: true, donnees: { site: info.titre, domaine: perimetre.domaineAcces(info),
+      peutCreer: !!def.creation && peutOperation(ctx.droits, `${def.fonction}.creer`, def.fonction), ...r }, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] edition", e.message);
     refuser(res, 503, "Le service est momentanément indisponible.");
@@ -364,7 +372,8 @@ async function editionApercu(req, res) {
     const composant = String(req.body?.composant || "");
     const def = edition.COMPOSANTS_EDITABLES[composant];
     const info = await siteDuPerimetre(ctx, req.body?.domaine);
-    if (!info || !def || !peutEcrire(ctx.droits, def.fonction)) return refuserEcriture(res, ctx, req.body?.domaine, "Cockpit : aperçu édition",
+    const suffixe = req.body?.element === "nouveau" ? "creer" : "modifier";
+    if (!info || !def || !peutOperation(ctx.droits, `${def.fonction}.${suffixe}`, def.fonction)) return refuserEcriture(res, ctx, req.body?.domaine, "Cockpit : aperçu édition",
       "Ce réglage n'est pas disponible dans votre espace.");
     const r = await edition.preparer({ identite: ctx.identite, composant, siteId: info.id, siteNom: info.titre, valeurs: req.body?.valeurs, element: String(req.body?.element || "") });
     repondreResultat(res, r);
@@ -393,7 +402,8 @@ async function confirmer(req, res) {
           const s = donnees.sites.find((s) => String(s.id) === String(op.siteId));
           op.contexteJournal = { acteur: ctx.identite.sujet, utilisateurId: d.utilisateurId,
             clientId: s?.clientId || null, siteId: String(op.siteId) };
-          if (!peutEcrire(d, op.fonction) || !d.siteIds.includes(String(op.siteId))) return "Vous n'avez plus l'autorisation de modifier ce réglage.";
+          if (!peutOperation(d, op.operation || `${op.fonction}.modifier`, op.fonction) ||
+            !d.siteIds.includes(String(op.siteId))) return "Vous n'avez plus l'autorisation de réaliser cette opération.";
           return null;
         }
         if (op.portee === "admin") {
@@ -602,7 +612,7 @@ async function construireLire(req, res) {
     const reference = String(req.query.conteneur || "");
     if (reference) {
       const r = C.resoudre(d, reference, ["entete", "footer", "page"]);
-      if (!r || !p.sites.has(String(C.siteDe(d, r.type, r.el)))) {
+      if (!r || !p.sites.has(String(C.siteDe(d, r.type, r.el))) || !p.lecture(C.CONTENEURS[r.type].fonction)) {
         return refuser(res, 404, "Élément introuvable dans ce site.");
       }
       donnees.arbre = C.arbre(d, r.type, r.el, p);
@@ -654,6 +664,15 @@ async function construireAction(req, res) {
     const source = require("../shared/builder-source");
     if (!lecture) source.viderCache();
     const d = await source.obtenirDonnees();
+    if (ctx.droits.autorisations) {
+      p.peut = (fonction) => {
+        const racines = Object.entries(C.CONTENEURS).filter(([, def]) => def.fonction === fonction).map(([type]) => type);
+        return racines.some((type) => peutOperation(ctx.droits, `constructeur.${type}.${action}`, fonction));
+      };
+      if (![...FONCTIONS_CONSTRUCTEUR].some((f) => p.peut(f))) {
+        return refuserEcriture(res, ctx, domaine, action, "Capacité/action non autorisée pour cette cible.");
+      }
+    }
     let r;
     try {
       r = await C.executer({ d, perimetre: p, siteId: p.info.id, action, params });

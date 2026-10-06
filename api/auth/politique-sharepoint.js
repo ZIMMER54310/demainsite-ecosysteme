@@ -2,15 +2,7 @@
 
 const { FONCTIONS_COCKPIT } = require("../shared/cockpit");
 
-// Traduction des capacites SharePoint vers les routes du moteur, jamais des roles.
-const CAPACITES = {
-  "ADMINISTRATION-GLOBALE": FONCTIONS_COCKPIT,
-  "GESTION-CLIENT": ["administration", "suivi"],
-  "GESTION-UTILISATEURS-CLIENT": ["utilisateurs"],
-  "GESTION-SITES-ATTRIBUES": ["sites", "pages", "entete", "logo-medias", "menu", "footer", "seo", "domaine", "apercu", "suivi"]
-};
-
-function politiqueDepuisRoles(roles) {
+function politiqueDepuisRoles(roles, correspondances = []) {
   const politique = { roles: {} };
   for (const role of roles) {
     if (!role.actif || !role.valide) continue;
@@ -18,13 +10,13 @@ function politiqueDepuisRoles(roles) {
     const niveau = { LECTURE: "lecture", ECRITURE: "ecriture", ADMINISTRATION: "administration" }[role.niveau];
     const codes = String(role.fonctions || "").split(/[;,\n]+/).map((v) => v.trim()).filter(Boolean);
     if (!portee || !niveau || !codes.length) continue;
-    if (codes.some((c) => c.toUpperCase() === "ADMINISTRATION-GLOBALE") &&
-      (portee !== "tous" || niveau !== "administration")) continue;
     const fonctions = new Set();
     let inconnue = false;
     for (const code of codes) {
-      const traduction = CAPACITES[code.toUpperCase()];
-      if (traduction) traduction.forEach((f) => fonctions.add(f));
+      const mappings = correspondances.filter((o) => o.mode === "compatibility" &&
+        o.operation === `compatibilite.${code.toUpperCase()}` && (!o.route || o.route === `${portee}/${niveau}`));
+      if (mappings.length === 1) mappings[0].fonction.split(",")
+        .filter((f) => FONCTIONS_COCKPIT.includes(f)).forEach((f) => fonctions.add(f));
       else if (FONCTIONS_COCKPIT.includes(code.toLowerCase())) fonctions.add(code.toLowerCase());
       else inconnue = true;
     }

@@ -37,13 +37,15 @@ export const EDITIONS = Object.freeze([
   { composant: "seo", fonction: "seo", libelle: "Modifier le SEO" },
   { composant: "footer", fonction: "footer", libelle: "Modifier le Footer" },
   { composant: "menu", fonction: "menu", libelle: "Modifier le menu" },
-  { composant: "pages", fonction: "pages", libelle: "Modifier les pages" }
+  { composant: "pages", fonction: "pages", libelle: "Modifier les pages" },
+  { composant: "articles", fonction: "articles", libelle: "Modifier les articles" }
 ]);
 const NIVEAUX = { lecture: 0, ecriture: 1, administration: 2 };
 export function editionsVisibles(moi, fonctionsSite = []) {
   if ((NIVEAUX[moi?.niveau] ?? -1) < NIVEAUX.ecriture) return [];
   const f = new Set(fonctionsSite);
-  return EDITIONS.filter((x) => f.has(x.fonction));
+  return EDITIONS.filter((x) => f.has(x.fonction) &&
+    (!moi?.autorisations || moi.autorisations.operations.some((o) => o.operation === `${x.fonction}.modifier`)));
 }
 
 export function cartesVisibles(fonctions = []) {
@@ -387,7 +389,9 @@ export function rendreAssistant({ moi, numero = 1, valeurs = {} }) {
 
 export function rendreEdition(moi, d, params = {}) {
   const retour = `#/cockpit/site/${encodeURIComponent(d.domaine || params.domaine)}`;
-  if (d.selection) return `<section class="cockpit">${rendreEnteteCockpit(moi)}<div class="card"><h2>${e(d.libelle)}</h2><ul class="cockpit-liste">${(d.elements || []).map((x) => `<li><a href="${retour}/modifier/${encodeURIComponent(params.composant)}?element=${encodeURIComponent(x.ref)}">${e(x.titre)}</a></li>`).join("")}</ul><a class="btn btn-secondary" href="${retour}">Retour au site</a></div></section>`;
+  if (d.selection) return `<section class="cockpit">${rendreEnteteCockpit(moi)}<div class="card"><h2>${e(d.libelle)}</h2>
+    ${d.peutCreer ? `<a class="btn btn-primary" href="${retour}/modifier/${encodeURIComponent(params.composant)}?element=nouveau">Créer</a>` : ""}
+    <ul class="cockpit-liste">${(d.elements || []).map((x) => `<li><a href="${retour}/modifier/${encodeURIComponent(params.composant)}?element=${encodeURIComponent(x.ref)}">${e(x.titre)}</a></li>`).join("")}</ul><a class="btn btn-secondary" href="${retour}">Retour au site</a></div></section>`;
   if (!d.disponible) {
     return `<section class="cockpit">${rendreEnteteCockpit(moi)}
       <div class="card"><h2>${e(d.libelle || "Réglage")} — ${e(d.site || "")}</h2>

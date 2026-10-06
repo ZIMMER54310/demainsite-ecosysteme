@@ -12,6 +12,7 @@ const catalogueSource = require("../shared/catalogue-source");
 const { FONCTIONS_COCKPIT } = require("../shared/cockpit");
 const perimetre = require("../shared/perimetre");
 const { politiqueDepuisRoles } = require("./politique-sharepoint");
+const autorisations = require("./autorisations");
 
 const DUREE_CACHE_MS = 120000;
 let cache = { valeur: null, expiration: 0, promesse: null };
@@ -115,16 +116,45 @@ function contexteSite(base, donnees, siteId) {
   const refus = (message) => ({ ...base, siteIds: [], clientIds: [], fonctions: [], niveau: null, portee: null, role: null, roleId: null, accesType: null,
     global: false, contexte: { etat: "CONTEXTE INCOMPLET", message, siteId: id } });
   if (!base.reconnu) return refus("Utilisateur non reconnu.");
+  if (donnees.dynamique) {
+    const resolution = autorisations.resoudre(donnees.dynamique, base.utilisateurId, id);
+    if (resolution.actif) {
+      const fonctions = [...new Set(["sites", ...resolution.operations.map((o) => o.fonction)])];
+      const relations = resolution.affectations;
+      const clientIds = [...new Set(relations.map((a) => a.clientId))];
+      const client = donnees.clients.find((c) => c.id === clientIds[0]);
+      return { ...base, global: false, siteIds: [id], clientIds, fonctions,
+        niveau: resolution.operations.some((o) => o.mode !== "read") ? "ecriture" : "lecture",
+        portee: "attribues", autorisations: resolution, roleId: relations.length === 1 ? relations[0].roleId : null,
+        role: { titre: [...new Set(relations.map((a) => a.role))].join(", ") }, accesType: null,
+        contexte: { etat: "COMPLET", siteId: id, affectations: relations, client: { titre: client?.titre },
+          role: { titre: [...new Set(relations.map((a) => a.role))].join(", ") },
+          verrouille: relations.every((a) => a.verrouille) } };
+    }
+    const listeSites = donnees.dynamique.source["OBJ-SITE-PUBLIC"];
+    const champsDirects = donnees.dynamique.source["OBJ-UTILISATEUR-SITE"].cols.filter((c) =>
+      c.name.startsWith("Cible") && c.lookup?.listId.toLowerCase() === listeSites.id.toLowerCase()).map((c) => c.name);
+    if (donnees.dynamique.affectations.some((a) => a.utilisateurId === base.utilisateurId &&
+      a.typeId && champsDirects.some((c) => String(a.fields[`${c}LookupId`]) === id))) {
+      return refus("Affectation dynamique incomplète : contrôler rôle, états, périmètre et cible dans SharePoint.");
+    }
+  }
   if (!Array.isArray(donnees.liens) || !Array.isArray(donnees.clients) || !Array.isArray(donnees.sites)) {
     return refus("Données de contexte indisponibles.");
   }
   const relations = donnees.liens.filter((l) => l.actif && l.valide &&
-    String(l.utilisateurId) === base.utilisateurId && String(l.siteId) === id);
+    String(l.utilisateurId) === base.utilisateurId && String(l.siteId) === id &&
+    !donnees.dynamique?.affectations.some((a) => a.id === String(l.id) && a.typeId));
   if (relations.length !== 1) return refus(relations.length ? "Plusieurs relations actives pour ce site." : "Site non autorisé.");
   return contexteRelation(base, donnees, relations[0]);
 }
 
 function contexteRelation(base, donnees, l) {
+  if (donnees.dynamique?.affectations.some((a) => a.id === String(l.id) && a.typeId)) {
+    const utilisateur = donnees.utilisateurs.find((u) => u.id === String(l.utilisateurId));
+    return contexteSite({ ...base, reconnu: !!utilisateur?.actif && !!utilisateur?.valide,
+      utilisateurId: String(l.utilisateurId) }, donnees, l.siteId);
+  }
   const id = String(l.siteId);
   const refus = (message) => ({ ...base, siteIds: [], clientIds: [], fonctions: [], niveau: null, portee: null, role: null, roleId: null, accesType: null,
     global: false, contexte: { etat: "CONTEXTE INCOMPLET", message, siteId: id } });
@@ -199,6 +229,8 @@ async function chargerDonnees() {
   };
   const [u, k, r, s, li, co] = await Promise.all([lire(L.utilisateur), lire(L.client), lire(L.role), lire(L.site), lire(L.lien), lire(L.commun)]);
   const [actifs, validesOui, verrous, at] = await Promise.all([lire(L.actif), lire(L.valide), lire(L.verrou), lire(L.acces)]);
+  const dynamique = await autorisations.charger(token, site.id, listes);
+  if (dynamique) li.items = dynamique.source["OBJ-UTILISATEUR-SITE"].items;
   const valeurOui = (items) => {
     const candidats = items.filter((i) => /^oui\b/i.test(String(i.fields?.Title || "").trim()));
     return candidats.length === 1 ? String(candidats[0].id) : null;
@@ -300,7 +332,8 @@ async function chargerDonnees() {
       lienValide: L.valide ? li.cols.parListe(L.valide.id)?.name || null : null
     }
   };
-  return { utilisateurs, clients, liens, liensCommuns, sites, roles, accesTypes, politique: politiqueDepuisRoles(roles), structure };
+  return { utilisateurs, clients, liens, liensCommuns, sites, roles, accesTypes, dynamique, correspondances: dynamique?.operations || [],
+    politique: politiqueDepuisRoles(roles, dynamique?.operations || []), structure };
 }
 
 async function donneesDroits() {
@@ -315,7 +348,13 @@ async function donneesDroits() {
 
 async function droitsPour(identite) {
   const donnees = await donneesDroits();
-  return calculerDroits({ identite, ...donnees });
+  const base = calculerDroits({ identite, ...donnees });
+  if (!base.reconnu || base.global || !donnees.dynamique) return base;
+  const dyn = autorisations.resoudre(donnees.dynamique, base.utilisateurId, "");
+  const candidats = [...new Set([...base.siteIds, ...(dyn.siteIds || [])])];
+  const siteIds = candidats.filter((id) => contexteSite(base, donnees, id).contexte?.etat === "COMPLET");
+  return { ...base, siteIds, sitesAttribues: siteIds,
+    sitePrincipalId: siteIds.includes(base.sitePrincipalId) ? base.sitePrincipalId : siteIds[0] || null };
 }
 
 async function sitesIndex() {

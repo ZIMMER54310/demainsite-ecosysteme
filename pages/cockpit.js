@@ -30,7 +30,7 @@ const indisponible = `<section class="cockpit card"><p>Le cockpit est momentané
 
 const moiDepuis = (u) => ({
   nom: u.displayName, role: u.role, fonctions: u.fonctions, niveau: u.niveau, menu: u.menu,
-  accesType: u.accesType, contexte: u.contexte,
+  accesType: u.accesType, contexte: u.contexte, autorisations: u.autorisations,
   domaineAccueil: u.domaineAccueil, nombreSites: u.nombreSites, clients: u.clients || [], porteeGlobale: u.porteeGlobale === true, fournisseurs: u.fournisseurs
 });
 const domaineCourant = () => location.hostname.trim().toLowerCase().replace(/^www\./, "");

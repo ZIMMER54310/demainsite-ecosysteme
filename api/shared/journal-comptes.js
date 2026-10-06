@@ -25,7 +25,7 @@ async function enregistrer(g, { cle, action, avant, apres, contexte }) {
     if (existants[0].fields[C.apres] !== nouveau) throw new Error("OBJ-JRN : opération différente pour la même clé.");
     return { id: String(existants[0].id), relecture: "conforme", deja: true };
   }
-  const champs = { [C.title]: action.slice(0, 255), [C.cle]: cle, [C.action]: action.slice(0, 255),
+  const champs = { [C.title]: `${action.slice(0, 222)}-${ecriture.hash(cle).slice(0, 32)}`, [C.cle]: cle, [C.action]: action.slice(0, 255),
     [C.avant]: JSON.stringify(avant), [C.apres]: nouveau, [C.date]: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
     [C.notes]: "Opération DSE réussie et relue. Relations par ID SharePoint natifs ; aucune suppression." };
   const item = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${liste.id}/items`, { fields: champs });

@@ -14,7 +14,8 @@ const COMPOSANTS_EDITABLES = {
   seo: { fonction: "seo", libelle: "Référencement SEO", listes: ["OBJ-SEO"], creation: true },
   footer: { fonction: "footer", libelle: "Footer", listes: ["OBJ-FOOTER-SITE", "OBJ-FOOTER"] },
   menu: { fonction: "menu", libelle: "Menu", listes: ["OBJ-MENU-SITE"], collection: true },
-  pages: { fonction: "pages", libelle: "Pages", listes: ["OBJ-PAGES-SITE"], collection: true }
+  pages: { fonction: "pages", libelle: "Pages", listes: ["OBJ-PAGES-SITE"], collection: true },
+  articles: { fonction: "articles", libelle: "Articles", listes: ["OBJ-ARTICLE"], collection: true, creation: true }
 };
 
 const referenceElement = (listeId, id) => ecriture.hash([listeId, String(id)]).slice(0, 24);
@@ -47,8 +48,9 @@ async function resoudre(g, composant, siteId, element = "") {
   const champs = ecriture.champsModifiables(colonnes);
   if (!champs.length) return { indisponible: `${def.libelle} : aucun champ modifiable.` };
   const lies = elementsLies(items, colonnes, siteId, listeSite.id, composant);
-  if (lies.length === 0) {
-    const lookup = colonnes.find((c) => c.name === "OBJSITEPUBLIC" && c.lookup?.listId === listeSite.id && !c.lookup.allowMultipleValues);
+  if (lies.length === 0 || def.creation && element === "nouveau") {
+    const candidats = colonnes.filter((c) => c.lookup?.listId === listeSite.id && !c.lookup.allowMultipleValues);
+    const lookup = candidats.length === 1 ? candidats[0] : candidats.find((c) => c.name === "OBJSITEPUBLIC");
     if (def.creation && lookup) {
       const nonPrisEnCharge = colonnes.filter((c) => c.required && !c.readOnly && !c.hidden &&
         c.name !== lookup.name && !champs.some((x) => x.nom === c.name) &&
@@ -89,6 +91,21 @@ async function preparer({ identite, composant, siteId, siteNom, valeurs, element
   const r = await resoudre(g, composant, siteId, element);
   if (r.selection) return { status: 422, erreur: "Choisissez un élément à modifier." };
   if (r.indisponible) return { status: 409, erreur: r.indisponible };
+  const listeVerrou = dse.trouverListe(g.listes, "OBJ-VEROUILLE");
+  const colonneVerrou = r.colonnes.find((c) => c.boolean && /VER[R]?OUILLE/i.test(c.displayName)) ||
+    r.colonnes.find((c) => listeVerrou && c.lookup?.listId === listeVerrou.id && !c.lookup.allowMultipleValues);
+  let verrouOui = null;
+  if (colonneVerrou?.lookup) {
+    const xs = (await dse.chargerItemsListe(g.token, g.siteGraphId, listeVerrou.id))
+      .filter((i) => /^oui\b/i.test(i.fields.Title || ""));
+    if (xs.length !== 1) return { status: 409, erreur: "État de verrouillage indisponible." };
+    verrouOui = String(xs[0].id);
+  }
+  const estVerrouille = (f) => colonneVerrou && (colonneVerrou.boolean
+    ? f[colonneVerrou.name] === true : String(f[`${colonneVerrou.name}LookupId`]) === verrouOui);
+  if (r.itemId && estVerrouille(await ecriture.lireItemFrais(g, r.listId, r.itemId))) {
+    return { status: 403, erreur: "Cet élément est verrouillé et protégé contre les modifications." };
+  }
   const { erreurs, propres } = ecriture.validerValeurs(r.champs, valeurs);
   if (!r.itemId && !String(propres.Title || "").trim()) erreurs.push("Un titre est nécessaire pour créer ce réglage.");
   if (erreurs.length) return { status: 422, erreur: erreurs.join(" "), erreurs };
@@ -110,13 +127,20 @@ async function preparer({ identite, composant, siteId, siteNom, valeurs, element
   const avant = Object.fromEntries(diff.map((d) => [d.nom, r.actuel[d.nom]]));
   const { jeton } = ecriture.emettreJeton(identite, {
     type: r.itemId ? "modifier" : "ajouter", portee: "site", composant, fonction: r.def.fonction, siteId: String(siteId),
+    operation: `${r.def.fonction}.${r.itemId ? "modifier" : "creer"}`,
+    journalComptes: composant === "articles",
     listId: r.listId, itemId: r.itemId, champs: nouveaux, avant: ecriture.hash(avant),
     cleDoublon: `${composant}:${siteId}`,
-    verifierVersion: (fields) => elementsLies([{ fields }], r.colonnes, siteId, r.listeSiteId, composant).length
-      ? null : "L'élément n'est plus rattaché au site autorisé.",
+    verifierVersion: (fields) => estVerrouille(fields) ? "Cet élément est maintenant verrouillé."
+      : elementsLies([{ fields }], r.colonnes, siteId, r.listeSiteId, composant).length
+        ? null : "L'élément n'est plus rattaché au site autorisé.",
     verifierCible: async (frais) => {
       const lies = await relireLies(frais, r.listId, r.colonnes, siteId, r.listeSiteId, composant);
-      if (r.def.collection) return lies.some((i) => String(i.id) === r.itemId) ? null : "L'élément n'est plus lié à ce site.";
+      if (r.def.collection && r.itemId) return lies.some((i) => String(i.id) === r.itemId) ? null : "L'élément n'est plus lié à ce site.";
+      if (r.def.collection && !r.itemId) {
+        return lies.some((i) => String(i.fields.Title || "").trim() === String(nouveaux.Title || "").trim())
+          ? "Un article avec ce titre existe déjà dans ce site." : null;
+      }
       return r.itemId
         ? (lies.length === 1 && String(lies[0].id) === r.itemId ? null : "Le rattachement a changé ou plusieurs réglages existent. Écriture bloquée.")
         : (lies.length ? "Un réglage existe déjà pour ce site. Merci de le relire." : null);

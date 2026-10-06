@@ -16,9 +16,18 @@ const admin = require("../shared/administration");
     { id: "300", actif: true, valide: true, portee: "", niveau: "", fonctions: "" },
     { id: "400", actif: true, valide: true, portee: "TOUS", niveau: "ADMINISTRATION", fonctions: "INCONNUE" }
   ];
-  const politique = politiqueDepuisRoles(roles);
+  const correspondances = [
+    { operation: "compatibilite.ADMINISTRATION-GLOBALE", mode: "compatibility", route: "tous/administration",
+      fonction: require("../shared/cockpit").FONCTIONS_COCKPIT.join(",") },
+    { operation: "compatibilite.GESTION-CLIENT", mode: "compatibility", fonction: "administration,suivi" },
+    { operation: "compatibilite.GESTION-UTILISATEURS-CLIENT", mode: "compatibility", fonction: "utilisateurs" },
+    { operation: "compatibilite.GESTION-SITES-ATTRIBUES", mode: "compatibility",
+      fonction: "sites,pages,entete,logo-medias,menu,footer,seo,domaine,apercu,suivi" }
+  ];
+  const politique = politiqueDepuisRoles(roles, correspondances);
   assert.deepStrictEqual(Object.keys(politique.roles), ["100", "200"], "aucune politique par ID ou titre");
-  assert.deepStrictEqual(politiqueDepuisRoles([{ ...roles[0], portee: "CLIENT" }]).roles, {});
+  assert.deepStrictEqual(politiqueDepuisRoles(roles).roles, {}, "absence de correspondance : aucun droit implicite");
+  assert.deepStrictEqual(politiqueDepuisRoles([{ ...roles[0], portee: "CLIENT" }], correspondances).roles, {});
   assert.deepStrictEqual(politiqueDepuisRoles([{ ...roles[0], actif: false }]).roles, {});
   const clients = [{ id: "a" }, { id: "b" }];
   const utilisateurs = [

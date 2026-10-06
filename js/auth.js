@@ -12,6 +12,7 @@ export async function initializeAuth(domaine = "") {
       role: moi.role || null,
       accesType: moi.accesType || null,
       contexte: moi.contexte || null,
+      autorisations: moi.autorisations || null,
       fonctions: Array.isArray(moi.fonctions) ? moi.fonctions : [],
       niveau: moi.niveau || null,
       menu: Array.isArray(moi.menu) ? moi.menu : [],
