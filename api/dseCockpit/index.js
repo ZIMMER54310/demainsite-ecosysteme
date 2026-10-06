@@ -38,7 +38,20 @@ async function refuserEcriture(res, ctx, domaine, action, message) {
 async function contexteUtilisateur(req) {
   const identite = session.identiteSession(req);
   if (!identite) return null;
+  dse.viderCacheGraph();
+  droits.viderCache();
   return { identite, droits: await droits.droitsPour(identite) };
+}
+
+const contextePublic = (d) => ({ role: d.role, niveau: d.niveau, fonctions: d.fonctions,
+  accesType: d.accesType ? { titre: d.accesType.titre } : null,
+  contexte: d.contexte ? { etat: d.contexte.etat, message: d.contexte.message, client: d.contexte.client,
+    domaine: d.contexte.domaine,
+    role: d.contexte.role, accesType: d.contexte.accesType, verrouille: d.contexte.verrouille } : null });
+
+async function contexteAdmin(ctx, domaine) {
+  if (!domaine) return ctx.droits.global ? ctx.droits : null;
+  return await siteDuPerimetre(ctx, domaine) ? ctx.droits : null;
 }
 
 async function chargerSiteComplet(siteId) {
@@ -84,7 +97,13 @@ async function moi(req, res) {
     if (!ctx) {
       return repondre(res, 200, { succes: true, donnees: { connecte: false, fournisseurs: fournisseurs.lister() }, meta: meta() });
     }
+    if (req.query.domaine) {
+      if (!await siteDuPerimetre(ctx, req.query.domaine)) return refuser(res, 403, ctx.droits.contexte?.message || "Site non autorisé.");
+    }
     const groupes = ctx.droits.reconnu ? (await groupesAutorises(ctx)).groupes : [];
+    const attribues = new Set(ctx.droits.sitesAttribues || ctx.droits.siteIds);
+    const nombreSites = ctx.droits.reconnu
+      ? perimetre.regrouperSites([...(await droits.sitesIndex()).sites.values()]).filter((g) => attribues.has(String(g.id))).length : 0;
     return repondre(res, 200, {
       succes: true,
       donnees: {
@@ -94,11 +113,12 @@ async function moi(req, res) {
         role: ctx.droits.role,
         fonctions: ctx.droits.fonctions,
         niveau: ctx.droits.niveau,
+        ...contextePublic(ctx.droits),
         accesCommun: ctx.droits.reconnu && (ctx.droits.sitesCommuns || []).length > 0,
-        menu: await administration.menu(ctx.droits),
-        nombreSites: groupes.length,
-        clients: clientsDuPerimetre(ctx, groupes),
-        porteeGlobale: ctx.droits.reconnu && ctx.droits.portee === "tous",
+        menu: await administration.menu(ctx.droits, req.query.domaine || null),
+        nombreSites,
+        clients: ctx.droits.global || ctx.droits.contexte?.etat === "COMPLET" ? clientsDuPerimetre(ctx, groupes) : [],
+        porteeGlobale: ctx.droits.global === true,
         sitesPublics: groupes.map((g) => {
           const domaines = perimetre.domainesDuSite(g);
           return { nom: g.titre || domaines.principal || "Site sans nom",
@@ -120,7 +140,8 @@ async function moi(req, res) {
  * du perimetre (ID natifs) ayant au moins un site autorise sont proposes.
  */
 function clientsDuPerimetre(ctx, groupes) {
-  if (!ctx.droits.reconnu || !ctx.droits.fonctions.includes("sites") || !["tous", "client"].includes(ctx.droits.portee)) return [];
+  if (!ctx.droits.reconnu || !ctx.droits.fonctions.includes("sites") ||
+    !["tous", "client"].includes(ctx.droits.portee) && ctx.droits.contexte?.etat !== "COMPLET") return [];
   const autorises = new Set((ctx.droits.clientIds || []).map(String));
   const parClient = new Map();
   for (const g of groupes) {
@@ -145,6 +166,11 @@ async function listeSites(ctx, query, groupes, statuts) {
     s.progressionVisuelle = progressionVisuelle.pourcentage(configuration, s.progression);
     const clientId = clientParAcces.get(s.acces);
     s.clientCockpit = clientId && clients.has(clientId) ? clientId : null;
+    const info = groupes.find((g) => perimetre.domaineAcces(g) === s.acces);
+    const contexte = droits.contexteSite(ctx.droits, await droits.donneesDroits(), info.id);
+    s.contexte = contextePublic(contexte).contexte;
+    s.role = contexte.role?.titre || null;
+    s.accesType = contexte.accesType?.titre || null;
   }
   liste.avertissementProgression = configuration.message || configuration.avertissement || null;
   liste.peutChangerStatut = require("../shared/statut-sites").autorise(ctx.droits);
@@ -155,8 +181,14 @@ async function sites(req, res) {
   try {
     const ctx = await contexteUtilisateur(req);
     if (!ctx) return refuser(res, 401, "Connexion requise.");
-    if (!ctx.droits.fonctions.includes("sites")) return refuser(res, 403, "Accès non autorisé.");
-    const { groupes, statuts } = await groupesAutorises(ctx);
+    if (!ctx.droits.reconnu) return refuser(res, 403, "Accès non autorisé.");
+    const { groupes: tousGroupes, statuts } = await groupesAutorises(ctx);
+    const donnees = await droits.donneesDroits();
+    const attribues = new Set(donnees.liens.filter((l) => l.actif && l.valide &&
+      String(l.utilisateurId) === ctx.droits.utilisateurId && l.siteId && l.clientId &&
+      donnees.clients.some((c) => String(c.id) === String(l.clientId)) &&
+      donnees.sites.some((s) => String(s.id) === String(l.siteId) && String(s.clientId) === String(l.clientId))).map((l) => String(l.siteId)));
+    const groupes = tousGroupes.filter((g) => attribues.has(String(g.id)));
     const liste = await listeSites(ctx, req.query, groupes, statuts);
     liste.clientsCockpit = clientsDuPerimetre(ctx, groupes);
     repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
@@ -170,6 +202,7 @@ async function client(req, res) {
   try {
     const ctx = await contexteUtilisateur(req);
     if (!ctx) return refuser(res, 401, "Connexion requise.");
+    if (!ctx.droits.global && !await contexteAdmin(ctx, req.query.contexteDomaine)) return refuser(res, 403, "Contexte client requis.");
     const id = /^\d{1,12}$/.test(String(req.query.id || "")) ? String(req.query.id) : null;
     const { groupes, statuts } = await groupesAutorises(ctx);
     const fiche = id ? clientsDuPerimetre(ctx, groupes).find((c) => c.id === id) : null;
@@ -178,6 +211,7 @@ async function client(req, res) {
     const { client: _ignore, ...query } = req.query;
     const liste = await listeSites(ctx, query, groupes.filter((g) => String(g.clientId) === id), statuts);
     liste.client = fiche;
+    if (req.query.contexteDomaine) liste.criteres.domaine = req.query.contexteDomaine;
     repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] client", e.message);
@@ -194,6 +228,7 @@ async function contenus(req, res) {
   try {
     const ctx = await contexteUtilisateur(req);
     if (!ctx) return refuser(res, 401, "Connexion requise.");
+    if (!ctx.droits.global && !await contexteAdmin(ctx, req.query.contexteDomaine)) return refuser(res, 403, "Sélectionnez un site autorisé pour gérer ses contenus.");
     const inventaire = require("../shared/inventaire");
     const d = ctx.droits;
     const type = Object.hasOwn(inventaire.TYPES, String(req.query.type || "")) ? String(req.query.type) : "medias";
@@ -233,12 +268,12 @@ async function site(req, res) {
     const ctx = await contexteUtilisateur(req);
     if (!ctx) return refuser(res, 401, "Connexion requise.");
     const domaine = normaliserDomaine(req.query.domaine);
-    const { sites: index, statuts } = await droits.sitesIndex();
+    const { statuts } = await droits.sitesIndex();
     // Un alias ouvre son site principal ; le controle porte sur l'ID natif du site principal.
-    const info = domaine ? perimetre.groupeParDomaine(perimetre.regrouperSites([...index.values()]), domaine) : null;
+    const info = await siteDuPerimetre(ctx, domaine);
     // Meme reponse pour un site inexistant ou hors perimetre : rien n'est divulgue.
-    if (!info || !ctx.droits.siteIds.includes(String(info.id)) || !ctx.droits.fonctions.includes("sites")) {
-      return refuser(res, 403, "Ce site n'est pas disponible dans votre espace.");
+    if (!info || !ctx.droits.fonctions.includes("sites")) {
+      return refuser(res, 403, ctx.droits.contexte?.message || "Ce site n'est pas disponible dans votre espace.");
     }
     const siteComplet = await chargerSiteComplet(info.id);
     const vue = cockpit.vueSite({
@@ -251,6 +286,7 @@ async function site(req, res) {
     vue.progressionVisuelle = progressionVisuelle.pourcentage(await progressionVisuelle.lire(), vue.progression);
     const espaceClient = info.clientId && clientsDuPerimetre(ctx, (await groupesAutorises(ctx)).groupes).find((c) => c.id === String(info.clientId));
     vue.clientCockpit = espaceClient ? espaceClient.id : null;
+    vue.contexteUtilisateur = { ...contextePublic(ctx.droits), menu: await administration.menu(ctx.droits, domaine) };
     repondre(res, 200, { succes: true, donnees: vue, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] site", e.message);
@@ -275,9 +311,14 @@ const peutEcrire = (d, fonction) => d.reconnu && d.fonctions.includes(fonction) 
 async function siteDuPerimetre(ctx, domaineBrut) {
   const domaine = normaliserDomaine(domaineBrut);
   if (!domaine) return null;
+  require("../shared/catalogue-source").viderCache();
   const { sites: index } = await droits.sitesIndex();
   const info = perimetre.groupeParDomaine(perimetre.regrouperSites([...index.values()]), domaine);
-  return info && ctx.droits.siteIds.includes(String(info.id)) ? info : null;
+  if (!info) return null;
+  const d = droits.contexteSite(ctx.droits, await droits.donneesDroits(), info.id);
+  d.contexte.domaine = domaine;
+  ctx.droits = d;
+  return d.contexte?.etat === "COMPLET" ? info : null;
 }
 
 function repondreResultat(res, r) {
@@ -340,9 +381,10 @@ async function confirmer(req, res) {
       revalider: async (op) => {
         dse.viderCacheGraph();
         droits.viderCache();
-        const d = await droits.droitsPour(ctx.identite);
+        let d = await droits.droitsPour(ctx.identite);
         if (op.portee === "site") {
           const donnees = await droits.donneesDroits();
+          d = droits.contexteSite(d, donnees, op.siteId);
           const s = donnees.sites.find((s) => String(s.id) === String(op.siteId));
           op.contexteJournal = { acteur: ctx.identite.sujet, utilisateurId: d.utilisateurId,
             clientId: s?.clientId || null, siteId: String(op.siteId) };
@@ -350,12 +392,16 @@ async function confirmer(req, res) {
           return null;
         }
         if (op.portee === "admin") {
+          const adminCtx = { identite: ctx.identite, droits: d };
+          d = await contexteAdmin(adminCtx, op.adminParams?.contexteDomaine);
+          if (!d) return "Contexte d'administration non autorisé.";
           const a = await administration.construireAction(d, op.adminAction, op.adminParams || {}, null);
           if (a.refus) return a.refus;
+          if (a.aucunChangement) return "Cette relation ou modification existe déjà. Relisez avant de recommencer.";
           if (op.adminAction === "changer-statut-site" &&
             (!a.op || a.op.listId !== op.listId || a.op.itemId !== op.itemId ||
               ecriture.hash(a.op.champs) !== ecriture.hash(op.champs))) return "Le site ou le statut a changé. Relisez avant confirmation.";
-          if (op.adminAction === "ajouter-acces-site" && a.op) {
+          if (["ajouter-acces-site", "modifier-acces-site"].includes(op.adminAction) && a.op) {
             for (const [nom, valeur] of Object.entries(a.op.champs)) {
               if (String(op.champs[nom]) !== String(valeur)) return "Le rattachement utilisateur/client/site a changé.";
             }
@@ -379,6 +425,7 @@ async function adminTableau(req, res) {
   try {
     const ctx = await contexteUtilisateur(req);
     if (!ctx) return refuser(res, 401, "Connexion requise.");
+    if (!await contexteAdmin(ctx, req.query.contexteDomaine)) return refuser(res, 403, "Contexte d'administration requis.");
     if (!ctx.droits.reconnu || !ctx.droits.fonctions.includes("administration")) return refuser(res, 403, "Accès non autorisé.");
     repondre(res, 200, { succes: true, donnees: await administration.tableau(ctx.droits), meta: meta() });
   } catch (e) {
@@ -391,9 +438,11 @@ async function adminUtilisateurs(req, res) {
   try {
     const ctx = await contexteUtilisateur(req);
     if (!ctx) return refuser(res, 401, "Connexion requise.");
+    if (!await contexteAdmin(ctx, req.query.contexteDomaine)) return refuser(res, 403, "Contexte d'administration requis.");
     const r = ctx.droits.reconnu ? await administration.utilisateurs(ctx.droits) : null;
     if (!r) return refuser(res, 403, "Accès non autorisé.");
-    r.peutGererIncidents = require("../auth/incidents").global(ctx.droits);
+    r.peutGererIncidents = false;
+    r.contexteDomaine = req.query.contexteDomaine || "";
     repondre(res, 200, { succes: true, donnees: r, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] admin utilisateurs", e.message);
@@ -407,12 +456,36 @@ async function adminApercu(req, res) {
     if (!ctx) return;
     const action = String(req.body?.action || "");
     const p = req.body?.params && typeof req.body.params === "object" ? req.body.params : {};
-    const params = Object.fromEntries(["utilisateur", "role", "domaine", "email", "client", "portee", "niveau", "fonctions", "statut"]
+    const params = Object.fromEntries(["utilisateur", "role", "accesType", "relation", "contexteDomaine", "domaine", "email", "client", "portee", "niveau", "fonctions", "statut"]
       .filter((k) => typeof p[k] === "string").map((k) => [k, p[k].slice(0, k === "fonctions" ? 2000 : 255)]));
+    if (!await contexteAdmin(ctx, params.contexteDomaine)) return refuser(res, 403, "Contexte d'administration requis.");
     repondreResultat(res, await administration.preparerAction({ identite: ctx.identite, d: ctx.droits, action, params }));
   } catch (e) {
     console.error("[DSE cockpit] admin apercu", e.message);
     refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+async function monCompte(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    if (!ctx.droits.reconnu) return refuser(res, 403, "Compte non reconnu ou non validé.");
+    const data = await droits.donneesDroits();
+    const utilisateur = data.utilisateurs.find((u) => String(u.id) === ctx.droits.utilisateurId);
+    const { sites: index } = await droits.sitesIndex();
+    const relations = data.liens.filter((l) => String(l.utilisateurId) === ctx.droits.utilisateurId && l.actif && l.valide);
+    const sites = relations.map((l) => {
+      const info = index.get(String(l.siteId));
+      const contexte = droits.contexteSite(ctx.droits, data, l.siteId);
+      return { nom: info?.titre || null, domaine: info ? perimetre.domainesDuSite(info).principal : null,
+        ...contextePublic(contexte) };
+    });
+    repondre(res, 200, { succes: true, donnees: { nom: ctx.identite.nom || null,
+      email: utilisateur.titre, roleGlobal: utilisateur.roleTitre, sites }, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] mon compte", e.message);
+    refuser(res, 503, "Compte momentanément indisponible.");
   }
 }
 
@@ -469,10 +542,10 @@ const constructeurEnCours = new Map();
 const constructeurExecutees = new Map();
 
 async function perimetreConstructeur(ctx, domaine) {
-  const d = ctx.droits;
-  if (!d.reconnu || ![...FONCTIONS_CONSTRUCTEUR, "logo-medias"].some((f) => d.fonctions.includes(f))) return null;
   const info = await siteDuPerimetre(ctx, domaine);
   if (!info) return null;
+  const d = ctx.droits;
+  if (!d.reconnu || ![...FONCTIONS_CONSTRUCTEUR, "logo-medias"].some((f) => d.fonctions.includes(f))) return null;
   const fiches = new Set((info.fiches || [String(info.id)]).map(String));
   const { sites: tous = [] } = await droits.donneesDroits();
   const clients = new Set(tous.filter((s) => fiches.has(String(s.id)) && s.clientId).map((s) => String(s.clientId)));
@@ -732,7 +805,7 @@ const synchroConfirmer = (req, res) => synchroEcriture(req, res, "SYNCHRO-RESTAU
 
 module.exports = {
   client, synchroVue, synchroSauvegardes, synchroReglage, synchroLancer, synchroApercu, synchroConfirmer,
-  moi, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
+  moi, monCompte, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
   contenus, editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide, clientsDuPerimetre }
 };

@@ -245,6 +245,7 @@ async function chargerDonnees() {
         code: catalogue.champ(el, ["CODE"]),
         noteCourte: catalogue.champ(el, ["NOTECOURTE"]),
         noteLongue: catalogue.champ(el, ["NOTELONGUE"]),
+        couleur: catalogue.champ(el, ["COULEUR", "COULEURSTATUT"]),
         media: statutsSite.mediaElement(el._colonnes, el._fields, mediaListId),
         actif: catalogue.etatOui(el, catalogue.ALIAS.actif),
         valide: catalogue.etatOui(el, catalogue.ALIAS.valide)

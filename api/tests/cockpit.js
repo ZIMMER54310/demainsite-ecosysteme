@@ -294,11 +294,12 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   const dClient = calculerDroits({ ...base, liens: [{ utilisateurId: "5", clientId: "2", siteId: "4", actif: true, valide: true }],
     identite: { fournisseur: "entra", sujet: "c", email: "admin@client.fr" }, utilisateurs: [u("5", "admin@client.fr", "3")] });
   assert.strictEqual(dSuper.portee, "tous"); assert.strictEqual(dSuper.niveau, "administration");
-  assert.strictEqual(dClient.portee, "client"); assert.deepStrictEqual(dClient.clientIds, ["2"]); assert.deepStrictEqual(dClient.siteIds, ["4"]);
+  assert.strictEqual(dClient.portee, "attribues"); assert.deepStrictEqual(dClient.clientIds, ["2"]); assert.deepStrictEqual(dClient.siteIds, ["4"]);
+  assert.deepStrictEqual(dClient.fonctions, [], "sans contexte, le role global n'accorde aucun droit");
   assert.ok(droitsMod.peutAttribuer(dSuper, "1", politique));
   assert.ok(!droitsMod.peutAttribuer(dClient, "1", politique), "admin client ne peut pas attribuer Super admin");
   assert.ok(!droitsMod.peutAttribuer(dClient, "2", politique));
-  assert.ok(droitsMod.peutAttribuer(dClient, "4", politique) && droitsMod.peutAttribuer(dClient, "6", politique));
+  assert.ok(!droitsMod.peutAttribuer(dClient, "4", politique) && !droitsMod.peutAttribuer(dClient, "6", politique));
 
   // Menu par role
   const dLecteur = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "l", email: "l@ex.fr" }, utilisateurs: [u("7", "l@ex.fr", "6")], liens: [{ utilisateurId: "7", siteId: "4", actif: true, valide: true }] });
@@ -322,7 +323,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   droitsMod.sitesIndex = async () => ({ sites: new Map([["4", { id: "4", titre: "Site A", domaines: ["a.fr"], domainePrincipal: "a.fr", clientId: "2" }], ["9", { id: "9", titre: "Site B", domaines: ["b.fr"], domainePrincipal: "b.fr", clientId: "3" }]]), statuts: new Map() });
   try {
     const visibles = admin._test.utilisateursVisibles(dClient, donneesSim).map((x) => x.id).sort();
-    assert.deepStrictEqual(visibles, ["5", "6"], "admin client : jamais un utilisateur d'un autre client");
+    assert.deepStrictEqual(visibles, [], "aucune administration sans contexte site");
     assert.strictEqual(admin._test.utilisateursVisibles(dSuper, donneesSim).length, 4);
     const R = admin._test.ref;
     let a = await admin.construireAction(dClient, "changer-role", { utilisateur: R("u", "6"), role: R("r", "1") }, null);
@@ -332,11 +333,11 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     a = await admin.construireAction(dClient, "changer-role", { utilisateur: R("u", "5"), role: R("r", "4") }, null);
     assert.ok(a.refus, "pas de modification de son propre role");
     a = await admin.construireAction(dClient, "changer-role", { utilisateur: R("u", "6"), role: R("r", "5") }, null);
-    assert.ok(a.op && a.op.champs.ROLELookupId === "5" && a.changements.length === 1);
+    assert.ok(a.refus, "role global non modifiable par un acteur sans contexte");
     a = await admin.construireAction(dClient, "ajouter-acces-site", { utilisateur: R("u", "6"), domaine: "b.fr" }, null);
     assert.ok(a.refus, "site hors perimetre refuse");
     a = await admin.construireAction(dClient, "ajouter-acces-site", { utilisateur: R("u", "6"), domaine: "a.fr" }, null);
-    assert.ok(a.aucunChangement, "relation active existante : succes idempotent sans nouvelle ecriture");
+    assert.ok(a.refus, "relation non creee sans contexte, role et profil");
     a = await admin.construireAction(dClient, "creer-utilisateur", { email: "n@client.fr", role: R("r", "4") }, null);
     assert.ok(a.refus, "creation reservee a la portee tous");
     a = await admin.construireAction(dSuper, "creer-utilisateur", { email: "redac@client.fr", role: R("r", "4") }, null);
@@ -354,8 +355,8 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     const groupes = [{ id: "4", clientId: "2", client: "Client A" }, { id: "10", clientId: "2", client: "Client A" }, { id: "9", clientId: "3", client: "Client B" }, { id: "11" }];
     const avecSites = (d) => ({ droits: { ...d, fonctions: [...new Set([...(d.fonctions || []), "sites"])] } });
     assert.deepStrictEqual(clientsDuPerimetre(avecSites(dSuper), groupes).map((c) => [c.id, c.nombreSites]), [["2", 2], ["3", 1]]);
-    assert.deepStrictEqual(clientsDuPerimetre(avecSites(dClient), groupes.filter((g) => g.id !== "9")).map((c) => c.id), ["2"]);
-    assert.deepStrictEqual(clientsDuPerimetre(avecSites(dClient), groupes).map((c) => c.id), ["2"], "jamais le client d'un autre");
+    assert.deepStrictEqual(clientsDuPerimetre(avecSites(dClient), groupes.filter((g) => g.id !== "9")).map((c) => c.id), []);
+    assert.deepStrictEqual(clientsDuPerimetre(avecSites(dClient), groupes).map((c) => c.id), [], "pas d'espace client par role global hors contexte");
     assert.deepStrictEqual(clientsDuPerimetre(avecSites(dLecteur), groupes), [], "portee sites attribues : pas d'espace client");
     const htmlClient = ui.rendreListeSites({ fonctions: ["sites"], clients: [{ id: "2" }] }, { ...filtrerSites([{ ...resumeSite(info, actif, siteComplet), clientCockpit: "2" }], {}), client: { id: "2", titre: "Client <A>", nombreSites: 1 } });
     assert.ok(htmlClient.includes("Espace client") && htmlClient.includes("Client &lt;A&gt;") && htmlClient.includes('data-base="/cockpit/client/2"'));

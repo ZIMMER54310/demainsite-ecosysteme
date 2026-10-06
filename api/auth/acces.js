@@ -18,21 +18,27 @@ async function etat(identite, nom) {
   const g = await ecriture.contexteGraph();
   const ctx = await inscription.domaineContexte(g, nom);
   const d = await droits.droitsPour(identite);
-  if (!d.reconnu || !d.fonctions.length) {
+  if (!d.reconnu) {
     const x = await droits.donneesDroits();
     const u = x.utilisateurs.find((u) => String(u.entraObjectId || "").toLowerCase() === String(identite.sujet).toLowerCase());
     return { etat: u && !u.actif ? "refuse" : "attente", cible: null };
   }
   let metier = ctx && d.siteIds.includes(ctx.siteId);
+  let siteMetierId = ctx?.siteId;
   if (ctx && !metier && !(d.sitesCommuns || []).includes(ctx.siteId)) {
     const index = await droits.sitesIndex();
     const groupe = perimetre.groupeParDomaine(perimetre.regrouperSites([...index.sites.values()]), nom);
     metier = !!groupe && d.siteIds.includes(String(groupe.id));
+    if (metier) siteMetierId = String(groupe.id);
   }
   if (!ctx || (!metier && !(d.sitesCommuns || []).includes(ctx.siteId))) {
     return { etat: "refuse", cible: null };
   }
-  return { etat: "autorise", cible: metier
+  if (metier && !d.global) {
+    const contexte = droits.contexteSite(d, await droits.donneesDroits(), siteMetierId);
+    if (contexte.contexte?.etat !== "COMPLET") return { etat: "contexte-incomplet", cible: "/#/cockpit/sites" };
+  }
+  return { etat: "autorise", cible: metier && !d.global
     ? `/#/cockpit/site/${encodeURIComponent(ctx.domaine)}` : "/#/cockpit" };
 }
 

@@ -89,11 +89,15 @@ depuis OBJ-NOM DE DOMAINE -> OBJSITE -> client, pas un client transmis par le na
 Le corps vide affiche l'apercu ; `{ "confirmer": true }` confirme. Aucun parametre de role,
 client ou site n'est accepte. Pour autoriser une inscription, la structure minimale est
 OBJ-INSCRIPTION avec ENTRA-OBJECT-ID texte (nom interne resolu), Lookups OBJ-UTILISATEUR (facultatif pour un
-nouveau compte), OBJ-CLIENT, OBJ-SITE-PUBLIC, OBJ-ROLE, OBJ-ACTIF et OBJ-VALIDE.
+nouveau compte), OBJ-CLIENT, OBJ-SITE-PUBLIC, OBJ-ROLE, OBJ-ACCES-TYPE, OBJ-ACTIF et OBJ-VALIDE.
 Une invitation unique active/validee doit designer les IDs reels du compte et du domaine.
 La creation de role global n'est jamais permise dans ce parcours. Sans invitation, 409/403,
 trace REFUS et aucune attribution. Un utilisateur existant est reutilise sans modifier
-son role, qui doit correspondre a l'invitation ; le triplet utilisateur/client/site est relu avant creation et ne se duplique pas.
+son role global et son client historiques ; le contexte de l'invitation peut etre different.
+Le couple utilisateur/site est relu avant creation ;
+une relation contextuelle existante incomplete ou differente exige une correction administrateur.
+Le role et le profil d'acces de l'invitation doivent etre valides et sont enregistres dans la relation.
+Sans Lookup/profil dans l'invitation, refus explicite avant toute creation de compte ou de relation.
 La reprise apres erreur relit les elements deja crees et ne reactive pas un acces desactive.
 Apres authentification Entra, un compte non reconnu passe automatiquement par ce parcours
 sur le domaine conserve dans la transaction signee. Sans autorisation exacte, aucune session
@@ -102,6 +106,42 @@ une invitation exacte existe (ajout d'un site ou reprise d'une inscription inter
 Sans invitation exacte, sa connexion conserve les droits existants sans nouvelle attribution.
 Les connexions globales restent inchangees ; l'endpoint avec confirmation permet aussi
 l'ajout d'un autre site autorise.
+
+### Contextes multi-sites et comptes
+
+OBJ-UTILISATEUR-SITE est la source des droits de chaque site : utilisateur, site,
+client, role, profil d'acces, actif, valide et verrou. Les Lookups simples sont
+resolus depuis le schema reel et leur liste cible ; aucun GUID de colonne n'est fixe.
+L'absence d'un champ dans un item signifie une valeur non renseignee, pas une colonne absente.
+Les champs utiles sont selectionnes explicitement dans Graph pour la lecture des Lookups.
+
+Le role global est conserve pour compatibilite et administration globale autorisee.
+Hors administration globale, aucun droit d'administration ou d'ecriture n'est accorde
+avant selection d'un contexte complet. Toute operation de site, meme par un administrateur
+global, exige une relation active/validee unique avec role et profil valides, client coherent.
+Une valeur manquante refuse le contexte sans repli sur le role global. Une relation
+verrouillee est en lecture seule. Mes sites ne contient que les sites reellement attribues ;
+les relations incompletes y sont signalees et ne donnent aucun droit sur le site.
+
+GET /moi?domaine=... recharge le contexte et le menu ; GET /cockpit/compte est une vue
+personnelle en lecture seule. Les routes d'administration recoivent contexteDomaine
+pour un acteur non global. Les references opaques et la confirmation serveur sont
+revalidees avec les droits frais avant toute ecriture. Comptes permet de choisir
+explicitement role/profil lors de l'ajout ou de la correction d'une relation.
+L'anti-doublon porte sur utilisateur + site actif, jamais sur utilisateur seul ou client.
+
+Les profils actuels qualifient l'acces (validite et client facultatif) ; leur titre
+ne constitue pas une matrice de droits. Si SharePoint configure des colonnes de
+restriction FONCTIONS/NIVEAU-ACCES, celles-ci peuvent uniquement reduire la politique
+du role. Sans ces colonnes, les capacites proviennent de la politique du role.
+Aucune valeur de remplacement et aucune modification automatique de donnee ou schema.
+`npm run test:contextes-reels` execute la recette en lecture seule avec les comptes,
+relations et schemas reels accessibles par la configuration Graph existante.
+Les sessions de recette sont signees localement pour les identites presentes :
+ce test verifie l'API et le rendu, pas le parcours OAuth dans un navigateur.
+Les ajouts/corrections de relations sont uniquement prevalides, jamais executes.
+Les scenarios impossibles faute de relations completes sont signales NON TESTABLE,
+sans completer les donnees a la place de l'administrateur.
 
 L'acces commun DSE utilise OBJ-ACCES-COMMUN : Lookups utilisateur, site, actif et valide.
 Apres inscription valide, le domaine de service dseco.fr est resolu dans SharePoint ;

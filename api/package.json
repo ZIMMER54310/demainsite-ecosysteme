@@ -12,6 +12,7 @@
     "smoke": "node tests/smoke.js",
     "test:rendu-domaines": "node tests/domaines-rendu.js",
     "test:sharepoint-access": "node tools/test-sharepoint-access.js",
+    "test:contextes-reels": "node tests/contextes-reels.js",
     "domain-sync": "node tools/sync-ovh-sharepoint.js --dry-run",
     "domain-sync:apply": "node tools/sync-ovh-sharepoint.js --sync",
     "domain-sync:metadata": "node tools/sync-ovh-sharepoint.js --metadata-sync",

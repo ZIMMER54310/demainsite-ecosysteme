@@ -17,9 +17,10 @@ export const ONGLETS_CONTENUS = Object.freeze([
   { cle: "articles", libelle: "Articles", fonction: "pages", icone: "list", texte: "Les articles publiés sur les sites." }
 ]);
 
-export function lienContenus(type, client = null) {
+export function lienContenus(type, client = null, domaine = "") {
   const p = new URLSearchParams({ type });
   if (client) p.set("client", client);
+  if (domaine) p.set("domaine", domaine);
   return `#/cockpit/contenus?${p}`;
 }
 
@@ -27,10 +28,11 @@ export function lienContenus(type, client = null) {
 export function rendreRaccourcisContenus(moi, { client = null, titre = null } = {}) {
   const onglets = ONGLETS_CONTENUS.filter((o) => moi?.fonctions?.includes(o.fonction));
   if (!moi?.fonctions?.includes("sites") || !onglets.length) return "";
-  const intitule = titre || (client ? "Gérer les sites de ce client" : moi.porteeGlobale ? "Gérer tous les sites" : "Gérer tous mes sites");
+  const contexte = !!moi.contexte && !moi.porteeGlobale;
+  const intitule = titre || (contexte ? "Gérer les contenus de ce site" : client ? "Gérer les sites de ce client" : moi.porteeGlobale ? "Gérer tous les sites" : "Gérer tous mes sites");
   return `<article class="card cockpit-contenus-raccourcis"><h2>${e(intitule)}</h2>
-    <p class="muted">Médias, pages, En-têtes, Footer et articles de ${client ? "tous les sites du client" : moi.porteeGlobale ? "tous les sites de l'écosystème" : "tous vos sites"}, réunis au même endroit.</p>
-    <div class="cockpit-contenus-tuiles">${onglets.map((o) => `<a class="cockpit-contenus-tuile" href="${e(lienContenus(o.cle, client))}">${icon(o.icone)}<span><strong>${e(o.libelle)}</strong><small>${e(o.texte)}</small></span></a>`).join("")}</div></article>`;
+    <p class="muted">Médias, pages, En-têtes, Footer et articles de ${contexte ? "ce site" : client ? "tous les sites du client" : moi.porteeGlobale ? "tous les sites de l'écosystème" : "tous vos sites"}, réunis au même endroit.</p>
+    <div class="cockpit-contenus-tuiles">${onglets.map((o) => `<a class="cockpit-contenus-tuile" href="${e(lienContenus(o.cle, client, moi.contexte?.domaine))}">${icon(o.icone)}<span><strong>${e(o.libelle)}</strong><small>${e(o.texte)}</small></span></a>`).join("")}</div></article>`;
 }
 
 const lienSite = (s, suite = "") => s?.domaine ? `#/cockpit/site/${encodeURIComponent(s.domaine)}${suite}` : null;
@@ -107,7 +109,7 @@ export function rendreContenus(r) {
     <div class="cockpit-entete"><div><p class="cockpit-surtitre">${e(portee)}</p><h1 class="page-title">${e(onglet?.libelle || "Contenus")} de ${r.client ? "ses sites" : r.global ? "tous les sites" : "mes sites"}</h1>
       <p class="muted">${Number(r.nombreSites) || 0} site(s) concerné(s). La modification se fait dans le cockpit du site, avec les mêmes contrôles qu'aujourd'hui.</p></div>
       ${r.client ? `<a class="btn btn-secondary" href="#/cockpit/client/${encodeURIComponent(r.client.id)}">${icon("users")} Retour à l'espace client</a>` : `<a class="btn btn-secondary" href="#/cockpit/sites">${icon("globe")} Mes sites</a>`}</div>
-    <nav class="cockpit-contenus-onglets" aria-label="Type de contenu">${r.onglets.map((o) => `<a class="btn ${o.cle === type ? "btn-primary" : "btn-secondary"}"${o.cle === type ? ' aria-current="page"' : ""} href="${e(lienContenus(o.cle, r.client?.id))}">${e(o.libelle)} <span class="badge">${Number(r.compteurs?.[o.cle]) || 0}</span></a>`).join("")}</nav>
+    <nav class="cockpit-contenus-onglets" aria-label="Type de contenu">${r.onglets.map((o) => `<a class="btn ${o.cle === type ? "btn-primary" : "btn-secondary"}"${o.cle === type ? ' aria-current="page"' : ""} href="${e(lienContenus(o.cle, r.client?.id, r.contexteDomaine))}">${e(o.libelle)} <span class="badge">${Number(r.compteurs?.[o.cle]) || 0}</span></a>`).join("")}</nav>
     ${rendreSynchro(r.synchro)}
     <form class="card cockpit-filtres" data-filtres-contenus role="search">
       <label class="cockpit-champ"><span>Rechercher</span><input type="search" name="q" placeholder="Nom…"></label>

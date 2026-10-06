@@ -227,6 +227,7 @@ application.get("/api/v1/auth/continuer", require("./auth/fournisseurs/entra").c
 application.post("/api/v1/cockpit/inscription", controleurCockpit.inscrire);
 application.get("/api/v1/auth/deconnexion", controleurCockpit.deconnexion);
 application.get("/api/v1/cockpit/sites", controleurCockpit.sites);
+application.get("/api/v1/cockpit/compte", controleurCockpit.monCompte);
 application.get("/api/v1/cockpit/sites/statuts", async (req, res) => {
   try {
     const identite = require("./auth/session").identiteSession(req);

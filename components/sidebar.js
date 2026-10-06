@@ -41,14 +41,14 @@ export function rendreEspacesClients(user, current, lien) {
   const clients = Array.isArray(user?.clients) ? user.clients : [];
   if (!clients.length) return "";
   if (clients.length > 3) return lien("/cockpit/sites", "Espaces clients", "users", false);
-  return clients.map((c) => lien(`/cockpit/client/${encodeURIComponent(c.id)}`, `Espace ${c.titre || "client"}`, "users",
+  return clients.map((c) => lien(`/cockpit/client/${encodeURIComponent(c.id)}${user.contexte?.domaine ? `?domaine=${encodeURIComponent(user.contexte.domaine)}` : ""}`, `Espace ${c.titre || "client"}`, "users",
     current === `/cockpit/client/${encodeURIComponent(c.id)}`)).join("");
 }
 
 // Gestion transverse (medias, pages, En-tetes, Footer, articles de tous les sites du perimetre).
 export function rendreGestionContenus(user, current, lien) {
   if (!user?.fonctions?.includes("sites") || !["logo-medias", "pages", "entete", "footer"].some((f) => user.fonctions.includes(f))) return "";
-  return lien("/cockpit/contenus", user.porteeGlobale ? "Gérer tous les sites" : "Gérer mes sites", "grid", current === "/cockpit/contenus");
+  return lien(`/cockpit/contenus${user.contexte?.domaine ? `?domaine=${encodeURIComponent(user.contexte.domaine)}` : ""}`, user.porteeGlobale ? "Gérer tous les sites" : "Gérer ce site", "grid", current === "/cockpit/contenus");
 }
 
 export function renderSidebar() {
@@ -63,7 +63,7 @@ export function renderSidebar() {
   const vue = getState().selectedSite;
   const correspond = selection && vue && selection[1] === encodeURIComponent(vue.acces || vue.domaine);
   const lien = (p, l, i, actif) => `<a class="nav-link ${actif ? "active" : ""}"${actif ? ' aria-current="page"' : ""} href="#${escapeHtml(p)}" title="${escapeHtml(l)}">${icon(i)}<span>${escapeHtml(l)}</span></a>`;
-  const global = (items) => items.map(([p, , l]) => lien(p, correspond && p === "/cockpit" ? "Cockpit général" : l, iconForRoute(p), current === p)).join("");
+  const global = (items) => items.map(([p, , l]) => lien(p, correspond && p === "/cockpit" ? "Cockpit général" : l, iconForRoute(p.split("?")[0]), current === p.split("?")[0])).join("");
   const local = correspond ? `<div class="cockpit-site-selection"><small>Site sélectionné</small><a href="#${escapeHtml(`/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}`)}" title="${escapeHtml(vue.nom || vue.domaine)}">${icon("globe")}<span><strong>${escapeHtml(vue.nom || vue.domaine || vue.acces)}</strong><small>${escapeHtml(vue.domaine || vue.acces)}</small></span></a></div>
     ${navigationSite(vue, user?.niveau).map((x) => lien(x.url, x.libelle, x.icone, route === x.url)).join("")}
     ${rendreVoirSite(user, current)}${user?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "arrow", false) : ""}` : "";

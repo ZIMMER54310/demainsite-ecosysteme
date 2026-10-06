@@ -1,14 +1,16 @@
 // Identite fournie par le serveur (session HttpOnly). Aucun secret ni jeton n'est manipule ici.
 import { getMoi } from "../services/cockpit.service.js";
 
-export async function initializeAuth() {
+export async function initializeAuth(domaine = "") {
   try {
-    const moi = (await getMoi())?.donnees || {};
+    const moi = (await getMoi(domaine))?.donnees || {};
     return {
       authenticated: moi.connecte === true,
       displayName: moi.nom || null,
       reconnu: moi.reconnu === true,
       role: moi.role || null,
+      accesType: moi.accesType || null,
+      contexte: moi.contexte || null,
       fonctions: Array.isArray(moi.fonctions) ? moi.fonctions : [],
       niveau: moi.niveau || null,
       menu: Array.isArray(moi.menu) ? moi.menu : [],
@@ -19,8 +21,9 @@ export async function initializeAuth() {
       porteeGlobale: moi.porteeGlobale === true,
       fournisseurs: Array.isArray(moi.fournisseurs) ? moi.fournisseurs : []
     };
-  } catch {
-    return { authenticated: false, displayName: null, reconnu: false, role: null, fonctions: [], niveau: null, menu: [], nombreSites: 0, fournisseurs: [] };
+  } catch (err) {
+    console.error("[DSE compte]", err.message);
+    return { authenticated: false, erreur: err.message, displayName: null, reconnu: false, role: null, fonctions: [], niveau: null, menu: [], nombreSites: 0, fournisseurs: [] };
   }
 }
 

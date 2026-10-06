@@ -102,7 +102,7 @@ function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT, dom
     domaines,
     domaineAPreciser: dom.aPreciser,
     acces: perimetre.domaineAcces(info, domaineDemande),
-    statut: statut ? { titre: statut.titre || null, actif, message: statut.noteCourte || null } : null,
+    statut: statut ? { titre: statut.titre || null, actif, message: statut.noteCourte || null, couleur: statut.couleur || null } : null,
     progression: etapes.length ? Math.round((terminees / etapes.length) * 100) : 0,
     etapes: etapes.map(({ fonction, ...e }) => e),
     fonctions,
@@ -128,7 +128,7 @@ function resumeSite(info, statut, siteComplet = null) {
     alias: dom.alias,
     domaineAPreciser: dom.aPreciser,
     acces: perimetre.domaineAcces(info),
-    statut: statut ? { titre: statut.titre || null, actif: String(statut.code || "").toUpperCase() === "ACTIF" } : null,
+    statut: statut ? { titre: statut.titre || null, actif: String(statut.code || "").toUpperCase() === "ACTIF", couleur: statut.couleur || null } : null,
     client: String(info?.client || "").trim() || null
   };
   if (siteComplet) {

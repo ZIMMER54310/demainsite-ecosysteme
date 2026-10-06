@@ -30,23 +30,24 @@ const admin = require("../shared/administration");
       { utilisateurId: "u1", clientId: "b", siteId: "20", actif: true, valide: true }],
     identite: { fournisseur: "entra", sujet: "subject", email: "a@example.test" } };
   const d = droits.calculerDroits(base);
-  assert.deepStrictEqual(d.siteIds, ["10"], "un acces explicite d'un autre client ne donne aucun droit");
+  assert.deepStrictEqual(d.siteIds, ["10", "20"], "plusieurs clients autorises par les relations, sans droit hors contexte");
+  assert.deepStrictEqual(d.fonctions, []);
   assert.deepStrictEqual(d.clientIds, ["a"]);
   const multi = { ...base, sites: [...base.sites, { id: "11", clientId: "a" }, { id: "12", clientId: "a" }],
     liens: [...base.liens, { utilisateurId: "u1", clientId: "a", siteId: "11", actif: true, valide: true },
       { utilisateurId: "u1", clientId: "b", siteId: "12", actif: true, valide: true }] };
-  assert.deepStrictEqual(droits.calculerDroits(multi).siteIds, ["10", "11"], "deux sites attribues, aucun site non attribue ni mauvais client");
+  assert.deepStrictEqual(droits.calculerDroits(multi).siteIds, ["10", "20", "11"], "sites attribues avec client de relation coherent");
   const permanent = { ...multi, utilisateurs: [{ ...utilisateurs[0], entraObjectId: "objet-stable" }],
     identite: { fournisseur: "entra", sujet: "objet-stable", email: "nouvelle-adresse@example.test" } };
-  assert.deepStrictEqual(droits.calculerDroits(permanent).siteIds, ["10", "11"], "objet Entra prioritaire malgre changement email");
+  assert.deepStrictEqual(droits.calculerDroits(permanent).siteIds, ["10", "20", "11"], "objet Entra prioritaire malgre changement email");
   assert.strictEqual(droits.calculerDroits({ ...permanent, identite: { fournisseur: "entra", sujet: "autre", email: "a@example.test" } }).reconnu, false,
     "l'email ne reprend pas une identite deja liee");
   assert.strictEqual(droits.calculerDroits({ ...permanent, utilisateurs: [permanent.utilisateurs[0], { ...permanent.utilisateurs[0], id: "doublon" }] }).reconnu, false);
   assert.ok(!droits.peutAttribuer(d, "100", politique));
-  assert.ok(!droits.calculerDroits({ ...base, clients: [] }).reconnu);
-  assert.ok(!droits.calculerDroits({ ...base, politique: undefined }).reconnu, "aucun repli JSON");
-  assert.ok(!droits.calculerDroits({ ...base, utilisateurs: [{ ...utilisateurs[0], roleId: "300" }] }).reconnu);
-  assert.deepStrictEqual(admin._test.utilisateursVisibles(d, { utilisateurs, liens: [], politique }).map((u) => u.id), ["u1"]);
+  assert.deepStrictEqual(droits.calculerDroits({ ...base, clients: [] }).siteIds, []);
+  assert.deepStrictEqual(droits.calculerDroits({ ...base, politique: undefined }).fonctions, [], "aucun repli JSON");
+  assert.deepStrictEqual(droits.calculerDroits({ ...base, utilisateurs: [{ ...utilisateurs[0], roleId: "300" }] }).fonctions, []);
+  assert.deepStrictEqual(admin._test.utilisateursVisibles(d, { utilisateurs, liens: [], politique }).map((u) => u.id), []);
   const origineDonnees = droits.donneesDroits;
   droits.donneesDroits = async () => ({ utilisateurs, clients, liens: [], roles, politique,
     structure: { listes: { role: "roles", utilisateur: "users" }, colonnes: { utilisateurRole: "R", utilisateurClient: "K" } } });
@@ -60,7 +61,7 @@ const admin = require("../shared/administration");
       "droits superieurs ou utilisateur d'un autre client refuses");
     assert.ok((await admin.construireAction(d, "changer-client", { utilisateur: ref("u", "u1"), client: ref("k", "b") }, null)).refus,
       "aucune action de changement de client n'est autorisee");
-    const global = { ...d, portee: "tous", roleId: "100", fonctions: politique.roles["100"].fonctions, clientIds: ["a", "b"] };
+    const global = { ...d, global: true, portee: "tous", niveau: "administration", roleId: "100", fonctions: politique.roles["100"].fonctions, clientIds: ["a", "b"] };
     assert.ok((await admin.construireAction(global, "modifier-politique-role", { role: ref("r", "100"),
       portee: "CLIENT", niveau: "LECTURE", fonctions: "sites" }, null)).refus, "pas de modification de sa propre politique");
     assert.ok((await admin.construireAction(global, "modifier-politique-role", { role: ref("r", "300"),
@@ -90,7 +91,8 @@ const admin = require("../shared/administration");
     await controleur.moi({ query: {}, hostname: "a.example.test", get: () => null }, res);
     assert.strictEqual(res.code, 200);
     assert.deepStrictEqual(res.corps.donnees.sitesPublics, [{ nom: "A", domainePrincipal: "a.example.test",
-      domaines: ["a.example.test", "alias.example.test"] }], "seuls les sites autorises et leurs domaines sont exposes");
+      domaines: ["a.example.test", "alias.example.test"] }, { nom: "B", domainePrincipal: "b.example.test",
+      domaines: ["b.example.test"] }], "seuls les sites attribues et leurs domaines sont exposes");
     droits.droitsPour = async () => ({ ...d, portee: "tous", siteIds: ["10", "20"] });
     res = reponse();
     await controleur.moi({ query: {}, hostname: "a.example.test", get: () => null }, res);

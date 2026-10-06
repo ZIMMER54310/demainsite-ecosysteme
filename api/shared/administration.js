@@ -50,33 +50,42 @@ function utilisateursVisibles(d, donnees) {
   return donnees.utilisateurs.filter((u) => {
     if (d.portee === "tous") return true;
     if (String(u.id) === String(d.utilisateurId)) return true;
-    if (u.roleId && !droits.peutAttribuer(d, u.roleId, donnees.politique)) return false;
-    const sites = donnees.liens.filter((l) => String(l.utilisateurId) === String(u.id) && l.siteId).map((l) => String(l.siteId));
-    const clientOk = u.clientId && d.clientIds.includes(String(u.clientId));
-    return !!clientOk && sites.every((s) => mesSites.has(s));
+    return donnees.liens.some((l) => String(l.utilisateurId) === String(u.id) && l.siteId &&
+      mesSites.has(String(l.siteId)) && d.clientIds.includes(String(l.clientId)));
   });
 }
 
 const rolesAttribuables = (d, donnees) => donnees.roles.filter((r) => droits.peutAttribuer(d, r.id, donnees.politique));
 
 function vueUtilisateur(u, d, donnees, ctxSites) {
+  const moi = String(u.id) === String(d.utilisateurId);
   const sites = donnees.liens
     .filter((l) => String(l.utilisateurId) === String(u.id) && l.siteId)
+    .filter((l) => d.global || d.siteIds.includes(String(l.siteId)) && d.clientIds.includes(String(l.clientId)))
     .map((l) => {
       const g = ctxSites.parFiche.get(String(l.siteId));
-      return { nom: g?.titre || "Site", domaine: g ? perimetre.domaineAcces(g) : null, actif: l.actif && l.valide };
+      const role = donnees.roles.find((r) => String(r.id) === String(l.roleId));
+      const acces = (donnees.accesTypes || []).find((a) => String(a.id) === String(l.accesTypeId));
+      const contexte = droits.contexteSite({ reconnu: u.actif && u.valide, utilisateurId: String(u.id) }, donnees, l.siteId);
+      return { ref: ref("l", l.id), nom: g?.titre || "Site", domaine: g ? perimetre.domaineAcces(g) : null,
+        actif: l.actif && l.valide, role: role?.titre || null, accesType: acces?.titre || null,
+        roleRef: role ? ref("r", role.id) : "", accesTypeRef: acces ? ref("a", acces.id) : "",
+        modifiable: d.niveau === "administration" && l.actif && l.valide && !l.verrouille &&
+          (d.global || !moi && (!role || droits.peutAttribuer(d, role.id, donnees.politique))),
+        incomplet: contexte.contexte.etat !== "COMPLET" };
     });
-  const moi = String(u.id) === String(d.utilisateurId);
-  const modifiable = !moi && (!u.roleId || droits.peutAttribuer(d, u.roleId, donnees.politique));
+  const modifiable = d.niveau === "administration" && (d.global || !moi);
   return {
     ref: ref("u", u.id),
     email: u.titre,
-    role: u.roleTitre || null,
+    role: d.global || moi ? u.roleTitre || null : null,
+    roleGlobalRef: d.global && u.roleId ? ref("r", u.roleId) : "",
     actif: u.actif && u.valide,
     moi,
     sites,
     portee: droits.regleRole(donnees.politique || {}, u.roleId)?.portee || null,
-    modifiable
+    modifiable,
+    roleGlobalModifiable: d.global && !moi && (!u.roleId || droits.peutAttribuer(d, u.roleId, donnees.politique))
   };
 }
 
@@ -88,6 +97,8 @@ async function utilisateurs(d) {
     utilisateurs: utilisateursVisibles(d, donnees).map((u) => vueUtilisateur(u, d, donnees, ctxSites))
       .sort((a, b) => a.email.localeCompare(b.email, "fr")),
     roles: rolesAttribuables(d, donnees).map((r) => ({ ref: ref("r", r.id), titre: r.titre })),
+    accesTypes: (donnees.accesTypes || []).filter((a) => a.actif && a.valide &&
+      (!a.clientId || d.clientIds.includes(String(a.clientId)))).map((a) => ({ ref: ref("a", a.id), titre: a.titre })),
     sites: (await sitesAffectables(d)).map((g) => ({ nom: g.titre, domaine: perimetre.domaineAcces(g) })).filter((s) => s.domaine)
       .sort((a, b) => a.nom.localeCompare(b.nom, "fr")),
     peutCreer: d.portee === "tous",
@@ -109,7 +120,7 @@ async function idOui(g, nomListe, idListe) {
 
 /* ---------------- Actions d'administration ---------------- */
 
-const ACTIONS = ["changer-role", "ajouter-acces-site", "creer-utilisateur", "modifier-politique-role", "changer-statut-site"];
+const ACTIONS = ["changer-role", "ajouter-acces-site", "modifier-acces-site", "creer-utilisateur", "modifier-politique-role", "changer-statut-site"];
 
 /*
  * Verifie une action et construit l'operation d'ecriture. Appelee a l'apercu ET a la
@@ -148,6 +159,7 @@ async function construireAction(d, action, params, g) {
   }
 
   if (action === "changer-role") {
+    if (!d.global) return { refus: "Le rôle global est réservé à l'administration globale." };
     if (!cible) return { refus: "Utilisateur introuvable dans votre périmètre." };
     if (String(cible.id) === String(d.utilisateurId)) return { refus: "Vous ne pouvez pas modifier votre propre rôle." };
     if (cible.roleId && !droits.peutAttribuer(d, cible.roleId, politique)) return { refus: "Cet utilisateur dispose de droits supérieurs aux vôtres." };
@@ -171,22 +183,47 @@ async function construireAction(d, action, params, g) {
     };
   }
 
-  if (action === "ajouter-acces-site") {
+  if (["ajouter-acces-site", "modifier-acces-site"].includes(action)) {
     if (!cible) return { refus: "Utilisateur introuvable dans votre périmètre." };
-    if (String(cible.id) === String(d.utilisateurId) ||
-      !droits.peutAttribuer(d, cible.roleId, politique)) return { refus: "Vous ne pouvez pas modifier les accès de cet utilisateur." };
+    if (!cible.actif || !cible.valide) return { refus: "Utilisateur non actif ou non validé." };
+    if (String(cible.id) === String(d.utilisateurId) && !d.global) return { refus: "Vous ne pouvez pas modifier vos propres accès." };
+    if (!role || !role.actif || !role.valide || !droits.peutAttribuer(d, role.id, politique)) return { refus: "Rôle contextuel absent ou non attribuable." };
+    const acces = (donnees.accesTypes || []).find((a) => ref("a", a.id) === params.accesType && a.actif && a.valide);
+    if (!acces) return { refus: "Profil d'accès valide obligatoire." };
     const groupe = perimetre.groupeParDomaine(await sitesAffectables(d), minuscule(params.domaine));
     if (!groupe) return { refus: "Ce site n'est pas dans votre périmètre." };
     const site = donnees.sites.find((s) => String(s.id) === String(groupe.id));
-    if (!site?.clientId || String(cible.clientId) !== String(site.clientId)) return { refus: "L'utilisateur et le site doivent appartenir au même client." };
+    if (!site?.valide || !site.clientId || !donnees.clients.some((c) => String(c.id) === String(site.clientId)) ||
+      !d.global && !d.clientIds.includes(String(site.clientId)) ||
+      acces.clientId && String(acces.clientId) !== String(site.clientId)) return { refus: "Client/site/profil hors du périmètre autorisé." };
     const C = S.colonnes;
-    if (!S.listes.lien || !C.lienUtilisateur || !C.lienSite || !C.lienClient) return { refus: "La gestion des accès est momentanément indisponible." };
-    const existants = donnees.liens.filter((l) => String(l.utilisateurId) === String(cible.id) && String(l.siteId) === String(groupe.id) && String(l.clientId) === String(site.clientId));
+    if (!S.listes.lien || !C.lienUtilisateur || !C.lienSite || !C.lienClient || !C.lienRole || !C.lienAccesType) return { refus: "La gestion des accès est momentanément indisponible." };
+    const existants = donnees.liens.filter((l) => l.actif && String(l.utilisateurId) === String(cible.id) && String(l.siteId) === String(groupe.id));
     if (existants.length > 1) return { refus: "Plusieurs relations existent déjà : résolution administrateur requise." };
-    if (existants.length === 1) return existants[0].actif && existants[0].valide
-      ? { aucunChangement: true } : { refus: "Un accès désactivé existe déjà : validation administrateur requise." };
+    if (action === "ajouter-acces-site" && existants.length) return { refus: "Une relation active Utilisateur + Site existe déjà." };
+    const existante = action === "modifier-acces-site" ? existants.find((l) => ref("l", l.id) === params.relation) : null;
+    if (action === "modifier-acces-site" && (!existante || !existante.valide || existante.verrouille ||
+      String(existante.clientId) !== String(site.clientId) ||
+      !d.global && existante.roleId && !droits.peutAttribuer(d, existante.roleId, politique))) return { refus: "Relation non valide, verrouillée ou non modifiable." };
     const champs = { [`${C.lienUtilisateur}LookupId`]: String(cible.id), [`${C.lienSite}LookupId`]: String(groupe.id),
-      [`${C.lienClient}LookupId`]: String(site.clientId) };
+      [`${C.lienClient}LookupId`]: String(site.clientId), [`${C.lienRole}LookupId`]: String(role.id),
+      [`${C.lienAccesType}LookupId`]: String(acces.id) };
+    if (existante) {
+      const avantValeurs = { [`${C.lienUtilisateur}LookupId`]: String(existante.utilisateurId),
+        [`${C.lienSite}LookupId`]: String(existante.siteId), [`${C.lienClient}LookupId`]: String(existante.clientId),
+        [`${C.lienRole}LookupId`]: String(existante.roleId || ""), [`${C.lienAccesType}LookupId`]: String(existante.accesTypeId || "") };
+      if (ecriture.hash(champs) === ecriture.hash(avantValeurs)) return { aucunChangement: true };
+      if (!S.etats?.actifOui || !S.etats.valideOui) return { refus: "États de validation de la relation indisponibles." };
+      return { op: { type: "modifier", listId: S.listes.lien, itemId: String(existante.id), champs, avantValeurs,
+        selectionChamps: [...Object.keys(champs), ...[C.lienActif, C.lienValide, C.lienVerrou].filter(Boolean).map((c) => `${c}LookupId`)],
+        verifierVersion: (f) => String(f[`${C.lienActif}LookupId`]) !== S.etats.actifOui ||
+          String(f[`${C.lienValide}LookupId`]) !== S.etats.valideOui ||
+          C.lienVerrou && S.etats.verrouOui && String(f[`${C.lienVerrou}LookupId`]) === S.etats.verrouOui
+          ? "La relation a été désactivée, invalidée ou verrouillée." : null,
+        action: "Cockpit : droits contextuels", nom: groupe.titre },
+        changements: [{ libelle: `Droits de ${cible.titre} sur ${groupe.titre}`, avant: "Contexte actuel",
+          apres: `${role.titre} / ${acces.titre}` }] };
+    }
     if (g) {
       const [oa, ov] = await Promise.all([idOui(g, "OBJ-ACTIF", S.listes.actif), idOui(g, "OBJ-VALIDE", S.listes.valide)]);
       if (!oa || !ov || !C.lienActif || !C.lienValide) return { refus: "Les valeurs d'activation ne sont pas disponibles." };
@@ -195,13 +232,16 @@ async function construireAction(d, action, params, g) {
     }
     return {
       op: {
-        type: "ajouter", listId: S.listes.lien, champs,
+        type: "ajouter", listId: S.listes.lien, champs: { Title: `Accès — ${cible.titre} — ${groupe.titre}`.slice(0, 255), ...champs },
+        selectionChamps: ["Title", ...Object.keys(champs)],
         action: "Cockpit : ajout d'accès site", nom: `Accès — ${cible.titre} — ${groupe.titre}`,
         notes: `Utilisateur ${cible.id} (${cible.titre}) | Site ${groupe.id} (${groupe.titre})`,
-        cleDoublon: `lien:${cible.id}:${groupe.id}:${site.clientId}`,
+        cleDoublon: `lien:${cible.id}:${groupe.id}`,
+        doublonChamps: { utilisateur: `${C.lienUtilisateur}LookupId`, site: `${C.lienSite}LookupId`,
+          actif: `${C.lienActif}LookupId`, actifId: champs[`${C.lienActif}LookupId`] },
         contexteJournal: { utilisateurId: String(cible.id), clientId: String(site.clientId), siteId: String(groupe.id) }
       },
-      changements: [{ libelle: `Accès de ${cible.titre}`, avant: "Aucun accès", apres: groupe.titre }]
+      changements: [{ libelle: `Accès de ${cible.titre}`, avant: "Aucun accès", apres: `${groupe.titre} / ${role.titre} / ${acces.titre}` }]
     };
   }
 
@@ -240,14 +280,15 @@ async function construireAction(d, action, params, g) {
 /* Anti-doublon relu dans SharePoint au moment de l'ecriture (et non depuis le cache). */
 function controleDoublon(op) {
   return async (g) => {
-    const items = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${op.listId}/items?$expand=fields`);
-    const [type, a, b, clientId] = String(op.cleDoublon || "").split(":");
+    const [type, a, b] = String(op.cleDoublon || "").split(":");
+    const c = op.doublonChamps;
+    if (type === "lien" && (!c?.actifId || !c.utilisateur || !c.site || !c.actif)) throw new Error("Contrôle anti-doublon incomplet.");
+    const champs = type === "lien" ? [c.utilisateur, c.site, c.actif] : ["Title"];
+    const items = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${op.listId}/items?$expand=fields($select=${champs.join(",")})`);
     if (type === "utilisateur") return items.some((i) => minuscule(i.fields?.Title) === a);
     if (type === "lien") {
-      const nomU = Object.keys(op.champs)[0];
-      const nomS = Object.keys(op.champs)[1];
-      const nomC = Object.keys(op.champs)[2];
-      return items.some((i) => String(i.fields?.[nomU]) === a && String(i.fields?.[nomS]) === b && String(i.fields?.[nomC]) === clientId);
+      return items.some((i) => String(i.fields?.[c.utilisateur]) === a && String(i.fields?.[c.site]) === b &&
+        String(i.fields?.[c.actif]) === String(c.actifId));
     }
     return false;
   };
@@ -275,10 +316,11 @@ async function preparerAction({ identite, d, action, params }) {
 
 const ENTREES_MOTEUR = [
   { cle: "accueil", libelle: "Cockpit", icone: "🏠", url: "/cockpit", ordre: 10, niveau: "lecture", fonction: null },
-  { cle: "sites", libelle: "Mes sites", icone: "🌐", url: "/cockpit/sites", ordre: 20, niveau: "lecture", fonction: "sites" },
+  { cle: "sites", libelle: "Mes sites", icone: "🌐", url: "/cockpit/sites", ordre: 20, niveau: "lecture", fonction: null },
   { cle: "creer", libelle: "Créer un site", icone: "➕", url: "/cockpit/creer", ordre: 30, niveau: "ecriture", fonction: "creer" },
   { cle: "administration", libelle: "Administration", icone: "🛡️", url: "/cockpit/administration", ordre: 80, niveau: "administration", fonction: "administration" },
-  { cle: "utilisateurs", libelle: "Utilisateurs et accès", icone: "👥", url: "/cockpit/utilisateurs", ordre: 90, niveau: "administration", fonction: "utilisateurs" },
+  { cle: "compte", libelle: "Mon compte", icone: "👤", url: "/cockpit/compte", ordre: 85, niveau: "lecture", fonction: null },
+  { cle: "utilisateurs", libelle: "Comptes", icone: "👥", url: "/cockpit/utilisateurs", ordre: 90, niveau: "administration", fonction: "utilisateurs" },
   { cle: "synchronisations", libelle: "Synchronisations", icone: "🔄", url: "/cockpit/synchronisations", ordre: 95, niveau: "administration", fonction: "administration", global: true }
 ];
 
@@ -341,20 +383,26 @@ async function applications(d) {
   return { disponible: true, liste, colonnesManquantes: manquantes };
 }
 
-async function menu(d) {
+async function menu(d, domaine = null) {
   if (!d.reconnu) return [ENTREES_MOTEUR[0]].map(({ fonction, ...e }) => e);
   const R = droits.RANG_NIVEAU;
   const base = ENTREES_MOTEUR.filter((e) => (!e.fonction || d.fonctions.includes(e.fonction)) && R[e.niveau] <= R[d.niveau || "lecture"]
+    && (d.global || d.contexte?.etat === "COMPLET" || !["administration", "utilisateurs", "creer"].includes(e.cle))
     && (!e.global || require("./statut-sites").autorise(d)));
   let apps = [];
   try {
+    if (!d.global && d.contexte?.etat !== "COMPLET") return base.map(({ fonction, global, ...e }) => e);
     apps = (await applications(d)).liste
-      .filter((a) => a.autorisee && a.actif && a.valide && a.url && /^\/cockpit(\/[a-z0-9-]+)*$/i.test(a.url))
-      .map((a, i) => ({ cle: `app-${i}`, libelle: a.titre, icone: a.icone || "🧩", url: a.url, ordre: a.ordre ?? 50 + i, niveau: "lecture" }));
+      .filter((a) => a.autorisee && a.actif && a.valide && a.url && /^\/cockpit(\/[a-z0-9-]+)*$/i.test(a.url) &&
+        (!ENTREES_MOTEUR.find((e) => e.url === a.url)?.global || d.global))
+      .map((a, i) => ({ cle: `app-${i}`, libelle: a.titre, icone: a.icone || "🧩",
+        url: domaine ? `${a.url}?domaine=${encodeURIComponent(domaine)}` : a.url, ordre: a.ordre ?? 50 + i, niveau: "lecture" }));
   } catch (e) {
     console.warn("[DSE cockpit] applications", e.message);
   }
-  return [...base.map(({ fonction, global, ...e }) => e), ...apps].sort((a, b) => a.ordre - b.ordre);
+  return [...base.map(({ fonction, global, ...e }) => ({ ...e,
+    url: domaine && ["administration", "utilisateurs"].includes(e.cle) ? `${e.url}?domaine=${encodeURIComponent(domaine)}` : e.url })), ...apps]
+    .sort((a, b) => a.ordre - b.ordre);
 }
 
 /* ---------------- Tableau de bord ---------------- */
@@ -396,7 +444,7 @@ async function tableau(d) {
     if (manque.length) aCompleter.push({ site: s.nom, domaine: s.acces, progression: s.progression ?? null, elements: manque.map((e) => e.libelle), lien: `/cockpit/site/${s.acces}` });
   }
   const g = await ecriture.contexteGraph();
-  const plateforme = d.fonctions.includes("plateforme");
+  const plateforme = d.global && d.fonctions.includes("plateforme");
   if (plateforme) {
     for (const c of await rattachementsCasses(g)) {
       problemes.unshift({ niveau: "critique", titre: `${c} : le rattachement au site est inutilisable dans SharePoint (modification impossible)`, lien: "/cockpit/administration" });

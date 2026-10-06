@@ -2,12 +2,12 @@ import { initializeAuth } from "../js/auth.js";
 import { setState, getState } from "../js/state.js";
 import {
   getSitesCockpit, getClientCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
-  getAdminTableau, getAdminUtilisateurs, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident, getStatutsSite, getConstruire
+  getAdminTableau, getAdminUtilisateurs, getMonCompte, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident, getStatutsSite, getConstruire
 } from "../services/cockpit.service.js";
 import { activerConstructeur } from "../modules/cockpit/constructeur.js";
 import {
   rendreConnexion, rendreSansAcces, rendreAccueil, rendreListeSites, rendreVueSite, rendreAssistant,
-  CRITERES_SITES, lienSites, rendreEdition, rendreApercu, rendreResultatEcriture, rendreAdministration, rendreUtilisateurs
+  CRITERES_SITES, lienSites, rendreEdition, rendreApercu, rendreResultatEcriture, rendreAdministration, rendreUtilisateurs, rendreMonCompte
 } from "../modules/cockpit/cockpit.js";
 import { escapeHtml } from "../modules/public/outils.js";
 import { getMediasCockpit, actionConstruire, televerserMedia } from "../services/cockpit.service.js";
@@ -28,16 +28,18 @@ const indisponible = `<section class="cockpit card"><p>Le cockpit est momentané
 
 const moiDepuis = (u) => ({
   nom: u.displayName, role: u.role, fonctions: u.fonctions, niveau: u.niveau, menu: u.menu,
+  accesType: u.accesType, contexte: u.contexte,
   domaineAccueil: u.domaineAccueil, nombreSites: u.nombreSites, clients: u.clients || [], porteeGlobale: u.porteeGlobale === true, fournisseurs: u.fournisseurs
 });
 const domaineCourant = () => location.hostname.trim().toLowerCase().replace(/^www\./, "");
 
 async function contexte(params = {}) {
   document.body.classList.remove("dse-public");
-  const user = await initializeAuth();
+  const user = await initializeAuth(params.domaine || "");
   setState({ user, selectedSite: null });
+  if (user.erreur) return { html: `<section class="cockpit card"><p role="alert">${escapeHtml(user.erreur)}</p><a href="#/cockpit/sites">Mes sites</a></section>` };
   if (!user.authenticated) return { html: rendreConnexion({ fournisseurs: user.fournisseurs, message: MESSAGES_CONNEXION[params.connexion] || "" }) };
-  if (!user.reconnu || !user.fonctions.length) return { html: rendreSansAcces(moiDepuis(user)) };
+  if (!user.reconnu) return { html: rendreSansAcces(moiDepuis(user)) };
   return { moi: moiDepuis(user) };
 }
 
@@ -46,6 +48,10 @@ async function vue(domaine) {
   try {
     const site = (await getSiteCockpit(domaine))?.donnees || null;
     setState({ selectedSite: site });
+    if (site?.contexteUtilisateur) {
+      const user = { ...getState().user, ...site.contexteUtilisateur, porteeGlobale: false };
+      setState({ user });
+    }
     return site;
   } catch (err) {
     setState({ selectedSite: null });
@@ -80,7 +86,7 @@ export async function cockpitClientPage(params) {
     const c = await contexte(params);
     if (c.html) return c.html;
     const criteres = Object.fromEntries(CRITERES_SITES.filter((k) => k !== "client" && params?.[k]).map((k) => [k, params[k]]));
-    const resultat = (await getClientCockpit(params.id, criteres).catch(() => null))?.donnees || null;
+    const resultat = (await getClientCockpit(params.id, { ...criteres, contexteDomaine: params.domaine || "" }).catch(() => null))?.donnees || null;
     if (!resultat?.client) return `<section class="cockpit card"><p>Cet espace client n'est pas disponible.</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
     return rendreListeSites(c.moi, resultat, { complement: rendreRaccourcisContenus(c.moi, { client: resultat.client.id }) });
   } catch { return indisponible; }
@@ -92,6 +98,7 @@ export async function cockpitContenusPage(params) {
     if (c.html) return c.html;
     const criteres = { type: params?.type || "medias" };
     if (params?.client) criteres.client = params.client;
+    criteres.contexteDomaine = params.domaine || "";
     const r = (await getContenusCockpit(criteres).catch(() => null))?.donnees || null;
     return rendreContenus(r);
   } catch { return indisponible; }
@@ -280,7 +287,7 @@ export async function cockpitAdministrationPage(params) {
     const c = await contexte(params);
     if (c.html) return c.html;
     if (!c.moi.fonctions.includes("administration")) return nonDisponible("L'administration n'est pas disponible pour votre profil.");
-    const r = await getAdminTableau().catch(() => null);
+    const r = await getAdminTableau(params.domaine || "").catch(() => null);
     if (!r?.donnees) return indisponible;
     return rendreAdministration(c.moi, r.donnees);
   } catch { return indisponible; }
@@ -291,7 +298,7 @@ export async function cockpitUtilisateursPage(params) {
     const c = await contexte(params);
     if (c.html) return c.html;
     if (!c.moi.fonctions.includes("utilisateurs")) return nonDisponible("La gestion des utilisateurs n'est pas disponible pour votre profil.");
-    const r = await getAdminUtilisateurs().catch(() => null);
+    const r = await getAdminUtilisateurs(params.domaine || "").catch(() => null);
     if (!r?.donnees) return indisponible;
     if (r.donnees.peutGererIncidents) r.donnees.incidents = (await getIncidents()).donnees;
     return rendreUtilisateurs(c.moi, r.donnees);
@@ -320,10 +327,22 @@ export function activerUtilisateurs(racine = document) {
     form.addEventListener("submit", (ev) => {
       ev.preventDefault();
       const params = Object.fromEntries(new FormData(form));
+      if (racine.querySelector("[data-comptes-contexte]")) params.contexteDomaine = racine.querySelector("[data-comptes-contexte]").dataset.comptesContexte;
       lancer({ action: form.dataset.actionAdmin, params });
       zone.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
   });
+}
+
+export async function cockpitMonComptePage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return c.html;
+    return rendreMonCompte(c.moi, (await getMonCompte()).donnees);
+  } catch (err) {
+    console.error("[DSE mon compte]", err.message);
+    return `<section class="cockpit card"><p role="alert">${escapeHtml(err.message)}</p></section>`;
+  }
 }
 
 /* Constructeur DSE : les donnees et droits viennent du serveur (aucune page, aucun role code en dur). */

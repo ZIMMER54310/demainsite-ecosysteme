@@ -123,8 +123,9 @@ async function contexteGraph() {
   return { token, siteGraphId: site.id, listes };
 }
 
-async function lireItemFrais(g, listId, itemId) {
-  const r = await dse.graphSansCache(g.token, `/sites/${g.siteGraphId}/lists/${listId}/items/${encodeURIComponent(itemId)}?$expand=fields`);
+async function lireItemFrais(g, listId, itemId, selectionChamps = null) {
+  const expansion = selectionChamps ? `fields($select=${selectionChamps.join(",")})` : "fields";
+  const r = await dse.graphSansCache(g.token, `/sites/${g.siteGraphId}/lists/${listId}/items/${encodeURIComponent(itemId)}?$expand=${expansion}`);
   return r?.fields || {};
 }
 
@@ -205,7 +206,8 @@ async function executerOperation({ cle, op, revalider, acteur }) {
   let ancien = {};
   let etag = null;
   if (op.type === "modifier") {
-    const version = await dse.graphSansCache(g.token, `/sites/${g.siteGraphId}/lists/${op.listId}/items/${encodeURIComponent(op.itemId)}?$expand=fields`);
+    const expansion = op.selectionChamps ? `fields($select=${op.selectionChamps.join(",")})` : "fields";
+    const version = await dse.graphSansCache(g.token, `/sites/${g.siteGraphId}/lists/${op.listId}/items/${encodeURIComponent(op.itemId)}?$expand=${expansion}`);
     if (op.verifierVersion) {
       const refusVersion = op.verifierVersion(version?.fields || {});
       if (refusVersion) return { status: 409, erreur: refusVersion };
@@ -234,7 +236,7 @@ async function executerOperation({ cle, op, revalider, acteur }) {
       const cree = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${op.listId}/items`, { fields: op.champs });
       itemId = String(cree?.id || "");
     }
-    relu = valeursDe(await lireItemFrais(g, op.listId, itemId), noms);
+    relu = valeursDe(await lireItemFrais(g, op.listId, itemId, op.selectionChamps), noms);
   } catch (e) {
     console.error("[DSE ecriture]", e.message);
     if (e.status === 412 || e.statusCode === 412) return { status: 409, erreur: "Les données ont été modifiées entre-temps. Merci de les relire." };

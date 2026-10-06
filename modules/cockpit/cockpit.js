@@ -27,8 +27,8 @@ export const CARTES = Object.freeze([
   { fonction: "domaine", icone: "🔗", titre: "Domaine", texte: "Adresse publique du site.", cible: (d) => lienSite(d, "domaine") },
   { fonction: "apercu", icone: "👁️", titre: "Aperçu du site", texte: "Voir le site tel que le public le voit.", cible: (d) => (d ? `https://${d}/` : "#/cockpit/sites"), externe: true },
   { fonction: "suivi", icone: "📈", titre: "Suivi / progression", texte: "Avancement de la configuration.", cible: (d) => lienSite(d) },
-  { fonction: "administration", icone: "🛡️", titre: "Administration", texte: "Problèmes, anomalies et prochaines actions.", cible: () => "#/cockpit/administration" },
-  { fonction: "utilisateurs", icone: "👥", titre: "Utilisateurs et accès", texte: "Rôles et sites attribués.", cible: () => "#/cockpit/utilisateurs" }
+  { fonction: "administration", icone: "🛡️", titre: "Administration", texte: "Problèmes, anomalies et prochaines actions.", cible: (d) => `#/cockpit/administration${d ? `?domaine=${encodeURIComponent(d)}` : ""}` },
+  { fonction: "utilisateurs", icone: "👥", titre: "Comptes", texte: "Rôles et profils par site.", cible: (d) => `#/cockpit/utilisateurs${d ? `?domaine=${encodeURIComponent(d)}` : ""}` }
 ]);
 
 /* Reglages modifiables depuis le cockpit (le serveur refait tous les controles). */
@@ -65,7 +65,8 @@ export function rendreCartes(fonctions, domaine) {
 
 function badgeStatut(statut) {
   if (!statut?.titre) return `<span class="cockpit-badge">Statut non renseigné</span>`;
-  return `<span class="cockpit-badge ${statut.actif ? "actif" : "situation"}">${e(statut.titre)}</span>`;
+  const couleur = /^#[0-9a-f]{6}$/i.test(statut.couleur || "") ? ` style="color:${e(statut.couleur)};border-color:currentColor"` : "";
+  return `<span class="cockpit-badge ${statut.actif ? "actif" : "situation"}"${couleur}>${e(statut.titre)}</span>`;
 }
 
 function styleProgression(visuel) {
@@ -128,6 +129,7 @@ export function rendreEnteteCockpit(moi) {
   return `<div class="cockpit-entete">
     <div><h1 class="page-title">Bonjour${moi?.nom ? ` ${e(moi.nom)}` : ""}</h1>
     ${moi?.role?.titre ? `<p class="muted">Profil : ${e(moi.role.titre)}</p>` : ""}</div>
+    ${moi?.accesType?.titre ? `<p class="muted">Accès : ${e(moi.accesType.titre)}</p>` : ""}
     <a class="btn btn-secondary" href="/api/v1/auth/deconnexion">Se déconnecter</a></div>`;
 }
 
@@ -151,7 +153,7 @@ export function rendreAccueil({ moi, vueCourante = null, domaineCourant = "", co
 }
 
 // Parametres de « Mes sites » transmis par l'adresse ; l'API refait tout le controle.
-export const CRITERES_SITES = Object.freeze(["q", "statut", "client", "progression", "aCompleter", "tri", "sens", "page", "parPage"]);
+export const CRITERES_SITES = Object.freeze(["q", "statut", "client", "progression", "aCompleter", "tri", "sens", "page", "parPage", "domaine"]);
 
 const lienSitesBase = (...a) => lienSites(...a);
 export const lienClient = (id) => `#/cockpit/client/${encodeURIComponent(id)}`;
@@ -203,6 +205,7 @@ export function rendreListeSites(moi, resultat, { complement = "" } = {}) {
   </div>`;
 
   const filtres = `<form class="card cockpit-filtres" data-filtres-sites data-base="${e(base)}" role="search">
+    ${c.domaine ? `<input type="hidden" name="domaine" value="${e(c.domaine)}">` : ""}
     <label class="cockpit-champ cockpit-recherche"><span>Rechercher</span><input type="search" name="q" value="${e(c.q || "")}" placeholder="Nom du site ou domaine"></label>
     ${choix("statut", "Statut", "Tous les statuts", o.statuts || [], c.statut)}
     ${colonneClient ? choix("client", "Client", "Tous les clients", o.clients, c.client) : ""}
@@ -222,7 +225,9 @@ export function rendreListeSites(moi, resultat, { complement = "" } = {}) {
       <td data-label="Statut">${badgeStatut(s.statut)}${r.peutChangerStatut ? ` <button type="button" class="icon-btn" data-changer-statut="${e(s.acces || s.domaine)}" aria-label="Changer le statut de ${e(s.nom)}" title="Changer le statut">${icon("edit")}</button>` : ""}</td>
       <td data-label="Progression">${jaugeCourte(s.progression, s.progressionVisuelle)}${s.progressionVisuelle?.message || s.progressionVisuelle?.avertissement ? ` <span title="${e(s.progressionVisuelle.message || s.progressionVisuelle.avertissement)}">⚠</span>` : ""}${(s.aCompleter || []).some((x) => x.etat === "attention") ? ` <span title="Un point demande votre attention">⚠</span>` : ""}</td>
       ${colonneClient ? `<td data-label="Client">${s.clientCockpit ? `<a href="${e(lienClient(s.clientCockpit))}" title="Ouvrir l'espace client">${e(s.client || "Non renseigné")}</a>` : e(s.client || "Non renseigné")}</td>` : ""}
-      <td><div class="cockpit-actions"><a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}">Ouvrir ${icon("arrow")}</a>${s.domaine ? `<a class="btn btn-primary" href="https://${e(s.domaine)}/" target="_blank" rel="noopener noreferrer">${icon("external")} Voir le site</a>` : ""}</div></td></tr>`).join("")}</tbody></table></div>`
+      <td>${s.contexte?.etat === "CONTEXTE INCOMPLET" ? `<p role="status">CONTEXTE INCOMPLET : ${e(s.contexte.message)}</p>` :
+        `<p class="muted">${e(s.role || "")}${s.accesType ? ` / ${e(s.accesType)}` : ""}</p>`}
+        <div class="cockpit-actions"><a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.acces || s.domaine)}">Ouvrir ${icon("arrow")}</a>${s.domaine ? `<a class="btn btn-primary" href="https://${e(s.domaine)}/" target="_blank" rel="noopener noreferrer">${icon("external")} Voir le site</a>` : ""}</div></td></tr>`).join("")}</tbody></table></div>`
     : `<div class="empty">${filtre ? "Aucun site ne correspond à votre recherche." : "Aucun site dans votre espace pour le moment."}</div>`;
 
   const pagination = (r.pages || 1) > 1 ? `<nav class="cockpit-pagination" aria-label="Pages de résultats">
@@ -482,19 +487,31 @@ export function rendreUtilisateurs(moi, d) {
       <button class="btn btn-secondary" data-incident="${e(i.id)}" data-decision-incident="reactiver">Réactiver après vérification</button>
       <button class="btn btn-secondary" data-incident="${e(i.id)}" data-decision-incident="maintenir">Maintenir le blocage</button>
     </details>`).join("") || "<p>Aucun incident d’accès.</p>"}</section>` : "";
-  const roles = (d.roles || []).map((r) => `<option value="${e(r.ref)}">${e(r.titre)}</option>`).join("");
+  const options = (liste, selected = "") => `<option value="">Choisir</option>${(liste || []).map((v) =>
+    `<option value="${e(v.ref)}"${v.ref === selected ? " selected" : ""}>${e(v.titre)}</option>`).join("")}`;
+  const roles = options(d.roles);
+  const profils = options(d.accesTypes);
   const sites = (d.sites || []).map((s) => `<option value="${e(s.domaine)}">${e(s.nom)} — ${e(s.domaine)}</option>`).join("");
   const lignes = (d.utilisateurs || []).map((u) => `<tr>
     <td>${e(u.email)}${u.moi ? ' <span class="muted">(vous)</span>' : ""}</td>
     <td>${e(u.role || "Aucun")}</td>
     <td>${u.actif ? "✅ Actif" : "⬜ Inactif"}</td>
-    <td>${u.sites.length ? u.sites.map((s) => e(s.nom)).join(", ") : (u.portee === "tous" ? '<span class="muted">Tous les sites</span>' : "⚠ Aucun site")}</td>
+    <td>${u.sites.length ? u.sites.map((s) => `<div><strong>${e(s.nom)}</strong> · ${e(s.role || "Rôle manquant")} / ${e(s.accesType || "Profil manquant")}
+      ${s.incomplet ? "<p>CONTEXTE INCOMPLET</p>" : ""}
+      ${s.modifiable && s.domaine ? `<form data-action-admin="modifier-acces-site" class="cockpit-form-inline">
+        <input type="hidden" name="utilisateur" value="${e(u.ref)}"><input type="hidden" name="relation" value="${e(s.ref)}">
+        <input type="hidden" name="domaine" value="${e(s.domaine)}">
+        <label>Rôle du site<select name="role" required>${options(d.roles, s.roleRef)}</select></label>
+        <label>Profil d'accès<select name="accesType" required>${options(d.accesTypes, s.accesTypeRef)}</select></label>
+        <button type="submit" class="btn btn-secondary">Modifier ce contexte</button></form>` : ""}</div>`).join("") : (u.portee === "tous" ? '<span class="muted">Administration globale ; aucun contexte site attribué</span>' : "⚠ Aucun site")}</td>
     <td>${u.modifiable ? `
-      <form data-action-admin="changer-role" class="cockpit-form-inline"><input type="hidden" name="utilisateur" value="${e(u.ref)}">
-        <label class="sr-only" for="r-${e(u.ref)}">Rôle</label><select id="r-${e(u.ref)}" name="role" required>${roles}</select>
-        <button class="btn btn-secondary" type="submit">Changer le rôle</button></form>
+      ${u.roleGlobalModifiable ? `<form data-action-admin="changer-role" class="cockpit-form-inline"><input type="hidden" name="utilisateur" value="${e(u.ref)}">
+        <label class="sr-only" for="r-${e(u.ref)}">Rôle</label><select id="r-${e(u.ref)}" name="role" required>${options(d.roles, u.roleGlobalRef)}</select>
+        <button class="btn btn-secondary" type="submit">Changer le rôle global</button></form>` : ""}
       ${sites ? `<form data-action-admin="ajouter-acces-site" class="cockpit-form-inline"><input type="hidden" name="utilisateur" value="${e(u.ref)}">
         <label class="sr-only" for="s-${e(u.ref)}">Site</label><select id="s-${e(u.ref)}" name="domaine" required>${sites}</select>
+        <label>Rôle du site<select name="role" required>${options(d.roles)}</select></label>
+        <label>Profil d'accès<select name="accesType" required>${profils}</select></label>
         <button class="btn btn-secondary" type="submit">Donner accès</button></form>` : ""}` : '<span class="muted">—</span>'}</td>
   </tr>`).join("");
   const creation = d.peutCreer && roles ? `<div class="card"><h3>Ajouter un utilisateur</h3>
@@ -516,8 +533,8 @@ export function rendreUtilisateurs(moi, d) {
       <p class="muted">Capacités disponibles : ADMINISTRATION-GLOBALE, GESTION-CLIENT, GESTION-UTILISATEURS-CLIENT, GESTION-SITES-ATTRIBUES. Les fonctions individuelles de votre espace sont aussi acceptées. Séparez-les par un point-virgule.</p>
       <button class="btn btn-primary" type="submit">Vérifier la politique</button>
     </form>` : '<p class="muted">Votre propre politique ne peut pas être modifiée dans ce formulaire.</p>'}</div>`).join("");
-  return `<section class="cockpit">${rendreEnteteCockpit(moi)}
-    <h2>Utilisateurs et accès <span class="muted">(${(d.utilisateurs || []).length})</span></h2>
+  return `<section class="cockpit" data-comptes-contexte="${e(d.contexteDomaine || "")}">${rendreEnteteCockpit(moi)}
+    <h2>Comptes · utilisateurs et droits par site <span class="muted">(${(d.utilisateurs || []).length})</span></h2>
     <div data-apercu aria-live="polite"></div>
     <div class="card"><div class="table-wrap"><table class="cockpit-table">
       <thead><tr><th>Utilisateur</th><th>Rôle</th><th>État</th><th>Sites</th><th>Actions</th></tr></thead>
@@ -526,4 +543,15 @@ export function rendreUtilisateurs(moi, d) {
     ${incidents}
     ${politiques ? `<h2>Politiques des rôles</h2>${politiques}` : ""}
   </section>`;
+}
+
+export function rendreMonCompte(moi, d) {
+  return `<section class="cockpit">${rendreEnteteCockpit(moi)}<article class="card"><h2>Mon compte</h2>
+    <p>${e(d.nom || moi.nom || "")}</p><p>${e(d.email || "")}</p>
+    ${d.roleGlobal ? `<p class="muted">Rôle global conservé : ${e(d.roleGlobal)}</p>` : ""}
+    <h3>Mes contextes de site</h3>${(d.sites || []).map((s) => `<article><h4>${e(s.nom || s.domaine || "Site")}</h4>
+      <p>${e(s.contexte?.etat || "CONTEXTE INCOMPLET")}</p>
+      ${s.contexte?.message ? `<p role="status">${e(s.contexte.message)}</p>` : `<p>${e(s.role?.titre || "")} / ${e(s.accesType?.titre || "")}</p>`}
+      ${s.domaine ? `<a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(s.domaine)}">Ouvrir</a>` : ""}</article>`).join("") || "<p>Aucun site attribué.</p>"}
+    <a class="btn btn-secondary" href="#/cockpit/sites">Mes sites</a></article></section>`;
 }
