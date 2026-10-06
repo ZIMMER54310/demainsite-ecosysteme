@@ -22,6 +22,7 @@ const progressionVisuelle = require("../shared/progression-visuelle");
 const autorisations = require("../auth/autorisations");
 const experienceCockpit = require("../shared/experience-cockpit");
 const demandesAcces = require("../shared/demandes-acces");
+const galerie = require("../shared/galerie");
 
 const meta = () => ({ genereLe: new Date().toISOString() });
 
@@ -126,7 +127,7 @@ async function moi(req, res) {
         niveau: ctx.droits.niveau,
         ...contextePublic(ctx.droits),
         accesCommun: ctx.droits.reconnu && (ctx.droits.sitesCommuns || []).length > 0,
-        menu: await administration.menu(ctx.droits, req.query.domaine || null),
+        menu: await administration.menu(ctx.droits, req.query.domaine || null, { galerie: await galerieVisible(ctx) }),
         nombreSites,
         clients: ctx.droits.global || ctx.droits.contexte?.etat === "COMPLET" ? clientsDuPerimetre(ctx, groupes) : [],
         porteeGlobale: ctx.droits.global === true,
@@ -205,6 +206,61 @@ async function sites(req, res) {
     repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] sites", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+/*
+ * Galerie : sites du perimetre pour lesquels galerie.voir est resolu par site depuis SharePoint.
+ * Aucune carte non autorisee n'est construite ; le bouton cockpit exige cockpit.ouvrir et une
+ * relation OBJ-SITE-COCKPIT exploitable.
+ */
+async function cartesGalerie(ctx) {
+  const { groupes, statuts } = await groupesAutorises(ctx);
+  const donnees = await droits.donneesDroits();
+  const [cockpits, resumes] = await Promise.all([galerie.cockpitsParSite(), resumeSites.obtenirResumes().catch(() => null)]);
+  return galerie.construireCartes({ groupes, statuts, cockpits, resumes,
+    contexte: (g) => droits.contexteSite(ctx.droits, donnees, g.id) });
+}
+
+async function galerieVisible(ctx) {
+  try {
+    if (!ctx.droits.reconnu) return false;
+    const { groupes } = await groupesAutorises(ctx);
+    const donnees = await droits.donneesDroits();
+    return groupes.some((g) => galerie.peutLire(droits.contexteSite(ctx.droits, donnees, g.id), galerie.OPERATION_GALERIE, "galerie"));
+  } catch (e) {
+    console.warn("[DSE cockpit] galerie menu", e.message);
+    return false;
+  }
+}
+
+async function galerieListe(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    if (!ctx.droits.reconnu) return refuser(res, 403, "Accès non autorisé.");
+    const cartes = await cartesGalerie(ctx);
+    if (!cartes.length) return refuser(res, 403, "La Galerie n'est pas disponible pour votre compte.");
+    repondre(res, 200, { succes: true, donnees: galerie.filtrer(cartes, req.query), meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] galerie", e.message);
+    refuser(res, 503, "Le service est momentanément indisponible.");
+  }
+}
+
+/* Verification serveur avant ouverture : meme refus pour un site absent, hors perimetre ou sans droit. */
+async function galerieCockpit(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const domaine = normaliserDomaine(req.query.domaine);
+    const carte = domaine && ctx.droits.reconnu
+      ? (await cartesGalerie(ctx)).find((c) => c.cockpit && c.cockpit.url === `/cockpit/site/${encodeURIComponent(domaine)}`) : null;
+    if (!carte) return refuser(res, 403, "Le cockpit de ce site n'est pas disponible pour votre compte.");
+    repondre(res, 200, { succes: true, donnees: { url: carte.cockpit.url, nom: carte.nom }, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] galerie cockpit", e.message);
     refuser(res, 503, "Le service est momentanément indisponible.");
   }
 }
@@ -310,7 +366,7 @@ async function site(req, res) {
     vue.progressionVisuelle = progressionVisuelle.pourcentage(await progressionVisuelle.lire(), vue.progression);
     const espaceClient = info.clientId && clientsDuPerimetre(ctx, (await groupesAutorises(ctx)).groupes).find((c) => c.id === String(info.clientId));
     vue.clientCockpit = espaceClient ? espaceClient.id : null;
-    vue.contexteUtilisateur = { ...contextePublic(ctx.droits), menu: await administration.menu(ctx.droits, domaine) };
+    vue.contexteUtilisateur = { ...contextePublic(ctx.droits), menu: await administration.menu(ctx.droits, domaine, { galerie: await galerieVisible(ctx) }) };
     repondre(res, 200, { succes: true, donnees: vue, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] site", e.message);
@@ -934,7 +990,7 @@ const synchroConfirmer = (req, res) => synchroEcriture(req, res, "SYNCHRO-RESTAU
 
 module.exports = {
   client, synchroVue, synchroSauvegardes, synchroReglage, synchroLancer, synchroApercu, synchroConfirmer,
-  moi, monCompte, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
+  moi, monCompte, sites, site, galerieListe, galerieCockpit, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
   contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide, clientsDuPerimetre }
 };

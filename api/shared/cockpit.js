@@ -10,7 +10,7 @@ const perimetre = require("./perimetre");
 const FONCTIONS_COCKPIT = [
   "sites", "creer", "pages", "entete", "logo-medias", "menu",
   "footer", "seo", "domaine", "apercu", "suivi",
-  "administration", "utilisateurs", "plateforme"
+  "administration", "utilisateurs", "plateforme", "galerie", "cockpit"
 ];
 
 const ETATS = { termine: "termine", encours: "encours", afaire: "afaire", attention: "attention" };

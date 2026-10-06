@@ -37,6 +37,7 @@ registerRoute("/", async () => {
 }); // Cockpit unique : l'interface s'adapte aux droits renvoyes par le serveur.
 registerRoute("/cockpit",async p=>mount(await cockpitAccueilPage(p),["Cockpit"]));
 registerRoute("/cockpit/sites",async p=>{ mount(await cockpitSitesPage(p),["Cockpit","Mes sites"]); activerFiltresSites(document.querySelector("#app-page")); });
+registerRoute("/cockpit/galerie",async p=>{ const {cockpitGaleriePage,activerGalerie}=await import("../pages/cockpit.js"); mount(await cockpitGaleriePage(p),["Cockpit","Galerie"]); activerGalerie(document.querySelector("#app-page")); });
 registerRoute("/cockpit/compte",async p=>{ const {cockpitMonComptePage}=await import("../pages/cockpit.js"); mount(await cockpitMonComptePage(p),["Cockpit","Mon compte"]); });
 registerRoute("/cockpit/client/:id",async p=>{ const html=await cockpitClientPage(p); mount(html,["Cockpit","Espace client"]); activerFiltresSites(document.querySelector("#app-page")); });
 registerRoute("/cockpit/site/:domaine",async p=>{ mount(await cockpitSitePage(p),["Cockpit","Mes sites",p.domaine]); activerVueSite(document.querySelector("#app-page")); });

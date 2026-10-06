@@ -3,6 +3,8 @@ import { CONFIG } from "../js/config.js";
 export const getMoi = (domaine = "") => apiGet("/moi", { domaine });
 export const getMonCompte = () => apiGet("/cockpit/compte");
 export const getSitesCockpit = (criteres = {}) => apiGet("/cockpit/sites", criteres);
+export const getGalerie = (criteres = {}) => apiGet("/cockpit/galerie", criteres);
+export const getGalerieCockpit = (domaine) => apiGet("/cockpit/galerie/cockpit", { domaine });
 export const getContenusCockpit = (criteres = {}) => apiGet("/cockpit/contenus", criteres);
 export const getClientCockpit = (id, criteres = {}) => apiGet("/cockpit/client", { ...criteres, id });
 export const getStatutsSite = (domaine) => apiGet("/cockpit/sites/statuts", { domaine });

@@ -34,7 +34,10 @@ async function tester() {
     assert.equal(A.autoriser(r, op).autorise, false, `Refus attendu : ${op}`);
   }
   const permis = new Set(r.operations.map((o) => `${o.capaciteId}/${o.actionId}`));
-  assert.equal(permis.size, 5, "Les opérations techniques ne doivent pas ajouter de paire capacité/action.");
+  const explicites = new Set(data.permissions.filter((p) => p.autorisation && r.affectations.some((a) => a.id === String(p.affectationId)))
+    .map((p) => `${p.capaciteId}/${p.actionId}`));
+  assert.deepEqual([...permis].sort(), [...explicites].sort(), "Les opérations techniques ne doivent pas ajouter de paire capacité/action.");
+  for (const op of ["galerie.voir", "cockpit.ouvrir"]) assert.equal(A.autoriser(r, op).autorise, false, `Refus attendu sur ce site : ${op}`);
   for (const site of data.source["OBJ-SITE-PUBLIC"].items) {
     if (!r.siteIds.includes(site.id)) assert.equal(A.resoudre(data, pilote.id, site.id).actif, false);
   }
@@ -92,7 +95,7 @@ async function tester() {
       assert.ok(plan.refus, "Le formulaire historique doit refuser une affectation typée.");
     }
   }
-  console.log("Droits dynamiques natifs : cinq paires autorisées, refus et contexte serveur conformes.");
+  console.log("Droits dynamiques natifs : paires issues des seules permissions explicites, refus et contexte serveur conformes.");
   console.log(`Restrictions explicites réelles contrôlées : ${denies.length}. Aucune donnée de test écrite.`);
   console.log("Cette recette de résolution native ne constitue PAS un test OAuth ou une écriture métier.");
 }

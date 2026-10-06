@@ -383,3 +383,30 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 [data-builder-valeurs] .design-actions{border:0;margin:0;padding:0}
 [data-builder-valeurs] textarea{width:100%;min-width:0;font:inherit}
 .constructeur--plein-ecran > .cockpit-entete{display:none}
+
+/* Galerie des sites */
+.galerie-filtres { display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-end; }
+.galerie-filtres label { display: flex; flex-direction: column; gap: .25rem; font-weight: 600; flex: 1 1 10rem; }
+.galerie-filtres label:first-child { flex: 2 1 14rem; }
+.galerie-compte { margin: .75rem 0; color: #555; }
+.galerie-grille { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); }
+.galerie-carte { display: flex; flex-direction: column; background: #fff; border: 1px solid #e3e6ec; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.galerie-carte:focus-within { outline: 3px solid #2563eb; outline-offset: 2px; }
+.galerie-visuel { height: 9rem; display: flex; align-items: center; justify-content: center; background: #f4f6fa; }
+.galerie-visuel img { max-width: 80%; max-height: 7rem; object-fit: contain; }
+.galerie-initiales { font-size: 2.5rem; font-weight: 700; color: #3b4b6b; }
+.galerie-corps { padding: .9rem 1rem .5rem; flex: 1; }
+.galerie-corps h3 { margin: 0 0 .4rem; font-size: 1.1rem; }
+.galerie-statut { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .85rem; background: color-mix(in srgb, var(--statut, #64748b) 18%, #fff); color: #1f2937; border: 1px solid var(--statut, #94a3b8); }
+.galerie-statut-vide { border-style: dashed; }
+.galerie-domaine { margin: .5rem 0 0; color: #475569; word-break: break-all; }
+.galerie-actions { display: flex; flex-wrap: wrap; gap: .5rem; padding: .75rem 1rem 1rem; }
+.galerie-actions .btn { flex: 1 1 auto; text-align: center; }
+.galerie-pagination { display: flex; gap: 1rem; align-items: center; justify-content: center; margin: 1.25rem 0; }
+.galerie-message:empty { display: none; }
+.galerie-humain { margin-top: 1.5rem; padding: .9rem 1rem; border-left: 4px solid #2563eb; background: #f1f5ff; border-radius: 6px; }
+@media (max-width: 600px) {
+  .galerie-filtres label { flex-basis: 100%; }
+  .galerie-filtres .btn { width: 100%; }
+  .galerie-grille { grid-template-columns: 1fr; }
+}

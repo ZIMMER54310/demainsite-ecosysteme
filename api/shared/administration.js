@@ -449,6 +449,7 @@ async function preparerAction({ identite, d, action, params }) {
 const ENTREES_MOTEUR = [
   { cle: "accueil", libelle: "Cockpit", icone: "🏠", url: "/cockpit", ordre: 10, niveau: "lecture", fonction: null },
   { cle: "sites", libelle: "Mes sites", icone: "🌐", url: "/cockpit/sites", ordre: 20, niveau: "lecture", fonction: null },
+  { cle: "galerie", libelle: "Galerie", icone: "🖼️", url: "/cockpit/galerie", ordre: 25, niveau: "lecture", fonction: null, galerie: true },
   { cle: "creer", libelle: "Créer un site", icone: "➕", url: "/cockpit/creer", ordre: 30, niveau: "ecriture", fonction: "creer" },
   { cle: "administration", libelle: "Administration", icone: "🛡️", url: "/cockpit/administration", ordre: 80, niveau: "administration", fonction: "administration" },
   { cle: "compte", libelle: "Mon compte", icone: "👤", url: "/cockpit/compte", ordre: 85, niveau: "lecture", fonction: null },
@@ -515,15 +516,16 @@ async function applications(d) {
   return { disponible: true, liste, colonnesManquantes: manquantes };
 }
 
-async function menu(d, domaine = null) {
+/* options.galerie : resolu cote serveur (galerie.voir sur au moins un site du perimetre). */
+async function menu(d, domaine = null, options = {}) {
   if (!d.reconnu) return [ENTREES_MOTEUR[0]].map(({ fonction, ...e }) => e);
   const R = droits.RANG_NIVEAU;
   const base = ENTREES_MOTEUR.filter((e) => (!e.fonction || d.fonctions.includes(e.fonction)) && R[e.niveau] <= R[d.niveau || "lecture"]
     && (d.global || d.contexte?.etat === "COMPLET" || !["administration", "utilisateurs", "creer"].includes(e.cle))
-    && (!e.global || require("./statut-sites").autorise(d)));
+    && (!e.global || require("./statut-sites").autorise(d)) && (!e.galerie || options.galerie === true));
   let apps = [];
   try {
-    if (!d.global && d.contexte?.etat !== "COMPLET") return base.map(({ fonction, global, ...e }) => e);
+    if (!d.global && d.contexte?.etat !== "COMPLET") return base.map(({ fonction, global, galerie, ...e }) => e);
     apps = (await applications(d)).liste
       .filter((a) => a.autorisee && a.actif && a.valide && a.url && /^\/cockpit(\/[a-z0-9-]+)*$/i.test(a.url) &&
         (!ENTREES_MOTEUR.find((e) => e.url === a.url)?.global || d.global))
@@ -532,7 +534,7 @@ async function menu(d, domaine = null) {
   } catch (e) {
     console.warn("[DSE cockpit] applications", e.message);
   }
-  return [...base.map(({ fonction, global, ...e }) => ({ ...e,
+  return [...base.map(({ fonction, global, galerie, ...e }) => ({ ...e,
     url: domaine && ["administration", "utilisateurs"].includes(e.cle) ? `${e.url}?domaine=${encodeURIComponent(domaine)}` : e.url })), ...apps]
     .sort((a, b) => a.ordre - b.ordre);
 }

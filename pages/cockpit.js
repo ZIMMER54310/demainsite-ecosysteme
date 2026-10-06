@@ -18,6 +18,8 @@ import { getSynchronisations } from "../services/cockpit.service.js";
 import { rendreContenus, rendreRaccourcisContenus, activerContenus } from "../modules/cockpit/contenus.js";
 import { getContenusCockpit } from "../services/cockpit.service.js";
 import { getEspaces } from "../services/cockpit.service.js";
+import { getGalerie, getGalerieCockpit } from "../services/cockpit.service.js";
+import { rendreGalerie, CRITERES_GALERIE, lienGalerie } from "../modules/cockpit/galerie-sites.js";
 import { rendreComptes, rendreEspaces, activerFiltresComptes, activerFiltresEspaces } from "../modules/cockpit/comptes.js";
 
 const CLE_ASSISTANT = "dseAssistantSite";
@@ -86,6 +88,43 @@ export async function cockpitSitesPage(params) {
     const resultat = (await getSitesCockpit(criteres).catch(() => null))?.donnees || null;
     return rendreListeSites(c.moi, resultat, { complement: rendreRaccourcisContenus(c.moi) });
   } catch { return indisponible; }
+}
+
+export async function cockpitGaleriePage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return c.html;
+    const criteres = Object.fromEntries(CRITERES_GALERIE.filter((k) => params?.[k]).map((k) => [k, params[k]]));
+    try {
+      return rendreGalerie((await getGalerie(criteres)).donnees);
+    } catch (e) {
+      return rendreGalerie(null, e);
+    }
+  } catch { return indisponible; }
+}
+
+// Le bouton cockpit est verifie par l'API (droit + relation SharePoint) avant toute navigation.
+export function activerGalerie(racine = document) {
+  const form = racine.querySelector("[data-filtres-galerie]");
+  if (form) {
+    const appliquer = () => { location.hash = lienGalerie(Object.fromEntries(new FormData(form))); };
+    form.addEventListener("submit", (ev) => { ev.preventDefault(); appliquer(); });
+    form.addEventListener("change", (ev) => { if (ev.target.tagName === "SELECT") appliquer(); });
+  }
+  racine.querySelector("[data-galerie-reessayer]")?.addEventListener("click", () => location.reload());
+  racine.querySelectorAll("[data-ouvrir-cockpit]").forEach((bouton) => {
+    bouton.addEventListener("click", async () => {
+      const message = racine.querySelector("[data-galerie-message]");
+      bouton.disabled = true;
+      try {
+        const r = (await getGalerieCockpit(bouton.dataset.ouvrirCockpit)).donnees;
+        location.hash = `#${r.url}`;
+      } catch (e) {
+        if (message) message.textContent = e.status === 403 ? "Le cockpit de ce site n’est pas disponible pour votre compte." : "Ouverture impossible pour le moment. Merci de réessayer.";
+        bouton.disabled = false;
+      }
+    });
+  });
 }
 
 export async function cockpitClientPage(params) {
