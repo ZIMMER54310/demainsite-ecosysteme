@@ -54,7 +54,8 @@ async function vue(domaine) {
     const site = (await getSiteCockpit(domaine))?.donnees || null;
     setState({ selectedSite: site });
     if (site?.contexteUtilisateur) {
-      const user = { ...getState().user, ...site.contexteUtilisateur, porteeGlobale: false };
+      const user = { ...getState().user, ...site.contexteUtilisateur,
+        porteeGlobale: site.contexteUtilisateur.porteeGlobale === true };
       setState({ user });
     }
     return site;

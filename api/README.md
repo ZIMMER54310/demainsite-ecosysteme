@@ -41,6 +41,9 @@ compatibilite, dont les traductions sont elles aussi dans OBJ-DROIT-OPERATION
 (mode technique compatibility). Aucun code de role ne donne un acces par lui-meme.
 Un contexte dynamique direct declare pour un site mais incomplet ne retombe
 jamais sur une ancienne affectation de ce meme site.
+Sans affectation contextuelle applicable, une politique globale SharePoint
+deja autorisee conserve son perimetre explicite sur les sites/client valides.
+Ce chemin n'ajoute aucune fonction a la politique globale resolue.
 
 Les routes edition/aperçu/confirmation et construire/action controlent l'action
 atomique sur la cible relue. La confirmation reutilise la session, la version

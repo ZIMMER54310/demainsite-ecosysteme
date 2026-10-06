@@ -50,6 +50,18 @@ async function tester() {
   assert.ok(!contexte.fonctions.includes("utilisateurs"));
   assert.ok(!contexte.fonctions.includes("administration"));
   assert.ok(base.siteIds.includes("2"));
+  const donnees = await droits.donneesDroits();
+  for (const u of donnees.utilisateurs.filter((u) => u.entraObjectId && u.actif && u.valide)) {
+    const global = await droits.droitsPour({ fournisseur: "entra", sujet: u.entraObjectId });
+    if (!global.global) continue;
+    const s = donnees.sites.find((s) => s.actif && s.valide &&
+      !donnees.liens.some((l) => l.utilisateurId === u.id && l.siteId === s.id));
+    if (!s) continue;
+    const c = droits.contexteSite(global, donnees, s.id);
+    assert.equal(c.contexte.etat, "COMPLET");
+    assert.equal(c.contexte.source, "POLITIQUE-GLOBALE-SHAREPOINT");
+    assert.deepEqual(c.fonctions, global.fonctions, "Aucune fonction inventée au changement de cible.");
+  }
   console.log("Droits dynamiques natifs : cinq paires autorisées, refus et contexte serveur conformes.");
   console.log(`Restrictions explicites réelles contrôlées : ${denies.length}. Aucune donnée de test écrite.`);
   console.log("Cette recette de résolution native ne constitue PAS un test OAuth ou une écriture métier.");

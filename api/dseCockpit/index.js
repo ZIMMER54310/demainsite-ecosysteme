@@ -45,6 +45,7 @@ async function contexteUtilisateur(req) {
 }
 
 const contextePublic = (d) => ({ role: d.role, niveau: d.niveau, fonctions: d.fonctions,
+  porteeGlobale: d.global === true,
   autorisations: d.autorisations ? { operations: d.autorisations.operations, affectations: d.autorisations.affectations } : null,
   accesType: d.accesType ? { titre: d.accesType.titre } : null,
   contexte: d.contexte ? { etat: d.contexte.etat, message: d.contexte.message, client: d.contexte.client,

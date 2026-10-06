@@ -135,7 +135,8 @@ function contexteSite(base, donnees, siteId) {
     const champsDirects = donnees.dynamique.source["OBJ-UTILISATEUR-SITE"].cols.filter((c) =>
       c.name.startsWith("Cible") && c.lookup?.listId.toLowerCase() === listeSites.id.toLowerCase()).map((c) => c.name);
     if (donnees.dynamique.affectations.some((a) => a.utilisateurId === base.utilisateurId &&
-      a.typeId && champsDirects.some((c) => String(a.fields[`${c}LookupId`]) === id))) {
+      a.typeId && (champsDirects.some((c) => String(a.fields[`${c}LookupId`]) === id) ||
+        a.actif && autorisations.ciblesPour(donnees.dynamique, a).cibles.some((c) => c.id === id)))) {
       return refus("Affectation dynamique incomplète : contrôler rôle, états, périmètre et cible dans SharePoint.");
     }
   }
@@ -145,6 +146,14 @@ function contexteSite(base, donnees, siteId) {
   const relations = donnees.liens.filter((l) => l.actif && l.valide &&
     String(l.utilisateurId) === base.utilisateurId && String(l.siteId) === id &&
     !donnees.dynamique?.affectations.some((a) => a.id === String(l.id) && a.typeId));
+  if (!relations.length && base.global && base.siteIds.includes(id)) {
+    const site = donnees.sites.find((s) => s.id === id && s.actif && s.valide);
+    const client = site && donnees.clients.find((c) => c.id === site.clientId);
+    if (!site || !client) return refus("Site ou client invalide.");
+    return { ...base, siteIds: [id], clientIds: [client.id], autorisations: null, accesType: null,
+      contexte: { etat: "COMPLET", siteId: id, source: "POLITIQUE-GLOBALE-SHAREPOINT",
+        client: { titre: client.titre }, role: base.role, verrouille: false } };
+  }
   if (relations.length !== 1) return refus(relations.length ? "Plusieurs relations actives pour ce site." : "Site non autorisé.");
   return contexteRelation(base, donnees, relations[0]);
 }
