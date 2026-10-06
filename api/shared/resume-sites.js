@@ -69,6 +69,9 @@ async function chargerResumes() {
   ]);
 
   const resumes = new Map();
+  const experience = await require("./experience-cockpit").lire();
+  const donneesBuilder = experience.realisations.etat === "configuree"
+    ? await require("./builder-source").obtenirDonnees() : null;
   for (const [id, info] of index.sites) {
     const sc = { site: { nom: null } };
     composants.forEach(([cle], i) => {
@@ -95,6 +98,11 @@ async function chargerResumes() {
 
     sc.pages = { disponible: pages.disponible, donnees: selection.vraiSite ? selection.pages : [] };
     sc.contenus = selection.vraiSite ? tousContenus : { footer: tousContenus.footer };
+    if (donneesBuilder) {
+      const vue = require("./cockpit").vueSite({ siteComplet: sc, info, statut: index.statuts?.get(String(info.statutId)) });
+      require("./experience-cockpit").appliquerProgression(vue, experience.realisations, donneesBuilder, id, null);
+      sc.progressionRealisation = vue.etapes;
+    }
     resumes.set(String(id), sc);
   }
   return resumes;

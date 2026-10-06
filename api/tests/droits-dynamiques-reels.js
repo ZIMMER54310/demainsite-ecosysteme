@@ -20,6 +20,10 @@ async function tester() {
   assert.equal(relation.utilisateurId, "2");
   assert.ok(relation.actif);
   const r = A.resoudre(data, pilote.id, "2");
+  console.log("Pilote natif : En-tête/VOIR =", A.autoriser(r, "entete.voir").autorise,
+    "; En-tête/MODIFIER =", A.autoriser(r, "entete.modifier").autorise,
+    "; Footer/VOIR =", A.autoriser(r, "footer.voir").autorise,
+    "; Footer/MODIFIER =", A.autoriser(r, "footer.modifier").autorise);
   assert.ok(r.actif);
   assert.ok(r.affectations.some((a) => a.id === "4"));
   for (const op of ["entete.modifier", "footer.modifier", "pages.voir", "articles.creer", "articles.modifier"]) {

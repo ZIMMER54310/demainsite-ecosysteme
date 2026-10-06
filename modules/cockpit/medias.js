@@ -36,6 +36,6 @@ export function rendreMedias(d, { domaine, message = "", erreur = false } = {}) 
       <figcaption>${e(m.titre)}<br><span class="muted">${e(m.type || "Type non renseigné")} · ${e(m.portee || "")}</span></figcaption>
       ${imageMedia(m.type) && d.droits?.["logo-medias"]?.ecriture ? `<button type="button" class="btn btn-secondary" data-media-logo="${e(m.ref)}">Choisir comme logo</button>` : ""}
     </figure>`).join("")}</div><p class="muted" data-medias-vide${medias.length ? " hidden" : ""}>Aucun média ne correspond à cette sélection.</p>
-    <p class="muted">Les fichiers importés sont rangés dans la bibliothèque DSE - MEDIAS, dans le dossier du site. Aucun fichier n'est supprimé lors d'un remplacement.</p></article>
+    <p class="muted">Les fichiers importés sont rangés dans la médiathèque officielle de DemainSite Écosystème, dans le dossier du site. Aucun fichier n'est supprimé lors d'un remplacement.</p></article>
   </section>`;
 }

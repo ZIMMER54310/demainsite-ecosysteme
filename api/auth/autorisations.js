@@ -69,6 +69,9 @@ async function charger(token, siteId, listes) {
     if (xs.length !== 1) throw new Error(`Droits dynamiques : liste ${nom} unique requise.`);
     return { ...xs[0], nom };
   });
+  const options = listes.filter((l) => l.displayName === "OBJ-CLIENT-CAPACITE");
+  if (options.length > 1) throw new Error("Configuration client/capacite dupliquee.");
+  definitions.push(...options.map((l) => ({ ...l, nom: l.displayName })));
   const ids = new Set(definitions.map((l) => l.id.toLowerCase()));
   const lectures = await Promise.all(definitions.map((l) => lireListe(token, siteId, l, ids)));
   const source = Object.fromEntries(lectures.map((l) => [l.nom, l]));
@@ -82,6 +85,14 @@ function construire(source) {
     return v == null || v === "" ? null : String(v);
   };
   const texte = (n, i, champ) => String(valeur(L(n), i, champ) || "").trim();
+  const option = (n, i, champ, type) => {
+    const cs = L(n).cols.filter((c) => normaliser(c.displayName) === normaliser(champ));
+    if (!cs.length) return type === "boolean" ? false : "";
+    if (cs.length !== 1 || !cs[0][type]) throw new Error(`${n} : configuration ${champ} incoherente.`);
+    const v = i.fields[cs[0].name];
+    if (type === "boolean" && v != null && typeof v !== "boolean") throw new Error(`${n} : ${champ} doit etre booleen.`);
+    return type === "boolean" ? v === true : String(v || "").trim();
+  };
   const oui = new Map(["OBJ-ACTIF", "OBJ-VALIDE", "OBJ-VEROUILLE"].map((n) => {
     const xs = L(n).items.filter((i) => /^oui\b/i.test(i.fields.Title || ""));
     if (xs.length !== 1) throw new Error(`${n} : valeur Oui unique requise.`);
@@ -133,6 +144,10 @@ function construire(source) {
     mode: texte("OBJ-DROIT-OPERATION", i, "MODE-TECHNIQUE"),
     libelle: texte("OBJ-DROIT-OPERATION", i, "LIBELLE-INTERFACE"),
     route: texte("OBJ-DROIT-OPERATION", i, "ROUTE-COCKPIT"),
+    demandable: option("OBJ-DROIT-OPERATION", i, "DEMANDABLE", "boolean"),
+    interdite: option("OBJ-DROIT-OPERATION", i, "INTERDITE", "boolean"),
+    optionRequise: option("OBJ-DROIT-OPERATION", i, "OPTION-REQUISE", "boolean"),
+    messageRefus: option("OBJ-DROIT-OPERATION", i, "MESSAGE-REFUS", "text"),
     capaciteId: id("OBJ-DROIT-OPERATION", i, "OBJ-CAPACITE", "OBJ-CAPACITE"),
     actionId: id("OBJ-DROIT-OPERATION", i, "OBJ-ACTION", "OBJ-ACTION")
   }));
@@ -157,7 +172,13 @@ function construire(source) {
     actif: actif("OBJ-UTILISATEUR-SITE", i), verrouille: verrou("OBJ-UTILISATEUR-SITE", i),
     fields: i.fields
   }));
-  return { source, roles, capacites, actions, types, origines, bases, possibles, permissions, operations, configurations, affectations, actif };
+  const clientCapacites = L("OBJ-CLIENT-CAPACITE") ? L("OBJ-CLIENT-CAPACITE").items
+    .filter((i) => actif("OBJ-CLIENT-CAPACITE", i)).map((i) => ({
+      clientId: id("OBJ-CLIENT-CAPACITE", i, "OBJ-CLIENT", "OBJ-CLIENT"),
+      siteId: id("OBJ-CLIENT-CAPACITE", i, "OBJ-SITE-PUBLIC", "OBJ-SITE-PUBLIC"),
+      capaciteId: id("OBJ-CLIENT-CAPACITE", i, "OBJ-CAPACITE", "OBJ-CAPACITE")
+    })) : null;
+  return { source, roles, capacites, actions, types, origines, bases, possibles, permissions, operations, configurations, affectations, actif, clientCapacites };
 }
 
 function ciblesPour(data, affectation) {
@@ -225,7 +246,7 @@ function resoudre(data, utilisateurId, cibleId) {
   const applicables = resolutions.filter(({ a, r }) => a.actif && r.cibles.some((s) => s.id === String(cibleId)));
   const erreurs = resolutions.filter(({ r }) => r.refus).map(({ a, r }) => ({ affectationId: a.id, message: r.refus }));
   const reconnues = applicables.filter(({ a }) => data.roles.some((role) => role.id === a.roleId));
-  const permis = [], refuses = [];
+  const permis = [], refuses = [], decisions = [];
   for (const op of data.operations) {
     const capacite = data.capacites.find((c) => c.id === op.capaciteId);
     const action = data.actions.find((a) => a.id === op.actionId);
@@ -233,21 +254,47 @@ function resoudre(data, utilisateurId, cibleId) {
     const permissions = reconnues.flatMap(({ a }) => data.permissions.filter((p) =>
       p.utilisateurId === String(utilisateurId) && p.affectationId === a.id &&
       p.capaciteId === capacite.id && p.actionId === action.id).map((p) => ({ p, a })));
-    if (permissions.some(({ p }) => p.autorisation === false)) {
+    const politique = decisionPolitique(data, op, reconnues.flatMap(({ r }) =>
+      r.cibles.filter((s) => s.id === String(cibleId)).map((s) => s.clientId)), cibleId);
+    const restriction = permissions.some(({ p }) => p.autorisation === false);
+    if (restriction || !politique.autorise) {
       refuses.push(op.operation);
+      decisions.push({ operation: op.operation, fonction: op.fonction, libelle: op.libelle,
+        autorise: false, categorie: restriction ? "interdit" : politique.categorie,
+        demandable: !restriction && reconnues.length > 0 && politique.demandable,
+        message: op.messageRefus || (restriction ? "Cette action est interdite dans votre espace." : politique.message) });
       continue;
     }
     const grants = permissions.filter(({ p, a }) => p.autorisation === true &&
       data.bases.some((b) => b.roleId === a.roleId && b.capaciteId === capacite.id));
+    decisions.push({ operation: op.operation, fonction: op.fonction, libelle: op.libelle,
+      autorise: grants.length > 0, categorie: grants.length ? "autorise" : "droit",
+      demandable: !grants.length && reconnues.length > 0 && op.demandable === true,
+      message: grants.length ? null : op.messageRefus || "Votre compte ne dispose pas encore de l'autorisation pour cette action." });
     if (grants.length) permis.push({ ...op, capacite: capacite.titre, action: action.titre,
       affectations: [...new Set(grants.map(({ a }) => a.id))] });
   }
   return { actif: reconnues.length > 0, cibleId: String(cibleId), siteIds: toutes, operations: permis,
-    refuses, erreurs, affectations: reconnues.map(({ a, r }) => ({
+    refuses, decisions, erreurs, affectations: reconnues.map(({ a, r }) => ({
       id: a.id, roleId: a.roleId, role: data.roles.find((role) => role.id === a.roleId)?.titre,
       origine: data.origines.find((o) => o.id === a.origineId)?.titre, verrouille: a.verrouille,
       clientId: r.cibles.find((s) => s.id === String(cibleId))?.clientId
     })) };
+}
+
+function decisionPolitique(data, op, clients, cibleId) {
+  if (op.interdite) return { autorise: false, categorie: "interdit", demandable: false,
+    message: "Cette fonction n'est pas disponible dans cet espace." };
+  if (op.optionRequise && !Array.isArray(data.clientCapacites)) return {
+    autorise: false, categorie: "configuration", demandable: false,
+    message: "La disponibilité de cette fonction doit être vérifiée par votre administrateur."
+  };
+  if (op.optionRequise && !data.clientCapacites.some((c) => clients.includes(c.clientId) &&
+    (!c.siteId || c.siteId === String(cibleId)) && c.capaciteId === op.capaciteId)) return {
+    autorise: false, categorie: "option", demandable: op.demandable === true,
+    message: "Cette fonction n'est pas activée pour votre espace client. Une demande peut être adressée à votre interlocuteur."
+  };
+  return { autorise: true };
 }
 
 function autoriser(resolution, operation) {
@@ -258,4 +305,4 @@ function autoriser(resolution, operation) {
   return { autorise: true };
 }
 
-module.exports = { charger, construire, ciblesPour, resoudre, autoriser, colonne, valeur, LISTES };
+module.exports = { charger, construire, ciblesPour, resoudre, autoriser, decisionPolitique, lireListe, colonne, valeur, LISTES };

@@ -20,6 +20,8 @@ const administration = require("../shared/administration");
 const inscription = require("../auth/inscription");
 const progressionVisuelle = require("../shared/progression-visuelle");
 const autorisations = require("../auth/autorisations");
+const experienceCockpit = require("../shared/experience-cockpit");
+const demandesAcces = require("../shared/demandes-acces");
 
 const meta = () => ({ genereLe: new Date().toISOString() });
 
@@ -46,7 +48,8 @@ async function contexteUtilisateur(req) {
 
 const contextePublic = (d) => ({ role: d.role, niveau: d.niveau, fonctions: d.fonctions,
   porteeGlobale: d.global === true,
-  autorisations: d.autorisations ? { operations: d.autorisations.operations, affectations: d.autorisations.affectations } : null,
+  autorisations: d.autorisations ? { operations: d.autorisations.operations, decisions: d.autorisations.decisions,
+    affectations: d.autorisations.affectations } : null,
   accesType: d.accesType ? { titre: d.accesType.titre } : null,
   contexte: d.contexte ? { etat: d.contexte.etat, message: d.contexte.message, client: d.contexte.client,
     domaine: d.contexte.domaine,
@@ -292,6 +295,18 @@ async function site(req, res) {
       fonctions: ctx.droits.fonctions,
       domaineDemande: domaine
     });
+    const experience = await experienceCockpit.lire();
+    if (experience.realisations.etat === "configuree") {
+      const donneesBuilder = await require("../shared/builder-source").obtenirDonnees();
+      experienceCockpit.appliquerProgression(vue, experience.realisations, donneesBuilder, info.id, ctx.droits.autorisations);
+    }
+    vue.accompagnement = experience.accompagnement;
+    vue.demandesAcces = (ctx.droits.autorisations?.decisions || []).filter((d) => !d.autorise &&
+      !d.operation.startsWith("constructeur.") && d.demandable);
+    if (ctx.droits.porteeGlobale || ctx.droits.global) vue.configurationCockpit = {
+      realisations: { etat: experience.realisations.etat, message: experience.realisations.message },
+      accompagnement: { etat: experience.accompagnement.etat, message: experience.accompagnement.message }
+    };
     vue.progressionVisuelle = progressionVisuelle.pourcentage(await progressionVisuelle.lire(), vue.progression);
     const espaceClient = info.clientId && clientsDuPerimetre(ctx, (await groupesAutorises(ctx)).groupes).find((c) => c.id === String(info.clientId));
     vue.clientCockpit = espaceClient ? espaceClient.id : null;
@@ -314,9 +329,9 @@ function origineValide(req) {
 }
 
 const RANG = { lecture: 0, ecriture: 1, administration: 2 };
-const peutOperation = (d, operation, fonction) => d.autorisations
+const peutOperation = (d, operation, fonction) => !d.contraintesOperations?.includes(operation) && (d.autorisations
   ? autorisations.autoriser(d.autorisations, operation).autorise
-  : d.reconnu && d.fonctions.includes(fonction) && RANG[d.niveau] >= RANG.ecriture;
+  : d.reconnu && d.fonctions.includes(fonction) && RANG[d.niveau] >= RANG.ecriture);
 const peutEcrire = (d, fonction) => peutOperation(d, `${fonction}.modifier`, fonction);
 
 /* Site demande -> site principal (ID natif) dans le perimetre, sinon null (aucune divulgation). */
@@ -384,6 +399,21 @@ async function editionApercu(req, res) {
   }
 }
 
+async function demandeAccesApercu(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const info = await siteDuPerimetre(ctx, req.body?.domaine);
+    if (!info) return refuser(res, 403, "Ce site n'est pas disponible dans votre espace.");
+    const resultat = await demandesAcces.preparer({ d: ctx.droits, donnees: await droits.donneesDroits(),
+      siteId: info.id, operation: String(req.body?.operation || "").slice(0, 160), motif: req.body?.motif }, ctx.identite);
+    repondreResultat(res, resultat);
+  } catch (e) {
+    console.error("[DemainSite Ecosysteme demande]", e.message);
+    refuser(res, 503, "Votre demande ne peut pas être préparée pour le moment. Contactez votre interlocuteur.");
+  }
+}
+
 /* Confirmation commune : les droits sont recalcules au moment de l'ecriture. */
 async function confirmer(req, res) {
   try {
@@ -397,6 +427,18 @@ async function confirmer(req, res) {
         dse.viderCacheGraph();
         droits.viderCache();
         let d = await droits.droitsPour(ctx.identite);
+        if (op.portee === "demande") {
+          const donnees = await droits.donneesDroits();
+          d = droits.contexteSite(d, donnees, op.siteId);
+          const plan = await demandesAcces.construire({ d, donnees, siteId: op.siteId,
+            operation: op.operationDemandee, motif: op.motif });
+          if (plan.refus) return plan.refus;
+          if (plan.op.listId !== op.listId || ecriture.hash(plan.op.champs) !== ecriture.hash(op.champs)) {
+            return "Le contexte de votre demande a changé. Relisez l'aperçu avant de confirmer.";
+          }
+          op.contexteJournal = plan.op.contexteJournal;
+          return null;
+        }
         if (op.portee === "site") {
           const donnees = await droits.donneesDroits();
           d = droits.contexteSite(d, donnees, op.siteId);
@@ -598,8 +640,12 @@ async function construireLire(req, res) {
     const C = require("../shared/constructeur");
     const d = await require("../shared/builder-source").obtenirDonnees();
     const donnees = { site: { titre: p.info.titre, domaine: (p.info.domaines || [])[0] || null },
+      operations: ctx.droits.autorisations ? ctx.droits.autorisations.operations.map((o) => o.operation) : null,
+      operationsInterdites: ctx.droits.contraintesOperations || [],
       droits: Object.fromEntries([...FONCTIONS_CONSTRUCTEUR, "logo-medias"].map((f) => [f, { lecture: p.lecture(f), ecriture: p.peut(f) }])),
       superAdmin: p.superAdmin, ...C.vue(d, p) };
+    const experience = await experienceCockpit.lire();
+    donnees.accompagnement = experience.accompagnement;
     if (mediasSeulement) {
       let televersement = null;
       if (p.peut("logo-medias")) {
@@ -622,6 +668,7 @@ async function construireLire(req, res) {
       const z = (x) => (x ? { ...zone(x), _ref: x._ref } : null);
       donnees.apercu = { mode: apercu.mode, ...z(apercu), theme: apercu.theme || {}, entete: z(apercu.entete), footer: z(apercu.footer) };
     }
+    experienceCockpit.decorerConstruction(donnees, experience.realisations);
     res.set("Cache-Control", "no-store");
     repondre(res, 200, { succes: true, donnees, meta: meta() });
   } catch (e) {
@@ -649,10 +696,9 @@ async function construireAction(req, res) {
 
     const lecture = action === "contenu.formulaire" || action === "design.lire" || (action === "conteneur.modifier" && !params.valeurs);
     const acteur = `OBJ-UTILISATEUR ${ctx.droits.utilisateurId || "non reconnu"}`;
-    const cle = ecriture.hash(["constructeur", acteur, cleClient || Math.random(), action, params]);
+    const cle = ecriture.hash(["constructeur", acteur, String(p.info.id), cleClient || Math.random(), action, params]);
     if (!lecture) {
       if (!/^[A-Za-z0-9-]{16,80}$/.test(cleClient)) return refuser(res, 400, "Requête incomplète.");
-      if (constructeurExecutees.has(cle)) return repondreResultat(res, { ...constructeurExecutees.get(cle), deja: true });
       verrou = String(p.info.id);
       if (constructeurEnCours.has(verrou)) {
         verrou = null;
@@ -665,18 +711,51 @@ async function construireAction(req, res) {
     const source = require("../shared/builder-source");
     if (!lecture) source.viderCache();
     const d = await source.obtenirDonnees();
-    if (ctx.droits.autorisations) {
+    if (ctx.droits.autorisations || ctx.droits.contraintesOperations?.length) {
       p.peut = (fonction) => {
         const racines = Object.entries(C.CONTENEURS).filter(([, def]) => def.fonction === fonction).map(([type]) => type);
-        return racines.some((type) => peutOperation(ctx.droits, `constructeur.${type}.${action}`, fonction));
+        return racines.some((type) => peutOperation(ctx.droits, `constructeur.${type}.${action}`, fonction) &&
+          (action !== "element.etat" || params.etat !== "actif" ||
+            peutOperation(ctx.droits, `constructeur.${type}.conteneur.publier`, fonction)));
       };
       if (![...FONCTIONS_CONSTRUCTEUR].some((f) => p.peut(f))) {
-        return refuserEcriture(res, ctx, domaine, action, "Capacité/action non autorisée pour cette cible.");
+        return refuserEcriture(res, ctx, domaine, action, "Vous ne disposez pas de l'autorisation pour cette action dans ce site. Consultez les accès disponibles depuis la fiche du site.");
       }
+    }
+    if (!lecture && constructeurExecutees.has(cle)) {
+      return repondreResultat(res, { ...constructeurExecutees.get(cle), deja: true });
     }
     let r;
     try {
-      r = await C.executer({ d, perimetre: p, siteId: p.info.id, action, params });
+      const confirmation = require("../shared/construction-confirmation");
+      let attendus = [];
+      if (confirmation.SENSIBLES.has(action)) {
+        if (req.body?.apercu === true) {
+          const plan = await C.executer({ d, perimetre: p, siteId: p.info.id, action, params, apercu: true });
+          if (plan.refus || plan.erreur) return repondreResultat(res, plan.refus ? { status: 403, erreur: plan.refus } : plan);
+          if (!plan.modifications?.length) return repondreResultat(res, { status: 409, erreur: "Aucune modification à confirmer." });
+          const g = await ecriture.contexteGraph();
+          const jeton = ecriture.emettreJeton(ctx.identite, { type: "construction", action, params,
+            siteId: String(p.info.id), modifications: plan.modifications }).jeton;
+          return repondreResultat(res, { jeton, site: p.info.titre, changements: await confirmation.apercuPublic(g, plan.modifications) });
+        }
+        const lu = ecriture.lireJeton(ctx.identite, req.body?.jeton);
+        if (lu.erreur || lu.op?.type !== "construction" || lu.op.action !== action ||
+          lu.op.siteId !== String(p.info.id) || ecriture.hash(lu.op.params) !== ecriture.hash(params)) {
+          return refuser(res, 409, "Un aperçu confirmé de cette opération est nécessaire.");
+        }
+        attendus = lu.op.modifications;
+        const g = await ecriture.contexteGraph();
+        const lecteur = new C.Ecrivain(g);
+        for (const m of attendus) {
+          if ((await lecteur.version(m.listeId, m.itemId, Object.keys(m.apres))).etag !== m.etag) {
+            return refuser(res, 409, "Les données ont changé depuis l'aperçu. Relisez avant confirmation.");
+          }
+        }
+        confirmation.sauvegarder(cle, { siteId: String(p.info.id), action, modifications: attendus });
+        if (!ecriture.consommerJeton(ctx.identite, req.body?.jeton)) return refuser(res, 409, "Cette confirmation a déjà été utilisée.");
+      }
+      r = await C.executer({ d, perimetre: p, siteId: p.info.id, action, params, attendus });
     } catch (e) {
       if (e.refus) r = { refus: e.message };
       else {
@@ -692,7 +771,20 @@ async function construireAction(req, res) {
     const sortie = succes
       ? { message: r.message, nouveau: r.nouveau || {} }
       : { erreur: r.erreur, status: r.status };
-    if (succes) constructeurExecutees.set(cle, sortie);
+    if (succes) {
+      constructeurExecutees.set(cle, sortie);
+      try {
+        sortie.journal = await require("../shared/journal-comptes").enregistrer(await ecriture.contexteGraph(), {
+          cle: `CONSTRUCTION-${cle}`, action, avant: (r.modifications || []).map((m) => ({ itemId: m.itemId, champs: m.avant })),
+          apres: (r.modifications || []).map((m) => ({ itemId: m.itemId, champs: m.apres })),
+          contexte: { utilisateurId: ctx.droits.utilisateurId, siteId: String(p.info.id), clientId: p.info.clientId }
+        });
+      } catch (e) {
+        console.error("[DemainSite Ecosysteme construction journal]", e.message);
+        sortie.erreur = "L'opération est enregistrée et relue, mais sa journalisation doit être vérifiée. Ne répétez pas la modification.";
+        sortie.status = 502; sortie.enregistrementEffectue = true;
+      }
+    }
     if (constructeurExecutees.size > 500) constructeurExecutees.delete(constructeurExecutees.keys().next().value);
     return repondreResultat(res, sortie);
   } catch (e) {
@@ -843,6 +935,6 @@ const synchroConfirmer = (req, res) => synchroEcriture(req, res, "SYNCHRO-RESTAU
 module.exports = {
   client, synchroVue, synchroSauvegardes, synchroReglage, synchroLancer, synchroApercu, synchroConfirmer,
   moi, monCompte, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
-  contenus, espaces, editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
+  contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide, clientsDuPerimetre }
 };

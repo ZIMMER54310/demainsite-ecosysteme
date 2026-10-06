@@ -259,7 +259,24 @@ function apercu(d, siteId, type, el, appareil, perimetre) {
    ====================================================================== */
 
 class Ecrivain {
-  constructor(g) { this.g = g; this.colonnes = new Map(); this.refs = new Map(); this.crees = []; }
+  constructor(g, { apercu = false, attendus = [] } = {}) {
+    this.g = g; this.colonnes = new Map(); this.refs = new Map(); this.crees = [];
+    this.apercu = apercu; this.modifications = [];
+    this.attendus = new Map(attendus.map((x) => [`${x.listeId}:${x.itemId}`, x.etag]));
+  }
+
+  async version(listeId, id, noms) {
+    const champs = [...new Set(["Title", ...noms])];
+    let version = null;
+    for (let i = 0; i < champs.length; i += 8) {
+      const r = await dse.graphSansCache(this.g.token,
+        `/sites/${this.g.siteGraphId}/lists/${listeId}/items/${encodeURIComponent(id)}?$expand=fields($select=${champs.slice(i, i + 8).join(",")})`);
+      const etag = r.eTag || r["@odata.etag"] || r.fields?.["@odata.etag"];
+      if (!etag || version && version.etag !== etag) throw Object.assign(new Error("Les données ont changé pendant leur lecture. Relisez l'aperçu."), { refus: true });
+      version = { etag, fields: { ...version?.fields, ...r.fields } };
+    }
+    return version;
+  }
 
   liste(nom) {
     const l = dse.trouverListe(this.g.listes, [nom]);
@@ -319,18 +336,39 @@ class Ecrivain {
   }
 
   async creer(nom, champs) {
+    if (this.apercu || this.attendus.size) throw Object.assign(new Error("Cette opération de création ne peut pas être préparée dans cet aperçu."), { refus: true });
     const l = this.liste(nom);
     const r = await dse.graphEcriture(this.g.token, "POST", `/sites/${this.g.siteGraphId}/lists/${l.id}/items`, { fields: champs });
     const id = String(r?.id || "");
     if (!id) throw new Error("Création non confirmée par SharePoint.");
     this.crees.push({ liste: nom, id });
+    const relu = await this.version(l.id, id, Object.keys(champs));
+    if (ecriture.hash(ecriture.valeursDe(relu.fields, Object.keys(champs))) !==
+      ecriture.hash(ecriture.valeursDe(champs, Object.keys(champs)))) throw new Error("La création doit être vérifiée : sa relecture diffère.");
+    this.modifications.push({ listeId: l.id, itemId: id, titre: relu.fields.Title, avant: {}, apres: champs, etag: relu.etag });
     return id;
   }
 
   async maj(nom, id, champs) {
     if (!Object.keys(champs).length) return;
     const l = this.liste(nom);
-    await dse.graphEcriture(this.g.token, "PATCH", `/sites/${this.g.siteGraphId}/lists/${l.id}/items/${encodeURIComponent(id)}/fields`, champs);
+    const noms = Object.keys(champs);
+    const version = await this.version(l.id, id, noms);
+    const cle = `${l.id}:${id}`;
+    if (this.attendus.size && !this.attendus.has(cle)) throw Object.assign(
+      new Error("Un nouvel élément doit être modifié. Relisez l'aperçu complet avant confirmation."), { refus: true });
+    if (this.attendus.has(cle) && this.attendus.get(cle) !== version.etag) {
+      throw Object.assign(new Error("Les données ont changé depuis l'aperçu. Aucune nouvelle modification de cet élément n'a été faite."), { refus: true });
+    }
+    this.modifications.push({ listeId: l.id, itemId: String(id), titre: version.fields.Title,
+      etag: version.etag, avant: ecriture.valeursDe(version.fields, noms), apres: champs });
+    if (this.apercu) return;
+    await dse.graphEcriture(this.g.token, "PATCH", `/sites/${this.g.siteGraphId}/lists/${l.id}/items/${encodeURIComponent(id)}/fields`, champs, version.etag);
+    const relu = await this.version(l.id, id, noms);
+    if (ecriture.hash(ecriture.valeursDe(relu.fields, noms)) !== ecriture.hash(ecriture.valeursDe(champs, noms))) {
+      throw new Error("La modification est enregistrée mais sa relecture diffère. Vérifiez avant de recommencer.");
+    }
+    if (this.attendus.has(cle)) this.attendus.set(cle, relu.etag);
   }
 
   /* Champs copiables d'un element (duplication) : valeurs simples et Lookups simples, hors etats et parent. */
@@ -562,10 +600,10 @@ const FONCTION_PAR_RACINE = { entete: "entete", footer: "footer", page: "pages" 
  * perimetre : { sites:Set(ID natifs du groupe), clients:Set, superAdmin, peut(fonction) }.
  * Retour : { refus } | { erreur, status } | { message, journal, cree? }.
  */
-async function executer({ d, perimetre, siteId, action, params = {} }) {
+async function executer({ d, perimetre, siteId, action, params = {}, apercu = false, attendus = [] }) {
   const p = params && typeof params === "object" ? params : {};
   const g = await ecriture.contexteGraph();
-  const w = new Ecrivain(g);
+  const w = new Ecrivain(g, { apercu, attendus });
 
   // Element cible + controle de site (le site de l'element doit appartenir au perimetre demande).
   const cible = (types, reference) => {
@@ -583,7 +621,7 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
     }
     return { ...r, racine: rac };
   };
-  const res = (message, details = {}) => ({ message, nouveau: details, crees: w.crees });
+  const res = (message, details = {}) => ({ message, nouveau: details, crees: w.crees, modifications: w.modifications });
 
   if (action.startsWith("builder.")) {
     let parametres = p;
@@ -593,7 +631,7 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
       if (enfantsDe(d, c.type, c.el).length) return { refus: "Le conteneur possède une composition existante : aucune migration automatique." };
       parametres = { ...p, type: c.type, id: c.el.id, titre: titreDe(c.el) };
     }
-    return require("./builder-recursif-ecriture").executer({
+    const resultat = await require("./builder-recursif-ecriture").executer({
       d, w, p: parametres, action, siteId,
       reference: referenceBuilder,
       autoriser: (type, id) => {
@@ -602,6 +640,7 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
       },
       mediaAutorise: (m) => mediaAutorise(m, perimetreBuilder(perimetre, siteId))
     });
+    return { ...resultat, modifications: w.modifications };
   }
 
   switch (action) {

@@ -94,7 +94,13 @@ function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT, dom
     { cle: "publication", fonction: "apercu", libelle: "Publication", etat: actif ? ETATS.termine : (statut ? ETATS.encours : ETATS.afaire), nombre: statut ? 1 : 0, resume: statut?.titre ? [statut.titre] : [] }
   ].filter((e) => fonctions.includes(e.fonction));
 
-  const terminees = etapes.filter((e) => e.etat === ETATS.termine).length;
+  for (const e of etapes) {
+    const realisation = sc.progressionRealisation?.find((r) => r.cle === e.cle && r.realisations?.length);
+    if (realisation) Object.assign(e, { etat: realisation.etat, progression: realisation.progression,
+      realisations: realisation.realisations });
+  }
+  const avancement = etapes.reduce((s, e) => s + (typeof e.progression === "number"
+    ? e.progression : e.etat === ETATS.termine ? 100 : 0), 0);
   return {
     nom,
     domaine: dom.principal,
@@ -103,7 +109,7 @@ function vueSite({ siteComplet, info, statut, fonctions = FONCTIONS_COCKPIT, dom
     domaineAPreciser: dom.aPreciser,
     acces: perimetre.domaineAcces(info, domaineDemande),
     statut: statut ? { titre: statut.titre || null, actif, message: statut.noteCourte || null, couleur: statut.couleur || null } : null,
-    progression: etapes.length ? Math.round((terminees / etapes.length) * 100) : 0,
+    progression: etapes.length ? Math.round(avancement / etapes.length) : 0,
     etapes: etapes.map(({ fonction, ...e }) => e),
     fonctions,
     client: String(info?.client || "").trim() || null,

@@ -34,7 +34,8 @@ async function executer({ d, w, p, action, siteId, reference, autoriser, mediaAu
     return n;
   };
   const verifier = async (liste, id, champs) => {
-    const f = await ecriture.lireItemFrais(w.g, w.liste(liste).id, id);
+    if (w.apercu) return;
+    const f = await ecriture.lireItemFrais(w.g, w.liste(liste).id, id, Object.keys(champs));
     if (!Object.entries(champs).every(([k, v]) => (v === null ? f[k] == null || f[k] === "" : String(f[k]) === String(v)))) {
       throw new Error("Relecture Builder non conforme. Relisez avant de recommencer.");
     }

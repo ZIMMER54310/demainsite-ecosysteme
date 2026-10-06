@@ -3,9 +3,10 @@
 import { escapeHtml as e } from "../public/outils.js";
 import { rendreBuilder, STYLES_BUILDER } from "../builder/rendu.js";
 import { getConstruire, actionConstruire } from "../../services/cockpit.service.js";
-import { rendreEnteteCockpit } from "./cockpit.js";
+import { rendreEnteteCockpit, rendreAccompagnement } from "./cockpit.js";
 import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU } from "./design.js";
 import { codeChamp, controleChamp, erreurValeur } from "../builder/proprietes.js";
+import { confirmerApercuConstruction } from "./confirmation.js";
 
 export const ONGLETS = Object.freeze([
   { cle: "entetes", libelle: "En-têtes" },
@@ -23,26 +24,33 @@ export function badgeEtat(etat = {}) {
   if (etat.publiable) return `<span class="badge constructeur-badge constructeur-badge--actif">Actif et validé</span>`;
   return `<span class="badge constructeur-badge">${e(etat.actif || "")} · ${e(etat.valide || "")}</span>`;
 }
+const realisation = (r) => r?.titre ? `<span class="badge constructeur-badge"${/^#[0-9a-f]{6}$/i.test(r.couleur || "")
+  ? ` style="color:${e(r.couleur)}"` : ""}>${e(r.titre)}</span>` : "";
 
 const bouton = (libelle, action, attrs = "", classe = "btn btn-secondary") =>
   `<button type="button" class="${classe}" data-c-action="${e(action)}" ${attrs}>${libelle}</button>`;
-const ecrit = (d, fonction) => Boolean(d.droits?.[fonction]?.ecriture);
 const FONCTION = { entete: "entete", footer: "footer", page: "pages" };
+export const peutAction = (d, type, action) => !d.operationsInterdites?.includes(`constructeur.${type}.${action}`) &&
+  (Array.isArray(d.operations) ? d.operations.includes(`constructeur.${type}.${action}`) : Boolean(d.droits?.[FONCTION[type]]?.ecriture));
+const ecrit = (d, fonction) => {
+  const type = Object.keys(FONCTION).find((t) => FONCTION[t] === fonction);
+  return type ? peutAction(d, type, "conteneur.modifier") : Boolean(d.droits?.[fonction]?.ecriture);
+};
 
 function carteConteneur(d, type, c) {
   const peut = ecrit(d, FONCTION[type]);
   const pages = c.pages.length ? c.pages.map((p) => e(p.titre)).join(", ") : "Aucune page";
   return `<article class="card constructeur-carte" data-ref="${e(c.ref)}">
-    <header><h3>${e(c.titre)}</h3>${badgeEtat(c.etat)}</header>
+    <header><h3>${e(c.titre)}</h3>${c.realisation ? realisation(c.realisation) : badgeEtat(c.etat)}</header>
     ${c.noteCourte ? `<p class="muted">${e(c.noteCourte)}</p>` : ""}
     <p class="muted">${c.sections} section(s) · Utilisé par : ${pages}</p>
     <div class="constructeur-boutons">
       ${bouton("🧱 Construire / aperçu", "ouvrir", `data-ref="${e(c.ref)}"`, "btn btn-primary")}
       ${peut ? bouton("✏️ Modifier", "proprietes", `data-ref="${e(c.ref)}"`) : ""}
-      ${peut ? bouton("⧉ Dupliquer", "dupliquer", `data-ref="${e(c.ref)}"`) : ""}
-      ${peut && type !== "page" ? bouton("📄 Affecter aux pages", "affecter", `data-ref="${e(c.ref)}" data-type="${type}"`) : ""}
-      ${peut && !c.etat.publiable ? bouton("✅ Valider et activer", "publier", `data-ref="${e(c.ref)}"`) : ""}
-      ${peut && !c.etat.inactif ? bouton("⏸ Désactiver", "desactiver", `data-ref="${e(c.ref)}"`) : ""}
+      ${peutAction(d, type, "conteneur.dupliquer") ? bouton("⧉ Dupliquer", "dupliquer", `data-ref="${e(c.ref)}"`) : ""}
+      ${type !== "page" && peutAction(d, type, "page.affecter") && peutAction(d, "page", "page.affecter") ? bouton("📄 Affecter aux pages", "affecter", `data-ref="${e(c.ref)}" data-type="${type}"`) : ""}
+      ${peutAction(d, type, "conteneur.publier") && !c.etat.publiable ? bouton("✅ Valider et activer", "publier", `data-ref="${e(c.ref)}"`) : ""}
+      ${peutAction(d, type, "conteneur.desactiver") && !c.etat.inactif ? bouton("⏸ Désactiver", "desactiver", `data-ref="${e(c.ref)}"`) : ""}
       ${bouton("🔎 Voir les utilisations", "utilisations", `data-ref="${e(c.ref)}"`)}
     </div>
     <div class="constructeur-utilisations" data-utilisations="${e(c.ref)}" hidden>
@@ -53,7 +61,7 @@ function carteConteneur(d, type, c) {
 
 function ongletConteneurs(d, type) {
   const liste = type === "entete" ? d.entetes : d.footers;
-  const peut = ecrit(d, FONCTION[type]);
+  const peut = peutAction(d, type, "conteneur.creer");
   return `${peut ? `<form class="card constructeur-creer" data-c-creer="${type}">
       <label>Créer un ${LIBELLES[type]} <input name="titre" required maxlength="255" placeholder="Nom"></label>
       <button class="btn btn-primary" type="submit">➕ Créer</button>
@@ -66,17 +74,18 @@ function ongletPages(d) {
   const peut = (f) => ecrit(d, f);
   const options = (liste, actuel) => `<option value="">— Aucun —</option>${liste.filter((x) => x.etat.publiable)
     .map((x) => `<option value="${e(x.ref)}"${actuel?.ref === x.ref ? " selected" : ""}>${e(x.titre)}</option>`).join("")}`;
-  const creer = peut("pages") ? `<form class="card constructeur-creer" data-c-creer="page">
+  const creer = peutAction(d, "page", "conteneur.creer") ? `<form class="card constructeur-creer" data-c-creer="page">
     <label>Créer une page <input name="titre" required maxlength="255"></label>
     <label>Adresse <input name="url" required placeholder="/ma-page/" pattern="/[A-Za-z0-9/_-]*"></label>
     <button class="btn btn-primary">Créer en brouillon</button></form>` : "";
   return `${creer}<div class="constructeur-grille">${d.pages.map((p) => `<article class="card constructeur-carte">
-    <header><h3>${e(p.titre)}</h3>${badgeEtat(p.etat)}</header>
+    <header><h3>${e(p.titre)}</h3>${p.realisation ? realisation(p.realisation) : badgeEtat(p.etat)}</header>
     <p class="muted">${e(p.url)} · ${p.sections} section(s)</p>
-    <label>En-tête ${peut("entete") ? `<select data-c-affecter="entete" data-page="${e(p.ref)}">${options(d.entetes, p.entete)}</select>` : `<strong>${e(p.entete?.titre || "Aucun")}</strong>`}</label>
-    <label>Footer ${peut("footer") ? `<select data-c-affecter="footer" data-page="${e(p.ref)}">${options(d.footers, p.footer)}</select>` : `<strong>${e(p.footer?.titre || "Aucun")}</strong>`}</label>
+    <label>En-tête ${peutAction(d, "page", "page.affecter") && peutAction(d, "entete", "page.affecter") ? `<select data-c-affecter="entete" data-page="${e(p.ref)}">${options(d.entetes, p.entete)}</select>` : `<strong>${e(p.entete?.titre || "Aucun")}</strong>`}</label>
+    <label>Footer ${peutAction(d, "page", "page.affecter") && peutAction(d, "footer", "page.affecter") ? `<select data-c-affecter="footer" data-page="${e(p.ref)}">${options(d.footers, p.footer)}</select>` : `<strong>${e(p.footer?.titre || "Aucun")}</strong>`}</label>
     <div class="constructeur-boutons">${bouton("🧱 Construire / aperçu", "ouvrir", `data-ref="${e(p.ref)}"`, "btn btn-primary")}
-      ${peut("pages") ? `${bouton("✏️ Modifier", "proprietes", `data-ref="${e(p.ref)}"`)}${bouton("Dupliquer", "dupliquer", `data-ref="${e(p.ref)}" data-type="page"`)}` : ""}</div>
+      ${peut("pages") ? bouton("✏️ Modifier", "proprietes", `data-ref="${e(p.ref)}"`) : ""}
+      ${peutAction(d, "page", "conteneur.dupliquer") ? bouton("Dupliquer", "dupliquer", `data-ref="${e(p.ref)}" data-type="page"`) : ""}</div>
   </article>`).join("") || '<p class="card muted">Aucune page pour ce site dans SharePoint.</p>'}</div>
   <p class="muted">Une page utilise au maximum un En-tête et un Footer actifs et validés ; choisir un autre élément remplace le précédent sans suppression.</p>`;
 }
@@ -96,7 +105,7 @@ function ongletBibliotheque(d) {
           <figcaption>${e(m.titre)}<br><span class="muted">${e(m.type || "")} · ${e(m.portee || "")}</span></figcaption>
           ${peutLogo ? bouton("Choisir comme logo", "logo", `data-media="${e(m.ref)}"`) : ""}
         </figure>`).join("")}</div>` : `<p class="muted">Aucun média autorisé pour ce périmètre.</p>`}
-      <p class="muted">L'import de nouveaux médias se fait dans la bibliothèque SharePoint DSE - MEDIAS ; un remplacement ne supprime jamais l'ancien média.</p>
+      <p class="muted">L'import de nouveaux médias se fait dans la médiathèque officielle de DemainSite Écosystème ; un remplacement ne supprime jamais l'ancien média.</p>
     </div>`;
 }
 
@@ -116,37 +125,40 @@ function ongletCatalogue(d) {
 
 /* ---------------- Editeur d'arbre ---------------- */
 
-function actionsNoeud(n, peut, colonnes) {
+function actionsNoeud(n, peut, colonnes, d) {
   if (!peut) return "";
+  const action = (a) => peutAction(d, d.arbre.type, a);
   const r = `data-ref="${e(n.ref)}"`;
   return `<span class="constructeur-outils">
-    ${bouton("▲", "monter", `${r} title="Monter" aria-label="Monter"`, "btn btn-mini")}
-    ${bouton("▼", "descendre", `${r} title="Descendre" aria-label="Descendre"`, "btn btn-mini")}
-    ${n.type === "module" && colonnes.length > 1 ? `<select data-c-deplacer="${e(n.ref)}" aria-label="Déplacer vers une colonne"><option value="">Déplacer vers…</option>${colonnes.map((c) => `<option value="${e(c.ref)}">${e(c.titre)}</option>`).join("")}</select>` : ""}
-    ${n.type === "module" && n.formulaire ? bouton("✏️ Contenu", "contenu", r, "btn btn-mini") : ""}
-    ${bouton("🎨", "design", `${r} title="Design" aria-label="Design"`, "btn btn-mini")}
-    ${bouton("⧉", "dupliquer-element", `${r} title="Dupliquer / créer une variante" aria-label="Dupliquer"`, "btn btn-mini")}
-    ${n.etat.inactif || n.etat.brouillon ? bouton("Activer", "activer", r, "btn btn-mini") : bouton("Désactiver", "desactiver-element", r, "btn btn-mini")}
+    ${action("element.deplacer") ? bouton("▲", "monter", `${r} title="Monter" aria-label="Monter"`, "btn btn-mini") +
+      bouton("▼", "descendre", `${r} title="Descendre" aria-label="Descendre"`, "btn btn-mini") : ""}
+    ${action("element.deplacer") && n.type === "module" && colonnes.length > 1 ? `<select data-c-deplacer="${e(n.ref)}" aria-label="Déplacer vers une colonne"><option value="">Déplacer vers…</option>${colonnes.map((c) => `<option value="${e(c.ref)}">${e(c.titre)}</option>`).join("")}</select>` : ""}
+    ${action("contenu.enregistrer") && n.type === "module" && n.formulaire ? bouton("✏️ Contenu", "contenu", r, "btn btn-mini") : ""}
+    ${action("design.enregistrer") ? bouton("🎨", "design", `${r} title="Design" aria-label="Design"`, "btn btn-mini") : ""}
+    ${action("element.dupliquer") ? bouton("⧉", "dupliquer-element", `${r} title="Dupliquer / créer une variante" aria-label="Dupliquer"`, "btn btn-mini") : ""}
+    ${action("element.etat") ? n.etat.inactif || n.etat.brouillon
+      ? action("conteneur.publier") ? bouton("Activer", "activer", r, "btn btn-mini") : ""
+      : bouton("Désactiver", "desactiver-element", r, "btn btn-mini") : ""}
   </span>`;
 }
 
 function noeudHtml(d, n, peut, colonnes) {
-  const entete = `<div class="constructeur-noeud-entete"${peut ? ' draggable="true"' : ""} data-c-noeud="${e(n.ref)}" data-c-type="${e(n.type)}"><span class="constructeur-type">${LIBELLES[n.type]}</span>
+  const entete = `<div class="constructeur-noeud-entete"${peut && peutAction(d, d.arbre.type, "element.deplacer") ? ' draggable="true"' : ""} data-c-noeud="${e(n.ref)}" data-c-type="${e(n.type)}"><span class="constructeur-type">${LIBELLES[n.type]}</span>
     <strong>${e(n.titre)}</strong>${n.typeModule ? ` <span class="badge">${e(n.typeModule)}</span>` : ""}
     ${n.structure && n.type === "ligne" ? ` <span class="muted">${e(n.structure)}</span>` : ""}
     ${n.type === "colonne" && n.largeur ? ` <span class="muted">${e(n.largeur)} %</span>` : ""}
     ${badgeEtat(n.etat)}
     ${n.type === "module" ? ` <span class="muted">${n.utilisations} utilisation(s)${n.formulaire ? (n.contenuRenseigne ? " · contenu renseigné" : " · contenu à renseigner") : ""}${n.modele ? ` · modèle ${e(n.modele)}` : ""}</span>` : ""}
-    ${actionsNoeud(n, peut, colonnes)}</div>`;
+    ${actionsNoeud(n, peut, colonnes, d)}</div>`;
   if (n.type === "module") return `<li class="constructeur-noeud constructeur-noeud--module">${entete}</li>`;
   const enfants = (n.enfants || []).map((x) => noeudHtml(d, x, peut, colonnes)).join("");
   let ajout = "";
-  if (peut && n.type === "section") {
+  if (peut && n.type === "section" && peutAction(d, d.arbre.type, "ligne.ajouter")) {
     ajout = `<form class="constructeur-ajout" data-c-ajout="ligne" data-ref="${e(n.ref)}">
       <select name="structure" required aria-label="Disposition"><option value="">Disposition des colonnes…</option>${d.structures.map((s) => `<option value="${e(s.ref)}">${e(s.titre)}</option>`).join("")}</select>
       <button class="btn btn-mini" type="submit">➕ Ligne</button></form>`;
   }
-  if (peut && n.type === "colonne") {
+  if (peut && n.type === "colonne" && peutAction(d, d.arbre.type, "module.ajouter")) {
     ajout = `<form class="constructeur-ajout" data-c-ajout="module" data-ref="${e(n.ref)}">
       <select name="typeModule" required aria-label="Type de module"><option value="">Module…</option>${d.typesModules.map((t) => `<option value="${e(t.code)}">${e(t.code)}</option>`).join("")}</select>
       ${d.modeles.disponibles.length ? `<select name="modele" aria-label="Modèle (facultatif)"><option value="">Construction libre</option>${d.modeles.disponibles.map((m) => `<option value="${e(m.ref)}">${e(m.titre)}</option>`).join("")}</select>` : ""}
@@ -159,15 +171,17 @@ function noeudHtml(d, n, peut, colonnes) {
 const colonnesDe = (sections) => sections.flatMap((s) => (s.enfants || []).flatMap((l) => (l.enfants || []).map((c) => ({ ref: c.ref, titre: `${s.titre} › ${c.titre}` }))));
 
 const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE" };
-function arbreGeneriqueHtml(n, peut, racine = true) {
-  return `<li class="constructeur-noeud"><div class="constructeur-noeud-entete" data-c-noeud="${e(n.ref)}" data-c-type="builder"${peut && !n.verrouille ? ' draggable="true"' : ""}>
+function arbreGeneriqueHtml(n, peut, racine = true, d = {}) {
+  const type = d.arbre?.type;
+  return `<li class="constructeur-noeud"><div class="constructeur-noeud-entete" data-c-noeud="${e(n.ref)}" data-c-type="builder"${peut && !n.verrouille && peutAction(d, type, "builder.deplacer") ? ' draggable="true"' : ""}>
     <button type="button" class="btn btn-mini" data-c-action="design" data-ref="${e(n.ref)}">${e(n.titre)}</button>
-    <span class="badge">${e(n.rendu)}</span>${n.verrouille ? "🔒" : ""}
-    ${peut && !n.verrouille ? `${n.ajouts?.length ? bouton("Ajouter dans", "builder-ajouter", `data-ref="${e(n.ref)}"`, "btn btn-mini") : ""}
-      ${!racine ? ["monter", "descendre", "deplacer", "dupliquer", "retirer"].map((a) =>
+    <span class="badge">${e(n.rendu)}</span>${realisation(n.realisation)}${n.verrouille ? "🔒" : ""}
+    ${peut && !n.verrouille ? `${n.ajouts?.length && peutAction(d, type, "builder.ajouter") ? bouton("Ajouter dans", "builder-ajouter", `data-ref="${e(n.ref)}"`, "btn btn-mini") : ""}
+      ${!racine ? ["monter", "descendre", "deplacer", "dupliquer", "retirer"].filter((a) =>
+        peutAction(d, type, `builder.${a === "retirer" ? "desactiver" : ["monter", "descendre"].includes(a) ? "deplacer" : a}`)).map((a) =>
         bouton({ monter: "↑", descendre: "↓", deplacer: "Déplacer", dupliquer: "Dupliquer", retirer: "Retirer" }[a],
           `builder-${a}`, `data-ref="${e(n.ref)}"`, "btn btn-mini")).join("") : ""}` : ""}</div>
-    <ul>${(n.enfants || []).map((x) => arbreGeneriqueHtml(x, peut, false)).join("")}</ul></li>`;
+    <ul>${(n.enfants || []).map((x) => arbreGeneriqueHtml(x, peut, false, d)).join("")}</ul></li>`;
 }
 
 export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU") {
@@ -246,26 +260,26 @@ function editeur(d) {
       <button type="button" class="btn btn-mini" data-c-action="copier-style">Copier style</button>
       <button type="button" class="btn btn-mini" data-c-action="coller-style">Coller style</button>
       <button type="button" class="btn btn-mini" data-c-action="apercu-seul">Aperçu</button>
-      <button type="button" class="btn btn-primary" data-c-action="enregistrer-design">Enregistrer</button>
+      ${peutAction(d, type, a.generique ? "builder.enregistrer" : "design.enregistrer") ? '<button type="button" class="btn btn-primary" data-c-action="enregistrer-design">Enregistrer</button>' : ""}
       ${bouton("Fermer", "fermer")}</div></header>
     <div class="constructeur-espace-visuel"><aside class="card constructeur-editeur">
     <header class="constructeur-editeur-entete">
-      <div><span class="constructeur-type">${LIBELLES[type]}</span><h3>${e(a.titre)}</h3>${badgeEtat(a.etat)}</div>
+      <div><span class="constructeur-type">${LIBELLES[type]}</span><h3>${e(a.titre)}</h3>${a.realisation ? realisation(a.realisation) : badgeEtat(a.etat)}</div>
       <div class="constructeur-boutons">${bouton("← Retour à la liste", "fermer")}
         ${peut ? bouton(`🎨 Design · ${LIBELLES[type]}`, "design", `data-ref="${e(a.ref)}"`) : ""}
-        ${peut ? bouton("Dupliquer le conteneur", "dupliquer", `data-ref="${e(a.ref)}" data-type="${type}"`) : ""}
-        ${peut && (!a.etat.publiable || a.generique) ? bouton("✅ Valider et activer", "publier", `data-ref="${e(a.ref)}"`, "btn btn-primary") : ""}
+        ${peutAction(d, type, "conteneur.dupliquer") ? bouton("Dupliquer le conteneur", "dupliquer", `data-ref="${e(a.ref)}" data-type="${type}"`) : ""}
+        ${peutAction(d, type, "conteneur.publier") && (!a.etat.publiable || a.generique) ? bouton("✅ Valider et activer", "publier", `data-ref="${e(a.ref)}"`, "btn btn-primary") : ""}
         ${bouton("✨ Demander à Pasc ARA IA", "ia")}</div>
     </header>
     <h3>Arborescence · Ajouter</h3>
     ${a.generique ? '<div data-builder-palette aria-label="Éléments autorisés"></div>' : ""}
     ${bouton("Médias du site", "builder-medias")}
     ${d.builder?.message ? `<p class="alerte-info">${e(d.builder.message)}</p>` : ""}
-    ${peut && !a.generique && !a.sections.length && d.builder?.types?.some((x) => x.racine) ?
+    ${peutAction(d, type, "builder.initialiser") && !a.generique && !a.sections.length && d.builder?.types?.some((x) => x.racine) ?
       bouton("Initialiser la racine générique", "builder-initialiser", `data-ref="${e(a.ref)}"`) : ""}
-    <ul class="constructeur-arbre">${a.generique ? arbreGeneriqueHtml(a.generique, peut) :
+    <ul class="constructeur-arbre">${a.generique ? arbreGeneriqueHtml(a.generique, peut, true, d) :
       a.sections.map((s) => noeudHtml(d, s, peut, colonnes)).join("") || `<li class="muted">Aucune section : commencez par ajouter une section.</li>`}</ul>
-    ${peut && !a.generique ? `<form class="constructeur-ajout" data-c-ajout="section" data-ref="${e(a.ref)}">
+    ${peut && !a.generique && peutAction(d, type, "section.ajouter") ? `<form class="constructeur-ajout" data-c-ajout="section" data-ref="${e(a.ref)}">
       <input name="titre" maxlength="255" placeholder="Nom de la section" aria-label="Nom de la section">
       ${d.typesSection.length ? `<select name="typeSection" aria-label="Type de section"><option value="">Type standard</option>${d.typesSection.map((t) => `<option value="${e(t.ref)}">${e(t.titre)}</option>`).join("")}</select>` : ""}
       <button class="btn btn-primary" type="submit">➕ Ajouter une section</button></form>` : ""}
@@ -293,6 +307,7 @@ export function rendreConstructeur(moi, d, etat = {}) {
           : onglet === "bibliotheque" ? ongletBibliotheque(d) : ongletCatalogue(d);
   return `<section class="cockpit constructeur${d.arbre ? " constructeur--plein-ecran" : ""}" data-constructeur>
     ${rendreEnteteCockpit(moi)}
+    ${d.arbre ? "" : rendreAccompagnement(d.accompagnement)}
     <div class="card cockpit-site-titre"><h2>🧱 Construire le site · ${e(d.site?.titre || "")}</h2>
       <p class="muted">${e(d.site?.domaine || "")} — données lues et enregistrées dans SharePoint.</p>
       <a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(etat.domaine || "")}">← Retour au site</a></div>
@@ -450,7 +465,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       });
       for (const el of doc?.querySelectorAll("[data-dse-ref]") || []) {
         const node = trouverNoeud(el.dataset.dseRef);
-        el.draggable = Boolean(node?.parent && !node.n.verrouille && ecrit(d, FONCTION[d.arbre.type]));
+        el.draggable = Boolean(node?.parent && !node.n.verrouille && peutAction(d, d.arbre.type, "builder.deplacer"));
       }
       doc?.addEventListener("dragstart", demarrerGlisse);
       doc?.addEventListener("dragover", autoriserDepot);
@@ -549,7 +564,14 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (zone) zone.innerHTML = `<p class="muted">Enregistrement dans SharePoint…</p>`;
     for (const b of racine.querySelectorAll("button")) b.disabled = true;
     try {
-      const r = await actionConstruire(domaine, action, params);
+      const confirmation = { cle: crypto.randomUUID() };
+      if (["conteneur.publier", "conteneur.desactiver", "page.affecter", "element.etat"].includes(action)) {
+        const apercu = (await actionConstruire(domaine, action, params, { ...confirmation, apercu: true })).donnees;
+        if (!apercu?.jeton || !apercu.changements?.length) throw new Error("L'aperçu de cette modification est indisponible.");
+        confirmation.jeton = await confirmerApercuConstruction(apercu);
+        if (!confirmation.jeton) { enCours = false; afficher(); return false; }
+      }
+      const r = await actionConstruire(domaine, action, params, confirmation);
       if (!r?.donnees || r.donnees.refus || r.donnees.erreur) throw new Error(r?.donnees?.refus || r?.donnees?.erreur || "Réponse d'enregistrement invalide.");
       Object.assign(etat, { message: r?.donnees?.message || "Action enregistrée.", erreur: false });
       if (action === "conteneur.dupliquer" && etat.conteneur && r.donnees.nouveau?.ref) {

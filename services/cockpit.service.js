@@ -10,6 +10,8 @@ export const getSiteCockpit = (domaine) => apiGet("/cockpit/site", { domaine });
 export const getEdition = (domaine, composant, element = "") => apiGet("/cockpit/edition", { domaine, composant, element });
 export const apercuEdition = (domaine, composant, valeurs, element = "") => apiPost("/cockpit/edition/apercu", { domaine, composant, valeurs, element });
 export const confirmerEdition = (jeton) => apiPost("/cockpit/edition/confirmer", { jeton });
+export const apercuDemandeAcces = (domaine, operation, motif) => apiPost("/cockpit/demandes-acces/apercu", { domaine, operation, motif });
+export const confirmerDemandeAcces = (jeton) => apiPost("/cockpit/demandes-acces/confirmer", { jeton });
 export const getAdminTableau = (contexteDomaine = "") => apiGet("/cockpit/admin/tableau", { contexteDomaine });
 export const getAdminUtilisateurs = (contexteDomaine = "", criteres = {}) => apiGet("/cockpit/admin/utilisateurs", { ...criteres, contexteDomaine });
 export const getEspaces = (criteres = {}) => apiGet("/cockpit/espaces", criteres);
@@ -28,8 +30,8 @@ export const apercuRestauration = (manifeste, liste) => apiPost("/cockpit/admin/
 export const confirmerRestauration = (jeton, selection) => apiPost("/cockpit/admin/synchronisations/restauration/confirmer", { jeton, selection });
 export const getMediasCockpit = (domaine) => apiGet("/cockpit/construire", { domaine, vue: "medias" });
 // Cle d'idempotence par action : un double clic ou une relance reseau ne cree jamais de doublon.
-export const actionConstruire = (domaine, action, params = {}) =>
-  apiPost("/cockpit/construire/action", { domaine, action, params, cle: crypto.randomUUID() });
+export const actionConstruire = (domaine, action, params = {}, confirmation = {}) =>
+  apiPost("/cockpit/construire/action", { domaine, action, params, cle: crypto.randomUUID(), ...confirmation });
 
 // Import d'un media (corps binaire) avec suivi de progression ; cle d'idempotence par envoi.
 export async function televerserMedia(domaine, fichier, { type, titre }, progression = () => {}) {

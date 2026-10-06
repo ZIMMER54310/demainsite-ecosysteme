@@ -2,7 +2,8 @@ import { initializeAuth } from "../js/auth.js";
 import { setState, getState } from "../js/state.js";
 import {
   getSitesCockpit, getClientCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
-  getAdminTableau, getAdminUtilisateurs, getMonCompte, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident, getStatutsSite, getConstruire
+  getAdminTableau, getAdminUtilisateurs, getMonCompte, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident, getStatutsSite, getConstruire,
+  apercuDemandeAcces, confirmerDemandeAcces
 } from "../services/cockpit.service.js";
 import { activerConstructeur } from "../modules/cockpit/constructeur.js";
 import {
@@ -142,6 +143,46 @@ function lireAssistant() {
 }
 
 export function activerVueSite(racine) {
+  racine.querySelectorAll("[data-demande-acces]").forEach((bouton) => bouton.addEventListener("click", () => {
+    const dialogue = document.createElement("dialog");
+    dialogue.className = "cockpit-statut-dialogue";
+    dialogue.innerHTML = `<form><h2>Demander l'accès</h2><label>Expliquez votre besoin
+      <textarea name="motif" required maxlength="4000"></textarea></label><div data-apercu-demande></div>
+      <p role="status" data-message-demande></p><button class="btn btn-primary" type="submit">Voir l'aperçu</button>
+      <button class="btn btn-secondary" type="button" data-fermer>Annuler</button></form>`;
+    let jeton = null;
+    const fermer = () => { dialogue.close(); dialogue.remove(); };
+    dialogue.querySelector("[data-fermer]").addEventListener("click", fermer);
+    dialogue.addEventListener("cancel", (ev) => { ev.preventDefault(); fermer(); });
+    dialogue.querySelector("textarea").addEventListener("input", () => {
+      jeton = null; dialogue.querySelector("[type=submit]").textContent = "Voir l'aperçu";
+      dialogue.querySelector("[data-apercu-demande]").innerHTML = "";
+    });
+    dialogue.querySelector("form").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const submit = dialogue.querySelector("[type=submit]");
+      submit.disabled = true;
+      try {
+        if (!jeton) {
+          const r = (await apercuDemandeAcces(bouton.dataset.domaine, bouton.dataset.demandeAcces,
+            dialogue.querySelector("textarea").value)).donnees;
+          if (!r?.jeton || !r.apercu) throw new Error("L'aperçu de la demande n'a pas été confirmé.");
+          jeton = r.jeton;
+          dialogue.querySelector("[data-apercu-demande]").innerHTML = `<dl>${Object.entries(r.apercu)
+            .map(([cle, valeur]) => `<dt>${escapeHtml(cle)}</dt><dd>${escapeHtml(valeur || "")}</dd>`).join("")}</dl>`;
+          submit.textContent = "Confirmer la demande";
+        } else {
+          const r = (await confirmerDemandeAcces(jeton)).donnees;
+          if (!r?.succes) throw new Error(r?.erreur || "L'enregistrement de la demande doit être vérifié.");
+          dialogue.querySelector("[data-message-demande]").textContent = "Votre demande est enregistrée. Aucun droit n'a été attribué automatiquement.";
+          jeton = null; submit.hidden = true; dialogue.querySelector("textarea").readOnly = true;
+          dialogue.querySelector("[data-fermer]").textContent = "Fermer";
+        }
+      } catch (err) { dialogue.querySelector("[data-message-demande]").textContent = err.message; }
+      finally { submit.disabled = false; }
+    });
+    document.body.append(dialogue); dialogue.showModal();
+  }));
   racine.querySelector("[data-ouvrir-progression]")?.addEventListener("click", (ev) => {
     ev.preventDefault();
     const details = racine.querySelector(".cockpit-progression");

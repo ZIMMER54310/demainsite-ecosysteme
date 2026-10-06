@@ -111,6 +111,12 @@ function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [],
   };
 }
 
+function contraintesOperations(d, donnees, siteId) {
+  return { ...d, contraintesOperations: (donnees.dynamique?.operations || [])
+    .filter((o) => !autorisations.decisionPolitique(donnees.dynamique, o, d.clientIds || [], siteId).autorise)
+    .map((o) => o.operation) };
+}
+
 function contexteSite(base, donnees, siteId) {
   const id = String(siteId);
   const refus = (message) => ({ ...base, siteIds: [], clientIds: [], fonctions: [], niveau: null, portee: null, role: null, roleId: null, accesType: null,
@@ -150,9 +156,9 @@ function contexteSite(base, donnees, siteId) {
     const site = donnees.sites.find((s) => s.id === id && s.actif && s.valide);
     const client = site && donnees.clients.find((c) => c.id === site.clientId);
     if (!site || !client) return refus("Site ou client invalide.");
-    return { ...base, siteIds: [id], clientIds: [client.id], autorisations: null, accesType: null,
+    return contraintesOperations({ ...base, siteIds: [id], clientIds: [client.id], autorisations: null, accesType: null,
       contexte: { etat: "COMPLET", siteId: id, source: "POLITIQUE-GLOBALE-SHAREPOINT",
-        client: { titre: client.titre }, role: base.role, verrouille: false } };
+        client: { titre: client.titre }, role: base.role, verrouille: false } }, donnees, id);
   }
   if (relations.length !== 1) return refus(relations.length ? "Plusieurs relations actives pour ce site." : "Site non autorisé.");
   return contexteRelation(base, donnees, relations[0]);
@@ -189,11 +195,11 @@ function contexteRelation(base, donnees, l) {
     if (!Object.hasOwn(RANG_NIVEAU, n)) return refus("Niveau du profil d'accès invalide.");
     if (RANG_NIVEAU[n] < RANG_NIVEAU[niveau]) niveau = n;
   }
-  return { ...base, global: false, roleId: String(role.id), role: { titre: role.titre }, niveau,
+  return contraintesOperations({ ...base, global: false, roleId: String(role.id), role: { titre: role.titre }, niveau,
     portee: "attribues", fonctions, siteIds: [id], clientIds: [String(client.id)],
     accesType: { id: String(acces.id), titre: acces.titre },
     contexte: { etat: "COMPLET", siteId: id, relationId: l.id, clientId: String(client.id),
-      client: client.titre, role: role.titre, accesType: acces.titre, verrouille: !!l.verrouille } };
+      client: client.titre, role: role.titre, accesType: acces.titre, verrouille: !!l.verrouille } }, donnees, id);
 }
 
 function colonnes(cols) {

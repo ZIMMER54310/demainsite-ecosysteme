@@ -126,7 +126,10 @@ async function main() {
     const donneesFront = { ...v, site: { titre: "Site", domaine: "exemple.test" }, droits: { entete: { ecriture: true }, footer: { ecriture: true }, pages: { ecriture: false }, "logo-medias": { ecriture: true } } };
     const html = rendreConstructeur({ nom: "x", fonctions: [] }, donneesFront, { domaine: "exemple.test" });
     for (const o of ONGLETS) assert.ok(html.includes(o.libelle));
-    assert.ok(html.includes("Dupliquer") && html.includes("Affecter aux pages") && html.includes("Voir les utilisations"));
+    assert.ok(html.includes("Dupliquer") && html.includes("Voir les utilisations"));
+    assert.ok(!html.includes("Affecter aux pages"), "Affectation masquée sans droit de modification de la page.");
+    assert.ok(rendreConstructeur({}, { ...donneesFront, droits: { ...donneesFront.droits, pages: { ecriture: true } } }, {})
+      .includes("Affecter aux pages"));
     assert.equal(/HERO/i.test(html), false, "vocabulaire En-tete, jamais HERO");
     const editeur = rendreConstructeur({ fonctions: [] }, { ...donneesFront, arbre: a, apercu: apEntete }, {});
     assert.ok(editeur.includes("Pasc ARA IA") && editeur.includes("Ajouter une section") && editeur.includes("📱 Mobile") && editeur.includes("🎨 Design"));

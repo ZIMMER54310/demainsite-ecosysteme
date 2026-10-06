@@ -115,6 +115,12 @@ function lireJeton(identite, jeton) {
   return { cle: d.cle, op: e.op };
 }
 
+function consommerJeton(identite, jeton) {
+  const lu = lireJeton(identite, jeton);
+  if (lu.erreur || !lu.op) return false;
+  return enAttente.delete(lu.cle);
+}
+
 /* ---------------- Acces SharePoint ---------------- */
 
 async function contexteGraph() {
@@ -287,7 +293,7 @@ function etatJournalisation() {
 }
 
 module.exports = {
-  champsModifiables, validerValeurs, differences, valeursDe, hash, emettreJeton, lireJeton,
+  champsModifiables, validerValeurs, differences, valeursDe, hash, emettreJeton, lireJeton, consommerJeton,
   contexteGraph, lireItemFrais, collecterFrais, executer, journaliser, invaliderCaches, etatJournalisation, etatStructureJournal,
   _test: { libelleChamp, cleChamp, executees, enAttente }
 };

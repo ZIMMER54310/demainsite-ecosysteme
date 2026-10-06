@@ -12,6 +12,58 @@ Le cockpit utilise une session native Entra et des controles de perimetre cote s
 
 ## Droits et edition cockpit
 
+### Lot cockpit / construction / accompagnement
+
+`node tools/provision-cockpit.js --apply` sauvegarde le schema concerne avant
+de proposer des ajouts idempotents. Il ne cree aucun etat, offre, abonnement,
+modele ni droit utilisateur. Un 403 interrompt le provisionnement sans modifier
+les permissions Graph/Azure. Les fonctionnalites concernees restent bloquees,
+pas remplacees par des donnees fictives :
+
+- OBJ-REALISATION-ETAT porte libelle, progression 0-100, couleur et prochaine
+  operation technique. Les Lookups simples REALISATION-ETAT des En-tetes,
+  Footers, pages et elements de construction conservent les etats historiques.
+  La progression du cockpit consomme les etats renseignes ; un etat absent
+  conserve le calcul historique, sans inventer de libelle du nouveau referentiel.
+- OBJ-DROIT-OPERATION peut declarer DEMANDABLE, INTERDITE, OPTION-REQUISE et
+  MESSAGE-REFUS. Une interdiction explicite reste prioritaire et non demandable.
+  OBJ-CLIENT-CAPACITE porte une activation fonctionnelle client/site/capacite,
+  pas un prix ou un abonnement. Une option requise sans configuration exploitable
+  est bloquee ; une activation client ne donne jamais de droit utilisateur.
+  Ces contraintes s'appliquent aussi aux contextes globaux et de compatibilite,
+  sans leur accorder de nouvelles operations.
+- OBJ-DEMANDE-ACCES est un flux metier distinct de la liste systeme SharePoint
+  « Demandes d'acces ». L'API derive utilisateur/affectation/client/site/périmetre/
+  capacite/action depuis la session et les Lookups, puis exige apercu et
+  confirmation, revalidation, anti-doublon, relecture et OBJ-JRN. La demande
+  n'attribue aucun droit. Une demande deja traitee est suivie avec l'interlocuteur,
+  sans creation automatique d'une seconde ligne identique.
+- OBJ-ACCOMPAGNEMENT distingue les types techniques humain et ia, leurs textes
+  et Lookups vers les medias officiels, sans copie de fichiers. Le texte officiel
+  approuve reste visible sans inventer d'avatar lorsqu'il n'est pas configure.
+  L'IA ne recoit ni session ni privilege et ne realise aucune action autonome.
+- Les modeles existants restent dans OBJ-MODELE-BUILDER. SOURCE-ENTETE,
+  SOURCE-FOOTER et DEFAUT-NOUVEAU-SITE preparent leur designation native.
+  L'assistant actuel ne cree pas de site serveur : l'instanciation automatique
+  n'est donc pas activee. Les modeles non valides restent inutilisables ;
+  la construction libre est conservee.
+
+Les boutons de conteneurs et de l'arbre generique consomment les operations
+effectivement autorisees. Publication/desactivation de conteneur, affectation
+de page et changement d'etat d'element exigent un aperçu serveur sans écriture,
+avec valeurs actuelles/proposees puis confirmation unique liee a l'identite.
+Les versions sont recontrolees, une sauvegarde locale protegee precede l'ecriture
+sensible, et chaque ecriture du constructeur utilise ETag puis relecture.
+Les succes sont journalises dans OBJ-JRN avec cle d'idempotence. Un echec de
+journal apres ecriture est signale comme partiel et ne permet pas de reecrire.
+Les apercus de creation/duplication et toutes les operations internes de Design
+ne sont pas convertis en flux de confirmation dans ce lot.
+
+Validation ciblee : `node tests/cockpit-lot.js` (unitaire hors reseau) et
+`node tests/droits-dynamiques-reels.js` (lecture native). Aucun de ces tests ne
+constitue une preuve OAuth de Laurence. L'activation des etats/demandes/avatars
+exige des configurations SharePoint officielles et une recette reelle.
+
 ### Autorisations atomiques SharePoint
 
 Le service central [auth/autorisations.js](auth/autorisations.js) lit les comptes,
