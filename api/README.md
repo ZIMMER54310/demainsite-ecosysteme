@@ -457,6 +457,13 @@ partielle, jamais comme un échec permettant de répéter aveuglément la mutati
 Ce branchement est limité à Comptes : le Builder et les autres journaux restent
 inchangés.
 
+La publication front génère depuis le commit une import map déterministe
+versionnant tous les modules et les feuilles de style par SHA. Une simple
+query sur la page ne suffit pas à invalider le cache des imports relatifs :
+le bootstrap publié versionne aussi les dépendances statiques et dynamiques.
+Les contrôles de publication comparent les fichiers copiés à cette sortie
+générée ; aucun fichier API ni secret n'est copié dans le front.
+
 `npm run test:contextes-reels` vérifie en lecture seule les données réelles et
 les prévalidations sans écrire de fausses affectations. Les sessions locales de
 recette sont limitées aux OID réellement liés ; elles ne prouvent pas un parcours

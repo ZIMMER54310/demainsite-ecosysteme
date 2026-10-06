@@ -29,6 +29,7 @@ fi
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 git archive "$SHA" "${FICHIERS[@]}" "${DOSSIERS[@]}" | tar -x -C "$TMP"
+node scripts/version-front.js "$TMP" "$SHA"
 
 # Controle avant copie : rien d'interdit, tous les fichiers requis presents.
 for f in "${FICHIERS[@]}"; do [ -f "$TMP/$f" ] || { echo "ERREUR : $f absent" >&2; exit 1; }; done
@@ -49,7 +50,7 @@ done
 
 [ ${#DRY[@]} -gt 0 ] && { echo "Simulation terminee."; exit 0; }
 
-# Controle apres copie : contenu identique au commit.
+# Controle apres copie : source du commit et bootstrap versionne deterministe.
 for f in "${FICHIERS[@]}"; do cmp -s "$TMP/$f" "$CIBLE/$f" || { echo "ERREUR : $f differe" >&2; exit 1; }; done
 for d in "${DOSSIERS[@]}"; do
   while IFS= read -r -d '' f; do

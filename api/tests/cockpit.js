@@ -202,6 +202,22 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     { titre: `Site ${String(i).padStart(3, "0")}`, domaines: [`site${i}.fr`], domainePrincipal: `site${i}.fr`, client: i % 2 ? "Client B" : "Client A" },
     i % 10 === 0 ? statutsTest[2] : (i % 7 === 0 ? null : statutsTest[1]),
     i % 3 ? null : siteComplet));
+  const { paginer } = require("../shared/pagination");
+  for (const parPage of [10, 25, 50, 100]) {
+    const pages = [];
+    for (let page = 1; page <= Math.ceil(nombreux.length / parPage); page++) {
+      const p = paginer(nombreux, { parPage, page, tri: "nom", sens: "asc" },
+        { tris: { nom: (s) => s.nom }, recherche: (s) => s.nom });
+      assert.equal(p.total, nombreux.length);
+      assert.ok(p.elements.length <= parPage);
+      pages.push(...p.elements.map((s) => s.nom));
+    }
+    assert.equal(pages.length, nombreux.length);
+    assert.equal(new Set(pages).size, nombreux.length, "pagination sans doublon ni omission");
+  }
+  const desc = paginer(nombreux, { parPage: 100, sens: "desc" },
+    { tris: { nom: (s) => s.nom }, recherche: (s) => s.nom });
+  assert.ok(desc.elements.every((s, i) => !i || desc.elements[i - 1].nom.localeCompare(s.nom, "fr") >= 0));
   let r = filtrerSites(nombreux, {});
   assert.strictEqual(r.total, 230); assert.strictEqual(r.elements.length, 25); assert.strictEqual(r.pages, 10);
   assert.deepStrictEqual(r.options.statuts, ["Actif", "Construction", "Non renseigné"], "statuts issus des donnees");
