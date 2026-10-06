@@ -153,8 +153,12 @@ async function main() {
       const comptesContextuels = await appeler(api.adminUtilisateurs, base, { contexteDomaine: s.acces });
       assert.equal(comptesContextuels.code, 200);
       for (const u of comptesContextuels.corps.donnees.utilisateurs) {
+        const utilisateur = data.utilisateurs.find((v) => v.titre === u.email);
+        assert.ok(utilisateur, "Compte HTTP absent des donnees reelles.");
         for (const relation of u.sites) {
-          const native = data.liens.find((l) => administration._test.ref("l", l.id) === relation.ref);
+          const groupe = perimetre.groupeParDomaine(groupes, relation.domaine);
+          const native = data.liens.find((l) => l.utilisateurId === utilisateur.id && l.siteId === String(groupe?.id));
+          assert.ok(native, "Relation HTTP absente des Lookups reels.");
           if (native.verrouille) assert.equal(relation.modifiable, false);
         }
       }
