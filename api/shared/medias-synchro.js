@@ -130,14 +130,6 @@ async function executer({ acteur }) {
   }
 
   if (rapport.crees.length || rapport.erreurs.length) {
-    const cle = ecriture.hash(["media-synchro", ...rapport.crees.map((c) => c.chemin), ...rapport.erreurs.map((c) => c.chemin)]);
-    const journal = await ecriture.journaliser(g, {
-      cle, action: "Médias : synchronisation bibliothèque", nom: `Synchronisation médias · ${rapport.crees.length} fiche(s) créée(s)`,
-      ancien: {}, nouveau: { crees: rapport.crees.map((c) => ({ media: c.id, chemin: c.chemin })), erreurs: rapport.erreurs },
-      notes: `Acteur : ${acteur} | Fichiers ${rapport.fichiers} | Déjà référencés ${rapport.dejaReferences} | Ignorés ${rapport.ignores.length}`,
-      succes: !rapport.erreurs.length, contexte: { bibliotheque: PREFIXE }
-    });
-    rapport.journal = journal.ok;
     ecriture.invaliderCaches();
     require("./builder-source").viderCache();
   }

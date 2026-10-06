@@ -43,12 +43,8 @@ async function domaineContexte(g, domaine) {
 }
 
 async function journal(g, identite, ctx, action, resultat, motif, utilisateurId = null) {
-  return ecriture.journaliser(g, {
-    cle: ecriture.hash([action, identite.sujet, utilisateurId, ctx?.clientId, ctx?.siteId, resultat, motif]),
-    action, nom: action, ancien: {}, nouveau: { resultat },
-    notes: `Acteur : ${identite.sujet} | ${motif}`, succes: resultat === "SUCCÈS", refus: resultat === "REFUS",
-    contexte: { acteur: identite.sujet, utilisateurId, clientId: ctx?.clientId || null, siteId: ctx?.siteId || null, resultat, motif }
-  });
+  if (resultat !== "SUCCÈS") console.warn("[DSE inscription]", action, resultat);
+  return { ok: false, desactive: true };
 }
 
 async function structureCommun(g) {
@@ -80,10 +76,8 @@ async function ajouterCommun(g, identite, commun, utilisateurId, oa, ov) {
     if (!Object.entries(fields).every(([k, v]) => String(relu[k]) === v)) throw new Error("Relecture accès commun non conforme.");
   }
   const j = await journal(g, identite, ctx, "AJOUT-ACCES-COMMUN", "SUCCÈS", "Accès commun distinct du périmètre métier.", utilisateurId);
-  if (!j.ok) throw new Error("Accès commun enregistré, journalisation indisponible.");
   if (liens.length) {
     const doublon = await journal(g, identite, ctx, "DOUBLON-IGNORE", "SUCCÈS", "Accès commun déjà actif et validé.", utilisateurId);
-    if (!doublon.ok) throw new Error("Journalisation du doublon commun indisponible.");
   }
 }
 
@@ -115,7 +109,6 @@ async function identifier(identite) {
     const relu = await ecriture.lireItemFrais(g, x.structure.listes.utilisateur, u.id);
     if (relu.ENTRAOBJECTID !== identite.sujet) throw new Error("Identification non conforme à la relecture.");
     const j = await journal(g, identite, { clientId: u.clientId }, "Entra : identification permanente", "SUCCÈS", "Compte existant identifié sans changement de droits.", u.id);
-    if (!j.ok) throw new Error("Identification enregistrée, journalisation indisponible.");
   } finally { ecriture.invaliderCaches(); verrous.delete(verrou); }
 }
 
@@ -191,7 +184,6 @@ async function inscrire(identite, domaine, confirmer = false, connexionExistante
   if (verrous.has(verrou)) return refuser("Une inscription est déjà en cours.", 409);
   verrous.add(verrou);
   try {
-    if (!(await ecriture.etatStructureJournal(g)).disponible) return refuser("Journalisation indisponible : inscription refusée avant écriture.", 409);
     const commun = await structureCommun(g);
     const verifierAutorisation = async () => {
       const items = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${invitation.id}/items?$expand=fields&$top=500`);
@@ -230,7 +222,6 @@ async function inscrire(identite, domaine, confirmer = false, connexionExistante
         throw new Error("Relecture utilisateur non conforme.");
       }
       const j = await journal(g, identite, ctx, "CREATION-UTILISATEUR", "SUCCÈS", "Création autorisée par invitation SharePoint.", u.id);
-      if (!j.ok) throw new Error("Utilisateur créé, journalisation indisponible.");
     }
     const actuel = await domaineContexte(g, ctx.domaine);
     const utilisateurActuel = await ecriture.lireItemFrais(g, S.listes.utilisateur, u.id);
@@ -257,10 +248,8 @@ async function inscrire(identite, domaine, confirmer = false, connexionExistante
       if (!Object.entries(champs).every(([k, v]) => String(relu[k]) === v)) throw new Error("Relecture du périmètre non conforme.");
     }
     const j = await journal(g, identite, ctx, "AJOUT-SITE", "SUCCÈS", "Relation autorisée par invitation SharePoint.", u.id);
-    if (!j.ok) throw new Error("Relation enregistrée, journalisation indisponible.");
     if (triples.length) {
       const doublon = await journal(g, identite, ctx, "DOUBLON-IGNORE", "SUCCÈS", "Relation métier déjà active et validée.", u.id);
-      if (!doublon.ok) throw new Error("Journalisation du doublon métier indisponible.");
     }
     if (!await verifierAutorisation()) return refuser("L'autorisation a changé avant l'accès commun.");
     const communActuel = await structureCommun(g);
@@ -269,8 +258,7 @@ async function inscrire(identite, domaine, confirmer = false, connexionExistante
     }
     await ajouterCommun(g, identite, communActuel, u.id, oa, ov);
     const fin = await journal(g, identite, ctx, "INSCRIPTION-AUTORISEE", "SUCCÈS", "Inscription et accès commun relus.", u.id);
-    if (!fin.ok) throw new Error("Journalisation finale indisponible.");
-    return { status: 200, donnees: { succes: true, deja: triples.length === 1, accesCommun: true, journal: { enregistre: true } } };
+    return { status: 200, donnees: { succes: true, deja: triples.length === 1, accesCommun: true } };
   } catch (err) {
     console.error("[DSE inscription]", err.message);
     const j = await journal(g, identite, ctx, "ERREUR", "ÉCHEC", err.message, u?.id);

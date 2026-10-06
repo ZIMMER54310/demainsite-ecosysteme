@@ -58,8 +58,10 @@ function fabrique(construire) {
 const sansId = ({ _id, ...x }) => x;
 const nettoyer = (sections) => (sections || []).map((s) => ({ ...sansId(s), lignes: (s.lignes || []).map((l) => ({ ...sansId(l),
   colonnes: (l.colonnes || []).map((c) => ({ ...sansId(c), modules: (c.modules || []).map(sansId) })) })) }));
-const zone = (z) => ({ sections: nettoyer(z.sections), ...(z.style ? { style: z.style } : {}), ...(z.responsive ? { responsive: z.responsive } : {}) });
+const zone = (z) => ({ sections: nettoyer(z.sections), ...(z.noeuds ? { noeuds: z.noeuds } : {}),
+  ...(z.style ? { style: z.style } : {}), ...(z.responsive ? { responsive: z.responsive } : {}) });
 const sortie = (r) => ({ mode: r.mode, sections: nettoyer(r.sections),
+  ...(r.noeuds ? { noeuds: r.noeuds } : {}),
   ...(r.page?.style ? { style: r.page.style, responsive: r.page.responsive || {} } : {}),
   ...(r.theme && Object.keys(r.theme).length ? { theme: r.theme } : {}),
   ...(r.entete ? { entete: zone(r.entete) } : {}),

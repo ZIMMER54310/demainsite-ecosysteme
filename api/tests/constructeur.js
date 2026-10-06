@@ -129,6 +129,9 @@ async function main() {
     assert.equal(/HERO/i.test(html), false, "vocabulaire En-tete, jamais HERO");
     const editeur = rendreConstructeur({ fonctions: [] }, { ...donneesFront, arbre: a, apercu: apEntete }, {});
     assert.ok(editeur.includes("Pasc ARA IA") && editeur.includes("Ajouter une section") && editeur.includes("📱 Mobile") && editeur.includes("🎨 Design"));
+    for (const classe of ["constructeur--plein-ecran", "constructeur-barre-visuelle", "constructeur-espace-visuel", "constructeur-design-zone"]) assert.ok(editeur.includes(classe), classe);
+    for (const action of ["annuler-design", "retablir-design", "copier-style", "coller-style", "apercu-seul", "enregistrer-design"]) assert.ok(editeur.includes(`data-c-action="${action}"`), action);
+    assert.ok(editeur.includes('draggable="true"') && editeur.includes('data-c-noeud='));
     assert.ok(documentApercu({ mode: "builder", sections: [] }).includes("Aperçu vide"));
     assert.ok(badgeEtat({ brouillon: true }).includes("Brouillon"));
   }

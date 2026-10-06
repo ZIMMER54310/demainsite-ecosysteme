@@ -48,8 +48,6 @@ async function construire(d, params, g) {
   require("./catalogue-source").viderCache();
   const ctx = await contexte(d, params.domaine, g);
   if (ctx.refus) return ctx;
-  const journal = await ecriture.etatStructureJournal(ctx.g);
-  if (!journal.disponible) return { refus: journal.raison };
   const statut = ctx.disponibles.find((i) => ref(i.id) === params.statut);
   if (!statut) return { refus: "Statut non disponible ou non validé." };
   const nom = `${ctx.col.name}LookupId`;

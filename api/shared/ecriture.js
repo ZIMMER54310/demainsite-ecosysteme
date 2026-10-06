@@ -5,7 +5,7 @@
  *
  * Workflow : lecture actuelle -> validation serveur -> apercu (jeton signe) -> confirmation
  * -> nouveau controle des droits -> controle de concurrence -> ecriture -> relecture
- * -> journal OBJ-JRN -> invalidation des caches -> resultat.
+ * -> invalidation des caches -> resultat.
  *
  * - Aucune suppression : seules les operations PATCH (modifier) et POST (ajouter) existent.
  * - Rien n'est accepte du navigateur hormis les valeurs saisies : liste, element, colonnes
@@ -20,11 +20,8 @@ const session = require("../auth/session");
 
 const DUREE_JETON_S = 900;
 const MAX_MULTILIGNE = 10000;
-const JOURNAL_MAX = 30;
 
 const executees = new Map();
-const etatJournal = { dernier: null };
-const journalLocal = [];
 
 const hash = (v) => crypto.createHash("sha256").update(JSON.stringify(v)).digest("hex");
 const cleChamp = (nom) => `c${hash(["champ", nom]).slice(0, 10)}`;
@@ -144,69 +141,14 @@ async function collecterFrais(g, chemin) {
   return items;
 }
 
-/* ---------------- Journal OBJ-JRN (texte uniquement : aucun Lookup OBJ-REF / OBJ-REL) ---------------- */
-
-const tronquer = (v, n) => (v.length > n ? `${v.slice(0, n - 1)}…` : v);
-const journauxEnCours = new Map();
-
-async function etatStructureJournal(g) {
-  const liste = dse.trouverListe(g.listes, ["OBJ-JRN"]);
-  if (!liste) return { disponible: false, raison: "Journal indisponible." };
-  const colonnes = await dse.chargerColonnesListe(g.token, g.siteGraphId, liste.id);
-  const historique = colonnes.find((c) => c.name === "STATUT" && c.lookup && c.required);
-  if (historique) return { disponible: false, raison: "Journal bloqué par une relation historique obligatoire." };
-  if (!["STATUTJRN", "CLEIDEMPOTENCE"].every((nom) => colonnes.some((c) => c.name === nom))) {
-    return { disponible: false, raison: "Le journal doit être complété avant journalisation." };
-  }
-  return { disponible: true };
+/* Compatibilite des anciennes reponses API : aucune lecture/ecriture de journal SharePoint. */
+async function etatStructureJournal() {
+  return { disponible: true, desactive: true };
 }
 
-function journaliser(g, entree) {
-  if (journauxEnCours.has(entree.cle)) return journauxEnCours.get(entree.cle);
-  const p = journaliserUnique(g, entree).finally(() => journauxEnCours.delete(entree.cle));
-  journauxEnCours.set(entree.cle, p);
-  return p;
-}
-
-async function journaliserUnique(g, { cle, action, nom, ancien, nouveau, notes, succes, refus = false, contexte = {} }) {
-  const liste = dse.trouverListe(g.listes, ["OBJ-JRN"]);
-  const horodatage = new Date();
-  const entree = {
-    le: horodatage.toISOString(), action, nom, succes,
-    ok: false, erreur: null
-  };
-  if (!liste) {
-    entree.erreur = "Journal indisponible";
-  } else {
-    const champs = {
-      Title: `DSE-COCKPIT-${horodatage.toISOString().replace(/\D/g, "").slice(0, 14)}-${cle.slice(0, 8)}`,
-      DATEEVENEMENT: horodatage.toISOString(),
-      ACTION: tronquer(action, 255),
-      NOM: tronquer(nom, 255),
-      CODE: cle,
-      CLEIDEMPOTENCE: cle,
-      ANCIENNEVALEUR: JSON.stringify(ancien),
-      NOUVELLEVALEUR: JSON.stringify(nouveau),
-      NOTES: `${notes || ""} | Contexte : ${JSON.stringify(contexte)}`,
-      STATUTJRN: refus ? "REFUS" : succes ? "SUCCÈS" : "ÉCHEC"
-    };
-    try {
-      const structure = await etatStructureJournal(g);
-      if (!structure.disponible) throw new Error(structure.raison);
-      const existantes = await collecterFrais(g, `/sites/${g.siteGraphId}/lists/${liste.id}/items?$expand=fields&$top=500`);
-      if (!existantes.some((i) => i.fields?.CLEIDEMPOTENCE === cle)) {
-        await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${liste.id}/items`, { fields: champs });
-      }
-      entree.ok = true;
-    } catch (e) {
-      entree.erreur = e.message;
-      console.error("[DSE ecriture] journal", e.message);
-    }
-  }
-  etatJournal.dernier = entree;
-  journalLocal.unshift(entree);
-  journalLocal.length = Math.min(journalLocal.length, JOURNAL_MAX);
-  return entree;
+async function journaliser(_g, { action, succes }) {
+  if (succes === false) console.warn("[DSE diagnostic]", String(action || "Opération refusée").slice(0, 255));
+  return { ok: false, desactive: true };
 }
 
 /* ---------------- Invalidation des caches apres ecriture ---------------- */
@@ -247,18 +189,10 @@ async function executer({ identite, jeton, revalider, acteur }) {
 }
 
 async function executerOperation({ cle, op, revalider, acteur }) {
-  const cleJournal = hash([op.action, op.listId, op.itemId || op.cleDoublon, op.avant || null, op.champs, acteur]);
   const refus = await revalider(op);
   if (refus) {
-    let journal = { ok: false };
-    try {
-      const g = await contexteGraph();
-      journal = await journaliser(g, { cle: hash([cleJournal, "REFUS", refus]), action: op.action || "Écriture refusée", nom: op.nom || "Écriture refusée",
-        ancien: {}, nouveau: {}, notes: `Acteur : ${acteur} | Motif : ${refus}`, succes: false, refus: true, contexte: op.contexteJournal });
-    } catch (e) {
-      console.error("[DSE ecriture] journal du refus", e.message);
-    }
-    return { status: 403, erreur: refus, journal: resumeJournal(journal) };
+    console.warn("[DSE ecriture] autorisation refusée");
+    return { status: 403, erreur: refus };
   }
   enAttente.delete(cle);
 
@@ -304,27 +238,19 @@ async function executerOperation({ cle, op, revalider, acteur }) {
   } catch (e) {
     console.error("[DSE ecriture]", e.message);
     if (e.status === 412 || e.statusCode === 412) return { status: 409, erreur: "Les données ont été modifiées entre-temps. Merci de les relire." };
-    const journal = await journaliser(g, { cle: hash([cleJournal, "ECHEC"]), action: op.action, nom: op.nom, ancien, nouveau: op.champs, notes: `${op.notes} | Acteur : ${acteur} | Erreur : ${e.message}`, succes: false, contexte: op.contexteJournal });
     invaliderCaches();
-    return { status: 502, erreur: "L'enregistrement ou sa vérification a échoué. Relisez les données avant de recommencer.", journal: resumeJournal(journal) };
+    return { status: 502, erreur: "L'enregistrement ou sa vérification a échoué. Relisez les données avant de recommencer." };
   }
   invaliderCaches();
   const conforme = noms.every((n) => normaliserTexte(relu[n]) === normaliserTexte(op.champs[n]));
-  const journal = await journaliser(g, {
-    cle: cleJournal, action: op.action, nom: op.nom, ancien, nouveau: relu, contexte: op.contexteJournal,
-    notes: `${op.notes} | Élément ${itemId} | Acteur : ${acteur} | Relecture ${conforme ? "conforme" : "NON conforme"}`,
-    succes: conforme
-  });
-  const r = { succes: conforme, relecture: conforme ? "conforme" : "différente", journal: resumeJournal(journal) };
+  const r = { succes: conforme, relecture: conforme ? "conforme" : "différente", journal: null };
   executees.set(cle, r);
   if (executees.size > 500) executees.delete(executees.keys().next().value);
   return { status: conforme ? 200 : 502, ...r, ...(conforme ? {} : { erreur: "La relecture ne correspond pas à la valeur demandée." }) };
 }
 
-const resumeJournal = (j) => (j ? { enregistre: j.ok, le: j.le, ...(j.ok ? {} : { erreur: "Journalisation indisponible : une relation obligatoire du journal doit être vérifiée." }) } : null);
-
 function etatJournalisation() {
-  return { dernier: etatJournal.dernier ? { ...etatJournal.dernier } : null, recentes: journalLocal.map((x) => ({ ...x })) };
+  return { desactive: true, dernier: null, recentes: [] };
 }
 
 module.exports = {

@@ -12,7 +12,9 @@ const TOUT = { pages: "OBJ-PAGES-SITE", sections: "OBJ-SECTION-SITE", lignes: "O
   entetes: "OBJ-ENTETE-SITE", footers: "OBJ-FOOTER-SITE", utilisations: "OBJ-MODULE-UTILISATION", instances: "OBJ-MODELE-INSTANCE",
   logos: "OBJ-LOGO-SITE", structures: "OBJ-LIGNE-STRUCTURE", typesSection: "OBJ-SECTION-TYPE", actifs: "OBJ-ACTIF", valides: "OBJ-VALIDE",
   // Moteur Design : types de style (groupes de reglages), theme du site, referentiels d alignement et d appareil.
-  styleTypes: "OBJ-STYLE-TYPE", themes: "OBJ-SITE-THEME", alignements: "OBJ-ALIGNEMENT", appareils: "OBJ-APPAREIL" };
+  styleTypes: "OBJ-STYLE-TYPE", themes: "OBJ-SITE-THEME", alignements: "OBJ-ALIGNEMENT", appareils: "OBJ-APPAREIL",
+  builderTypes: "OBJ-BUILDER-TYPE", builderElements: "OBJ-BUILDER-ELEMENT",
+  builderRegles: "OBJ-BUILDER-REGLE-IMBRICATION", builderChamps: "OBJ-BUILDER-CHAMP", builderValeurs: "OBJ-BUILDER-VALEUR" };
 
 let cache = null;
 let enCours = null;

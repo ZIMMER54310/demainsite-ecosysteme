@@ -1,2 +1,2 @@
-// V1 : aucune route d’écriture n’est appelée. Toute future écriture devra être journalisée par l’API dans OBJ-JRN.
+// Compatibilite de lecture historique ; les operations metier ne dependent pas du journal.
 export function journalStatus(){ return { enabled:false, reason:"Route API de journal non raccordée dans la V1" }; }

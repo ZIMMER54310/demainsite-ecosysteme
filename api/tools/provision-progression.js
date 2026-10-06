@@ -21,8 +21,6 @@ async function provisionner(appliquer) {
   const manquantes = Object.entries(DEFINITIONS).filter(([champ]) => !champs[champ]);
   console.log(`Colonnes à créer : ${manquantes.map(([, def]) => def.name).join(", ") || "aucune"}`);
   if (!appliquer) return;
-  const journal = await ecriture.etatStructureJournal(g);
-  if (!journal.disponible) throw new Error(journal.raison);
   const avant = { listeId: liste?.id || null, colonnes: colonnes.map((c) => c.name) };
   const mutations = [];
   let tentative = false, termine = false;
@@ -57,8 +55,7 @@ async function provisionner(appliquer) {
         notes: `Provisionnement demandé par Pascal Zimmer. Aucun élément métier créé. Aucune suppression.${termine ? "" : " Échec du provisionnement ; contrôler le schéma avant reprise."}`,
         contexte: { listeId: liste?.id || null }
       });
-      if (!resultat.ok) throw new Error(resultat.erreur || "Journalisation du provisionnement impossible.");
-      console.log("Structure journalisée dans OBJ-JRN.");
+      console.log("Structure enregistrée ; journal SharePoint désactivé.");
     }
     ecriture.invaliderCaches();
   }

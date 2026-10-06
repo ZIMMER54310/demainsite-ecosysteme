@@ -259,12 +259,12 @@ const {
     logger: { emit: () => {}, localBlocked: null, filename: "/tmp/domain-sync.jsonl" }
   }), /Graph unavailable/);
 
-  assert.match(journalBlockedReason({
+  assert.equal(journalBlockedReason({
     journal: {
       columns: [{ displayName: "STATUT", required: true, lookup: { listId: "orphan-list" } }],
       targetStatusList: null
     }
-  }), /liste absente/);
+  }), null, "une structure historique de journal invalide ne bloque pas la synchronisation");
 
   const tempLogs = fs.mkdtempSync(path.join(os.tmpdir(), "dse-sync-test-"));
   const previousLogDir = process.env.DSE_DOMAIN_SYNC_LOG_DIR;

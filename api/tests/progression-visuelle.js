@@ -62,7 +62,8 @@ const item = (id, min, max, ordre, couleur, extra = {}) => ({
   assert.ok(html.includes("Libellé 10"));
   assert.equal((html.match(/class="cockpit-etape /g) || []).length, 10);
   assert.ok(html.includes('<details class="cockpit-pliant cockpit-raccourcis">'));
-  for (const carte of ui.cartesVisibles(vue.fonctions)) assert.ok(html.includes(carte.titre), carte.titre);
+  const { navigationSite } = await import("../../modules/cockpit/navigation-site.js");
+  for (const lien of navigationSite(vue, "lecture")) assert.ok(html.includes(lien.url), lien.libelle);
   const accueil = ui.rendreAccueil({ moi: { nom: "Test", nombreSites: 1, fonctions: vue.fonctions }, vueCourante: vue });
   assert.ok(accueil.includes('<details class="cockpit-pliant cockpit-progression" style="--progression-couleur:#AbCdEf">'), "progression déroulante sur l'accueil");
   assert.ok(!/cockpit-progression"[^>]*open/.test(accueil), "progression fermée par défaut sur l'accueil");
@@ -108,35 +109,34 @@ const item = (id, min, max, ordre, couleur, extra = {}) => ({
     assert.equal(a.etat, "configuree");
     assert.equal(progression.pourcentage(a, 21).couleur, "#345678");
     await Promise.all([progression.lire(), progression.lire()]);
-    assert.equal(snapshots(), 1, "un seul snapshot pour la même configuration");
-    assert.equal(journaux.filter((j) => j.fields.ACTION === progression.ACTION_VERSION).length, 1, "une seule entrée par version native");
+    assert.equal(snapshots(), 0, "aucune dépendance au journal pour lire la configuration");
+    assert.equal(journaux.length, 0);
     assert.equal(lectures, 3, "les réglages sont relus sans cache");
     versionsIntermediaires = [{ id: '"20,1.5"', fields: { ...items[0].fields, Title: "Version intermédiaire" } }];
     courant = [{ ...items[0], eTag: '"20,2"', fields: { ...items[0].fields, COULEUR: "#987654", Title: "Nouveau libellé" } }];
     const b = await progression.lire();
     assert.equal(progression.pourcentage(b, 21).couleur, "#987654", "modification sans changement de code");
     assert.equal(progression.pourcentage(b, 21).libelle, "Nouveau libellé");
-    assert.equal(snapshots(), 2);
-    assert.equal(journaux.filter((j) => j.fields.ACTION === progression.ACTION_VERSION).length, 3,
-      "les modifications intermédiaires conservées par SharePoint sont toutes journalisées");
+    assert.equal(snapshots(), 0);
+    assert.equal(journaux.length, 0);
     const modulePath = require.resolve("../shared/progression-visuelle");
     const moduleCourant = require.cache[modulePath];
     delete require.cache[modulePath];
     try {
       await require("../shared/progression-visuelle").lire();
-      assert.equal(snapshots(), 2, "un redémarrage ne duplique pas les snapshots");
-      assert.equal(journaux.filter((j) => j.fields.ACTION === progression.ACTION_VERSION).length, 3);
+      assert.equal(snapshots(), 0);
+      assert.equal(journaux.length, 0);
     } finally { require.cache[modulePath] = moduleCourant; }
     versionsIntermediaires = [];
     courant = [];
     assert.equal((await progression.lire()).etat, "vide");
-    assert.equal(snapshots(), 3);
+    assert.equal(snapshots(), 0);
     courant = [{ ...items[0], eTag: '"20,3"' }];
     echecJournal = true;
-    assert.ok((await progression.lire()).avertissement, "échec journal visible");
+    assert.equal((await progression.lire()).avertissement, null, "le journal ne participe plus à la lecture");
     echecJournal = false;
     await progression.lire();
-    assert.equal(snapshots(), 4, "reprise de la journalisation après échec");
+    assert.equal(snapshots(), 0);
     courant = [item("50", 0, 100, 1, "invalide")];
     assert.equal((await progression.lire()).etat, "erreur", "configuration invalide signalée sans palette inventée");
     ecriture.contexteGraph = async () => { throw new Error("Panne Graph simulée"); };
@@ -147,5 +147,5 @@ const item = (id, min, max, ordre, couleur, extra = {}) => ({
     ecriture.journaliser = originaux.journaliser;
     dse.chargerColonnesListe = originaux.colonnes;
   }
-  console.log("Progression SharePoint : plages, couleurs, filtres, blocs déroulants, détails conservés, relecture et journal dédupliqué OK");
+  console.log("Progression SharePoint : plages, couleurs, filtres, blocs déroulants, détails conservés et relecture sans journal OK");
 })().catch((e) => { console.error(e); process.exitCode = 1; });

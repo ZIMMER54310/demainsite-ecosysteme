@@ -91,6 +91,33 @@ export function rendreSection(section, ctx) {
   return `${h.enLigne}<section class="${["dse-b-section", `dse-b-section--${type}`, h.identifiant, ...h.cache].join(" ")}"${ancre}${h.ref}><div class="dse-b-contenu">${lignes}</div></section>`;
 }
 
+export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
+  if (!noeud || profondeur >= 64) return "";
+  const champs = {};
+  const media = [];
+  const style = {};
+  const clesStyle = ["couleurTexte", "couleurFond", "couleurDegrade", "degradeAngle", "tailleTexte", "poidsPolice",
+    "hauteurLigne", "alignement", "largeur", "hauteur", "largeurMinimale", "largeurMaximale", "hauteurMinimale",
+    "hauteurMaximale", "bordureRayon", "bordureLargeur", "couleurBordure", "display", "direction", "retourLigne",
+    "gap", "gapLigne", "gapColonne", "colonnesGrille", "alignItems", "justification", "position", "ordre"];
+  const normaliser = (v) => String(v || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+  for (const c of noeud.champs || []) {
+    const code = normaliser(c.cle);
+    const cle = clesStyle.find((k) => `DESIGN${normaliser(k)}` === code);
+    if (cle && c.valeur !== null) style[cle] = c.valeur;
+    else if (c.nature === "MEDIA" && /^\d{1,12}$/.test(String(c.valeur || ""))) media.push({ id: String(c.valeur), titre: c.libelle });
+    else if (!code.startsWith("DESIGN")) champs[code] = c.valeur;
+  }
+  const type = String(noeud.rendu || "").toUpperCase();
+  const enfants = (noeud.enfants || []).map((x) => rendreNoeud(x, ctx, profondeur + 1)).join("");
+  const module = MODULES[type] ? MODULES[type]([{ champs, media }], ctx) : "";
+  const vide = !module && !enfants;
+  if (vide && !ctx.apercu) return "";
+  const h = habiller({ style, _ref: noeud.ref }, type, "m", ctx);
+  const tag = type === "SECTION" ? "section" : "div";
+  return `${h.enLigne}<${tag} class="dse-b-module dse-b-recursif ${h.identifiant}"${h.ref}>${module}${enfants}${vide ? `<span class="dse-b-vide">${escapeHtml(noeud.titre || "Élément vide")}</span>` : ""}</${tag}>`;
+}
+
 /*
  * Retourne "" si aucune composition Builder valide : la page conserve alors son rendu historique.
  * composition.style/responsive (ou page.style) : style du conteneur (Page, En-tete, Footer) ;
@@ -101,7 +128,9 @@ export function rendreBuilder(composition, ctx = {}) {
   let n = 0;
   const css = [];
   const contexte = { ...ctx, compteur: () => ++n, css };
-  const html = (composition.sections || []).map((s) => rendreSection(s, contexte)).filter(Boolean).join("");
+  const html = composition.noeuds
+    ? composition.noeuds.map((x) => rendreNoeud(x, contexte)).join("")
+    : (composition.sections || []).map((s) => rendreSection(s, contexte)).filter(Boolean).join("");
   if (!html) return "";
   const racine = composition.style || composition.responsive ? composition : composition.page || {};
   const type = String(ctx.typeConteneur || "PAGE").toUpperCase();

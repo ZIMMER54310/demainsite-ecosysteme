@@ -38,7 +38,8 @@ const statuts = require("../shared/statut-sites");
     courant = "b";
     assert.ok((await statuts.construire(d, { domaine: "site.example.test", statut: vue.statuts[1].ref }, g)).aucunChangement);
     ecriture.etatStructureJournal = async () => ({ disponible: false, raison: "Journal indisponible" });
-    assert.ok((await statuts.construire(d, { domaine: "site.example.test", statut: vue.statuts[0].ref }, g)).refus);
+    assert.ok((await statuts.construire(d, { domaine: "site.example.test", statut: vue.statuts[0].ref }, g)).op,
+      "une panne de journal ne bloque pas le changement de statut");
     const ui = await import("../../modules/cockpit/cockpit.js");
     const html = ui.rendreListeSites({ fonctions: ["sites"] }, { peutChangerStatut: true, elements: [
       { nom: "Site", acces: "alias.example.test", domaine: "site.example.test", statut: { titre: "Futur", actif: false } }] });

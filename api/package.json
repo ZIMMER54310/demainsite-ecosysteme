@@ -24,7 +24,7 @@
     "test:catalogue": "node tests/catalogue.js",
     "provision:sharepoint-production": "node tools/provision-sharepoint-production.js",
     "provision:dse-builder": "node tools/provision-dse-builder.js",
-    "test:builder": "node tests/builder.js && node tests/constructeur.js"
+    "test:builder": "node tests/builder.js && node tests/constructeur.js && node tests/builder-recursif.js"
   },
   "engines": {
     "node": ">=22"

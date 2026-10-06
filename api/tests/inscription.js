@@ -49,8 +49,14 @@ const inscription = require("../auth/inscription");
   changer(dse, "obtenirJetonGraph", async () => "fake");
   changer(dse, "obtenirSiteGraph", async () => ({ id: "g" }));
   changer(dse, "collecter", async () => listes);
-  changer(dse, "chargerColonnesListe", async (_t, _s, l) => cols[l] || []);
-  changer(dse, "chargerItemsListe", async (_t, _s, l) => items[l] || []);
+  changer(dse, "chargerColonnesListe", async (_t, _s, l) => {
+    if (l === "OBJ-JRN") assert.fail("Une panne du schéma journal ne doit pas atteindre l'inscription");
+    return cols[l] || [];
+  });
+  changer(dse, "chargerItemsListe", async (_t, _s, l) => {
+    if (l === "OBJ-JRN") assert.fail("Le journal ne doit pas être lu par l'inscription");
+    return items[l] || [];
+  });
   changer(dse, "graphSansCache", async (_t, chemin) => {
     const m = /\/lists\/([^/]+)\/items(?:\/([^/?]+))?/.exec(chemin);
     return m[2] ? items[m[1]].find((i) => i.id === m[2]) : { value: items[m[1]] };
@@ -59,6 +65,7 @@ const inscription = require("../auth/inscription");
   changer(dse, "graphEcriture", async (_t, methode, chemin, corps) => {
     assert.strictEqual(methode, "POST");
     const l = /\/lists\/([^/]+)\/items/.exec(chemin)[1];
+    if (l === "OBJ-JRN") assert.fail("Le journal ne doit pas être écrit par l'inscription");
     if (l === "OBJ-ACCES-COMMUN" && interruptionCommun) {
       interruptionCommun = false;
       throw new Error("Interruption commune simulée");
@@ -98,7 +105,7 @@ const inscription = require("../auth/inscription");
     assert.strictEqual(items["OBJ-UTILISATEUR"][0].fields.KLookupId, "k");
     assert.strictEqual(items["OBJ-SITE-PUBLIC"][1].fields.KLookupId, "proprietaire-dse");
     assert.strictEqual(await inscription.apresAuthentification(id, "dseco.fr"), true, "la connexion d'un utilisateur reconnu reste possible dans le cockpit commun");
-    assert.ok(items["OBJ-JRN"].some((i) => i.fields.ACTION === "INSCRIPTION-AUTORISEE"));
+    assert.strictEqual(items["OBJ-JRN"].length, 0, "inscription sans lecture/ecriture du journal");
     const replay = await inscription.inscrire(id, "client.example.test", true);
     assert.strictEqual(replay.donnees.deja, true);
     const total = items["OBJ-JRN"].length;
@@ -137,11 +144,11 @@ const inscription = require("../auth/inscription");
     items["OBJ-ACCES-COMMUN"][0].fields.VLookupId = "non";
     assert.strictEqual((await inscription.inscrire(id, "client.example.test", true)).status, 502);
     assert.strictEqual(items["OBJ-ACCES-COMMUN"].length, 1);
-    assert.strictEqual(items["OBJ-JRN"].at(-1).fields.ACTION, "ERREUR");
+    assert.strictEqual(items["OBJ-JRN"].length, 0);
     items["OBJ-ACCES-COMMUN"][0].fields.VLookupId = "yes";
     const interdit = await inscription.inscrire({ ...id, sujet: "intrus" }, "client.example.test", true);
     assert.strictEqual(interdit.status, 403);
-    assert.strictEqual(items["OBJ-JRN"].at(-1).fields.STATUTJRN, "REFUS");
+    assert.strictEqual(items["OBJ-JRN"].length, 0);
     assert.strictEqual(items["OBJ-UTILISATEUR-SITE"].length, 1);
     items["OBJ-UTILISATEUR"][0].fields.KLookupId = "autre-client";
     assert.strictEqual((await inscription.inscrire(id, "client.example.test", true)).status, 403);
@@ -164,5 +171,5 @@ const inscription = require("../auth/inscription");
       if (["donneesDroits", "droitsPour"].includes(cle)) droits[cle] = valeur; else dse[cle] = valeur;
     }
   }
-  console.log("Inscription autorisee, confirmation, egalite clients, journal REFUS et anti-doublon OK (Graph simule, aucune donnee reelle creee)");
+  console.log("Inscription autorisee sans journal, confirmation, egalite clients, refus et anti-doublon OK (Graph simule, aucune donnee reelle creee)");
 })().catch((e) => { console.error(e); process.exitCode = 1; });

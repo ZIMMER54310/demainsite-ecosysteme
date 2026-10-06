@@ -14,6 +14,7 @@ const crypto = require("crypto");
 const dse = require("./dse");
 const ecriture = require("./ecriture");
 const B = require("./builder");
+const R = require("./builder-recursif");
 const { champ, relations, cleChamp } = require("./catalogue");
 
 const SEL = crypto.randomBytes(32);
@@ -123,8 +124,11 @@ function noeud(d, type, el) {
   return base;
 }
 
-function arbre(d, type, el) {
+function arbre(d, type, el, perimetre) {
+  const root = R.trouverRacine(d, siteDuConteneur({ el }), type, el.id);
   return { ref: ref(type, el.id), type, titre: titreDe(el), etat: etat(el),
+    ...(root ? { generique: R.arbre(d, root, { reference: (id, sorte) => ref(`builder${sorte}`, id),
+      mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetre)) }) } : {}),
     sections: enfantsDe(d, type, el).map((s) => noeud(d, "section", s)) };
 }
 
@@ -168,6 +172,15 @@ function vue(d, perimetre) {
   const logo = (d.logos || []).filter((l) => perimetre.sites.has(rel(l, "OBJ-SITE")?.id)).sort((a, b) => Number(B.publiable(b)) - Number(B.publiable(a)))[0] || null;
   const modeles = d.modeles || [];
   return {
+    builder: {
+      configure: Boolean((d.builderTypes || []).some(R.actif) && (d.builderRegles || []).some(R.actif)),
+      types: (d.builderTypes || []).filter(R.actif).map((t) => ({
+        ref: ref("buildertype", t.id), titre: R.titre(t), conteneur: R.f(t, "EST-CONTENEUR") === true,
+        racine: R.f(t, "EST-RACINE") === true
+      })),
+      message: (d.builderTypes || []).some(R.actif) ? null :
+        "Les types, règles et champs génériques Builder sont encore vides dans SharePoint. Le constructeur existant reste disponible."
+    },
     entetes: conteneur("entete"),
     footers: conteneur("footer"),
     pages: pages.map((p) => ({
@@ -205,7 +218,7 @@ function vue(d, perimetre) {
 /* Apercu (ordinateur / tablette / mobile) : meme moteur que le public, brouillons inclus, elements desactives exclus.
  * Chaque element recoit sa reference signee (_ref) pour le reperage du panneau Design ; aucun ID natif n'est expose. */
 const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE" };
-function apercu(d, siteId, type, el, appareil) {
+function apercu(d, siteId, type, el, appareil, perimetre) {
   const site = { id: String(siteId) };
   const ctx = B.contexteComposition(d, site);
   const options = { appareil: B.APPAREILS.includes(String(appareil || "").toUpperCase()) ? String(appareil).toUpperCase() : null, visible: visibleApercu, ctx };
@@ -213,7 +226,13 @@ function apercu(d, siteId, type, el, appareil) {
   const sections = (t, e) => B.composerSections(d, site, enfantsDe(d, t, e), options).map((s) => ({ ...marquer("section", s),
     lignes: s.lignes.map((l) => ({ ...marquer("ligne", l), colonnes: l.colonnes.map((c) => ({ ...marquer("colonne", c),
       modules: c.modules.map((m) => marquer("module", m)) })) })) }));
-  const zone = (t, e) => ({ sections: sections(t, e), ...B.styleElement(ctx, TYPE_CONTENEUR[t], e), _ref: ref(t, e.id) });
+  const zone = (t, e) => {
+    const root = R.trouverRacine(d, siteId, t, e.id);
+    return { sections: root ? [] : sections(t, e),
+      ...(root ? { noeuds: [R.arbre(d, root, { reference: (id, sorte) => ref(`builder${sorte}`, id),
+        mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetre)) })] } : {}),
+      ...B.styleElement(ctx, TYPE_CONTENEUR[t], e), _ref: ref(t, e.id) };
+  };
   const theme = B.themeGlobal(ctx);
   if (type !== "page") return { mode: "builder", ...zone(type, el), theme };
   const lie = (t) => {
@@ -536,8 +555,6 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
   const p = params && typeof params === "object" ? params : {};
   const g = await ecriture.contexteGraph();
   const w = new Ecrivain(g);
-  const journalOk = await ecriture.etatStructureJournal(g);
-  if (!journalOk.disponible) return { refus: journalOk.raison };
 
   // Element cible + controle de site (le site de l'element doit appartenir au perimetre demande).
   const cible = (types, reference) => {
@@ -546,14 +563,40 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
     const rac = racine(d, r.type, r.el);
     if (!rac || !perimetre.sites.has(siteDuConteneur(rac))) return { refus: "Élément hors de votre périmètre." };
     if (!perimetre.peut(FONCTION_PAR_RACINE[rac.type])) return { refus: "Action non autorisée pour votre profil." };
+    if (!["design.lire", "contenu.formulaire"].includes(action)) {
+      let courant = r;
+      while (courant?.el) {
+        if (/^OUI/.test(cleChamp(rel(courant.el, "OBJ-VEROUILLE")?.titre))) return { refus: "Élément ou parent verrouillé." };
+        courant = parent(d, courant.type, courant.el);
+      }
+    }
     return { ...r, racine: rac };
   };
   const res = (message, details = {}) => ({ message, nouveau: details, crees: w.crees });
 
+  if (action.startsWith("builder.")) {
+    let parametres = p;
+    if (action === "builder.initialiser") {
+      const c = cible(["page", "entete", "footer"], p.ref);
+      if (c.refus) return c;
+      if (enfantsDe(d, c.type, c.el).length) return { refus: "Le conteneur possède une composition existante : aucune migration automatique." };
+      parametres = { ...p, type: c.type, id: c.el.id, titre: titreDe(c.el) };
+    }
+    return require("./builder-recursif-ecriture").executer({
+      d, w, p: parametres, action, siteId,
+      reference: (id, sorte) => ref(`builder${sorte}`, id),
+      autoriser: (type, id) => {
+        const c = cible([type], ref(type, id));
+        return !c.refus;
+      },
+      mediaAutorise: (m) => mediaAutorise(m, perimetre)
+    });
+  }
+
   switch (action) {
     case "conteneur.creer": {
       const type = String(p.type || "");
-      if (!["entete", "footer"].includes(type)) return { refus: "Type de conteneur non autorisé." };
+      if (!["entete", "footer", "page"].includes(type)) return { refus: "Type de conteneur non autorisé." };
       if (!perimetre.peut(CONTENEURS[type].fonction)) return { refus: "Action non autorisée pour votre profil." };
       const titre = String(p.titre || "").trim().slice(0, 255);
       if (!titre) return { erreur: "Le titre est obligatoire.", status: 400 };
@@ -561,6 +604,15 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
       const nSite = await w.lookup(def.liste, "OBJ-SITE-PUBLIC");
       if (!nSite) return { refus: "Relation au site indisponible." };
       const champs = { Title: titre, [nSite]: String(siteId), ...(await w.etats(def.liste, "brouillon")) };
+      if (type === "page") {
+        const url = String(p.url || "").trim();
+        if (!/^\/[A-Za-z0-9/_-]*$/.test(url) || (d.pages || []).some((x) => rels(x, "OBJ-SITE-PUBLIC").some((s) => s.id === String(siteId)) && texte(x, "URL") === url)) {
+          return { erreur: "Adresse de page invalide ou déjà utilisée sur ce site.", status: 400 };
+        }
+        const nUrl = await w.simple(def.liste, "URL");
+        if (!nUrl) return { refus: "Colonne URL indisponible." };
+        champs[nUrl] = url;
+      }
       const nNote = await w.simple(def.liste, "NOTE-COURTE");
       if (nNote && p.noteCourte) champs[nNote] = String(p.noteCourte).slice(0, 255);
       const id = await w.creer(def.liste, champs);
@@ -582,6 +634,7 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
     case "conteneur.dupliquer": {
       const c = cible(["entete", "footer"], p.ref);
       if (c.refus) return c;
+      if (R.trouverRacine(d, siteId, c.type, c.el.id)) return { refus: "La duplication d'une composition générique n'est pas encore disponible." };
       const def = CONTENEURS[c.type];
       const extra = await w.copiables(def.liste, c.el, ["OBJ-SITE-PUBLIC"]);
       const nSite = await w.lookup(def.liste, "OBJ-SITE-PUBLIC");
@@ -598,6 +651,16 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
       if (action === "conteneur.desactiver") {
         await w.maj(def.liste, c.el.id, await w.etats(def.liste, "inactif"));
         return res(`${def.libelle} désactivé (aucune suppression).`);
+      }
+      const root = R.trouverRacine(d, siteId, c.type, c.el.id);
+      if (root) {
+        const resultat = await require("./builder-recursif-ecriture").executer({
+          d, w, p: { ref: ref("builderelement", root.id) }, action: "builder.publier", siteId,
+          reference: (id, sorte) => ref(`builder${sorte}`, id),
+          autoriser: (t, id) => !cible([t], ref(t, id)).refus,
+          mediaAutorise: (m) => mediaAutorise(m, perimetre)
+        });
+        if (resultat.refus) return resultat;
       }
       // Valider et activer : le conteneur et ses elements encore en brouillon (les elements desactives restent desactives).
       await w.maj(def.liste, c.el.id, await w.etats(def.liste, "actif"));
@@ -713,6 +776,29 @@ async function executer({ d, perimetre, siteId, action, params = {} }) {
       const def = NIVEAUX[c.type];
       const nOrdre = await w.simple(def.liste, "ORDRE-AFFICHAGE");
       if (!nOrdre) return { refus: "Ordre d'affichage indisponible." };
+      if (p.parent) {
+        const typeParent = c.type === "section" ? c.racine.type : def.parentType;
+        const dest = cible([typeParent], p.parent);
+        if (dest.refus) return dest;
+        if (dest.racine.type !== c.racine.type || dest.racine.el.id !== c.racine.el.id) return { refus: "Déplacement limité à la même racine." };
+        const typeDef = (code) => (d.builderTypes || []).find((x) => R.actif(x) && String(R.f(x, "CLE-RENDU") || "").toUpperCase() === code);
+        const pt = typeDef(typeParent.toUpperCase());
+        const et = typeDef(c.type.toUpperCase());
+        if (pt && et && !R.regleDe(d, pt.id, et.id)) return { refus: "Imbrication interdite par SharePoint." };
+        const freres = enfantsDe(d, dest.type, dest.el).filter((x) => x.id !== c.el.id);
+        const position = p.avant ? freres.findIndex((x) => ref(c.type, x.id) === p.avant) : freres.length;
+        if (position < 0) return { refus: "Position de destination inconnue." };
+        const nParent = await w.lookup(def.liste, c.type === "section" ? CONTENEURS[dest.type].relation : def.parent);
+        if (!nParent) return { refus: "Relation au parent indisponible." };
+        freres.splice(position, 0, c.el);
+        await w.maj(def.liste, c.el.id, { [nParent]: String(dest.el.id) });
+        for (const [i, el] of freres.entries()) {
+          await w.maj(def.liste, el.id, { [nOrdre]: (i + 1) * 10 });
+          if (c.type === "module") await synchroniserUtilisations(w, d, el.id, {
+            "OBJ-COLONNE-SITE": String(dest.el.id), "ORDRE-AFFICHAGE": (i + 1) * 10 });
+        }
+        return res("Élément déplacé ; ordre et utilisations actualisés.");
+      }
       if (c.type === "module" && p.colonne) {
         const dest = cible(["colonne"], p.colonne);
         if (dest.refus) return dest;

@@ -422,7 +422,7 @@ export function rendreApercu(r) {
 
 export function rendreResultatEcriture(r) {
   if (!r || r.erreur) return `<div class="card cockpit-resultat erreur"><p>⚠ ${e(r?.erreur || "L'enregistrement n'a pas abouti.")}</p></div>`;
-  const journal = r.journal ? (r.journal.enregistre ? "✅ Modification journalisée." : "⚠ La modification est enregistrée mais n'a pas pu être journalisée.") : "";
+  const journal = "";
   return `<div class="card cockpit-resultat ok"><p>✅ ${e(r.message || (r.deja ? "Modification déjà enregistrée." : "Modification enregistrée et vérifiée."))}</p>
     ${journal ? `<p class="muted">${journal}</p>` : ""}${r.journal?.erreur ? `<p>${e(r.journal.erreur)}</p>` : ""}</div>`;
 }
@@ -475,7 +475,7 @@ export function rendreAdministration(moi, t) {
 
 export function rendreUtilisateurs(moi, d) {
   const incidents = d.incidents ? `<section class="card"><h2>Incidents d’accès</h2>
-    ${!d.incidents.politiqueDisponible ? "<p>Blocage automatique en attente de configuration de la politique SharePoint. Aucune durée inventée.</p>" : ""}
+    ${d.incidents.desactive ? `<p>${e(d.incidents.message)}</p>` : !d.incidents.politiqueDisponible ? "<p>Blocage automatique en attente de configuration de la politique SharePoint. Aucune durée inventée.</p>" : ""}
     <p data-resultat-incident role="status"></p>
     ${(d.incidents.incidents || []).map((i) => `<details><summary>${e(i.utilisateur)} — ${e(i.domaine)} — ${e({ OUVERT: "OUVERT", BLOQUE: "BLOQUÉ", RESOLU: "RÉSOLU" }[i.etat] || i.etat)} (${i.nombre} refus) · Examiner</summary>
       <p>Motif : ${e(i.motif)}<br>Premier refus : ${e(i.premier)}<br>Dernier refus : ${e(i.dernier)}<br>Journal : ${e(i.journalId)}</p>

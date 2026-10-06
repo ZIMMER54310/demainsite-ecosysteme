@@ -296,6 +296,23 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .constructeur-dialogue form label { display: grid; gap: 6px; }
 .constructeur-dialogue input, .constructeur-dialogue textarea { padding: 8px; font: inherit; width: 100%; }
 .constructeur-design-zone { display: grid; gap: 16px; align-items: start; }
+.constructeur--plein-ecran { position: fixed; inset: 0; z-index: 1000; overflow: auto; background: var(--bg, #f5f6fa); padding: 12px; }
+.constructeur--plein-ecran > .cockpit-site-titre { display: none; }
+.constructeur-barre-visuelle { position: sticky; top: -12px; z-index: 2; padding: 12px; background: var(--surface, #fff); border-bottom: 1px solid var(--line, #dde); display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.constructeur-espace-visuel { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 12px; align-items: start; }
+.constructeur-espace-visuel > aside { max-height: calc(100vh - 140px); overflow: auto; position: sticky; top: 90px; }
+.constructeur-espace-visuel .constructeur-design-zone--ouverte { grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); }
+.constructeur-espace-visuel [data-c-panneau] { grid-column: 2; grid-row: 1; }
+.constructeur-espace-visuel .constructeur-apercus { grid-column: 1; grid-row: 1; }
+.constructeur-noeud-entete[draggable="true"] { cursor: grab; }
+.constructeur--apercu-seul .constructeur-espace-visuel { grid-template-columns: 1fr; }
+.constructeur--apercu-seul .constructeur-espace-visuel > aside, .constructeur--apercu-seul [data-c-panneau] { display: none; }
+.constructeur--apercu-seul .constructeur-design-zone--ouverte { grid-template-columns: 1fr; }
+@media (max-width: 900px) {
+  .constructeur-espace-visuel, .constructeur-espace-visuel .constructeur-design-zone--ouverte { grid-template-columns: 1fr; }
+  .constructeur-espace-visuel > aside { position: static; max-height: 35vh; }
+  .constructeur-espace-visuel [data-c-panneau], .constructeur-espace-visuel .constructeur-apercus { grid-column: 1; grid-row: auto; }
+}
 .constructeur-design-zone--ouverte { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); }
 .constructeur-apercu-cadre { overflow: hidden; border: 1px solid var(--line, #dde); border-radius: 8px; background: #f6f7f9; min-height: 300px; }
 .constructeur-apercu-cadre .constructeur-apercu { border: 0; border-radius: 0; display: block; }

@@ -35,7 +35,7 @@ nouvel onglet, independamment du statut. L'action Ouvrir reste la fiche cockpit.
 La modification de statut est reservee a la portee TOUS, niveau ADMINISTRATION et
 fonctions administration/sites. La popup lit OBJ-SITES-STATUT via des references opaques,
 presente le statut actuel, puis reutilise apercu/confirmation admin, ETag, relecture
-et OBJ-JRN. La relation Lookup existante d'OBJ-SITE-PUBLIC est resolue par la liste cible.
+sans dependance au journal. La relation Lookup existante d'OBJ-SITE-PUBLIC est resolue par la liste cible.
 La confirmation revalide la cible et le statut ; les caches publics sont invalides.
 La liste, ses compteurs et filtres sont relus apres succes sans recharger la page.
 La page publique de situation utilise une disposition verticale en-tete/carte/footer.
@@ -50,34 +50,19 @@ cockpit du domaine courant, jamais un autre site choisi par defaut.
 ou bloque. Une erreur API laisse le site public utilisable et n'incremente aucun incident.
 Les acces communs permettent l'accueil du cockpit, sans droit metier sur le site commun.
 
-Les refus DSE explicites des routes cockpit et des inscriptions apres authentification
-sont journalises sous forme d'incidents dans OBJ-JRN, sans nouvelle structure.
-Le journal constitue la source durable, y compris apres redemarrage. Les decisions
-Super Administrateur ajoutent des evenements ; aucun incident n'est supprime.
-Les lectures de statut, erreurs techniques, expiration de session, annulation Microsoft
-et erreurs de mot de passe Microsoft ne sont pas des refus DSE.
-
-Sans politique SharePoint, les refus sont visibles pour examen, mais le compteur dans
-une fenetre et le verrouillage automatique ne sont PAS actives. Aucune duree n'est inventee.
-Le moteur est prepare pour une liste OBJ-POLITIQUE-ACCES, un seul element actif/valide,
-Lookups OBJ-ACTIF/OBJ-VALIDE et nombres FENETREREFUSMINUTES et BLOCAGEMINUTES strictement
-positifs. Cette liste n'est ni creee ni modifiee par le code. Apres configuration reelle :
-trois refus dans cette fenetre bloquent le cockpit, sans bloquer le site public.
-L'expiration enregistree derive de la politique au moment du blocage ; un blocage maintenu
-par le Super Administrateur n'expire pas automatiquement. Un administrateur ne peut
-pas maintenir son propre blocage. Une autre autorite globale doit gerer un compte bloque.
+Le blocage automatique et les decisions d'incident adosses au journal sont desactives
+par decision explicite du responsable. Les anciens incidents et leurs donnees restent
+intacts dans SharePoint, mais ne servent plus a bloquer une session.
+L'authentification Entra, les droits dynamiques, les perimetres client/site, les controles
+CSRF et la limitation technique des requetes restent en place.
 
 `GET /cockpit/incidents` et `POST /cockpit/incidents/decision` sont reserves a la portee
 TOUS, niveau ADMINISTRATION, fonction utilisateurs. La vue est dans Utilisateurs et acces.
-Decisions : reactiver apres verification ou maintenir ; journalisation obligatoire.
+La lecture signale explicitement la desactivation ; aucune decision historique n'est ecrite.
 Les verrous et caches correspondent au processus Node unique de production : une
 architecture multi-processus requerrait un verrou partage avant activation.
 
-Une seule ALERTE-EN-ATTENTE par incident est inscrite, destinataires resolus depuis les
-utilisateurs actifs/valides et les politiques de roles globaux SharePoint. Aucun email
-n'est envoye : aucun transport n'est configure. L'alerte ne contient ni identite Entra
-en clair ni cookie/jeton/secret ; elle porte un identifiant masque et un lien relatif
-vers une vue protegee. La mise en place d'un transport d'email reste necessaire.
+Aucune alerte d'incident ni notification de reactivation n'est inscrite automatiquement.
 
 Les POST cockpit exigent une origine identique et X-DSE-CSRF lie a la session, obtenu
 par `/acces/status`. Les confirmations d'ecriture signees restent obligatoires.
@@ -96,7 +81,7 @@ Les transactions en cours expirent en cas de redemarrage, sans incident de secur
 
 ENTRAOBJECTID est prioritaire. L'email ne sert qu'a migrer un compte historique unique
 non lie, apres authentification Microsoft reussie : PATCH conditionnel ETag, relecture,
-journalisation, sans changer role/client/sites. Un compte deja lie a un autre objet Entra
+sans journalisation, sans changer role/client/sites. Un compte deja lie a un autre objet Entra
 ne peut pas etre repris par son email. Le point de connexion resout le domaine HTTP reel
 depuis OBJ-NOM DE DOMAINE -> OBJSITE -> client, pas un client transmis par le navigateur.
 
@@ -157,12 +142,45 @@ rejoues automatiquement sur 503 : une relecture est necessaire avant un nouvel a
 L'anti-doublon suppose le service Node unique actuel ; avant un deploiement multi-processus,
 une contrainte d'unicite SharePoint ou un verrou distribue sera necessaire.
 
-OBJ-JRN est prepare avec STATUTJRN et CLEIDEMPOTENCE. Le Lookup historique STATUT
-facultatif est ignore, meme si sa cible est orpheline : aucun champ STATUT n'est envoye.
-S'il est obligatoire ou si Graph refuse le journal, le resultat affiche explicitement le blocage.
-Aucune valeur artificielle n'est envoyee, aucun nouvel essai sans STATUTJRN n'est effectue.
-Une modification deja effectuee n'est pas presentee comme annulee en cas d'echec du journal.
-Les historiques presentes a un administrateur client sont limites aux sites de son perimetre.
+OBJ-JRN n'est plus consulte ni ecrit dans les chemins applicatifs. La liste et ses
+donnees ne sont pas supprimees. Les adaptateurs historiques renvoient un etat explicite
+de desactivation, jamais une fausse confirmation de journalisation.
+Les erreurs techniques serveur restent signalees. L'idempotence des commandes, les
+verrous et la relecture des donnees metier sont independants de ce journal.
+Les nouvelles sauvegardes de listes excluent OBJ-JRN ; les sauvegardes deja presentes
+et la liste d'origine ne sont pas modifiees ni supprimees.
+
+### Constructeur visuel et modele recursif
+
+L'editeur s'ouvre en plein ecran avec barre d'actions, arbre a gauche, Canvas central
+et reglages a droite. Le Canvas partage le renderer public et change immediatement
+de largeur ordinateur/tablette/mobile. Selection et drag-and-drop sont disponibles
+dans l'arbre et le Canvas. Les retraits sont logiques et confirmes.
+Annuler/retablir et copier/coller concernent les reglages Design non enregistres de
+l'element selectionne ; les commandes structurelles sont enregistrees immediatement.
+La creation de pages utilise une URL unique au site et un etat brouillon.
+
+OBJ-BUILDER-TYPE, OBJ-BUILDER-ELEMENT, OBJ-BUILDER-REGLE-IMBRICATION,
+OBJ-BUILDER-CHAMP et OBJ-BUILDER-VALEUR sont lus via Graph.
+ELEMENT-PARENT et ELEMENT-RACINE utilisent les ID natifs ; les regles d'imbrication
+sont controlees par Lookup de type, avec refus des cycles, changements de site,
+racines ambigues et valeurs actives dupliquees. Le rendu public exige ACTIF et VALIDE.
+Le formulaire generique lit les libelles, natures et valeurs SharePoint ; le renderer
+traduit uniquement des cles techniques autorisees (CLE-RENDU, CODE-CHAMP).
+Les familles de champs utilisent les prefixes techniques DESIGN et AVANCE ; les autres
+champs sont des contenus. Aucun HTML/CSS arbitraire n'est execute.
+
+Une racine generique ne remplace jamais automatiquement une composition historique.
+Tant que les listes generiques restent vides, le constructeur actuel continue de
+fonctionner. Aucun type, regle, preset ou contenu fictif n'est initialise.
+Le schema actuel des valeurs n'a pas de Lookup appareil/etat : les surcharges
+responsive restent gerees par OBJ-STYLE-RESPONSIVE pour les elements historiques,
+pas encore par champ generique. Duplication generique et undo structurel restent
+a raccorder. La publication controle la composition et les champs obligatoires,
+puis valide les enfants avant la racine, avec relecture apres chaque ecriture.
+Les definitions Layout generiques peuvent traduire block/flex/grid, direction,
+retour ligne, alignement, justification, gap et nombre de colonnes via des valeurs
+CSS bornees. L'emplacement PascAra IA reste une popup facultative, sans service IA.
 
 `site-complet` agrege OBJ-SITE-PUBLIC avec menu, logo, entete, theme, SEO, pages, modules, contenus
 et OBJ-MEDIA en suivant les relations par **ID natifs SharePoint**.
@@ -273,7 +291,7 @@ Tests : `npm run test:catalogue`.
 
 `npm run provision:progression` inspecte les structures existantes sans écriture ;
 `npm run provision:progression -- --apply` réutilise une liste équivalente ou crée
-`OBJ-COCKPIT-PROGRESSION` vide, avec journalisation du provisionnement dans OBJ-JRN.
+`OBJ-COCKPIT-PROGRESSION` vide, sans dependance au journal.
 Aucune plage, couleur ou donnée métier n'est initialisée.
 La création du schéma via Graph nécessite une autorisation de gestion des listes.
 Si l'application Sites.Selected reçoit un refus 403, la création peut être effectuée
@@ -294,16 +312,8 @@ par un seuil ou une couleur métier par défaut : un message explicite accompagn
 l'affichage neutre. Une configuration invalide ou une panne ne supprime pas les
 informations de progression existantes.
 
-Les snapshots et versions des réglages observés sont journalisés dans OBJ-JRN
-(`CONFIGURATION-PROGRESSION` pour le snapshot, `REGLAGE-PROGRESSION` pour chaque
-version native, STATUTJRN + CLEIDEMPOTENCE, ancien STATUT non utilisé).
-Les modifications administratives directes dans SharePoint sont détectées à la
-prochaine lecture du cockpit, pas en temps réel. L'historique natif des éléments est
-relu pour journaliser aussi les versions intermédiaires disponibles, sans doublon.
-La conservation des versions doit rester activée dans SharePoint ; le moteur ne peut
-pas reconstituer des versions supprimées ou non conservées. Un historique indisponible
-produit un avertissement, sans annonce de journalisation réussie. Les erreurs sont affichées et
-retentées à la lecture suivante. Aucun mécanisme Azure n'est nécessaire.
+Les modifications administratives directes sont relues dans SharePoint au prochain
+chargement, sans lecture/ecriture du journal et sans duplication de l'historique natif.
 
 Les blocs Progression et Accès rapides utilisent des éléments HTML `details/summary`
 accessibles au clavier, fermés initialement. Un lien vers une section ouvre la

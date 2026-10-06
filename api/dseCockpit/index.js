@@ -31,14 +31,8 @@ function refuser(res, status, message) {
 }
 
 async function refuserEcriture(res, ctx, domaine, action, message) {
-  let enregistre = false;
-  try {
-    const g = await ecriture.contexteGraph();
-    const cible = await inscription.domaineContexte(g, domaine);
-    const j = await inscription.journal(g, ctx.identite, cible, action, "REFUS", message, ctx.droits.utilisateurId);
-    enregistre = j.ok;
-  } catch (e) { console.error("[DSE cockpit] journal refus", e.message); }
-  return repondre(res, 403, { succes: false, erreur: { message }, journal: { enregistre }, meta: meta() });
+  console.warn("[DSE cockpit] écriture refusée", action);
+  return refuser(res, 403, message);
 }
 
 async function contexteUtilisateur(req) {
@@ -439,9 +433,8 @@ async function inscrire(req, res) {
     if (!identite || identite.fournisseur !== "entra") return refuser(res, 401, "Connexion Microsoft requise.");
     if (Object.keys(req.body || {}).some((k) => k !== "confirmer") ||
       (Object.hasOwn(req.body || {}, "confirmer") && typeof req.body.confirmer !== "boolean")) {
-      const g = await ecriture.contexteGraph();
-      const j = await inscription.journal(g, identite, null, "INSCRIPTION-REFUSEE", "REFUS", "Paramètres d'attribution interdits.");
-      return repondre(res, 403, { succes: false, erreur: { message: "Aucune attribution de client, site ou rôle depuis le navigateur." }, journal: { enregistre: j.ok } });
+      console.warn("[DSE inscription] paramètres d'attribution interdits");
+      return refuser(res, 403, "Aucune attribution de client, site ou rôle depuis le navigateur.");
     }
     const domaine = req.hostname || String(req.get("host") || "").split(":")[0];
     const r = await inscription.inscrire(identite, domaine, req.body?.confirmer === true);
@@ -522,9 +515,9 @@ async function construireLire(req, res) {
       if (!r || !p.sites.has(String(C.siteDe(d, r.type, r.el)))) {
         return refuser(res, 404, "Élément introuvable dans ce site.");
       }
-      donnees.arbre = C.arbre(d, r.type, r.el);
+      donnees.arbre = C.arbre(d, r.type, r.el, p);
       const { zone } = require("../dsePageBuilder");
-      const apercu = C.apercu(d, p.info.id, r.type, r.el, req.query.appareil);
+      const apercu = C.apercu(d, p.info.id, r.type, r.el, req.query.appareil, p);
       const z = (x) => (x ? { ...zone(x), _ref: x._ref } : null);
       donnees.apercu = { mode: apercu.mode, ...z(apercu), theme: apercu.theme || {}, entete: z(apercu.entete), footer: z(apercu.footer) };
     }
@@ -538,7 +531,7 @@ async function construireLire(req, res) {
 
 /*
  * Action du constructeur : origine + session + perimetre + droit d'ecriture recontroles a chaque appel,
- * un seul traitement simultane par site, idempotence (cle cliente + journal OBJ-JRN), journalisation systematique.
+ * un seul traitement simultane par site, idempotence par cle cliente, sans dependance au journal.
  */
 async function construireAction(req, res) {
   let verrou = null;
@@ -560,7 +553,10 @@ async function construireAction(req, res) {
       if (!/^[A-Za-z0-9-]{16,80}$/.test(cleClient)) return refuser(res, 400, "Requête incomplète.");
       if (constructeurExecutees.has(cle)) return repondreResultat(res, { ...constructeurExecutees.get(cle), deja: true });
       verrou = String(p.info.id);
-      if (constructeurEnCours.has(verrou)) return refuser(res, 409, "Une autre modification de ce site est en cours. Merci de réessayer.");
+      if (constructeurEnCours.has(verrou)) {
+        verrou = null;
+        return refuser(res, 409, "Une autre modification de ce site est en cours. Merci de réessayer.");
+      }
       constructeurEnCours.set(verrou, cle);
     }
 
@@ -581,18 +577,11 @@ async function construireAction(req, res) {
     if (lecture) return repondreResultat(res, r);
     if (r.refus) return refuserEcriture(res, ctx, domaine, "CONSTRUCTEUR-REFUS", r.refus);
 
-    const g = await ecriture.contexteGraph();
     const succes = !r.erreur;
-    const journal = await ecriture.journaliser(g, {
-      cle, action: `Constructeur : ${action}`, nom: `${p.info.titre || domaine} · ${action}`,
-      ancien: {}, nouveau: { crees: r.crees || [], ...(r.nouveau || {}) },
-      notes: `Acteur : ${acteur} | Site : ${p.info.id} | ${r.message || r.erreur || ""}`,
-      succes, contexte: { domaine, site: String(p.info.id) }
-    });
     ecriture.invaliderCaches();
     const sortie = succes
-      ? { message: r.message, nouveau: r.nouveau || {}, journal: { enregistre: journal.ok } }
-      : { erreur: r.erreur, status: r.status, journal: { enregistre: journal.ok } };
+      ? { message: r.message, nouveau: r.nouveau || {} }
+      : { erreur: r.erreur, status: r.status };
     if (succes) constructeurExecutees.set(cle, sortie);
     if (constructeurExecutees.size > 500) constructeurExecutees.delete(constructeurExecutees.keys().next().value);
     return repondreResultat(res, sortie);
@@ -606,7 +595,7 @@ async function construireAction(req, res) {
 
 /*
  * Import d'un media (corps binaire) : memes garanties que les actions du constructeur
- * (origine, CSRF via acces.proteger, perimetre, droit d'ecriture, verrou par site, idempotence, OBJ-JRN).
+ * (origine, CSRF via acces.proteger, perimetre, droit d'ecriture, verrou par site, idempotence).
  */
 async function mediasTeleverser(req, res) {
   let verrou = null;
@@ -639,17 +628,11 @@ async function mediasTeleverser(req, res) {
     }
     if (r.refus) return refuserEcriture(res, ctx, domaine, "MEDIA-IMPORT-REFUS", r.refus);
     const succes = !r.erreur;
-    const journal = await ecriture.journaliser(g, {
-      cle, action: "Médias : import", nom: `${p.info.titre || domaine} · import média`,
-      ancien: {}, nouveau: { crees: r.crees || [], ...(r.nouveau || {}) },
-      notes: `Acteur : ${acteur} | Site : ${p.info.id} | ${r.message || r.erreur || ""}`,
-      succes, contexte: { domaine, site: String(p.info.id) }
-    });
     ecriture.invaliderCaches();
     require("../shared/builder-source").viderCache();
     const sortie = succes
-      ? { message: r.message, nouveau: r.nouveau || {}, journal: { enregistre: journal.ok } }
-      : { erreur: r.erreur, status: r.status, journal: { enregistre: journal.ok } };
+      ? { message: r.message, nouveau: r.nouveau || {} }
+      : { erreur: r.erreur, status: r.status };
     if (succes) constructeurExecutees.set(cle, sortie);
     if (constructeurExecutees.size > 500) constructeurExecutees.delete(constructeurExecutees.keys().next().value);
     return repondreResultat(res, sortie);

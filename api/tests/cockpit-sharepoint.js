@@ -152,28 +152,28 @@ const admin = require("../shared/administration");
   let journaux = 0;
   remplacer("obtenirJetonGraph", async () => "fake");
   remplacer("obtenirSiteGraph", async () => ({ id: "g" }));
-  remplacer("collecter", async (_t, chemin) => chemin.includes("/lists/OBJ-JRN/items") ? [
-    { fields: { Title: "DSE-COCKPIT-A", NOM: "Site autorise", NOTES: "Site 10 (A)" } },
-    { fields: { Title: "DSE-COCKPIT-B", NOM: "Autre client", NOTES: "Site 20 (B)" } },
-    { fields: { Title: "DSE-COCKPIT-C", NOM: "Administration globale", NOTES: "Utilisateur prive" } }
-  ] : listes);
-  remplacer("chargerColonnesListe", async (_t, _s, l) => cols[l] || []);
-  remplacer("chargerItemsListe", async (_t, _s, l) => items[l] || []);
+  remplacer("collecter", async (_t, chemin) => {
+    if (chemin.includes("/lists/OBJ-JRN/")) assert.fail("Le journal indisponible ne doit pas être consulté");
+    return listes;
+  });
+  remplacer("chargerColonnesListe", async (_t, _s, l) => {
+    if (l === "OBJ-JRN") assert.fail("Le schéma du journal ne doit pas être consulté");
+    return cols[l] || [];
+  });
+  remplacer("chargerItemsListe", async (_t, _s, l) => {
+    if (l === "OBJ-JRN") assert.fail("Le journal ne doit pas être consulté");
+    return items[l] || [];
+  });
   remplacer("graphSansCache", async (_t, chemin) => {
     const m = /\/lists\/([^/]+)\/items(?:\/([^/?]+))?/.exec(chemin);
     if (!m) throw new Error("Chemin de test inconnu");
+    if (m[1] === "OBJ-JRN") assert.fail("Le journal ne doit pas être consulté");
     return m[2] ? items[m[1]].find((i) => i.id === m[2]) : { value: items[m[1]] || [] };
   });
   remplacer("graphEcriture", async (_t, methode, chemin, corps, etag) => {
     const m = /\/lists\/([^/]+)\/items(?:\/([^/]+))?/.exec(chemin);
     if (m[1] === "OBJ-JRN") {
-      assert.strictEqual(cols["OBJ-JRN"][0].required, false, "aucune ecriture du journal historique obligatoire");
-      assert.ok(!Object.keys(corps.fields).some((k) => /^(STATUT|STATUTLookupId|TYPEEVENEMENTREF|SOURCEREF|RESULTATREF)$/.test(k)));
-      assert.strictEqual(corps.fields.STATUTJRN, "SUCCÈS");
-      assert.ok(corps.fields.CLEIDEMPOTENCE);
-      journaux++;
-      items["OBJ-JRN"].push({ id: String(journaux), fields: corps.fields });
-      return { id: String(journaux), fields: corps.fields };
+      assert.fail("Le journal indisponible ne doit pas être écrit");
     }
     if (methode === "POST") {
       const item = { id: String(++creations + 1), eTag: "test-etag", fields: { ...corps.fields } };
@@ -186,8 +186,8 @@ const admin = require("../shared/administration");
   });
   try {
     const historique = await admin._test.ecrituresRecentes({ token: "fake", siteGraphId: "g", listes }, d);
-    assert.strictEqual(historique.liste.length, 1);
-    assert.strictEqual(historique.liste[0].objet, "Site autorise");
+    assert.strictEqual(historique.liste.length, 0);
+    assert.strictEqual(historique.desactive, true);
     const identite = { fournisseur: "entra", sujet: "seo-user" };
     const lecture = await edition.lire({ composant: "seo", siteId: "10" });
     assert.ok(lecture.creation && lecture.champs.every((c) => c.valeur === ""));
@@ -203,7 +203,7 @@ const admin = require("../shared/administration");
     assert.ok(!Object.hasOwn(op.champs, "OBJ_x002d_SITE_x002d_PUBLICLookupId"));
     const exe = (jeton) => ecriture.executer({ identite, jeton, revalider: async () => null, acteur: "recette" });
     const r = await exe(p.jeton);
-    assert.ok(r.succes && r.relecture === "conforme" && r.journal.enregistre === false);
+    assert.ok(r.succes && r.relecture === "conforme" && r.journal === null);
     assert.ok((await exe(p.jeton)).deja);
     assert.strictEqual((await exe(p2.jeton)).status, 409);
     assert.strictEqual(creations, 1);
@@ -238,17 +238,17 @@ const admin = require("../shared/administration");
     items["OBJ-SEO"].pop();
     const modificationJournalisee = await edition.preparer({ ...args, valeurs: { [cle]: "Titre avec journal" } });
     const resultat = await exe(modificationJournalisee.jeton);
-    assert.ok(resultat.succes && resultat.journal.enregistre);
+    assert.ok(resultat.succes && resultat.journal === null);
     assert.strictEqual((await exe(modificationJournalisee.jeton)).deja, true);
-    assert.strictEqual(journaux, 1, "rejeu de confirmation sans doublon journal");
+    assert.strictEqual(journaux, 0, "rejeu sans aucune écriture du journal");
     const journalRejoue = { cle: "cle-deterministe", action: "Recette journal", nom: "Journal", ancien: {}, nouveau: {}, notes: "recette", succes: true };
     await ecriture.journaliser(g, journalRejoue);
     await ecriture.journaliser(g, journalRejoue);
-    assert.strictEqual(journaux, 2, "une meme cle deterministe n'ajoute pas un second journal");
+    assert.strictEqual(journaux, 0, "ancien adaptateur de journal sans appel Graph");
     cols["OBJ-JRN"][0].required = true;
-    assert.strictEqual((await ecriture.etatStructureJournal(g)).disponible, false, "STATUT obligatoire reste bloquant");
+    assert.strictEqual((await ecriture.etatStructureJournal(g)).desactive, true, "même un journal historique obligatoire est ignoré");
   } finally {
     Object.assign(dse, sauvegarde);
   }
-  console.log("Droits SharePoint, perimetres, SEO, journal obligatoire/facultatif et rejeu sans doublon OK");
+  console.log("Droits SharePoint, perimetres, SEO sans journal et rejeu sans doublon OK");
 })().catch((e) => { console.error(e); process.exitCode = 1; });

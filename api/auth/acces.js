@@ -108,6 +108,7 @@ async function liste(req, res) {
     if (!incidents.global(d)) return erreur(res, 403, "Accès non autorisé.");
     const data = await incidents.lire(true);
     res.set("Cache-Control", "no-store").json({ succes: true, donnees: {
+      desactive: data.desactive, message: data.message,
       politiqueDisponible: !!data.regle,
       incidents: data.incidents.map((i) => ({ id: i.id, utilisateur: i.utilisateur, domaine: i.domaine, motif: i.motif,
         nombre: i.nombre || i.refus.length, premier: i.premier, dernier: i.dernier, etat: i.etat,
@@ -125,8 +126,8 @@ async function decision(req, res) {
       return erreur(res, 400, "Décision invalide.");
     }
     droits.viderCache();
-    if (!await incidents.decider(id, req.body.incident, req.body.decision)) return erreur(res, 403, "Décision non autorisée.");
-    res.json({ succes: true, donnees: { journalise: true } });
+    if (!incidents.global(await droits.droitsPour(id))) return erreur(res, 403, "Décision non autorisée.");
+    return erreur(res, 409, "Les décisions de blocage liées au journal sont désactivées.");
   } catch (e) { console.error("[DSE incidents décision]", e.message); erreur(res, 503, "Décision momentanément indisponible."); }
 }
 

@@ -154,7 +154,6 @@ async function construireContexte(token, siteGraph) {
   const requiredListNames = Object.entries(LIST_NAMES).filter(([key]) => key !== "journal");
   const listMap = {};
   for (const [key, name] of requiredListNames) listMap[key] = byDisplayName(lists, name);
-  const maybeJournal = lists.find((list) => domainSync.cleNom(list.displayName || list.name) === domainSync.cleNom(LIST_NAMES.journal)) || null;
 
   const columnMap = {};
   for (const key of ["domain", "site"]) {
@@ -253,18 +252,7 @@ async function construireContexte(token, siteGraph) {
     }
   }
 
-  const journal = maybeJournal ? {
-    list: maybeJournal,
-    columns: await listColumns(token, siteGraph.id, maybeJournal)
-  } : null;
-  if (journal) {
-    const status = journal.columns.find((column) =>
-      !column.hidden && domainSync.cleNom(column.displayName || column.name) === "STATUT"
-    );
-    journal.targetStatusList = status?.lookup?.listId
-      ? lists.find((list) => list.id === status.lookup.listId) || null
-      : null;
-  }
+  const journal = null;
   const snapshot = async () => ({
     domains: await listItems(token, siteGraph.id, listMap.domain),
     sites: await listItems(token, siteGraph.id, listMap.site)
@@ -273,18 +261,7 @@ async function construireContexte(token, siteGraph) {
 }
 
 function journalBlockedReason(context) {
-  if (!context.journal) return "OBJ-JRN absente";
-  const required = context.journal.columns.filter((column) => column.required && !column.hidden);
-  const status = required.find((column) => domainSync.cleNom(column.displayName || column.name) === "STATUT");
-  if (!status) return "le schéma ne permet pas de déterminer les valeurs officielles obligatoires";
-  const names = new Set(required.map((column) => domainSync.cleNom(column.displayName || column.name)));
-  if (status.lookup?.listId) {
-    const target = context.journal.targetStatusList;
-    return target
-      ? `Lookup STATUT obligatoire (${target.displayName}); ses valeurs n'ont pas été résolues de façon certaine`
-      : `Lookup STATUT obligatoire vers une liste absente du catalogue SharePoint (${status.lookup.listId}); écriture OBJ-JRN bloquée`;
-  }
-  return `champs obligatoires non configurés: ${[...names].join(", ")}`;
+  return null;
 }
 
 function makeDomainFields(context, domain, info) {
@@ -499,7 +476,7 @@ async function main(args = process.argv.slice(2), dependencies = {}) {
     const write = dependencies.write || ((method, url, body) => P.appel(token, method, url, body));
     const getDomainInfo = dependencies.getDomainInfo || ((domain) => ovh.appel("GET", `/domain/${encodeURIComponent(domain)}/serviceInfos`));
     const journalReason = journalBlockedReason(context);
-    logger.emit({ code: "JOURNAL_OBJ_JRN_BLOQUÉ", reason: journalReason });
+    logger.emit({ code: "JOURNAL_OBJ_JRN_DESACTIVE" });
     logger.emit({
       code: "SCHEMA_RÉSOLU",
       lists: Object.fromEntries(Object.entries(context.lists).map(([key, value]) => [key, value.id])),
@@ -840,7 +817,7 @@ if (require.main === module) {
       code: "RAPPORT_COMPENSATOIRE",
       runId: result.runId,
       counts: result.counts,
-      journal: "JOURNAL_OBJ_JRN_BLOQUÉ",
+      journal: "JOURNAL_OBJ_JRN_DESACTIVE",
       journalReason: result.journalReason,
       localLog: result.localLog,
       localLogError: result.localLogError

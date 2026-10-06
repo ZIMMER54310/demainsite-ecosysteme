@@ -7,6 +7,7 @@
  */
 
 const { champ, relations, vrai, cleChamp } = require("./catalogue");
+const R = require("./builder-recursif");
 
 const LISTES_CONTENU = {
   TITRE: "OBJ-MODULE-TITRE", TEXTE: "OBJ-MODULE-TEXTE", "TEXTE-ENRICHI": "OBJ-MODULE-TEXTE",
@@ -414,6 +415,12 @@ function composerConteneurPage(donnees, site, page, { liste, relation }, options
   if (!el || !publiable(el) || rel(el, "OBJ-SITE-PUBLIC")?.id !== String(site.id)) return null;
   const sections = composerSections(donnees, site, enfants(donnees.sections, el.id, relation), options);
   const ctx = options.ctx || contexteComposition(donnees, site);
+  const root = R.trouverRacine(donnees, site.id, relation === "OBJ-ENTETE-SITE" ? "entete" : "footer", el.id);
+  if (root) {
+    const noeud = R.arbre(donnees, root, { public: true, reference: () => "",
+      mediaVisible: (m) => publiable(m) && R.mediaDansSite(m, site) });
+    return noeud ? { sections: [], noeuds: [noeud], ...styleElement(ctx, relation === "OBJ-ENTETE-SITE" ? "ENTETE" : "FOOTER", el) } : null;
+  }
   return aDesModules(sections) ? { id: el.id, sections, ...styleElement(ctx, relation === "OBJ-ENTETE-SITE" ? "ENTETE" : "FOOTER", el) } : null;
 }
 
@@ -429,6 +436,13 @@ function composerPage(donnees, site, options = {}) {
   const sections = composerSections(donnees, site, enfants(donnees.sections, page.id, "OBJ-PAGES-SITE"), opts);
   const entete = composerConteneurPage(donnees, site, page, { liste: "entetes", relation: "OBJ-ENTETE-SITE" }, opts);
   const footer = composerConteneurPage(donnees, site, page, { liste: "footers", relation: "OBJ-FOOTER-SITE" }, opts);
+  const root = R.trouverRacine(donnees, site.id, "page", page.id);
+  if (root) {
+    const noeud = R.arbre(donnees, root, { public: true, reference: () => "",
+      mediaVisible: (m) => publiable(m) && R.mediaDansSite(m, site) });
+    if (noeud) return { mode: "builder", page: { ...styleElement(opts.ctx, "PAGE", page) },
+      sections: [], noeuds: [noeud], entete, footer, theme: themeGlobal(opts.ctx) };
+  }
 
   if (!aDesModules(sections) && !entete && !footer) return { mode: "historique", page: null, sections: [] };
   return { mode: "builder", page: { id: page.id, ...styleElement(opts.ctx, "PAGE", page) }, sections: aDesModules(sections) ? sections : [], entete, footer,

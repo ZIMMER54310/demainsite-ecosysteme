@@ -99,6 +99,20 @@ export function groupes(style = {}, ctx = {}) {
   }
 
   if (FLEX[s.justification]) g.flex.push(`justify-content:${FLEX[s.justification]}`);
+  const displays = { BLOCK: "block", FLEX: "flex", GRID: "grid" };
+  const directions = { ROW: "row", COLUMN: "column", "ROW-REVERSE": "row-reverse", "COLUMN-REVERSE": "column-reverse" };
+  const aligns = { DEBUT: "start", CENTRE: "center", FIN: "end", STRETCH: "stretch" };
+  if (displays[s.display]) g.flex.push(`display:${displays[s.display]}`);
+  if (directions[s.direction]) g.flex.push(`flex-direction:${directions[s.direction]}`);
+  if (s.retourLigne === true) g.flex.push("flex-wrap:wrap");
+  if (s.retourLigne === false) g.flex.push("flex-wrap:nowrap");
+  if (aligns[s.alignItems]) g.flex.push(`align-items:${aligns[s.alignItems]}`);
+  for (const [cle, prop] of [["gap", "gap"], ["gapLigne", "row-gap"], ["gapColonne", "column-gap"]]) {
+    if (nb(s[cle], 0, 400) !== null) g.flex.push(`${prop}:${nb(s[cle], 0, 400)}px`);
+  }
+  if (nb(s.colonnesGrille, 1, 12) !== null) g.flex.push(`grid-template-columns:repeat(${Math.round(nb(s.colonnesGrille, 1, 12))},minmax(0,1fr))`);
+  if (["STATIC", "RELATIVE", "ABSOLUTE", "STICKY"].includes(s.position)) g.flex.push(`position:${s.position.toLowerCase()}`);
+  if (nb(s.ordre, -100, 100) !== null) g.flex.push(`order:${Math.round(nb(s.ordre, -100, 100))}`);
   return g;
 }
 
@@ -153,14 +167,14 @@ function blocs(sel, type, style, ctx) {
     add(sel, [...g.typo, ...g.fond, ...g.dim, ...g.marge, ...g.padding]);
     add(`${sel} img,${sel} video,${sel} iframe`, [...g.bord, ...g.ombre]);
   } else if (t === "SECTION") {
-    add(sel, [...g.typo, ...g.fond, ...g.dim.filter((x) => !/^(width|max-width|min-width)/.test(x)), ...g.marge, ...g.padding, ...g.bord, ...g.ombre]);
+    add(sel, [...g.typo, ...g.fond, ...g.dim.filter((x) => !/^(width|max-width|min-width)/.test(x)), ...g.marge, ...g.padding, ...g.bord, ...g.ombre, ...g.flex]);
     add(`${sel}>.dse-b-contenu`, g.dim.filter((x) => /^(width|max-width|min-width)/.test(x)));
     add(`${sel}:hover`, h);
   } else if (t === "LIGNE") {
     add(sel, [...tout(g), ...g.flex, ...(g.flex.length ? [] : FLEX_ALIGNEMENT[s.alignement] ? [`justify-content:${FLEX_ALIGNEMENT[s.alignement]}`] : [])]);
     add(`${sel}:hover`, h);
   } else if (t === "COLONNE") {
-    add(sel, [...tout(g), ...(g.flex.length ? ["display:flex", "flex-direction:column", ...g.flex] : [])]);
+    add(sel, [...tout(g), ...(g.flex.length ? [...(s.display ? [] : ["display:flex", "flex-direction:column"]), ...g.flex] : [])]);
     add(`${sel}:hover`, h);
   } else if (t === "LIEN") {
     add(`${sel} a`, [...g.typo, ...g.fond, ...g.padding, ...g.bord]);

@@ -120,7 +120,8 @@ async function tout(g, chemin0) {
 
 async function listesSauvegardables(g) {
   const listes = await tout(g, `/sites/${g.siteGraphId}/lists?$select=id,name,displayName,list,system&$top=999`);
-  return listes.filter((l) => !l.system && !l.list?.hidden && !/library/i.test(String(l.list?.template || "")))
+  return listes.filter((l) => String(l.displayName || l.name).toUpperCase() !== "OBJ-JRN" &&
+    !l.system && !l.list?.hidden && !/library/i.test(String(l.list?.template || "")))
     .sort((a, b) => String(a.displayName).localeCompare(String(b.displayName)));
 }
 
@@ -186,16 +187,6 @@ async function sauvegarder({ acteur }) {
   const nomManifeste = `${h}.json`;
   await deposer(g, driveId, `${DOSSIER}/manifestes/${nomManifeste}`, { format: FORMAT, le: maintenant.toISOString(), acteur, listes: entrees });
   rapport.manifeste = nomManifeste;
-  if (rapport.deposees || rapport.erreurs.length) {
-    const j = await ecriture.journaliser(g, {
-      cle: ecriture.hash(["sauvegarde-listes", nomManifeste]), action: "Synchronisations : sauvegarde des listes",
-      nom: `Sauvegarde ${nomManifeste} · ${rapport.deposees} liste(s) copiée(s)`, ancien: {},
-      nouveau: { manifeste: nomManifeste, copiees: entrees.filter((x) => x.change).map((x) => x.titre), erreurs: rapport.erreurs },
-      notes: `Acteur : ${acteur} | Listes ${rapport.listes} | Inchangées ${rapport.inchangees} | Éléments ${rapport.elements} | Coffre ${bibliotheque()}/${DOSSIER}`,
-      succes: !rapport.erreurs.length, contexte: { coffre: DOSSIER }
-    });
-    rapport.journal = j.ok;
-  }
   return rapport;
 }
 
@@ -354,14 +345,6 @@ async function confirmer({ identite, jeton, selection, acteur }) {
       }
     }
   }
-  const j = await ecriture.journaliser(g, {
-    cle: ecriture.hash(["restauration", jeton]), action: "Synchronisations : restauration",
-    nom: `Restauration ${plan.titre} · ${rapport.retablies.length} rétablie(s), ${rapport.recreees.length} recréée(s)`,
-    ancien: tronquerJson(ancien), nouveau: tronquerJson(nouveau),
-    notes: `Acteur : ${acteur} | Sauvegarde ${t.manifeste} | Ignorées ${rapport.ignorees.length} | Erreurs ${rapport.erreurs.length} | Aucune suppression`,
-    succes: !rapport.erreurs.length, contexte: { liste: plan.titre, listeId: plan.listId }
-  });
-  rapport.journal = j.ok;
   if (rapport.retablies.length || rapport.recreees.length) {
     ecriture.invaliderCaches();
     try { require("./builder-source").viderCache(); } catch { /* cache optionnel */ }

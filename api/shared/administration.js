@@ -257,13 +257,8 @@ async function preparerAction({ identite, d, action, params }) {
   const g = await ecriture.contexteGraph();
   const r = await construireAction(d, action, params || {}, g);
   if (r.refus) {
-    const ctx = params?.domaine ? await require("../auth/inscription").domaineContexte(g, params.domaine) : null;
-    const utilisateurId = d.utilisateurId || null;
-    const j = await ecriture.journaliser(g, { cle: ecriture.hash(["admin-refus", identite.sujet, action, params, r.refus]),
-      action: `Cockpit : ${action}`, nom: "Attribution refusée", ancien: {}, nouveau: {},
-      notes: `Acteur : ${identite.sujet} | Motif : ${r.refus}`, succes: false, refus: true,
-      contexte: { acteur: identite.sujet, utilisateurId, clientId: ctx?.clientId || null, siteId: ctx?.siteId || null, resultat: "REFUS", motif: r.refus } });
-    return { status: 403, erreur: r.refus, journal: { enregistre: j.ok } };
+    console.warn("[DSE administration] écriture refusée", action);
+    return { status: 403, erreur: r.refus };
   }
   if (r.aucunChangement) return { status: 200, aucunChangement: true, changements: [] };
   const op = { ...r.op, portee: "admin", adminAction: action, adminParams: params };
@@ -365,15 +360,7 @@ async function menu(d) {
 /* ---------------- Tableau de bord ---------------- */
 
 async function ecrituresRecentes(g, d) {
-  const lj = dse.trouverListe(g.listes, ["OBJ-JRN"]);
-  if (!lj) return { disponible: false, liste: [] };
-  const items = await dse.collecter(g.token,
-    `/sites/${g.siteGraphId}/lists/${lj.id}/items?$expand=fields($select=Title,ACTION,NOM,DATEEVENEMENT,STATUTJRN,NOTES)&$top=500`);
-  const liste = items.filter((i) => String(i.fields?.Title || "").startsWith("DSE-COCKPIT-"))
-    .filter((i) => d.portee === "tous" || d.siteIds.includes(String(/^Site (\d+)\b/.exec(i.fields?.NOTES || "")?.[1] || "")))
-    .map((i) => ({ le: i.fields.DATEEVENEMENT || null, action: i.fields.ACTION || null, objet: i.fields.NOM || null, statut: i.fields.STATUTJRN || null }))
-    .sort((a, b) => String(b.le).localeCompare(String(a.le))).slice(0, 15);
-  return { disponible: true, liste };
+  return { disponible: false, desactive: true, liste: [] };
 }
 
 /* Composants modifiables dont le rattachement au site n'est pas exploitable dans SharePoint. */
@@ -409,14 +396,6 @@ async function tableau(d) {
     if (manque.length) aCompleter.push({ site: s.nom, domaine: s.acces, progression: s.progression ?? null, elements: manque.map((e) => e.libelle), lien: `/cockpit/site/${s.acces}` });
   }
   const g = await ecriture.contexteGraph();
-  const journal = ecriture.etatJournalisation();
-  const structureJournal = await ecriture.etatStructureJournal(g);
-  if (!structureJournal.disponible) {
-    problemes.unshift({ niveau: "critique", titre: structureJournal.raison, lien: "/cockpit/administration" });
-  }
-  if (journal.dernier && !journal.dernier.ok) {
-    problemes.unshift({ niveau: "critique", titre: "La dernière écriture n'a pas pu être journalisée", lien: "/cockpit/administration" });
-  }
   const plateforme = d.fonctions.includes("plateforme");
   if (plateforme) {
     for (const c of await rattachementsCasses(g)) {
@@ -456,8 +435,7 @@ async function tableau(d) {
     utilisateursParRole,
     applications: plateforme ? apps : { disponible: apps.disponible, liste: apps.liste, colonnesManquantes: [] },
     ecrituresRecentes: ecritures,
-    journal: { disponible: ecritures.disponible, ecritureDisponible: structureJournal.disponible,
-      raison: structureJournal.raison || null, derniere: journal.dernier ? { le: journal.dernier.le, enregistre: journal.dernier.ok } : null }
+    journal: { disponible: false, desactive: true, derniere: null }
   };
 }
 
