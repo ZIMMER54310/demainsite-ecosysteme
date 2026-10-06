@@ -26,7 +26,8 @@ async function charger() {
   const titres = new Map();
   const lire = async (nom) => {
     const liste = dse.trouverListe(listes, [nom]);
-    return liste ? lireElements(token, site.id, liste, titres) : [];
+    return liste ? lireElements(token, site.id, liste, titres,
+      nom === "OBJ-BUILDER-CHAMP" ? { exclureChamps: ["APPAREIL"] } : {}) : [];
   };
 
   const donnees = { contenus: {} };

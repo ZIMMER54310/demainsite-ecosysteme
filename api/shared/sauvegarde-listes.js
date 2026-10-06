@@ -17,6 +17,7 @@
 const crypto = require("crypto");
 const dse = require("./dse");
 const ecriture = require("./ecriture");
+const schemaBuilder = require("./builder-schema");
 
 const DOSSIER = "SAUVEGARDES-LISTES";
 const FORMAT = "DSE-SAUVEGARDE-LISTE-1";
@@ -133,10 +134,10 @@ const colonnesUtiles = (cols) => cols.map((c) => ({
 }));
 
 async function exporterListe(g, l) {
-  const [cols, items] = await Promise.all([
-    tout(g, `/sites/${g.siteGraphId}/lists/${l.id}/columns?$top=999`),
-    tout(g, `/sites/${g.siteGraphId}/lists/${l.id}/items?$expand=fields&$top=999`)
-  ]);
+  const cols = schemaBuilder.colonnesAutorisees(l.displayName || l.name,
+    await tout(g, `/sites/${g.siteGraphId}/lists/${l.id}/columns?$top=999`));
+  const selection = schemaBuilder.estListeChamps(l.displayName || l.name) ? `($select=${schemaBuilder.selectionChamps(cols)})` : "";
+  const items = await tout(g, `/sites/${g.siteGraphId}/lists/${l.id}/items?$expand=fields${selection}&$top=999`);
   const elements = items.map((i) => {
     const { "@odata.etag": _e, ...fields } = i.fields || {};
     return { id: String(i.id), fields };
@@ -246,10 +247,11 @@ async function calculer(g, sauvegarde) {
   if (!liste) return { refus: "La liste de cette sauvegarde n'existe plus ou a été remplacée." };
   if (!restaurable(sauvegarde.liste.titre)) return { refus: REFUS_NON_RESTAURABLE };
   const actuelles = await tout(g, `/sites/${g.siteGraphId}/lists/${liste.id}/columns?$top=999`);
-  const colsActuelles = new Map(colonnesUtiles(actuelles).map((c) => [c.name, c]));
+  const colsActuelles = new Map(colonnesUtiles(schemaBuilder.colonnesAutorisees(sauvegarde.liste.titre, actuelles)).map((c) => [c.name, c]));
   const colonnes = (sauvegarde.colonnes || []).filter((c) => ecrivable(c) && ecrivable(colsActuelles.get(c.name)))
     .map((c) => colsActuelles.get(c.name));
-  const items = await tout(g, `/sites/${g.siteGraphId}/lists/${liste.id}/items?$expand=fields&$top=999`);
+  const selection = schemaBuilder.estListeChamps(sauvegarde.liste.titre) ? `($select=${schemaBuilder.selectionChamps([...colsActuelles.values()])})` : "";
+  const items = await tout(g, `/sites/${g.siteGraphId}/lists/${liste.id}/items?$expand=fields${selection}&$top=999`);
   const parId = new Map(items.map((i) => [String(i.id), i.fields || {}]));
   const titres = new Map();
   for (const [id, f] of parId) if (f.Title) titres.set(String(f.Title).trim().toLowerCase(), id);
@@ -316,7 +318,8 @@ async function confirmer({ identite, jeton, selection, acteur }) {
   const nouveau = {};
   for (const x of plan.modifiees.filter((m) => voulu.has(m.id))) {
     try {
-      const actuel = (await dse.graphSansCache(g.token, `/sites/${g.siteGraphId}/lists/${plan.listId}/items/${x.id}?$expand=fields`))?.fields || {};
+      const selection = schemaBuilder.estListeChamps(plan.titre) ? `($select=${schemaBuilder.selectionChamps(plan.colonnes)})` : "";
+      const actuel = (await dse.graphSansCache(g.token, `/sites/${g.siteGraphId}/lists/${plan.listId}/items/${x.id}?$expand=fields${selection}`))?.fields || {};
       if (empreinte(plan.colonnes.map((c) => valeur(c, actuel))) !== x.avant) { rapport.ignorees.push({ titre: x.titre, raison: "modifiée depuis l'aperçu" }); continue; }
       const champs = Object.assign({}, ...x.champs.map((c) => champEcriture(plan.colonnes.find((k) => k.name === c.nom), c.sauvegarde)));
       await dse.graphEcriture(g.token, "PATCH", `/sites/${g.siteGraphId}/lists/${plan.listId}/items/${x.id}/fields`, champs);
@@ -360,5 +363,5 @@ async function dateDerniereSauvegarde() {
 
 module.exports = {
   sauvegarder, sauvegardes, listesDeSauvegarde, apercu, confirmer, dateDerniereSauvegarde, DOSSIER, NON_RESTAURABLES,
-  _test: { restaurable, valeur, champEcriture, ecrivable, segment, nomManifesteValide, colonnesUtiles, jetons }
+  _test: { restaurable, valeur, champEcriture, ecrivable, segment, nomManifesteValide, colonnesUtiles, jetons, exporterListe, calculer }
 };

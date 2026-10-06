@@ -167,21 +167,22 @@ function arbreGeneriqueHtml(n, peut) {
     <ul>${(n.enfants || []).map((x) => arbreGeneriqueHtml(x, peut)).join("")}</ul></li>`;
 }
 
-function panneauGenerique(n, medias) {
+export function panneauGenerique(n, medias, appareil = "") {
   const controle = (c) => {
     const nom = `name="${e(c.ref)}"`;
-    const v = c.valeur ?? "";
+    const v = (appareil ? c.surcharges?.[appareil] : c.valeur) ?? "";
     const input = c.nature === "NOMBRE" ? `<input type="number" ${nom} value="${e(v)}" step="any">` :
       c.nature === "BOOLEEN" ? `<select ${nom}><option value="">Hériter</option><option value="true"${v === true ? " selected" : ""}>Oui</option><option value="false"${v === false ? " selected" : ""}>Non</option></select>` :
       c.nature === "MEDIA" ? `<select ${nom}><option value="">Aucun média</option>${medias.map((m) => `<option value="${e(m.ref)}"${m.url === `/api/v1/media/${v}` ? " selected" : ""}>${e(m.titre)}</option>`).join("")}</select>` :
       `<textarea ${nom} rows="2">${e(v)}</textarea>`;
     return `<label>${e(c.libelle)}${c.obligatoire ? " *" : ""}${input}<small>${e(c.aide)}</small></label>`;
   };
-  return `<form class="card design-panneau" data-builder-valeurs data-ref="${e(n.ref)}"><h3>${e(n.titre)}</h3>
-    ${[["CONTENU", (c) => !/^(DESIGN|AVANCE)/i.test(c.cle)], ["DESIGN", (c) => /^DESIGN/i.test(c.cle)],
-      ["AVANCÉ", (c) => /^AVANCE/i.test(c.cle)]].map(([libelle, filtre]) =>
-      `<details open><summary>${libelle}</summary>${n.champs.filter(filtre).map(controle).join("") || '<p class="muted">Aucun champ déclaré dans SharePoint.</p>'}</details>`).join("")}
-    <p class="muted">Les surcharges responsive par champ nécessitent les Lookups appareil et état, absents du schéma de valeurs actuel.</p>
+  return `<form class="card design-panneau" data-builder-valeurs data-appareil="${e(appareil)}" data-ref="${e(n.ref)}"><h3>${e(n.titre)}</h3>
+    <label>Valeurs à modifier<select data-builder-appareil>${[["", "Général / par défaut"], ...APPAREILS_APERCU.map((x) => [x.cle, x.libelle])].map(([cle, libelle]) =>
+      `<option value="${cle}"${appareil === cle ? " selected" : ""}>${e(libelle)}</option>`).join("")}</select></label>
+    ${[["CONTENU", "CONTENU"], ["DESIGN", "DESIGN"], ["AVANCE", "AVANCÉ"]].map(([categorie, libelle]) =>
+      `<details open><summary>${libelle}</summary>${n.champs.filter((c) => c.categorie === categorie).map(controle).join("") || '<p class="muted">Aucun champ déclaré dans SharePoint.</p>'}</details>`).join("")}
+    <p class="muted">Une surcharge vide hérite de la valeur générale. Les autres appareils ne sont pas modifiés.</p>
     <button type="submit" class="btn btn-primary"${n.verrouille ? " disabled" : ""}>Enregistrer</button></form>`;
 }
 
@@ -286,6 +287,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   let historique = [];
   let positionHistorique = -1;
   let brouillonGenerique = false;
+  const appareilsModifies = new Set();
   let glisse = null;
   const trouverNoeud = (reference) => {
     const chercher = (n, parent = null) => n?.ref === reference ? { n, parent } :
@@ -381,7 +383,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const zone = racine.querySelector("[data-c-panneau]");
     if (!zone) return;
     const generic = etat.design?.ref?.startsWith("builderelement.") ? trouverNoeud(etat.design.ref)?.n : null;
-    zone.innerHTML = generic ? panneauGenerique(generic, d.medias || []) : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), onglet: etat.design.onglet, appareil: etat.design.appareil })
+    zone.innerHTML = generic ? panneauGenerique(generic, d.medias || [], etat.design.appareilValeurs || "") : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), onglet: etat.design.onglet, appareil: etat.design.appareil })
       : etat.design ? `<p class="card muted">Chargement des réglages…</p>` : "";
     zone.closest(".constructeur-design-zone")?.classList.toggle("constructeur-design-zone--ouverte", Boolean(etat.design));
     apercuDesign();
@@ -389,7 +391,13 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   async function ouvrirDesign(ref, onglet = etat.design?.ref === ref ? etat.design.onglet : "design") {
     if (etat.design?.ref !== ref && modificationsLocales()) {
       if (!confirmerAbandon()) return;
-      if (brouillonGenerique) { await charger(); brouillonGenerique = false; }
+      if (brouillonGenerique) {
+        await charger();
+        brouillonGenerique = false;
+        appareilsModifies.clear();
+        const f = iframe();
+        if (f) f.srcdoc = documentApercu(d.apercu, d.arbre.type);
+      }
     }
     if (ref.startsWith("builderelement.")) {
       etat.design = { ref, onglet };
@@ -438,6 +446,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       Object.assign(etat, { message: r?.donnees?.message || "Action enregistrée.", erreur: false });
       await charger();
       brouillonGenerique = false;
+      appareilsModifies.clear();
       if (etat.design) etat.design.data = null;
     } catch (err) {
       Object.assign(etat, { message: err.message || "L'action n'a pas abouti.", erreur: true });
@@ -582,12 +591,29 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const s = ev.target;
     const fg = s.closest?.("[data-builder-valeurs]");
     if (fg) {
+      if (s.matches("[data-builder-appareil]")) {
+        etat.design.appareilValeurs = s.value;
+        if (s.value) {
+          etat.appareil = s.value;
+          for (const b of racine.querySelectorAll("[data-c-appareil]")) {
+            b.classList.toggle("btn-primary", b.dataset.cAppareil === s.value);
+            b.classList.toggle("btn-secondary", b.dataset.cAppareil !== s.value);
+            b.setAttribute("aria-pressed", String(b.dataset.cAppareil === s.value));
+          }
+        }
+        afficherPanneau();
+        return dimensionner();
+      }
       const node = trouverNoeud(fg.dataset.ref)?.n;
       const c = node?.champs.find((x) => x.ref === s.name);
       if (c) {
         brouillonGenerique = true;
-        c.valeur = c.nature === "BOOLEEN" ? (s.value === "" ? null : s.value === "true") :
-          c.nature === "MEDIA" ? /\/media\/(\d+)$/.exec(d.medias.find((m) => m.ref === s.value)?.url || "")?.[1] || null : s.value;
+        appareilsModifies.add(fg.dataset.appareil || "");
+        const valeur = c.nature === "BOOLEEN" ? (s.value === "" ? null : s.value === "true") :
+          c.nature === "MEDIA" ? /\/media\/(\d+)$/.exec(d.medias.find((m) => m.ref === s.value)?.url || "")?.[1] || null :
+            s.value === "" ? null : s.value;
+        if (fg.dataset.appareil) (c.surcharges ||= {})[fg.dataset.appareil] = valeur;
+        else c.valeur = valeur;
         const f = iframe();
         if (f) f.srcdoc = documentApercu({ ...d.apercu, noeuds: [d.arbre.generique] }, d.arbre.type);
       }
@@ -615,11 +641,14 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (f.matches("[data-builder-valeurs]")) {
       ev.preventDefault();
       const node = trouverNoeud(f.dataset.ref)?.n;
-      const valeurs = Object.fromEntries([...new FormData(f)].map(([key, value]) => {
-        const c = node?.champs.find((x) => x.ref === key);
-        return [key, c?.nature === "BOOLEEN" && value !== "" ? value === "true" : value];
+      const valeursPour = (appareil) => Object.fromEntries(node.champs.map((c) => {
+        const v = (appareil ? c.surcharges?.[appareil] : c.valeur) ?? "";
+        const valeur = c.nature === "MEDIA" && v ? d.medias.find((m) => m.url === `/api/v1/media/${v}`)?.ref : v;
+        return [c.ref, valeur ?? ""];
       }));
-      return executer("builder.enregistrer", { ref: f.dataset.ref, valeurs });
+      const appareil = f.dataset.appareil;
+      const surcharges = Object.fromEntries([...appareilsModifies].filter((a) => a !== appareil).map((a) => [a, valeursPour(a)]));
+      return executer("builder.enregistrer", { ref: f.dataset.ref, appareil, valeurs: valeursPour(appareil), surcharges });
     }
     if (f.matches("[data-design-form]")) {
       ev.preventDefault();

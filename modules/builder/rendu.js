@@ -102,11 +102,12 @@ export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
     "gap", "gapLigne", "gapColonne", "colonnesGrille", "alignItems", "justification", "position", "ordre"];
   const normaliser = (v) => String(v || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
   for (const c of noeud.champs || []) {
+    const valeur = c.surcharges?.[ctx.appareil] ?? c.valeur;
     const code = normaliser(c.cle);
-    const cle = clesStyle.find((k) => `DESIGN${normaliser(k)}` === code);
-    if (cle && c.valeur !== null) style[cle] = c.valeur;
-    else if (c.nature === "MEDIA" && /^\d{1,12}$/.test(String(c.valeur || ""))) media.push({ id: String(c.valeur), titre: c.libelle });
-    else if (!code.startsWith("DESIGN")) champs[code] = c.valeur;
+    const cle = clesStyle.find((k) => normaliser(k) === code || `DESIGN${normaliser(k)}` === code);
+    if (c.categorie === "DESIGN" && cle && valeur !== null) style[cle] = valeur;
+    else if (c.categorie !== "AVANCE" && c.nature === "MEDIA" && /^\d{1,12}$/.test(String(valeur || ""))) media.push({ id: String(valeur), titre: c.libelle });
+    else if (c.categorie === "CONTENU") champs[code] = valeur;
   }
   const type = String(noeud.rendu || "").toUpperCase();
   const enfants = (noeud.enfants || []).map((x) => rendreNoeud(x, ctx, profondeur + 1)).join("");
@@ -129,7 +130,9 @@ export function rendreBuilder(composition, ctx = {}) {
   const css = [];
   const contexte = { ...ctx, compteur: () => ++n, css };
   const html = composition.noeuds
-    ? composition.noeuds.map((x) => rendreNoeud(x, contexte)).join("")
+    ? ["ORDINATEUR", "TABLETTE", "MOBILE"].map((appareil) =>
+      `<div class="dse-b-appareil dse-b-appareil--${appareil.toLowerCase()}">${composition.noeuds.map((x) =>
+        rendreNoeud(x, { ...contexte, appareil })).join("")}</div>`).join("")
     : (composition.sections || []).map((s) => rendreSection(s, contexte)).filter(Boolean).join("");
   if (!html) return "";
   const racine = composition.style || composition.responsive ? composition : composition.page || {};
@@ -147,6 +150,9 @@ export function rendreBuilder(composition, ctx = {}) {
 
 export const STYLES_BUILDER = `
 .dse-builder{display:block}.dse-b-section{padding:clamp(24px,5vw,64px) 16px}.dse-b-section--pleine-largeur{padding-left:0;padding-right:0}
+.dse-b-appareil--tablette,.dse-b-appareil--mobile{display:none}
+@media(min-width:641px) and (max-width:1024px){.dse-b-appareil--ordinateur{display:none}.dse-b-appareil--tablette{display:block}}
+@media(max-width:640px){.dse-b-appareil--ordinateur{display:none}.dse-b-appareil--mobile{display:block}}
 .dse-b-contenu{max-width:1200px;margin:0 auto}.dse-b-section--pleine-largeur>.dse-b-contenu{max-width:none}
 .dse-b-ligne{display:flex;flex-wrap:wrap;gap:var(--dse-b-espace,24px)}
 .dse-b-colonne{flex:0 0 calc(var(--dse-b-l)*1% - var(--dse-b-espace,24px));min-width:0;max-width:100%}

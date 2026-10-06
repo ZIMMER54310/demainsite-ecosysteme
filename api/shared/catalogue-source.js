@@ -13,6 +13,7 @@
 const dse = require("./dse");
 const statutsSite = require("./statuts-site");
 const catalogue = require("./catalogue");
+const schemaBuilder = require("./builder-schema");
 
 const LISTES_CONTENU = {
   article: ["OBJ-ARTICLE"],
@@ -61,11 +62,23 @@ async function titresListe(token, siteGraphId, listId, cache) {
 }
 
 // Meme forme que construireElementPublic, mais les titres des Lookup sont resolus par lot.
-async function lireElements(token, siteGraphId, liste, cacheTitres) {
-  const [colonnes, items] = await Promise.all([
-    dse.chargerColonnesListe(token, siteGraphId, liste.id),
-    dse.chargerItemsListe(token, siteGraphId, liste.id)
-  ]);
+async function lireElements(token, siteGraphId, liste, cacheTitres, { exclureChamps = [] } = {}) {
+  if (schemaBuilder.estListeChamps(liste.displayName || liste.name)) exclureChamps = [...exclureChamps, "APPAREIL"];
+  let colonnes, items;
+  if (exclureChamps.length) {
+    colonnes = (await dse.chargerColonnesListe(token, siteGraphId, liste.id)).filter((c) =>
+      !exclureChamps.includes(catalogue.cleChamp(c.name)) && !exclureChamps.includes(catalogue.cleChamp(c.displayName)));
+    const noms = schemaBuilder.selectionChamps(colonnes).split(",");
+    items = await dse.collecter(token,
+      `/sites/${siteGraphId}/lists/${liste.id}/items?$expand=fields($select=${noms.join(",")})&$top=200`);
+    items = items.map((item) => ({ ...item, fields: Object.fromEntries(noms.filter((n) =>
+      Object.hasOwn(item.fields || {}, n)).map((n) => [n, item.fields[n]])) }));
+  } else {
+    [colonnes, items] = await Promise.all([
+      dse.chargerColonnesListe(token, siteGraphId, liste.id),
+      dse.chargerItemsListe(token, siteGraphId, liste.id)
+    ]);
+  }
   const lookups = colonnes.filter((c) => c.lookup?.listId && !c.hidden);
 
   const elements = [];

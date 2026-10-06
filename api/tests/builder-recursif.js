@@ -12,6 +12,56 @@ const ref = (id, sorte) => `${sorte}.${id}`;
 const nom = (s) => s.replace(/-/g, "");
 
 async function main() {
+  const schema = require("../shared/builder-schema");
+  const schemaSimule = [{ name: "APPAREIL", displayName: "APPAREIL" }, { name: "CATEGORIECHAMP" }];
+  assert.deepEqual(schema.colonnesAutorisees("OBJ-BUILDER-CHAMP", schemaSimule).map((c) => c.name), ["CATEGORIECHAMP"]);
+  assert.equal(schema.colonnesAutorisees("OBJ-BUILDER-VALEUR", schemaSimule), schemaSimule);
+  const dse = require("../shared/dse");
+  const { lireElements } = require("../shared/catalogue-source");
+  const originaux = { colonnes: dse.chargerColonnesListe, collecter: dse.collecter, items: dse.chargerItemsListe,
+    graphSansCache: dse.graphSansCache };
+  try {
+    dse.chargerColonnesListe = async () => [
+      { name: "Title", displayName: "Title" },
+      { name: "CATEGORIECHAMP", displayName: "CATEGORIE-CHAMP" },
+      { name: "APPAREIL", displayName: "APPAREIL" }
+    ];
+    dse.chargerItemsListe = async () => assert.fail("La lecture globale des champs inclurait APPAREIL");
+    dse.collecter = async (_token, chemin) => {
+      assert.ok(chemin.includes("$expand=fields($select=Title,CATEGORIECHAMP)"));
+      assert.ok(!chemin.includes("APPAREIL"));
+      const fields = { Title: "Champ", CATEGORIECHAMP: "DESIGN" };
+      Object.defineProperty(fields, "APPAREIL", { enumerable: true, get() { assert.fail("APPAREIL de CHAMP ne doit pas être lu"); } });
+      return [{ id: "1", fields }];
+    };
+    const [lu] = await lireElements("offline", "site", { id: "champs" }, new Map(), { exclureChamps: ["APPAREIL"] });
+    assert.equal(lu.configuration["CATEGORIE-CHAMP"], "DESIGN");
+    assert.ok(!Object.hasOwn(lu._fields, "APPAREIL"));
+    assert.ok(!lu._colonnes.some((c) => c.name === "APPAREIL"));
+    const sauvegardes = require("../shared/sauvegarde-listes")._test;
+    dse.graphSansCache = async (_token, chemin) => {
+      if (chemin.includes("/columns?")) return { value: [
+        { name: "Title", displayName: "Title" }, ...schemaSimule
+      ] };
+      assert.ok(chemin.includes("fields($select=Title,CATEGORIECHAMP)"), chemin);
+      assert.ok(!chemin.includes("APPAREIL"));
+      return { value: [{ id: "1", fields: { Title: "Actuel", CATEGORIECHAMP: "DESIGN" } }] };
+    };
+    const g = { token: "offline", siteGraphId: "site", listes: [{ id: "champs", displayName: "OBJ-BUILDER-CHAMP" }] };
+    const exporte = await sauvegardes.exporterListe(g, g.listes[0]);
+    assert.ok(!exporte.colonnes.some((c) => c.name === "APPAREIL"));
+    const anciensChamps = { Title: "Ancien", CATEGORIECHAMP: "DESIGN" };
+    Object.defineProperty(anciensChamps, "APPAREIL", { get() { assert.fail("La restauration ne doit pas lire APPAREIL du snapshot CHAMP"); } });
+    const plan = await sauvegardes.calculer(g, { liste: { id: "champs", titre: "OBJ-BUILDER-CHAMP" },
+      colonnes: [{ name: "Title" }, ...schemaSimule], elements: [{ id: "1", fields: anciensChamps }] });
+    assert.equal(plan.modifiees.length, 1);
+    assert.ok(!plan.colonnes.some((c) => c.name === "APPAREIL"));
+  } finally {
+    dse.chargerColonnesListe = originaux.colonnes;
+    dse.collecter = originaux.collecter;
+    dse.chargerItemsListe = originaux.items;
+    dse.graphSansCache = originaux.graphSansCache;
+  }
   const d = {
     builderTypes: [
       element(11, { Title: "Page", "EST-CONTENEUR": true, "EST-RACINE": true, "CLE-RENDU": "PAGE" }),
@@ -31,9 +81,9 @@ async function main() {
       element(22, { AUTORISE: true, MAXIMUM: 2 }, { "TYPE-PARENT": lien(12), "TYPE-ENFANT": lien(13) })
     ],
     builderChamps: [
-      element(31, { Title: "Texte", "CODE-CHAMP": "TEXTE", "TYPE-DONNEE": "TEXTE", OBLIGATOIRE: true }, { "OBJ-BUILDER-TYPE": lien(13) }),
-      element(32, { Title: "Taille", "CODE-CHAMP": "DESIGN-TAILLE-TEXTE", "TYPE-DONNEE": "NOMBRE" }, { "OBJ-BUILDER-TYPE": lien(13) }),
-      element(33, { Title: "Image", "CODE-CHAMP": "MEDIA", "TYPE-DONNEE": "MEDIA" }, { "OBJ-BUILDER-TYPE": lien(13) })
+      element(31, { Title: "Texte", CATEGORIECHAMP: "CONTENU", "CODE-CHAMP": "TEXTE", "TYPE-DONNEE": "TEXTE", OBLIGATOIRE: true }, { "OBJ-BUILDER-TYPE": lien(13) }),
+      element(32, { Title: "Taille", CATEGORIECHAMP: "DESIGN", "CODE-CHAMP": "DESIGN-TAILLE-TEXTE", "TYPE-DONNEE": "NOMBRE" }, { "OBJ-BUILDER-TYPE": lien(13) }),
+      element(33, { Title: "Image", CATEGORIECHAMP: "CONTENU", "CODE-CHAMP": "MEDIA", "TYPE-DONNEE": "MEDIA" }, { "OBJ-BUILDER-TYPE": lien(13) })
     ],
     builderValeurs: [], medias: [element(71)]
   };
@@ -46,6 +96,7 @@ async function main() {
   const stores = new Map();
   let mutations = 0, nextId = 100;
   const appliquer = (liste, id, champs) => {
+    assert.notEqual(liste, "OBJ-BUILDER-CHAMP", "les définitions de champs ne sont jamais écrites");
     const cle = liste === "OBJ-BUILDER-ELEMENT" ? "builderElements" : "builderValeurs";
     let el = d[cle].find((x) => x.id === id);
     if (!el) { el = element(id); d[cle].push(el); }
@@ -88,6 +139,29 @@ async function main() {
     await executer("builder.enregistrer", { ...cible, valeurs: { "champ.31": "Première valeur", "champ.32": 24 } });
     await executer("builder.enregistrer", { ...cible, valeurs: { "champ.31": "Valeur modifiée" } });
     assert.equal(d.builderValeurs.length, 2, "modification sans doublon");
+    Object.defineProperty(d.builderChamps[0].configuration, "APPAREIL", { get() { throw new Error("APPAREIL de CHAMP interdit"); }, enumerable: true });
+    const appareilInvalideAvant = mutations;
+    assert.ok((await executer("builder.enregistrer", { ...cible, appareil: "PHONE", valeurs: { "champ.32": 10 } })).refus);
+    assert.equal(mutations, appareilInvalideAvant);
+    assert.ok((await executer("builder.enregistrer", { ...cible, valeurs: { "champ.31": "Ne pas écrire" },
+      surcharges: { MOBILE: { "champ.32": "invalide" } } })).refus);
+    assert.equal(mutations, appareilInvalideAvant, "un lot responsive invalide ne modifie pas la valeur générale");
+    await executer("builder.enregistrer", { ...cible, appareil: "ORDINATEUR", valeurs: { "champ.32": 32 },
+      surcharges: { TABLETTE: { "champ.32": 20 }, MOBILE: { "champ.32": 14, "champ.31": "Texte mobile" } } });
+    assert.equal(R.valeurDe(d, nouveau.id, d.builderChamps[1]), 24);
+    assert.equal(R.valeurDe(d, nouveau.id, d.builderChamps[1], "ORDINATEUR"), 32);
+    assert.equal(R.valeurDe(d, nouveau.id, d.builderChamps[1], "TABLETTE"), 20);
+    assert.equal(R.valeurDe(d, nouveau.id, d.builderChamps[1], "MOBILE"), 14);
+    const nbValeurs = d.builderValeurs.length;
+    await executer("builder.enregistrer", { ...cible, appareil: "MOBILE", valeurs: { "champ.32": "" } });
+    assert.equal(R.valeurDe(d, nouveau.id, d.builderChamps[1], "MOBILE"), null);
+    assert.equal(d.builderValeurs.length, nbValeurs, "effacement de surcharge sans suppression");
+    assert.equal(R.arbre(d, root).enfants[0].enfants[0].champs[1].categorie, "DESIGN");
+    const doublon = element(200, { "VALEUR-NOMBRE": 9, APPAREIL: "TABLETTE" }, {
+      "OBJ-BUILDER-ELEMENT": lien(nouveau.id), "OBJ-BUILDER-CHAMP": lien(32) });
+    d.builderValeurs.push(doublon);
+    assert.throws(() => R.valeurDe(d, nouveau.id, d.builderChamps[1], "TABLETTE"), /dupliquées/);
+    d.builderValeurs.pop();
     assert.equal(R.arbre(d, root).enfants[0].enfants[0].champs[0].valeur, "Valeur modifiée", "relecture après création/modification");
     await executer("builder.publier", { ref: "element.1" });
     assert.equal(R.arbre(d, root, { public: true }).enfants[0].enfants.length, 1);
@@ -113,12 +187,38 @@ async function main() {
     const publicRenderer = await import("../../modules/builder/rendu.js");
     const html = publicRenderer.rendreBuilder({ mode: "builder", noeuds: [{
       ref: "element.test", titre: "Titre", rendu: "TITRE", champs: [
-        { cle: "TEXTE", nature: "TEXTE", valeur: "<script>alert(1)</script>" },
-        { cle: "DESIGN-TAILLE-TEXTE", nature: "NOMBRE", valeur: 24 }
+        { cle: "TEXTE", categorie: "CONTENU", nature: "TEXTE", valeur: "<script>alert(1)</script>", surcharges: { MOBILE: "Texte mobile" } },
+        { cle: "DESIGN-TAILLE-TEXTE", categorie: "DESIGN", nature: "NOMBRE", valeur: 24, surcharges: { ORDINATEUR: 32, TABLETTE: 20 } }
       ], enfants: []
     }] });
     assert.ok(!html.includes("<script>"));
     assert.match(html, /font-size:24px/);
+    assert.match(html, /font-size:32px/);
+    assert.match(html, /font-size:20px/);
+    assert.match(html, /Texte mobile/);
+    const ordinateur = html.split('dse-b-appareil--ordinateur">')[1].split('dse-b-appareil--tablette">')[0];
+    const tablette = html.split('dse-b-appareil--tablette">')[1].split('dse-b-appareil--mobile">')[0];
+    const mobile = html.split('dse-b-appareil--mobile">')[1];
+    assert.ok(ordinateur && tablette && mobile);
+    assert.ok(!ordinateur.includes("Texte mobile") && !tablette.includes("Texte mobile"));
+    assert.match(publicRenderer.STYLES_BUILDER, /max-width:1024px/);
+    assert.match(publicRenderer.STYLES_BUILDER, /max-width:640px/);
+    const valeurZero = element(201, { "VALEUR-NOMBRE": 0, APPAREIL: "MOBILE" }, {
+      "OBJ-BUILDER-ELEMENT": lien(nouveau.id), "OBJ-BUILDER-CHAMP": lien(32) });
+    const surchargeVide = d.builderValeurs.find((v) => R.lien(v, "OBJ-BUILDER-CHAMP") === "32" && R.appareilDe(v) === "MOBILE");
+    surchargeVide.configuration.ACTIF = false;
+    d.builderValeurs.push(valeurZero);
+    assert.equal(R.valeurDe(d, nouveau.id, d.builderChamps[1], "MOBILE"), 0, "zéro est une surcharge, pas un héritage");
+    d.builderValeurs.pop();
+    surchargeVide.configuration.ACTIF = true;
+    const { panneauGenerique } = await import("../../modules/cockpit/constructeur.js");
+    const panneau = panneauGenerique({ ref: "x", titre: "Titre", champs: [{
+      ref: "c", cle: "DESIGN-TROMPEUR", categorie: "CONTENU", nature: "TEXTE", valeur: "Base", surcharges: { MOBILE: "Mobile" }
+    }] }, [], "MOBILE");
+    assert.match(panneau, /data-appareil="MOBILE"/);
+    assert.match(panneau, /<summary>CONTENU<\/summary>.*Mobile/);
+    assert.throws(() => R.categorieDe(element(999, { CATEGORIECHAMP: "INCONNU" })), /Catégorie/);
+    assert.throws(() => R.appareilDe(element(999, { APPAREIL: "PHONE" })), /Appareil/);
     console.log("Builder récursif : création/modification/relecture, publication, règles natives, cycles, périmètre, médias, verrouillage et retrait logique OK (simulation)");
   } finally { ecriture.lireItemFrais = lireAvant; }
 }

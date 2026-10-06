@@ -167,16 +167,27 @@ sont controlees par Lookup de type, avec refus des cycles, changements de site,
 racines ambigues et valeurs actives dupliquees. Le rendu public exige ACTIF et VALIDE.
 Le formulaire generique lit les libelles, natures et valeurs SharePoint ; le renderer
 traduit uniquement des cles techniques autorisees (CLE-RENDU, CODE-CHAMP).
-Les familles de champs utilisent les prefixes techniques DESIGN et AVANCE ; les autres
-champs sont des contenus. Aucun HTML/CSS arbitraire n'est execute.
+Les familles de champs utilisent exclusivement OBJ-BUILDER-CHAMP.CATEGORIECHAMP :
+CONTENU, DESIGN et AVANCE. Une categorie absente ou invalide est signalee comme erreur,
+sans classement deduit du nom ou du prefixe. Aucun HTML/CSS arbitraire n'est execute.
 
 Une racine generique ne remplace jamais automatiquement une composition historique.
-Tant que les listes generiques restent vides, le constructeur actuel continue de
-fonctionner. Aucun type, regle, preset ou contenu fictif n'est initialise.
-Le schema actuel des valeurs n'a pas de Lookup appareil/etat : les surcharges
-responsive restent gerees par OBJ-STYLE-RESPONSIVE pour les elements historiques,
-pas encore par champ generique. Duplication generique et undo structurel restent
-a raccorder. La publication controle la composition et les champs obligatoires,
+Le socle SharePoint generique est considere pret ; aucun type, regle, preset ou
+contenu fictif n'est initialise par le code. Les compositions historiques sont conservees.
+OBJ-BUILDER-CHAMP.APPAREIL est exclue de la selection Graph des elements, des
+configurations et des relations : cette colonne erronee n'est ni lue ni ecrite ni supprimee.
+Les sauvegardes de listes et les restaurations manuelles appliquent la meme exclusion,
+y compris pour les anciens snapshots contenant cette colonne.
+Seule OBJ-BUILDER-VALEUR.APPAREIL est utilisee : vide = general, ORDINATEUR,
+TABLETTE ou MOBILE = surcharge du meme champ pour cet appareil. Une surcharge vide
+herite de la valeur generale, sans cascade tablette vers mobile. L'unicite active est
+controlee par element + champ + appareil. Le formulaire permet de modifier plusieurs
+appareils avant sauvegarde ; toutes les valeurs sont validees avant toute mutation,
+puis relues. Le Canvas et le rendu public partagent ces valeurs et les seuils techniques
+existants (tablette <= 1024 px, mobile <= 640 px).
+OBJ-STYLE-RESPONSIVE reste utilisee pour les elements historiques.
+Duplication generique et undo structurel restent a raccorder.
+La publication controle la composition et les champs obligatoires,
 puis valide les enfants avant la racine, avec relecture apres chaque ecriture.
 Les definitions Layout generiques peuvent traduire block/flex/grid, direction,
 retour ligne, alignement, justification, gap et nombre de colonnes via des valeurs

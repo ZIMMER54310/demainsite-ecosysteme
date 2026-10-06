@@ -10,6 +10,21 @@ const ordre = (el) => Number(f(el, "ORDRE")) || 0;
 const trier = (a, b) => ordre(a) - ordre(b) || Number(a.id) - Number(b.id);
 const CIBLES = { page: "OBJ-PAGES-SITE", entete: "OBJ-ENTETE-SITE", footer: "OBJ-FOOTER-SITE" };
 const TYPES_VALEUR = new Set(["TEXTE", "NOMBRE", "BOOLEEN", "MEDIA"]);
+const APPAREILS = ["ORDINATEUR", "TABLETTE", "MOBILE"];
+const CATEGORIES = ["CONTENU", "DESIGN", "AVANCE"];
+
+function appareilDe(valeur) {
+  const appareil = f(valeur, "APPAREIL");
+  if (appareil === null || appareil === undefined || appareil === "") return "";
+  if (!APPAREILS.includes(appareil)) throw new Error("Appareil de valeur Builder invalide.");
+  return appareil;
+}
+
+function categorieDe(definition) {
+  const categorie = f(definition, "CATEGORIECHAMP");
+  if (!CATEGORIES.includes(categorie)) throw new Error("Catégorie de champ Builder absente ou invalide.");
+  return categorie;
+}
 
 function mediaDansSite(media, site) {
   const portee = cleChamp(relations(media, ["OBJMEDIAPORTEE"])[0]?.titre || "");
@@ -57,9 +72,11 @@ function champsDe(d, typeId) {
   return (d.builderChamps || []).filter((x) => actif(x) && lien(x, "OBJ-BUILDER-TYPE") === typeId).sort(trier);
 }
 
-function valeurDe(d, elementId, definition) {
+function valeurDe(d, elementId, definition, appareil = "") {
+  if (appareil !== "" && !APPAREILS.includes(appareil)) throw new Error("Appareil Builder invalide.");
   const valeurs = (d.builderValeurs || []).filter((x) => actif(x) &&
-    lien(x, "OBJ-BUILDER-ELEMENT") === elementId && lien(x, "OBJ-BUILDER-CHAMP") === definition.id);
+    lien(x, "OBJ-BUILDER-ELEMENT") === elementId && lien(x, "OBJ-BUILDER-CHAMP") === definition.id &&
+    appareilDe(x) === appareil);
   if (valeurs.length > 1) throw new Error("Valeurs Builder actives dupliquées pour une propriété.");
   const v = valeurs[0];
   if (!v) return null;
@@ -141,15 +158,17 @@ function arbre(d, racine, { public: renduPublic = false, reference = (id) => id,
     const champs = champsDe(d, type.id).map((definition) => {
       const valeur = valeurDe(d, el.id, definition);
       const nature = String(f(definition, "TYPE-DONNEE") || "").toUpperCase();
-      if (nature === "MEDIA" && valeur) {
-        const media = (d.medias || []).find((m) => m.id === valeur);
+      const surcharges = Object.fromEntries(APPAREILS.map((appareil) => [appareil, valeurDe(d, el.id, definition, appareil)]));
+      for (const v of [valeur, ...Object.values(surcharges)]) {
+        if (nature !== "MEDIA" || !v) continue;
+        const media = (d.medias || []).find((m) => m.id === v);
         if (!media || !mediaVisible(media)) throw new Error("Média Builder absent ou hors périmètre.");
       }
       return {
       ref: reference(definition.id, "champ"), cle: String(f(definition, "CODE-CHAMP") || ""),
-      libelle: titre(definition), nature,
+      libelle: titre(definition), nature, categorie: categorieDe(definition),
       obligatoire: vrai(f(definition, "OBLIGATOIRE")), aide: String(f(definition, "AIDE") || ""),
-      valeur
+      valeur, surcharges
     }; });
     return { ref: reference(el.id, "element"), typeRef: reference(type.id, "type"), titre: titre(el),
       type: "builder", rendu: String(f(type, "CLE-RENDU") || "").toUpperCase(), conteneur: vrai(f(type, "EST-CONTENEUR")),
@@ -161,4 +180,4 @@ function arbre(d, racine, { public: renduPublic = false, reference = (id) => id,
 }
 
 module.exports = { index, trouverRacine, racineDe, enfantsDe, regleDe, verifierInsertion, verifierRetrait, arbre,
-  champsDe, valeurDe, actif, f, lien, titre, CIBLES, TYPES_VALEUR, mediaDansSite };
+  champsDe, valeurDe, actif, f, lien, titre, CIBLES, TYPES_VALEUR, mediaDansSite, APPAREILS, appareilDe, categorieDe };

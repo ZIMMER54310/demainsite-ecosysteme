@@ -133,17 +133,25 @@ async function executer({ d, w, p, action, siteId, reference, autoriser, mediaAu
     return message("Élément retiré logiquement ; aucune donnée supprimée.");
   }
   if (action === "builder.enregistrer") {
+    const appareil = p.appareil ?? "";
+    if (appareil !== "" && !R.APPAREILS.includes(appareil)) return { refus: "Appareil Builder invalide." };
+    const nAppareil = await nSimple(VALEURS, "APPAREIL");
     if (!p.valeurs || typeof p.valeurs !== "object" || Array.isArray(p.valeurs)) return { refus: "Valeurs invalides." };
+    if (p.surcharges !== undefined && (!p.surcharges || typeof p.surcharges !== "object" || Array.isArray(p.surcharges))) return { refus: "Surcharges invalides." };
+    const lots = [[appareil, p.valeurs], ...Object.entries(p.surcharges || {})];
+    if (new Set(lots.map(([a]) => a)).size !== lots.length) return { refus: "Appareil fourni plusieurs fois." };
+    if (lots.some(([a, valeurs]) => (a !== "" && !R.APPAREILS.includes(a)) ||
+      !valeurs || typeof valeurs !== "object" || Array.isArray(valeurs))) return { refus: "Surcharges invalides." };
     const definitions = R.champsDe(d, R.lien(c.el, "OBJ-BUILDER-TYPE"));
     const champs = new Map(definitions.map((x) => [reference(x.id, "champ"), x]));
     const operations = [];
-    for (const [refChamp, brut] of Object.entries(p.valeurs)) {
+    for (const [appareil, valeurs] of lots) for (const [refChamp, brut] of Object.entries(valeurs)) {
       const def = champs.get(refChamp);
       if (!def) return { refus: "Champ inconnu pour ce type." };
       const nature = String(R.f(def, "TYPE-DONNEE") || "").toUpperCase();
       if (!R.TYPES_VALEUR.has(nature)) return { refus: "Nature de champ non prise en charge." };
       const vide = brut === "" || brut === null;
-      if (R.f(def, "OBLIGATOIRE") === true && vide) return { refus: "Valeur obligatoire manquante." };
+      if (R.f(def, "OBLIGATOIRE") === true && vide && !appareil) return { refus: "Valeur obligatoire manquante." };
       let valeur = brut;
       if (!vide && nature === "NOMBRE") {
         if (!["string", "number"].includes(typeof brut) || !Number.isFinite(Number(brut))) return { refus: "Nombre invalide." };
@@ -164,16 +172,17 @@ async function executer({ d, w, p, action, siteId, reference, autoriser, mediaAu
         if (col?.text?.maxLength && brut.length > col.text.maxLength) return { refus: "Texte trop long pour la colonne SharePoint." };
       }
       const existantes = (d.builderValeurs || []).filter((x) => R.actif(x) &&
-        R.lien(x, "OBJ-BUILDER-ELEMENT") === c.el.id && R.lien(x, "OBJ-BUILDER-CHAMP") === def.id);
+        R.lien(x, "OBJ-BUILDER-ELEMENT") === c.el.id && R.lien(x, "OBJ-BUILDER-CHAMP") === def.id &&
+        R.appareilDe(x) === appareil);
       if (existantes.length > 1) return { refus: "Valeurs actives dupliquées ; corrigez SharePoint." };
-      operations.push({ def, nom, valeur: vide ? null : valeur, existante: existantes[0] });
+      operations.push({ def, nom, appareil, valeur: vide ? null : valeur, existante: existantes[0] });
     }
     for (const op of operations) {
       if (op.existante) await maj(VALEURS, op.existante.id, { [op.nom]: op.valeur });
       else if (op.valeur !== null) await creer(VALEURS, { Title: R.titre(op.def),
         [await nLien(VALEURS, "OBJ-BUILDER-ELEMENT", LISTE)]: c.el.id,
         [await nLien(VALEURS, "OBJ-BUILDER-CHAMP")]: op.def.id, [await nSimple(VALEURS, "ACTIF")]: true,
-        [op.nom]: op.valeur });
+        [nAppareil]: op.appareil || null, [op.nom]: op.valeur });
     }
     return message("Valeurs Builder enregistrées et relues.");
   }
