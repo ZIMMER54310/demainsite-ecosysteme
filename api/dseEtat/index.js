@@ -1,5 +1,14 @@
 "use strict";
 const dse = require("../shared/dse");
+const { execFileSync } = require("child_process");
+const path = require("path");
+const demarreLe = new Date().toISOString();
+let commit = null;
+try {
+  commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: path.resolve(__dirname, "../.."), encoding: "utf8" }).trim();
+} catch (e) {
+  console.error("[DSE version] Commit de démarrage indisponible :", e.message);
+}
 module.exports = async function (context, req) {
   const id = dse.correlationId(req);
   try {
@@ -9,6 +18,7 @@ module.exports = async function (context, req) {
       succes: true,
       donnees: {
         service: "DSE-API", version: "0.9", statut: "Disponible",
+        commit, demarreLe,
         identiteGereeAccessible: true, microsoftGraphAccessible: true, sharePointAccessible: true,
         site: { id: site.id, nom: site.displayName, url: site.webUrl }
       },

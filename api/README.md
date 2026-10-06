@@ -120,7 +120,9 @@ Hors administration globale, aucun droit d'administration ou d'ecriture n'est ac
 avant selection d'un contexte complet. Toute operation de site, meme par un administrateur
 global, exige une relation active/validee unique avec role et profil valides, client coherent.
 Une valeur manquante refuse le contexte sans repli sur le role global. Une relation
-verrouillee est en lecture seule. Mes sites ne contient que les sites reellement attribues ;
+verrouillee est protegee contre la modification de ses droits ; elle ne reduit pas
+le niveau du role et n'interdit pas la connexion ni la consultation.
+Mes sites ne contient que les sites reellement attribues ;
 les relations incompletes y sont signalees et ne donnent aucun droit sur le site.
 
 GET /moi?domaine=... recharge le contexte et le menu ; GET /cockpit/compte est une vue
@@ -140,8 +142,16 @@ relations et schemas reels accessibles par la configuration Graph existante.
 Les sessions de recette sont signees localement pour les identites presentes :
 ce test verifie l'API et le rendu, pas le parcours OAuth dans un navigateur.
 Les ajouts/corrections de relations sont uniquement prevalides, jamais executes.
+Avec DSE_CONTEXTES_BASE=https://dseco.fr, les controles de lecture passent par
+l'API HTTP de production avec les sessions de recette, sans exposer ces sessions.
 Les scenarios impossibles faute de relations completes sont signales NON TESTABLE,
 sans completer les donnees a la place de l'administrateur.
+
+La version API expose dans GET /etat le commit Git capture au demarrage et
+demarreLe : ces valeurs ne changent pas tant que le processus n'est pas redemarre.
+Le front publie est trace par /var/www/.dse-front-commit. Le deploiement du front
+est non destructif ; une archive de la version precedente doit etre conservee
+avant copie pour permettre le retour arriere.
 
 L'acces commun DSE utilise OBJ-ACCES-COMMUN : Lookups utilisateur, site, actif et valide.
 Apres inscription valide, le domaine de service dseco.fr est resolu dans SharePoint ;

@@ -57,7 +57,11 @@ async function main() {
         assert.deepEqual(contexte.siteIds, [lien.siteId]);
         assert.deepEqual(contexte.clientIds, [lien.clientId]);
         assert.equal(contexte.global, false);
-        if (lien.verrouille) assert.equal(contexte.niveau, "lecture");
+        if (lien.verrouille) {
+          const profil = data.accesTypes.find((a) => a.id === lien.accesTypeId);
+          if (!profil.niveau) assert.equal(contexte.niveau, droits.regleRole(data.politique, lien.roleId).niveau);
+          noter(`Relation ${lien.id} verrouillee : connexion et niveau du role preserves`);
+        }
         complets++;
       } else {
         assert.deepEqual(contexte.fonctions, []);
@@ -91,6 +95,17 @@ async function main() {
       "Secret de session existant requis pour la recette API.");
     const req = { query, headers: { cookie: entetes["Set-Cookie"].map((v) => v.split(";")[0]).join("; ") }, hostname: "",
       get: () => "" };
+    if (process.env.DSE_CONTEXTES_BASE) {
+      const routes = new Map([[api.monCompte, "/cockpit/compte"], [api.sites, "/cockpit/sites"],
+        [api.adminUtilisateurs, "/cockpit/admin/utilisateurs"], [api.moi, "/moi"]]);
+      const route = routes.get(handler);
+      assert.ok(route, "Route de recette HTTP inconnue.");
+      const url = new URL(`/api/v1${route}`, process.env.DSE_CONTEXTES_BASE);
+      url.search = new URLSearchParams(query).toString();
+      const reponse = await fetch(url, { headers: { cookie: req.headers.cookie, Accept: "application/json" },
+        signal: AbortSignal.timeout(60000) });
+      return { code: reponse.status, corps: await reponse.json() };
+    }
     const res = { code: null, corps: null, status(v) { this.code = v; return this; },
       set() { return this; }, json(v) { this.corps = v; return this; } };
     await handler(req, res);
@@ -123,10 +138,28 @@ async function main() {
       const html = ui.rendreUtilisateurs({}, comptes.corps.donnees);
       assert.ok(html.includes('name="accesType" required'));
       assert.ok(html.includes('name="role" required'));
-      assert.ok(html.includes('data-action-admin="modifier-acces-site"'));
-      noter("Rendu Comptes : formulaires role/profil, correction de relation incomplete");
+      if (comptes.corps.donnees.utilisateurs.some((u) => u.sites.some((s) => s.modifiable))) {
+        assert.ok(html.includes('data-action-admin="modifier-acces-site"'));
+      } else assert.ok(!html.includes('data-action-admin="modifier-acces-site"'));
+      noter("Rendu Comptes : formulaires role/profil, protection des relations verrouillees");
     }
     assert.ok(ui.rendreListeSites({}, sites.corps.donnees).includes("Mes sites"));
+    const sitesAvecDroits = sites.corps.donnees.elements.filter((s) => s.contexte?.etat === "COMPLET");
+    for (const s of sitesAvecDroits) {
+      const selection = await appeler(api.moi, base, { domaine: s.acces });
+      const menu = selection.corps.donnees.menu;
+      assert.ok(menu.some((e) => e.url === `/cockpit/utilisateurs?domaine=${encodeURIComponent(s.acces)}`));
+      assert.ok(!menu.some((e) => e.url.startsWith("/cockpit/synchronisations")));
+      const comptesContextuels = await appeler(api.adminUtilisateurs, base, { contexteDomaine: s.acces });
+      assert.equal(comptesContextuels.code, 200);
+      for (const u of comptesContextuels.corps.donnees.utilisateurs) {
+        for (const relation of u.sites) {
+          const native = data.liens.find((l) => administration._test.ref("l", l.id) === relation.ref);
+          if (native.verrouille) assert.equal(relation.modifiable, false);
+        }
+      }
+      noter(`Compte ${base.u.id} : Comptes contextuels accessibles, relations verrouillees non modifiables`);
+    }
     noter(`Compte ${base.u.id} : droits API non elevables par parametres`);
     for (const lien of attribues) {
       const groupe = groupes.find((s) => String(s.id) === lien.siteId);
@@ -209,7 +242,8 @@ async function main() {
   });
   noter("Changement entre deux contextes complets de roles/profils differents",
     multiComplet ? "OK" : "NON TESTABLE : relations completes distinctes manquantes");
-  console.log(JSON.stringify({ lectureSeule: true, comptes: bases.length, relationsCompletes: complets, resultats }, null, 2));
+  console.log(JSON.stringify({ lectureSeule: true, transport: process.env.DSE_CONTEXTES_BASE ? "HTTP" : "CONTROLEUR",
+    comptes: bases.length, relationsCompletes: complets, resultats }, null, 2));
 }
 
 main().catch((err) => {

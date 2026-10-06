@@ -143,7 +143,6 @@ function contexteSite(base, donnees, siteId) {
     if (!Object.hasOwn(RANG_NIVEAU, n)) return refus("Niveau du profil d'accès invalide.");
     if (RANG_NIVEAU[n] < RANG_NIVEAU[niveau]) niveau = n;
   }
-  if (l.verrouille) niveau = "lecture";
   return { ...base, global: false, roleId: String(role.id), role: { titre: role.titre }, niveau,
     portee: "attribues", fonctions, siteIds: [id], clientIds: [String(client.id)],
     accesType: { id: String(acces.id), titre: acces.titre },

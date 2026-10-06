@@ -39,19 +39,24 @@ if grep -rIlE 'DSE_CLIENT_SECRET|client_secret' "$TMP" >/dev/null; then
 fi
 
 echo "Deploiement du commit $SHA vers $CIBLE ${DRY[*]:-}"
-# --delete uniquement dans les dossiers geres ; /var/www/html/media et le reste sont preserves.
+# Copie non destructive ; les fichiers deja presents et les medias sont preserves.
 for f in "${FICHIERS[@]}"; do
   sudo rsync -a "${DRY[@]}" "$TMP/$f" "$CIBLE/$f"
 done
 for d in "${DOSSIERS[@]}"; do
-  sudo rsync -a --delete "${DRY[@]}" "$TMP/$d/" "$CIBLE/$d/"
+  sudo rsync -a "${DRY[@]}" "$TMP/$d/" "$CIBLE/$d/"
 done
 
 [ ${#DRY[@]} -gt 0 ] && { echo "Simulation terminee."; exit 0; }
 
 # Controle apres copie : contenu identique au commit.
 for f in "${FICHIERS[@]}"; do cmp -s "$TMP/$f" "$CIBLE/$f" || { echo "ERREUR : $f differe" >&2; exit 1; }; done
-for d in "${DOSSIERS[@]}"; do diff -rq "$TMP/$d" "$CIBLE/$d" || { echo "ERREUR : $d differe" >&2; exit 1; }; done
+for d in "${DOSSIERS[@]}"; do
+  while IFS= read -r -d '' f; do
+    rel="${f#"$TMP/"}"
+    cmp -s "$f" "$CIBLE/$rel" || { echo "ERREUR : $rel differe" >&2; exit 1; }
+  done < <(find "$TMP/$d" -type f -print0)
+done
 [ ! -e "$CIBLE/api" ] && [ ! -e "$CIBLE/.env" ] || { echo "ERREUR : element interdit en cible" >&2; exit 1; }
 
 echo "$SHA" | sudo tee "$(dirname "$CIBLE")/.dse-front-commit" >/dev/null
