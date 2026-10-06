@@ -274,6 +274,8 @@ async function main() {
       noter("Refus ecriture sans site : aucune operation produite");
       const fiche = await administration.utilisateurs(admin.droits, { utilisateur: utilisateur.ref });
       const relation = fiche.utilisateur.sites.find((s) => s.ref === administration._test.ref("l", lien.id));
+      assert.ok(relation.modifieLe && Number.isFinite(Date.parse(relation.modifieLe)),
+        "la date native de modification de l'affectation est disponible pour le tri");
       if (relation?.modifiable) {
         const modification = await administration.construireAction(admin.droits, "modifier-acces-site",
           { ...params, relation: relation.ref }, null);

@@ -225,7 +225,7 @@ async function chargerDonnees() {
   const colSitePrincipal = k.cols.toutes.find((c) => c.lookup && minuscule(c.lookup.listId) === minuscule(L.site.id) &&
     /principal/i.test(String(c.displayName || c.name)));
   const clients = k.items.filter((i) => oui(i.fields || {}, k.cols, L.actif) && oui(i.fields || {}, k.cols, L.valide)).map((i) => ({
-    id: String(i.id), modifieLe: i.lastModifiedDateTime || f.Modified || null,
+    id: String(i.id),
     titre: String(i.fields?.Title || "").trim() || null,
     entraObjectId: colOid ? i.fields?.[colOid.name] || null : null,
     entraEmail: colMail ? i.fields?.[colMail.name] || null : null,
@@ -235,7 +235,7 @@ async function chargerDonnees() {
   const liens = li.items.map((i) => {
     const f = i.fields || {};
     return {
-      id: String(i.id),
+      id: String(i.id), modifieLe: i.lastModifiedDateTime || f.Modified || null,
       utilisateurId: lookupId(f, li.cols.parListe(L.utilisateur.id)),
       clientId: lookupId(f, li.cols.parListe(L.client.id)),
       siteId: lookupId(f, li.cols.parListe(L.site.id)),

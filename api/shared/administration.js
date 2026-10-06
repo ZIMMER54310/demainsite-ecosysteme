@@ -117,8 +117,16 @@ async function utilisateurs(d, query = {}) {
     : paginer(vues, query, { tris: { identite: (u) => u.email, role: (u) => u.role,
       etat: (u) => Number(u.actif), affectations: (u) => u.sites.length },
       recherche: (u) => [u.email, u.role].join(" ") });
-  const repartition = (cle) => [...new Set(utilisateur.sites.map((s) => s[cle] || "Non renseigné"))]
-    .map((titre) => ({ titre, nombre: utilisateur.sites.filter((s) => (s[cle] || "Non renseigné") === titre).length }));
+  const repartition = (cle) => {
+    const groupes = new Map();
+    for (const s of utilisateur.sites) {
+      const id = s[`${cle}Ref`] || "";
+      const groupe = groupes.get(id) || { ref: id, titre: s[cle] || "Non renseigné", nombre: 0 };
+      groupe.nombre++;
+      groupes.set(id, groupe);
+    }
+    return [...groupes.values()];
+  };
   const synthese = utilisateur ? { total: utilisateur.sites.length,
     autorises: new Set(utilisateur.sites.filter((s) => s.autorise).map((s) => s.siteRef)).size,
     actives: utilisateur.sites.filter((s) => s.actif).length,
@@ -398,6 +406,7 @@ async function espaces(d, query = {}) {
   const elements = ctx.groupes.map((g) => {
     const client = donnees.clients.find((c) => c.id === String(g.clientId));
     return { ref: ref("s", g.id), nom: g.titre, domaine: perimetre.domaineAcces(g),
+      domainePrincipal: perimetre.domainesDuSite(g).principal,
       client: client?.titre || "", clientRef: client ? ref("k", client.id) : "",
       statut: ctx.statuts.get(String(g.statutId))?.titre || "",
       couleur: ctx.statuts.get(String(g.statutId))?.couleur || null };
@@ -420,6 +429,7 @@ async function preparerAction({ identite, d, action, params }) {
   }
   if (r.aucunChangement) return { status: 200, aucunChangement: true, changements: [] };
   const op = { ...r.op, portee: "admin", adminAction: action, adminParams: params };
+  if (["changer-role", "creer-utilisateur", "modifier-politique-role"].includes(action)) op.journalComptes = true;
   op.contexteJournal = { acteur: identite.sujet, utilisateurId: d.utilisateurId || null,
     clientId: d.clientIds?.length === 1 ? d.clientIds[0] : null, siteId: null, ...op.contexteJournal };
   if (op.type === "modifier") op.avant = ecriture.hash(op.avantValeurs);

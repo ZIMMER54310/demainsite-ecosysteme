@@ -452,6 +452,8 @@ condition de reconnaissance, avec les IDs natifs des relations si reconnu.
 Les mutations d'affectations et de liaison d'identité réussies puis relues
 sont journalisées dans les champs texte/date réellement disponibles d'OBJ-JRN,
 avec une clé d'idempotence ; les anciens Lookup orphelins ne sont pas utilisés.
+Les mutations des rôles globaux, politiques et comptes réalisées dans Comptes
+utilisent le même journal de succès ciblé.
 DATE-EVENEMENT est écrit à la seconde, précision effectivement conservée par
 SharePoint, et sa relecture compare l'instant plutôt que la forme ISO du texte.
 Un échec de journal après écriture est signalé explicitement comme une réussite

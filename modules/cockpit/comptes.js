@@ -82,7 +82,7 @@ export function rendreComptes(moi, d, params = {}) {
       <section class="card"><h3>Synthèse utilisateur</h3><p>${s.autorises} sites autorisés · ${s.total} affectations · ${s.actives} actives ·
       ${s.incompletes} incomplètes · ${s.verrouillees} verrouillées</p>${repartition("Répartition par rôle", s.roles)}${repartition("Répartition par type d'accès", s.accesTypes)}</section>
       ${barre}<div class="table-wrap"><table class="cockpit-table"><thead><tr>${["Site", "Domaine", "Client", "Rôle", "Type d'accès", "Actif", "Valide", "Verrouillé", "Actions"].map((t) => `<th>${t}</th>`).join("")}</tr></thead>
-      <tbody>${u.sites.map((v) => `<tr><td>${e(v.nom)}${v.incomplet ? `<br>Contexte incomplet : ${e(v.motif)}` : ""}</td><td>${e(v.domaine || "Non renseigné")}</td>
+      <tbody>${u.sites.map((v) => `<tr><td>${e(v.nom)}${v.incomplet ? `<br>Contexte incomplet : ${e(v.motif)}` : ""}${v.modifieLe ? `<br><small>Modifié : ${e(v.modifieLe)}</small>` : ""}</td><td>${e(v.domaine || "Non renseigné")}</td>
         <td>${e(v.client || "Non renseigné")}</td><td>${e(v.role || "Non renseigné")}</td><td>${e(v.accesType || "Non renseigné")}</td>
         <td>${ouiNon(v.actif)}</td><td>${ouiNon(v.valide)}</td><td>${ouiNon(v.verrouille)}</td><td>
         ${v.domaine ? `<a href="#/cockpit/site/${encodeURIComponent(v.domaine)}">Consulter le site</a>` : ""}
@@ -123,7 +123,8 @@ export function rendreEspaces(moi, d, params) {
     <button class="btn btn-primary">Appliquer</button><a href="#/cockpit/espaces">Réinitialiser les filtres</a></form>
     <div class="table-wrap"><table class="cockpit-table"><thead><tr><th>Site</th><th>Domaine</th><th>Client</th><th>Statut</th><th>Actions</th></tr></thead>
     <tbody>${d.espaces.map((v) => `<tr><td>${e(v.nom)}</td><td>${e(v.domaine || "Non renseigné")}</td><td>${e(v.client)}</td><td>${e(v.statut || "Non renseigné")}</td><td>
-      ${v.domaine ? `<a href="#/cockpit/site/${encodeURIComponent(v.domaine)}">Ouvrir le cockpit</a> · <a href="https://${e(v.domaine)}/" target="_blank" rel="noopener noreferrer">Voir le site public</a>` : ""}</td></tr>`).join("") ||
+      ${v.domaine ? `<a href="#/cockpit/site/${encodeURIComponent(v.domaine)}">Ouvrir le cockpit</a>` : ""}
+      ${v.domainePrincipal ? ` · <a href="https://${e(v.domainePrincipal)}/" target="_blank" rel="noopener noreferrer">Voir le site public</a>` : "<span>Domaine principal non renseigné</span>"}</td></tr>`).join("") ||
       '<tr><td colspan="5">Aucun espace autorisé.</td></tr>'}</tbody></table></div>${pagination(base, d.pagination, { ...params, ...c })}</section>`;
 }
 
