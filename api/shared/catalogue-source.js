@@ -62,7 +62,7 @@ async function titresListe(token, siteGraphId, listId, cache) {
 }
 
 // Meme forme que construireElementPublic, mais les titres des Lookup sont resolus par lot.
-async function lireElements(token, siteGraphId, liste, cacheTitres, { exclureChamps = [] } = {}) {
+async function lireElements(token, siteGraphId, liste, cacheTitres, { exclureChamps = [], siteListeId = null } = {}) {
   if (schemaBuilder.estListeChamps(liste.displayName || liste.name)) exclureChamps = [...exclureChamps, "APPAREIL"];
   let colonnes, items;
   if (exclureChamps.length) {
@@ -78,6 +78,23 @@ async function lireElements(token, siteGraphId, liste, cacheTitres, { exclureCha
       dse.chargerColonnesListe(token, siteGraphId, liste.id),
       dse.chargerItemsListe(token, siteGraphId, liste.id)
     ]);
+  }
+  if (siteListeId && liste.displayName === "OBJ-ARTICLE") {
+    const cible = dse.trouverColonneSiteCible(colonnes, siteListeId);
+    if (cible) {
+      const relus = await dse.collecter(token,
+        `/sites/${siteGraphId}/lists/${liste.id}/items?$expand=fields($select=${cible.name}LookupId)&$top=200`);
+      const parId = new Map(relus.map((i) => [String(i.id), i]));
+      if (items.length !== relus.length) throw new Error("Articles modifiés pendant la lecture du site cible.");
+      items = items.map((i) => {
+        const relu = parId.get(String(i.id));
+        const version = (item) => item?.eTag || item?.["@odata.etag"] || item?.fields?.["@odata.etag"];
+        if (!relu || !version(relu) || version(relu) !== version(i)) {
+          throw new Error("Version article modifiée pendant la lecture du site cible.");
+        }
+        return { ...i, fields: { ...i.fields, ...relu.fields } };
+      });
+    }
   }
   const lookups = colonnes.filter((c) => c.lookup?.listId && !c.hidden);
 
@@ -212,7 +229,7 @@ async function chargerDonnees() {
 
   const listeMedias = dse.trouverListe(listes, ["OBJ-MEDIA"]);
   const mediaListId = listeMedias ? String(listeMedias.id).toLowerCase() : null;
-  const lire = (liste) => lireElements(token, siteGraph.id, liste, cacheTitres);
+  const lire = (liste) => lireElements(token, siteGraph.id, liste, cacheTitres, { siteListeId: listeSites.id });
   const listeStatuts = dse.trouverListe(listes, statutsSite.LISTE_STATUTS);
   const entreesContenu = Object.entries(LISTES_CONTENU).map(([type, noms]) => [type, dse.trouverListe(listes, noms)]);
   const entreesReferentiel = Object.entries(LISTES_REFERENTIEL).map(([kind, noms]) => [kind, dse.trouverListe(listes, noms)]);

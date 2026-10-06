@@ -19,7 +19,29 @@ const COMPOSANTS_EDITABLES = {
 };
 
 const referenceElement = (listeId, id) => ecriture.hash([listeId, String(id)]).slice(0, 24);
+const cibleArticle = dse.trouverColonneSiteCible;
+
+function sitesArticle(fields, colonnes, listeSiteId) {
+  const cible = cibleArticle(colonnes, listeSiteId);
+  const primaire = cible && fields[`${cible.name}LookupId`];
+  if (primaire) return [String(primaire)];
+  const ids = colonnes.filter((c) => c.lookup?.listId === listeSiteId).flatMap((c) => {
+    const v = fields[`${c.name}LookupId`];
+    return Array.isArray(v) ? v : v ? [v] : [];
+  });
+  return [...new Set(ids.map(String))];
+}
+
+function selectionArticle(colonnes, listeSiteId) {
+  return [...new Set(["Title", ...ecriture.champsModifiables(colonnes).map((c) => c.nom),
+    ...colonnes.filter((c) => c.lookup?.listId === listeSiteId ||
+      /^(OBJ-)?(ACTIF|VALIDE|VER[RO]*UILLE)$/i.test(c.displayName))
+      .map((c) => c.lookup ? `${c.name}LookupId` : c.name)])];
+}
+
 function elementsLies(items, colonnes, siteId, listeSiteId, composant) {
+  if (composant === "articles") return items.filter((i) =>
+    sitesArticle(i.fields || {}, colonnes, listeSiteId).includes(String(siteId)));
   if (composant !== "seo") return items.filter((i) => dse.correspondAuSite(i.fields || {}, colonnes, siteId, listeSiteId));
   const officiel = colonnes.find((c) => c.name === "OBJSITEPUBLIC" && c.lookup?.listId === listeSiteId);
   return items.filter((i) => {
@@ -30,7 +52,8 @@ function elementsLies(items, colonnes, siteId, listeSiteId, composant) {
 }
 
 async function relireLies(g, listId, colonnes, siteId, listeSiteId, composant) {
-  const items = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${listId}/items?$expand=fields&$top=500`);
+  const expansion = composant === "articles" ? `fields($select=${selectionArticle(colonnes, listeSiteId).join(",")})` : "fields";
+  const items = await ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${listId}/items?$expand=${expansion}&$top=500`);
   return elementsLies(items, colonnes, siteId, listeSiteId, composant);
 }
 
@@ -41,23 +64,28 @@ async function resoudre(g, composant, siteId, element = "") {
   const liste = dse.trouverListe(g.listes, def.listes);
   const listeSite = dse.trouverListe(g.listes, ["OBJ-SITE-PUBLIC"]);
   if (!liste || !listeSite) return { indisponible: `${def.libelle} : données non disponibles.` };
-  const [colonnes, items] = await Promise.all([
-    dse.chargerColonnesListe(g.token, g.siteGraphId, liste.id),
-    dse.chargerItemsListe(g.token, g.siteGraphId, liste.id)
+  const [colonnes, bruts] = await Promise.all([
+    dse.chargerColonnesListe(g.token, g.siteGraphId, liste.id, { contraintes: true }),
+    composant === "articles" ? null : dse.chargerItemsListe(g.token, g.siteGraphId, liste.id)
   ]);
+  const selectionChamps = composant === "articles" ? selectionArticle(colonnes, listeSite.id) : null;
+  const items = bruts || await ecriture.collecterFrais(g,
+    `/sites/${g.siteGraphId}/lists/${liste.id}/items?$expand=fields($select=${selectionChamps.join(",")})&$top=200`);
   const champs = ecriture.champsModifiables(colonnes);
   if (!champs.length) return { indisponible: `${def.libelle} : aucun champ modifiable.` };
   const lies = elementsLies(items, colonnes, siteId, listeSite.id, composant);
   if (lies.length === 0 || def.creation && element === "nouveau") {
     const candidats = colonnes.filter((c) => c.lookup?.listId === listeSite.id && !c.lookup.allowMultipleValues);
-    const lookup = candidats.length === 1 ? candidats[0] : candidats.find((c) => c.name === "OBJSITEPUBLIC");
+    const lookup = composant === "articles" ? cibleArticle(colonnes, listeSite.id)
+      : candidats.length === 1 ? candidats[0] : candidats.find((c) => c.name === "OBJSITEPUBLIC");
     if (def.creation && lookup) {
       const nonPrisEnCharge = colonnes.filter((c) => c.required && !c.readOnly && !c.hidden &&
         c.name !== lookup.name && !champs.some((x) => x.nom === c.name) &&
         !["OBJ_x002d_ACTIF", "OBJ_x002d_VALIDE"].includes(c.name));
       if (nonPrisEnCharge.length) return { indisponible: "La création exige des informations non disponibles dans ce formulaire." };
-      return { def, listId: liste.id, itemId: null, champs, actuel: {}, lookup, colonnes, listeSiteId: listeSite.id };
+      return { def, listId: liste.id, itemId: null, champs, actuel: {}, lookup, colonnes, selectionChamps, listeSiteId: listeSite.id };
     }
+    if (composant === "articles") return { indisponible: "Création refusée : SITE-CIBLE doit être un Lookup simple vers OBJ-SITE-PUBLIC. Le Lookup multiple historique est conservé, pas utilisé pour créer un article." };
     return { indisponible: `${def.libelle} : aucun élément n'est encore rattaché à ce site. Le rattachement doit être complété avant modification.` };
   }
   if (def.collection && !element) {
@@ -68,15 +96,34 @@ async function resoudre(g, composant, siteId, element = "") {
   if (!def.collection && lies.length > 1) {
     return { indisponible: `${def.libelle} : plusieurs éléments sont rattachés à ce site. Modification bloquée pour éviter toute erreur.` };
   }
+  if (composant === "articles" && sitesArticle(cible.fields, colonnes, listeSite.id).length !== 1) {
+    return { indisponible: "Cet article historique est partagé entre plusieurs sites. Sa modification nécessite un rattachement simple explicite, sans migration automatique." };
+  }
   const itemId = String(cible.id);
-  const actuel = ecriture.valeursDe(await ecriture.lireItemFrais(g, liste.id, itemId), champs.map((c) => c.nom));
-  return { def, listId: liste.id, itemId, champs, actuel, colonnes, listeSiteId: listeSite.id };
+  const actuel = ecriture.valeursDe(await ecriture.lireItemFrais(g, liste.id, itemId, selectionChamps), champs.map((c) => c.nom));
+  return { def, listId: liste.id, itemId, champs, actuel, colonnes, selectionChamps, listeSiteId: listeSite.id };
 }
 
 const formulaire = (r) => ({
   libelle: r.def.libelle,
   champs: r.champs.map((c) => ({ cle: c.cle, libelle: c.libelle, multiligne: c.multiligne, max: c.max, valeur: r.actuel[c.nom] ?? "" }))
 });
+
+async function champsCreation(g, r, siteId, composant) {
+  const champs = { [`${r.lookup.name}LookupId`]: String(siteId) };
+  for (const nom of ["OBJ-ACTIF", "OBJ-VALIDE"]) {
+    const l = dse.trouverListe(g.listes, [nom]);
+    const c = l && r.colonnes.find((col) => col.lookup?.listId === l.id && !col.lookup.allowMultipleValues);
+    if (!c && composant === "articles") return { erreur: "Les états de création de l'article sont incomplets." };
+    if (!c) continue;
+    const motif = composant === "articles" && nom === "OBJ-VALIDE" ? /^non\b/i : /^oui\b/i;
+    const etats = (await dse.chargerItemsListe(g.token, g.siteGraphId, l.id))
+      .filter((i) => motif.test(String(i.fields?.Title || "").trim()));
+    if (etats.length !== 1) return { erreur: `${nom} : état de création indisponible ou ambigu.` };
+    champs[`${c.name}LookupId`] = String(etats[0].id);
+  }
+  return { champs };
+}
 
 async function lire({ composant, siteId, element }) {
   const g = await ecriture.contexteGraph();
@@ -103,7 +150,7 @@ async function preparer({ identite, composant, siteId, siteNom, valeurs, element
   }
   const estVerrouille = (f) => colonneVerrou && (colonneVerrou.boolean
     ? f[colonneVerrou.name] === true : String(f[`${colonneVerrou.name}LookupId`]) === verrouOui);
-  if (r.itemId && estVerrouille(await ecriture.lireItemFrais(g, r.listId, r.itemId))) {
+  if (r.itemId && estVerrouille(await ecriture.lireItemFrais(g, r.listId, r.itemId, r.selectionChamps))) {
     return { status: 403, erreur: "Cet élément est verrouillé et protégé contre les modifications." };
   }
   const { erreurs, propres } = ecriture.validerValeurs(r.champs, valeurs);
@@ -113,25 +160,20 @@ async function preparer({ identite, composant, siteId, siteNom, valeurs, element
   if (!diff.length) return { status: 200, aucunChangement: true, changements: [] };
   const nouveaux = Object.fromEntries(diff.map((d) => [d.nom, d.apres]));
   if (!r.itemId) {
-    nouveaux[`${r.lookup.name}LookupId`] = String(siteId);
-    for (const nom of ["OBJ-ACTIF", "OBJ-VALIDE"]) {
-      const l = dse.trouverListe(g.listes, [nom]);
-      const c = l && r.colonnes.find((col) => col.lookup?.listId === l.id);
-      if (!c) continue;
-      const oui = (await dse.chargerItemsListe(g.token, g.siteGraphId, l.id))
-        .filter((i) => /^oui\b/i.test(String(i.fields?.Title || "").trim()));
-      if (oui.length !== 1) return { status: 409, erreur: "La valeur d'activation n'est pas disponible." };
-      nouveaux[`${c.name}LookupId`] = String(oui[0].id);
-    }
+    const creation = await champsCreation(g, r, siteId, composant);
+    if (creation.erreur) return { status: 409, erreur: creation.erreur };
+    Object.assign(nouveaux, creation.champs);
   }
   const avant = Object.fromEntries(diff.map((d) => [d.nom, r.actuel[d.nom]]));
   const { jeton } = ecriture.emettreJeton(identite, {
     type: r.itemId ? "modifier" : "ajouter", portee: "site", composant, fonction: r.def.fonction, siteId: String(siteId),
     operation: `${r.def.fonction}.${r.itemId ? "modifier" : "creer"}`,
     journalComptes: composant === "articles",
-    listId: r.listId, itemId: r.itemId, champs: nouveaux, avant: ecriture.hash(avant),
+    listId: r.listId, itemId: r.itemId, champs: nouveaux, avant: ecriture.hash(avant), selectionChamps: r.selectionChamps,
     cleDoublon: `${composant}:${siteId}`,
     verifierVersion: (fields) => estVerrouille(fields) ? "Cet élément est maintenant verrouillé."
+      : composant === "articles" && sitesArticle(fields, r.colonnes, r.listeSiteId).length !== 1
+        ? "Cet article est maintenant partagé entre plusieurs sites. Écriture refusée."
       : elementsLies([{ fields }], r.colonnes, siteId, r.listeSiteId, composant).length
         ? null : "L'élément n'est plus rattaché au site autorisé.",
     verifierCible: async (frais) => {
@@ -152,4 +194,4 @@ async function preparer({ identite, composant, siteId, siteNom, valeurs, element
   return { status: 200, jeton, changements: diff.map(({ libelle, avant: a, apres }) => ({ libelle, avant: a, apres })) };
 }
 
-module.exports = { COMPOSANTS_EDITABLES, lire, preparer, resoudre, elementsLies };
+module.exports = { COMPOSANTS_EDITABLES, lire, preparer, resoudre, elementsLies, champsCreation };

@@ -44,6 +44,11 @@ jamais sur une ancienne affectation de ce meme site.
 Sans affectation contextuelle applicable, une politique globale SharePoint
 deja autorisee conserve son perimetre explicite sur les sites/client valides.
 Ce chemin n'ajoute aucune fonction a la politique globale resolue.
+Comptes conserve la consultation des affectations typees. Son formulaire
+historique ne peut pas modifier/deverrouiller ces lignes : il ne transporte pas
+la cible et l'origine du nouveau modele. Le refus est revalide cote serveur ;
+leurs changements doivent etre effectues dans SharePoint, pas via un formulaire
+qui desynchroniserait les anciennes colonnes et les nouvelles cibles.
 
 Les routes edition/aperçu/confirmation et construire/action controlent l'action
 atomique sur la cible relue. La confirmation reutilise la session, la version
@@ -51,12 +56,26 @@ ETag, l'anti-doublon et la relecture existants. Articles utilise le meme flux
 editorial sur OBJ-ARTICLE et journalise les succes avec cle d'idempotence.
 Les controles internes du Builder ne sont pas modifies.
 
+OBJ-ARTICLE dispose du Lookup simple SITE-CIBLE (nom interne relu depuis le
+schema). Une valeur renseignee prime sur le Lookup multiple historique ;
+sans valeur, les liens historiques restent consultables. Aucun lien ni article
+historique n'est migre ou supprime. Un article historique partage entre plusieurs
+sites est protege contre l'edition dans ce formulaire. Les projections ciblees
+incluent rattachement, verrous et champs editoriaux pour eviter les omissions Graph.
+Le catalogue public utilise la meme priorite de rattachement.
+La creation exige le site natif cote serveur et utilise les etats natifs
+Actif=Oui et Valide=Non relus dans SharePoint : creer ne valide/publie jamais.
+Un etat absent ou ambigu refuse l'operation, sans valeur inventee.
+Les affectations dynamiques ne beneficient pas implicitement d'autres fiches
+de site regroupees par le catalogue historique.
+
 Outils :
 
 ```sh
 node tools/provision-autorisations.js
 node tools/provision-autorisations.js --apply
 node tools/provision-autorisations.js --configure --apply
+node tools/provision-autorisations.js --article-site --apply
 node tests/droits-dynamiques-reels.js
 ```
 

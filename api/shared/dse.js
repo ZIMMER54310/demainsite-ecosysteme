@@ -575,7 +575,8 @@ function trouverListe(
 async function chargerColonnesListe(
   token,
   siteGraphId,
-  listeId
+  listeId,
+  options = {}
 ) {
   return collecter(
     token,
@@ -584,7 +585,8 @@ async function chargerColonnesListe(
     "/columns" +
     "?$select=" +
     "id,name,displayName,hidden," +
-    "lookup,boolean,text,number,dateTime"
+    "lookup,boolean,text,number,dateTime" +
+    (options.contraintes ? ",readOnly,required" : "")
   );
 }
 
@@ -1191,6 +1193,12 @@ const idListe = (v) =>
  * OBJ-SITE-PUBLIC (ID natif de liste), quel que soit le nom de la colonne
  * (ex. "OBJ-SITE-PUBLIC" ou "OBJ-SITE"). Repli par nom pour les colonnes simples.
  */
+function trouverColonneSiteCible(colonnes, listeSiteId) {
+  return colonnes.find((c) => nomNormalise(c.displayName) === "SITECIBLE" &&
+    c.lookup?.listId && !c.lookup.allowMultipleValues &&
+    (!listeSiteId || idListe(c.lookup.listId) === idListe(listeSiteId)));
+}
+
 function correspondAuSite(
   fields,
   colonnes,
@@ -1199,6 +1207,11 @@ function correspondAuSite(
 ) {
   const attendu =
     String(siteItemId);
+
+  const cible = trouverColonneSiteCible(colonnes, listeSiteId);
+  if (cible && fields[`${cible.name}LookupId`]) {
+    return String(fields[`${cible.name}LookupId`]) === attendu;
+  }
 
   const officiel = colonnes.find((c) => c.name === "OBJSITEPUBLIC");
   if (officiel && Object.hasOwn(fields, "OBJSITEPUBLICLookupId") && fields.OBJSITEPUBLICLookupId) {
@@ -1680,6 +1693,7 @@ module.exports = {
   convertirIdsLookup,
   idsLookupColonne,
   trouverColonneLookupVersListe,
+  trouverColonneSiteCible,
   correspondAuLookup,
   correspondAUnDesLookups,
   resoudreLookupDomaine,

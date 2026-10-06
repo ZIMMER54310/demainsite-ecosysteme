@@ -574,7 +574,7 @@ async function perimetreConstructeur(ctx, domaine) {
   if (!info) return null;
   const d = ctx.droits;
   if (!d.reconnu || ![...FONCTIONS_CONSTRUCTEUR, "logo-medias"].some((f) => d.fonctions.includes(f))) return null;
-  const fiches = new Set((info.fiches || [String(info.id)]).map(String));
+  const fiches = new Set((d.autorisations ? [String(info.id)] : info.fiches || [String(info.id)]).map(String));
   const { sites: tous = [] } = await droits.donneesDroits();
   const clients = new Set(tous.filter((s) => fiches.has(String(s.id)) && s.clientId).map((s) => String(s.clientId)));
   return {

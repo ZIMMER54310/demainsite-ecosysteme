@@ -193,10 +193,40 @@ async function configurer(appliquer) {
   console.log("Configuration technique uniquement ; attributions utilisateur et rôle inchangées.");
 }
 
-if (require.main === module) (process.argv.includes("--configure")
-  ? configurer(process.argv.includes("--apply")) : provisionner(process.argv.includes("--apply"))).catch((err) => {
+async function siteArticle(appliquer) {
+  const g = await ecriture.contexteGraph();
+  const article = dse.trouverListe(g.listes, "OBJ-ARTICLE");
+  const sites = dse.trouverListe(g.listes, "OBJ-SITE-PUBLIC");
+  if (!article || !sites) throw new Error("Listes article/site officielles indisponibles.");
+  let cols = await dse.chargerColonnesListe(g.token, g.siteGraphId, article.id, { contraintes: true });
+  let col = cols.find((c) => c.displayName === "SITE-CIBLE");
+  if (!col && !appliquer) { console.log("Lookup simple SITE-CIBLE à ajouter à OBJ-ARTICLE."); return; }
+  if (!col) {
+    col = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${article.id}/columns`, {
+      name: "SiteCible", displayName: "SITE-CIBLE", required: false,
+      lookup: { listId: sites.id, columnName: "Title", allowMultipleValues: false }
+    });
+    dse.viderCacheGraph();
+    cols = await dse.chargerColonnesListe(g.token, g.siteGraphId, article.id, { contraintes: true });
+    col = cols.find((c) => c.id === col.id);
+  }
+  if (!col?.lookup || col.lookup.allowMultipleValues || col.lookup.listId.toLowerCase() !== sites.id.toLowerCase()) {
+    throw new Error("SITE-CIBLE : Lookup simple vers la liste native de sites requis.");
+  }
+  console.log(`OBJ-ARTICLE/${col.name} : Lookup simple relu. Aucun article ni lien historique modifié.`);
+  if (appliquer) console.log("Journal", await require("../shared/journal-comptes").enregistrer(g, {
+    cle: `DSE-ARTICLE-SITE-CIBLE-${article.id}-${col.id}`, action: "STRUCTURE-ARTICLE-SITE-CIBLE",
+    avant: { historiqueModifie: false },
+    apres: { listeId: article.id, colonneId: col.id, nomInterne: col.name, cibleListeId: sites.id, multiple: false },
+    contexte: { autorisation: "Ajout explicite du Lookup simple article approuvé par Pascal Zimmer" }
+  }));
+}
+
+if (require.main === module) (process.argv.includes("--article-site")
+  ? siteArticle(process.argv.includes("--apply")) : process.argv.includes("--configure")
+    ? configurer(process.argv.includes("--apply")) : provisionner(process.argv.includes("--apply"))).catch((err) => {
   console.error("[DSE droits structure]", err.message);
   process.exitCode = 1;
 });
 
-module.exports = { provisionner, configurer, DEFINITIONS };
+module.exports = { provisionner, configurer, siteArticle, DEFINITIONS };

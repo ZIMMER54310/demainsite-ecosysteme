@@ -219,7 +219,8 @@ function normaliserElement(type, element, options = {}) {
     themes: filtrer("theme", relations(element, ALIAS.theme)),
     categories: filtrer("categorie", relations(element, ALIAS.categorie)),
     collections: filtrer("collection", relations(element, ALIAS.collection)),
-    plateformes: relations(element, ALIAS.plateforme),
+    plateformes: type === "article" && relations(element, ["SITECIBLE"]).length
+      ? relations(element, ["SITECIBLE"]) : relations(element, ALIAS.plateforme),
     format: valeurTexteOuRelation(element, ALIAS.format),
     visibilite,
     disponibilite,

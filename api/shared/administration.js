@@ -70,15 +70,16 @@ function vueUtilisateur(u, d, donnees, ctxSites) {
       const client = donnees.clients.find((c) => String(c.id) === String(l.clientId));
       const contexte = droits.contexteRelation({ utilisateurId: String(u.id) }, donnees, l);
       const autorisation = droits.contexteSite({ reconnu: u.actif && u.valide, utilisateurId: String(u.id) }, donnees, l.siteId);
+      const typee = donnees.dynamique?.affectations.some((a) => a.id === l.id && a.typeId);
       return { ref: ref("l", l.id), nom: g?.titre || "Site", domaine: g ? perimetre.domaineAcces(g) : null,
         actif: l.actif, valide: l.valide, verrouille: l.verrouille, modifieLe: l.modifieLe,
         client: client?.titre || null, clientRef: client ? ref("k", client.id) : "",
         siteRef: l.siteId ? ref("s", l.siteId) : "", role: role?.titre || null, accesType: acces?.titre || null,
         autorise: autorisation.contexte.etat === "COMPLET",
         roleRef: role ? ref("r", role.id) : "", accesTypeRef: acces ? ref("a", acces.id) : "",
-        modifiable: d.niveau === "administration" && !l.verrouille && !moi &&
+        modifiable: !typee && d.niveau === "administration" && !l.verrouille && !moi &&
           (d.global || !role || droits.peutAttribuer(d, role.id, donnees.politique)),
-        deverrouillable: d.global && d.niveau === "administration" && l.verrouille && !moi,
+        deverrouillable: !typee && d.global && d.niveau === "administration" && l.verrouille && !moi,
         incomplet: contexte.contexte.etat !== "COMPLET",
         motif: contexte.contexte.message || null };
     });
@@ -180,6 +181,10 @@ async function construireAction(d, action, params, g) {
   if (action === "changer-statut-site") return require("./statut-sites").construire(d, params, g);
   if (!d.reconnu || !d.fonctions.includes("utilisateurs") || d.niveau !== "administration") return { refus: "Accès non autorisé." };
   const donnees = await droits.donneesDroits();
+  if (["modifier-acces-site", "deverrouiller-acces-site"].includes(action) &&
+    donnees.dynamique?.affectations.some((a) => a.typeId && ref("l", a.id) === params.relation)) {
+    return { refus: "Cette affectation utilise le modèle de périmètres et permissions atomiques. Le formulaire historique ne peut pas la modifier ; gérez ses valeurs officielles dans SharePoint." };
+  }
   const politique = donnees.politique || { roles: {} };
   const S = donnees.structure;
   if (!S) return { refus: "La gestion des utilisateurs est momentanément indisponible." };
