@@ -412,3 +412,52 @@ Tests hors ligne : `npm run test:progression`.
 `npm run provision:sharepoint-production -- --plan | --apply | --seed | --verify` (idempotent, aucune suppression).
 `--plan` et `--verify` sont en lecture seule. `--apply` crée listes et colonnes (référentiels `OBJ-THEME/-CATEGORIE/-COLLECTION/-FORMAT/-VISIBILITE/-DISPONIBILITE`, `OBJ-ARTICLE`, `OBJ-SERVICE`, `OBJ-MODULE-FOOTER`, colonnes de `OBJ-CATALOGUE`, `PORTAIL-CATALOGUE`). `--seed` ajoute référentiels, type FOOTER, un pilote par type (actif, non validé), pages racines des sites 2 et 3 (non validées).
 `--apply` et `--seed` exigent `Sites.Manage.All` (temporaire, à révoquer ensuite) ; sans lui, ils s'arrêtent sans rien écrire. Sauvegarde du schéma dans `api/.sauvegardes/` (ignoré par Git).
+
+### Comptes multi-sites et identité OAuth
+
+`GET /cockpit/admin/utilisateurs` renvoie une liste légère (identité affichée, rôle
+global distinct, état, nombre d'affectations). Avec `utilisateur=<référence opaque>`,
+le même endpoint renvoie une fiche et uniquement la page demandée de relations
+OBJ-UTILISATEUR-SITE, ainsi que les synthèses dans le périmètre autorisé.
+La source Graph complète est collectée côté serveur ; le navigateur ne reçoit
+jamais toutes les affectations pour les paginer lui-même.
+
+Paramètres : `q`, `site`, `client`, `role`, `accesType`, `actif`, `valide`,
+`verrouille`, `incomplet`, `tri`, `sens`, `page`, `parPage` (10/25/50/100).
+Les valeurs des filtres relationnels sont les références opaques retournées
+par le serveur ; les états sont `true`/`false`. `qSite` et `pageSite` paginent
+indépendamment les choix de sites pour l'ajout. L'URL conserve ces critères.
+`GET /cockpit/espaces` centralise les sites du périmètre, avec recherche,
+client/statut, tri et pagination. Aucun statut ni couleur métier de repli.
+
+Les états Actif/Valide/Verrouillé sont distincts ; leurs LookupId Oui/Non sont
+résolus dans les référentiels réels. Les comptes globaux ne peuvent pas modifier
+leurs propres accès via ces formulaires. Une relation verrouillée reste
+consultable ; seul un administrateur global peut proposer son déverrouillage
+explicite avant une autre modification. Le retrait est une désactivation,
+jamais une suppression. Une réactivation recontrôle le doublon Utilisateur+Site.
+
+Pour Entra, seul ENTRA-OBJECT-ID explicitement lié au compte natif identifie
+l'utilisateur. Ni Title, ni nom affiché, ni e-mail du client ne peuvent le
+remplacer. Un compte existant non lié doit être rattaché explicitement :
+sa session Microsoft authentifiée affiche un code personnel temporaire
+(15 minutes, mémoire du processus, invalidé au redémarrage).
+L'administrateur global sélectionne le compte natif existant dans Comptes,
+saisit ce code et confirme l'identité OAuth présentée dans l'aperçu.
+L'API vérifie à nouveau preuve, compte, unicité et version ; elle ne crée aucun
+compte, rôle, profil ou affectation. Aucun code personnel ni jeton OAuth n'est
+journalisé. Les traces OAuth exposent uniquement une empreinte et la première
+condition de reconnaissance, avec les IDs natifs des relations si reconnu.
+
+Les mutations d'affectations et de liaison d'identité réussies puis relues
+sont journalisées dans les champs texte/date réellement disponibles d'OBJ-JRN,
+avec une clé d'idempotence ; les anciens Lookup orphelins ne sont pas utilisés.
+Un échec de journal après écriture est signalé explicitement comme une réussite
+partielle, jamais comme un échec permettant de répéter aveuglément la mutation.
+Ce branchement est limité à Comptes : le Builder et les autres journaux restent
+inchangés.
+
+`npm run test:contextes-reels` vérifie en lecture seule les données réelles et
+les prévalidations sans écrire de fausses affectations. Les sessions locales de
+recette sont limitées aux OID réellement liés ; elles ne prouvent pas un parcours
+OAuth personnel. Un compte non lié n'est plus simulé à partir de son titre.

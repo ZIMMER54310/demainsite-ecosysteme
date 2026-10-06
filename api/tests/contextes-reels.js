@@ -16,6 +16,7 @@ const api = require("../dseCockpit");
 async function main() {
   const resultats = [];
   const ui = await import(pathToFileURL(path.join(__dirname, "..", "..", "modules/cockpit/cockpit.js")));
+  const uiComptes = await import(pathToFileURL(path.join(__dirname, "..", "..", "modules/cockpit/comptes.js")));
   const noter = (test, resultat = "OK") => { resultats.push({ test, resultat }); };
   dse.viderCacheGraph();
   droits.viderCache();
@@ -35,9 +36,14 @@ async function main() {
     noter(`Schema dynamique ${nom}`);
   }
   const identite = (u) => ({
-    fournisseur: "entra", sujet: u.entraObjectId || u.titre, email: u.titre
+    fournisseur: "entra", sujet: u.entraObjectId
   });
-  const bases = data.utilisateurs.filter((u) => u.actif && u.valide).map((u) => {
+  const nonLies = data.utilisateurs.filter((u) => u.actif && u.valide && !u.entraObjectId);
+  for (const u of nonLies) {
+    assert.equal(droits.calculerDroits({ identite: { fournisseur: "entra", sujet: u.titre, email: u.titre }, ...data }).reconnu, false);
+    noter(`Compte natif ${u.id} sans OID : aucun rapprochement par Title`);
+  }
+  const bases = data.utilisateurs.filter((u) => u.actif && u.valide && u.entraObjectId).map((u) => {
     const i = identite(u);
     const d = droits.calculerDroits({ identite: i, ...data });
     assert.ok(d.reconnu, "Un compte reel actif/valide doit etre reconnu sans politique globale.");
@@ -47,6 +53,17 @@ async function main() {
   const { sites: index } = await droits.sitesIndex();
   const groupes = perimetre.regrouperSites([...index.values()]);
   let complets = 0;
+  for (const l of data.liens) {
+    const u = data.utilisateurs.find((u) => u.id === l.utilisateurId);
+    const c = droits.contexteSite({ reconnu: !!u?.actif && !!u?.valide, utilisateurId: u?.id }, data, l.siteId);
+    if (c.contexte.etat === "COMPLET") {
+      assert.equal(c.roleId, l.roleId); assert.equal(c.accesType.id, l.accesTypeId);
+      assert.deepEqual(c.siteIds, [l.siteId]); assert.deepEqual(c.clientIds, [l.clientId]);
+      if (l.verrouille) assert.equal(c.niveau, droits.regleRole(data.politique, l.roleId).niveau);
+      complets++;
+      noter(`Relation native ${l.id} : moteur contextuel complet, hors preuve OAuth`);
+    }
+  }
   for (const base of bases) {
     const liens = data.liens.filter((l) => l.actif && l.valide && l.utilisateurId === base.u.id);
     for (const lien of liens) {
@@ -62,7 +79,6 @@ async function main() {
           if (!profil.niveau) assert.equal(contexte.niveau, droits.regleRole(data.politique, lien.roleId).niveau);
           noter(`Relation ${lien.id} verrouillee : connexion et niveau du role preserves`);
         }
-        complets++;
       } else {
         assert.deepEqual(contexte.fonctions, []);
         assert.deepEqual(contexte.siteIds, []);
@@ -135,13 +151,55 @@ async function main() {
     const comptes = await appeler(api.adminUtilisateurs, base, { role: data.roles[0]?.id, client: data.clients[0]?.id });
     assert.equal(comptes.code, nonGlobal ? 403 : 200);
     if (!nonGlobal) {
-      const html = ui.rendreUtilisateurs({}, comptes.corps.donnees);
-      assert.ok(html.includes('name="accesType" required'));
-      assert.ok(html.includes('name="role" required'));
-      if (comptes.corps.donnees.utilisateurs.some((u) => u.sites.some((s) => s.modifiable))) {
-        assert.ok(html.includes('data-action-admin="modifier-acces-site"'));
-      } else assert.ok(!html.includes('data-action-admin="modifier-acces-site"'));
-      noter("Rendu Comptes : formulaires role/profil, protection des relations verrouillees");
+      const html = uiComptes.rendreComptes({}, comptes.corps.donnees);
+      assert.ok(html.includes("Gérer les accès"));
+      assert.ok(!html.includes('data-action-admin="modifier-acces-site"'));
+      for (const u of comptes.corps.donnees.utilisateurs) {
+        assert.ok(!Object.hasOwn(u, "sites"), "la liste ne charge pas les affectations imbriquees");
+        const fiche = await appeler(api.adminUtilisateurs, base, { utilisateur: u.ref });
+        assert.equal(fiche.code, 200);
+        const rendu = uiComptes.rendreComptes({}, fiche.corps.donnees);
+        assert.ok(rendu.includes("Synthèse utilisateur"));
+        for (const s of fiche.corps.donnees.utilisateur.sites) {
+          if (s.verrouille) assert.equal(s.modifiable, false);
+          for (const [cle, valeur] of [["site", s.siteRef], ["client", s.clientRef],
+            ["role", s.roleRef], ["accesType", s.accesTypeRef], ["actif", String(s.actif)],
+            ["valide", String(s.valide)], ["verrouille", String(s.verrouille)], ["incomplet", String(s.incomplet)]]) {
+            const filtre = await appeler(api.adminUtilisateurs, base, { utilisateur: u.ref, [cle]: valeur });
+            assert.equal(filtre.code, 200);
+            assert.ok(filtre.corps.donnees.utilisateur.sites.some((l) => l.ref === s.ref));
+            assert.ok(filtre.corps.donnees.utilisateur.sites.every((l) =>
+              String(Object.hasOwn(l, `${cle}Ref`) ? l[`${cle}Ref`] : l[cle]) === valeur));
+          }
+          const combines = await appeler(api.adminUtilisateurs, base, { utilisateur: u.ref,
+            q: s.nom, site: s.siteRef, client: s.clientRef, role: s.roleRef, accesType: s.accesTypeRef,
+            actif: String(s.actif), valide: String(s.valide), verrouille: String(s.verrouille), incomplet: String(s.incomplet) });
+          assert.ok(combines.corps.donnees.utilisateur.sites.some((l) => l.ref === s.ref));
+          for (const cle of ["actif", "valide", "verrouille", "incomplet"]) {
+            const inverse = await appeler(api.adminUtilisateurs, base, { utilisateur: u.ref, [cle]: String(!s[cle]) });
+            assert.ok(!inverse.corps.donnees.utilisateur.sites.some((l) => l.ref === s.ref));
+          }
+          for (const q of [s.nom, s.domaine, s.client, s.role, s.accesType].filter(Boolean)) {
+            const recherche = await appeler(api.adminUtilisateurs, base, { utilisateur: u.ref, q });
+            assert.ok(recherche.corps.donnees.utilisateur.sites.some((l) => l.ref === s.ref));
+          }
+        }
+        for (const tri of ["site", "domaine", "client", "role", "accesType", "etat", "modifieLe"]) {
+          const asc = await appeler(api.adminUtilisateurs, base, { utilisateur: u.ref, tri, sens: "asc", parPage: "100" });
+          const desc = await appeler(api.adminUtilisateurs, base, { utilisateur: u.ref, tri, sens: "desc", parPage: "100" });
+          assert.equal(asc.corps.donnees.pagination.criteres.tri, tri);
+          assert.equal(desc.corps.donnees.pagination.criteres.sens, "desc");
+          assert.equal(asc.corps.donnees.pagination.total, desc.corps.donnees.pagination.total);
+        }
+        for (const parPage of [10, 25, 50, 100]) {
+          const paginee = await appeler(api.adminUtilisateurs, base, { utilisateur: u.ref, parPage: String(parPage), page: "99999" });
+          const p = paginee.corps.donnees.pagination;
+          assert.equal(p.parPage, parPage); assert.equal(p.page, p.pages);
+          assert.ok(paginee.corps.donnees.utilisateur.sites.length <= parPage);
+        }
+      }
+      noter("Comptes : liste legere, fiches affectations, protection verrouillee");
+      noter("Affectations reelles : recherche sur cinq champs, huit filtres, combinaisons, sept tris et quatre tailles de page");
     }
     assert.ok(ui.rendreListeSites({}, sites.corps.donnees).includes("Mes sites"));
     const sitesAvecDroits = sites.corps.donnees.elements.filter((s) => s.contexte?.etat === "COMPLET");
@@ -155,7 +213,8 @@ async function main() {
       for (const u of comptesContextuels.corps.donnees.utilisateurs) {
         const utilisateur = data.utilisateurs.find((v) => v.titre === u.email);
         assert.ok(utilisateur, "Compte HTTP absent des donnees reelles.");
-        for (const relation of u.sites) {
+        const fiche = await appeler(api.adminUtilisateurs, base, { contexteDomaine: s.acces, utilisateur: u.ref });
+        for (const relation of fiche.corps.donnees.utilisateur.sites) {
           const groupe = perimetre.groupeParDomaine(groupes, relation.domaine);
           const native = data.liens.find((l) => l.utilisateurId === utilisateur.id && l.siteId === String(groupe?.id));
           assert.ok(native, "Relation HTTP absente des Lookups reels.");
@@ -194,7 +253,8 @@ async function main() {
     if (lien) {
       const utilisateur = vue.utilisateurs.find((u) => u.ref === administration._test.ref("u", lien.utilisateurId));
       const domaine = perimetre.domaineAcces(groupes.find((s) => String(s.id) === lien.siteId));
-      const params = { utilisateur: utilisateur.ref, domaine, role: role.ref, accesType: profil.ref };
+      const params = { utilisateur: utilisateur.ref, domaine, role: role.ref, accesType: profil.ref,
+        actif: "true", valide: "true", verrouille: "false" };
       const doublon = await administration.construireAction(admin.droits, "ajouter-acces-site", params, null);
       assert.match(doublon.refus, /relation active|Plusieurs relations/);
       const incomplet = await administration.construireAction(admin.droits, "ajouter-acces-site",
@@ -212,7 +272,8 @@ async function main() {
       })(g), true);
       noter("Refus doublon Utilisateur + Site : prevalidation et relecture Graph");
       noter("Refus ecriture sans site : aucune operation produite");
-      const relation = utilisateur.sites.find((s) => s.ref === administration._test.ref("l", lien.id));
+      const fiche = await administration.utilisateurs(admin.droits, { utilisateur: utilisateur.ref });
+      const relation = fiche.utilisateur.sites.find((s) => s.ref === administration._test.ref("l", lien.id));
       if (relation?.modifiable) {
         const modification = await administration.construireAction(admin.droits, "modifier-acces-site",
           { ...params, relation: relation.ref }, null);
@@ -226,7 +287,19 @@ async function main() {
           assert.equal(modification.op.champs[`${c.lienClient}LookupId`], lien.clientId);
         }
         noter("Correction relation reelle : champs, perimetre et version valides, sans ecriture");
+      } else if (relation?.verrouille) {
+        const modification = await administration.construireAction(admin.droits, "modifier-acces-site",
+          { ...params, relation: relation.ref }, null);
+        assert.match(modification.refus, /verrouill/);
+        const deverrouillage = await administration.construireAction(admin.droits, "deverrouiller-acces-site",
+          { utilisateur: utilisateur.ref, relation: relation.ref }, null);
+        assert.ok(deverrouillage.op);
+        assert.equal(deverrouillage.op.champs[`${data.structure.colonnes.lienVerrou}LookupId`], data.structure.etats.verrouNon);
+        noter("Relation verrouillee : modification refusee, deverrouillage global explicite prevalide sans ecriture");
       }
+      assert.ok((await administration.construireAction(admin.droits, "lier-identite-utilisateur",
+        { utilisateur: utilisateur.ref, codeLiaison: "" }, null)).refus);
+      noter("Identite : liaison refusee sans preuve OAuth personnelle, aucune attribution par navigateur");
       const autre = vue.sites.find((s) => data.sites.find((v) =>
         v.id === String(perimetre.groupeParDomaine(groupes, s.domaine)?.id))?.valide && !data.liens.some((l) => l.actif &&
         l.utilisateurId === lien.utilisateurId &&

@@ -55,8 +55,8 @@ function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [],
   const parObjet = identite.fournisseur === "entra"
     ? utilisateurs.filter((u) => u.entraObjectId && minuscule(u.entraObjectId) === minuscule(identite.sujet)) : [];
   if (parObjet.length > 1 || (parObjet.length === 1 && (!parObjet[0].actif || !parObjet[0].valide))) return aucun;
-  let candidats = parObjet.length ? parObjet : (email ? valides.filter((u) => !u.entraObjectId && minuscule(u.titre) === email) : []);
-  if (candidats.length === 0) {
+  let candidats = parObjet;
+  if (identite.fournisseur !== "entra" && candidats.length === 0) {
     const clientsLies = clients.filter((c) =>
       (identite.fournisseur === "entra" && c.entraObjectId && minuscule(c.entraObjectId) === minuscule(identite.sujet)) ||
       (email && minuscule(c.entraEmail) === email));
@@ -121,7 +121,14 @@ function contexteSite(base, donnees, siteId) {
   const relations = donnees.liens.filter((l) => l.actif && l.valide &&
     String(l.utilisateurId) === base.utilisateurId && String(l.siteId) === id);
   if (relations.length !== 1) return refus(relations.length ? "Plusieurs relations actives pour ce site." : "Site non autorisé.");
-  const l = relations[0], site = donnees.sites.find((s) => String(s.id) === id);
+  return contexteRelation(base, donnees, relations[0]);
+}
+
+function contexteRelation(base, donnees, l) {
+  const id = String(l.siteId);
+  const refus = (message) => ({ ...base, siteIds: [], clientIds: [], fonctions: [], niveau: null, portee: null, role: null, roleId: null, accesType: null,
+    global: false, contexte: { etat: "CONTEXTE INCOMPLET", message, siteId: id } });
+  const site = donnees.sites.find((s) => String(s.id) === id);
   const client = donnees.clients.find((c) => String(c.id) === String(l.clientId));
   const role = (donnees.roles || []).find((r) => String(r.id) === String(l.roleId) && r.actif && r.valide);
   const acces = (donnees.accesTypes || []).find((a) => String(a.id) === String(l.accesTypeId) && a.actif && a.valide);
@@ -218,7 +225,7 @@ async function chargerDonnees() {
   const colSitePrincipal = k.cols.toutes.find((c) => c.lookup && minuscule(c.lookup.listId) === minuscule(L.site.id) &&
     /principal/i.test(String(c.displayName || c.name)));
   const clients = k.items.filter((i) => oui(i.fields || {}, k.cols, L.actif) && oui(i.fields || {}, k.cols, L.valide)).map((i) => ({
-    id: String(i.id),
+    id: String(i.id), modifieLe: i.lastModifiedDateTime || f.Modified || null,
     titre: String(i.fields?.Title || "").trim() || null,
     entraObjectId: colOid ? i.fields?.[colOid.name] || null : null,
     entraEmail: colMail ? i.fields?.[colMail.name] || null : null,
@@ -235,6 +242,9 @@ async function chargerDonnees() {
       roleId: lookupId(f, li.cols.parListe(L.role.id)),
       accesTypeId: L.acces ? lookupId(f, li.cols.parListe(L.acces.id)) : null,
       verrouille: oui(f, li.cols, L.verrou),
+      etatsIds: { actif: L.actif ? lookupId(f, li.cols.parListe(L.actif.id)) : null,
+        valide: L.valide ? lookupId(f, li.cols.parListe(L.valide.id)) : null,
+        verrouille: L.verrou ? lookupId(f, li.cols.parListe(L.verrou.id)) : null },
       actif: oui(f, li.cols, L.actif), valide: oui(f, li.cols, L.valide)
     };
   });
@@ -266,6 +276,12 @@ async function chargerDonnees() {
   // Structure utile a la couche d'ecriture (noms internes resolus, jamais exposes au navigateur).
   const structure = {
     etats: { actifOui: idsOui.get(L.actif?.id) || null, valideOui: idsOui.get(L.valide?.id) || null,
+      actifNon: actifs.items.filter((i) => /^non\b/i.test(i.fields?.Title || "")).length === 1
+        ? String(actifs.items.find((i) => /^non\b/i.test(i.fields?.Title || "")).id) : null,
+      valideNon: validesOui.items.filter((i) => /^non\b/i.test(i.fields?.Title || "")).length === 1
+        ? String(validesOui.items.find((i) => /^non\b/i.test(i.fields?.Title || "")).id) : null,
+      verrouNon: verrous.items.filter((i) => /^non\b/i.test(i.fields?.Title || "")).length === 1
+        ? String(verrous.items.find((i) => /^non\b/i.test(i.fields?.Title || "")).id) : null,
       verrouOui: idsOui.get(L.verrou?.id) || null },
     listes: { utilisateur: L.utilisateur.id, role: L.role.id, acces: L.acces?.id || null, lien: L.lien?.id || null, actif: L.actif?.id || null, valide: L.valide?.id || null },
     colonnes: {
@@ -311,4 +327,4 @@ function viderCache() {
   cache = { valeur: null, expiration: 0, promesse: null };
 }
 
-module.exports = { calculerDroits, contexteSite, droitsPour, sitesIndex, donneesDroits, viderCache, peutAttribuer, regleRole, RANG_PORTEE, RANG_NIVEAU };
+module.exports = { calculerDroits, contexteSite, contexteRelation, droitsPour, sitesIndex, donneesDroits, viderCache, peutAttribuer, regleRole, RANG_PORTEE, RANG_NIVEAU };

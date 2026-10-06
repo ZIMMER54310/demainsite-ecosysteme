@@ -533,6 +533,7 @@ export function rendreUtilisateurs(moi, d) {
       <p class="muted">Capacités disponibles : ADMINISTRATION-GLOBALE, GESTION-CLIENT, GESTION-UTILISATEURS-CLIENT, GESTION-SITES-ATTRIBUES. Les fonctions individuelles de votre espace sont aussi acceptées. Séparez-les par un point-virgule.</p>
       <button class="btn btn-primary" type="submit">Vérifier la politique</button>
     </form>` : '<p class="muted">Votre propre politique ne peut pas être modifiée dans ce formulaire.</p>'}</div>`).join("");
+  if (d.gestionGlobaleSeulement) return `${creation}${politiques ? `<h2>Politiques globales des rôles</h2>${politiques}` : ""}`;
   return `<section class="cockpit" data-comptes-contexte="${e(d.contexteDomaine || "")}">${rendreEnteteCockpit(moi)}
     <h2>Comptes · utilisateurs et droits par site <span class="muted">(${(d.utilisateurs || []).length})</span></h2>
     <div data-apercu aria-live="polite"></div>

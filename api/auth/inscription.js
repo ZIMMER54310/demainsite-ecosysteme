@@ -81,35 +81,21 @@ async function ajouterCommun(g, identite, commun, utilisateurId, oa, ov) {
   }
 }
 
-// Migration unique d'un compte preexistant, sans attribution de role/client/site.
+// Une identite Entra doit etre explicitement liee dans la source officielle.
 async function identifier(identite) {
   if (identite.fournisseur !== "entra") return;
   dse.viderCacheGraph();
   droits.viderCache();
   const x = await droits.donneesDroits();
   const parObjet = x.utilisateurs.filter((u) => u.entraObjectId?.toLowerCase() === identite.sujet.toLowerCase());
-  if (parObjet.length) return;
-  const candidats = x.utilisateurs.filter((u) => u.actif && u.valide && !u.entraObjectId &&
-    u.titre.toLowerCase() === String(identite.email || "").toLowerCase());
-  if (candidats.length !== 1 || !x.structure?.colonnes.utilisateurEntra) return;
-  const u = candidats[0];
-  const verrou = `identite:${u.id}`;
-  if (verrous.has(verrou)) throw new Error("Identification déjà en cours.");
-  verrous.add(verrou);
-  try {
-    const g = await ecriture.contexteGraph();
-    const chemin = `/sites/${g.siteGraphId}/lists/${x.structure.listes.utilisateur}/items/${u.id}`;
-    const r = await dse.graphSansCache(g.token, `${chemin}?$expand=fields`);
-    if (r.fields?.ENTRAOBJECTID) return;
-    if (String(r.fields?.Title || "").toLowerCase() !== String(identite.email || "").toLowerCase()) {
-      throw new Error("Le compte a changé avant son identification.");
-    }
-    if (!r.eTag) throw new Error("Version utilisateur indisponible.");
-    await dse.graphEcriture(g.token, "PATCH", `${chemin}/fields`, { ENTRAOBJECTID: identite.sujet }, r.eTag);
-    const relu = await ecriture.lireItemFrais(g, x.structure.listes.utilisateur, u.id);
-    if (relu.ENTRAOBJECTID !== identite.sujet) throw new Error("Identification non conforme à la relecture.");
-    const j = await journal(g, identite, { clientId: u.clientId }, "Entra : identification permanente", "SUCCÈS", "Compte existant identifié sans changement de droits.", u.id);
-  } finally { ecriture.invaliderCaches(); verrous.delete(verrou); }
+  const empreinte = ecriture.hash(["entra", identite.sujet.toLowerCase()]).slice(0, 20);
+  const condition = parObjet.length !== 1 ? (parObjet.length ? "IDENTITE_AMBIGUE" : "IDENTITE_NON_LIEE")
+    : !parObjet[0].actif || !parObjet[0].valide ? "COMPTE_INACTIF_OU_NON_VALIDE" : "COMPTE_RECONNU";
+  console.info("[DSE OAuth identification]", JSON.stringify({ empreinte, condition,
+    utilisateurId: parObjet.length === 1 ? parObjet[0].id : null,
+    relations: parObjet.length === 1 ? x.liens.filter((l) => l.utilisateurId === parObjet[0].id)
+      .map((l) => ({ id: l.id, siteId: l.siteId, clientId: l.clientId, roleId: l.roleId,
+        accesTypeId: l.accesTypeId, actif: l.actif, valide: l.valide, verrouille: l.verrouille })) : [] }));
 }
 
 async function inscrire(identite, domaine, confirmer = false, connexionExistante = false) {

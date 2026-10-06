@@ -110,6 +110,11 @@ async function moi(req, res) {
         connecte: true,
         nom: ctx.identite.nom || ctx.identite.email || null,
         reconnu: ctx.droits.reconnu,
+        identification: !ctx.droits.reconnu && ctx.identite.fournisseur === "entra" ? {
+          condition: "IDENTITE_NON_LIEE_OU_COMPTE_NON_VALIDE",
+          codeLiaison: require("../auth/liaison-identite").proposer(ctx.identite),
+          message: "L'identité Microsoft doit être liée explicitement au compte existant par l'administration globale. Ce code personnel expire après 15 minutes."
+        } : null,
         role: ctx.droits.role,
         fonctions: ctx.droits.fonctions,
         niveau: ctx.droits.niveau,
@@ -401,10 +406,9 @@ async function confirmer(req, res) {
           if (op.adminAction === "changer-statut-site" &&
             (!a.op || a.op.listId !== op.listId || a.op.itemId !== op.itemId ||
               ecriture.hash(a.op.champs) !== ecriture.hash(op.champs))) return "Le site ou le statut a changé. Relisez avant confirmation.";
-          if (["ajouter-acces-site", "modifier-acces-site"].includes(op.adminAction) && a.op) {
-            for (const [nom, valeur] of Object.entries(a.op.champs)) {
-              if (String(op.champs[nom]) !== String(valeur)) return "Le rattachement utilisateur/client/site a changé.";
-            }
+          if (["ajouter-acces-site", "modifier-acces-site", "deverrouiller-acces-site", "lier-identite-utilisateur"].includes(op.adminAction) && a.op) {
+            if (op.listId !== a.op.listId || op.itemId !== a.op.itemId ||
+              ecriture.hash(op.champs) !== ecriture.hash(a.op.champs)) return "Le rattachement utilisateur/client/site ou les états ont changé.";
           }
           if (op.type === "ajouter") op.doublon = administration.controleDoublon(op);
           return null;
@@ -439,7 +443,7 @@ async function adminUtilisateurs(req, res) {
     const ctx = await contexteUtilisateur(req);
     if (!ctx) return refuser(res, 401, "Connexion requise.");
     if (!await contexteAdmin(ctx, req.query.contexteDomaine)) return refuser(res, 403, "Contexte d'administration requis.");
-    const r = ctx.droits.reconnu ? await administration.utilisateurs(ctx.droits) : null;
+    const r = ctx.droits.reconnu ? await administration.utilisateurs(ctx.droits, req.query) : null;
     if (!r) return refuser(res, 403, "Accès non autorisé.");
     r.peutGererIncidents = false;
     r.contexteDomaine = req.query.contexteDomaine || "";
@@ -450,13 +454,26 @@ async function adminUtilisateurs(req, res) {
   }
 }
 
+async function espaces(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const r = await administration.espaces(ctx.droits, req.query);
+    if (!r) return refuser(res, 403, "Accès non autorisé.");
+    repondre(res, 200, { succes: true, donnees: r, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] espaces", e.message);
+    refuser(res, 503, "La lecture des espaces est momentanément indisponible.");
+  }
+}
+
 async function adminApercu(req, res) {
   try {
     const ctx = await contexteEcriture(req, res);
     if (!ctx) return;
     const action = String(req.body?.action || "");
     const p = req.body?.params && typeof req.body.params === "object" ? req.body.params : {};
-    const params = Object.fromEntries(["utilisateur", "role", "accesType", "relation", "contexteDomaine", "domaine", "email", "client", "portee", "niveau", "fonctions", "statut"]
+    const params = Object.fromEntries(["utilisateur", "codeLiaison", "role", "accesType", "relation", "actif", "valide", "verrouille", "contexteDomaine", "domaine", "email", "client", "portee", "niveau", "fonctions", "statut"]
       .filter((k) => typeof p[k] === "string").map((k) => [k, p[k].slice(0, k === "fonctions" ? 2000 : 255)]));
     if (!await contexteAdmin(ctx, params.contexteDomaine)) return refuser(res, 403, "Contexte d'administration requis.");
     repondreResultat(res, await administration.preparerAction({ identite: ctx.identite, d: ctx.droits, action, params }));
@@ -806,6 +823,6 @@ const synchroConfirmer = (req, res) => synchroEcriture(req, res, "SYNCHRO-RESTAU
 module.exports = {
   client, synchroVue, synchroSauvegardes, synchroReglage, synchroLancer, synchroApercu, synchroConfirmer,
   moi, monCompte, sites, site, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
-  contenus, editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
+  contenus, espaces, editionLire, editionApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide, clientsDuPerimetre }
 };

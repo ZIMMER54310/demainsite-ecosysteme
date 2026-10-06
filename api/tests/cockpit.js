@@ -20,11 +20,16 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   const base = { sites, politique, clients: [{ id: "2", entraObjectId: "oid-pascal", entraEmail: "pascal@ex.fr" }, { id: "3" }],
     liens: [{ utilisateurId: "2", clientId: "2", siteId: "4", actif: true, valide: true }] };
 
-  // Rapprochement par e-mail, portee "tous"
-  let d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "autre", email: "Admin@Ex.fr" }, utilisateurs: [u("1", "admin@ex.fr", "1")] });
+  // Rapprochement explicite par OID, jamais par le titre.
+  let d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "autre", email: "Admin@Ex.fr" }, utilisateurs: [u("1", "admin@ex.fr", "1", { entraObjectId: "autre" })] });
   assert.ok(d.reconnu); assert.deepStrictEqual(d.siteIds, ["4", "9", "11"]); assert.ok(d.fonctions.includes("creer"));
-  // Rapprochement par oid du client
+  assert.equal(calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "autre", email: "Admin@Ex.fr" },
+    utilisateurs: [u("1", "admin@ex.fr", "1")] }).reconnu, false);
+  // L'OID du client ne remplace pas celui du compte utilisateur.
   d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "oid-pascal", email: "x@y.fr" }, utilisateurs: [u("2", "nom libre", "3")] });
+  assert.equal(d.reconnu, false);
+  d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "oid-pascal", email: "x@y.fr" },
+    utilisateurs: [u("2", "nom libre", "3", { entraObjectId: "oid-pascal" })] });
   assert.ok(d.reconnu); assert.deepStrictEqual(d.siteIds, ["4"]); assert.ok(!d.fonctions.includes("creer"));
   // Ambigu -> rien
   d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "oid-pascal" }, utilisateurs: [u("2", "a", "1"), u("3", "b", "1")] });
@@ -34,7 +39,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.strictEqual(d.reconnu, false);
   // Portee "attribues" : uniquement les liens actifs et valides
   const liens = [{ utilisateurId: "5", clientId: "3", siteId: "9", actif: true, valide: true }, { utilisateurId: "5", clientId: "3", siteId: "11", actif: true, valide: false }];
-  d = calculerDroits({ ...base, liens, identite: { fournisseur: "entra", sujet: "s", email: "c@ex.fr" }, utilisateurs: [u("5", "c@ex.fr", "5", { clientId: "3" })] });
+  d = calculerDroits({ ...base, liens, identite: { fournisseur: "entra", sujet: "s", email: "c@ex.fr" }, utilisateurs: [u("5", "c@ex.fr", "5", { clientId: "3", entraObjectId: "s" })] });
   assert.deepStrictEqual(d.siteIds, ["9"]); assert.ok(!d.fonctions.includes("seo")); assert.ok(!d.fonctions.includes("domaine"));
   // Role inconnu de la politique -> aucune fonction, aucun site
   d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "z@ex.fr" }, utilisateurs: [u("6", "z@ex.fr", "99")] });
@@ -156,9 +161,9 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.strictEqual(perimetre.sitePrincipal({ siteIds: ["9", "4"], explicite: "9" }), "9");
   assert.strictEqual(perimetre.sitePrincipal({ siteIds: ["4"], explicite: "99" }), "4");
   assert.strictEqual(perimetre.sitePrincipal({ siteIds: ["4", "9"], explicite: "99" }), null);
-  d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "admin@ex.fr" }, utilisateurs: [u("1", "admin@ex.fr", "1")] });
+  d = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "admin@ex.fr" }, utilisateurs: [u("1", "admin@ex.fr", "1", { entraObjectId: "s" })] });
   assert.strictEqual(d.sitePrincipalId, null, "plusieurs sites sans designation");
-  d = calculerDroits({ ...base, clients: [{ id: "2", sitePrincipalId: "11" }], identite: { fournisseur: "entra", sujet: "s", email: "admin@ex.fr" }, utilisateurs: [u("1", "admin@ex.fr", "1")] });
+  d = calculerDroits({ ...base, clients: [{ id: "2", sitePrincipalId: "11" }], identite: { fournisseur: "entra", sujet: "s", email: "admin@ex.fr" }, utilisateurs: [u("1", "admin@ex.fr", "1", { entraObjectId: "s" })] });
   assert.strictEqual(d.sitePrincipalId, "11");
   const vMulti = vueSite({ siteComplet: null, info: { titre: "M", domaines: ["b.fr", "a.fr"] }, statut: null });
   assert.strictEqual(vMulti.domaine, null);
@@ -290,9 +295,9 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   const { origineValide } = require("../dseCockpit")._test;
 
   // peutAttribuer : jamais au-dessus de soi
-  const dSuper = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "super@ex.fr" }, utilisateurs: [u("1", "super@ex.fr", "1")] });
+  const dSuper = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "super@ex.fr" }, utilisateurs: [u("1", "super@ex.fr", "1", { entraObjectId: "s" })] });
   const dClient = calculerDroits({ ...base, liens: [{ utilisateurId: "5", clientId: "2", siteId: "4", actif: true, valide: true }],
-    identite: { fournisseur: "entra", sujet: "c", email: "admin@client.fr" }, utilisateurs: [u("5", "admin@client.fr", "3")] });
+    identite: { fournisseur: "entra", sujet: "c", email: "admin@client.fr" }, utilisateurs: [u("5", "admin@client.fr", "3", { entraObjectId: "c" })] });
   assert.strictEqual(dSuper.portee, "tous"); assert.strictEqual(dSuper.niveau, "administration");
   assert.strictEqual(dClient.portee, "attribues"); assert.deepStrictEqual(dClient.clientIds, ["2"]); assert.deepStrictEqual(dClient.siteIds, ["4"]);
   assert.deepStrictEqual(dClient.fonctions, [], "sans contexte, le role global n'accorde aucun droit");
@@ -302,7 +307,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.ok(!droitsMod.peutAttribuer(dClient, "4", politique) && !droitsMod.peutAttribuer(dClient, "6", politique));
 
   // Menu par role
-  const dLecteur = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "l", email: "l@ex.fr" }, utilisateurs: [u("7", "l@ex.fr", "6")], liens: [{ utilisateurId: "7", siteId: "4", actif: true, valide: true }] });
+  const dLecteur = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "l", email: "l@ex.fr" }, utilisateurs: [u("7", "l@ex.fr", "6", { entraObjectId: "l" })], liens: [{ utilisateurId: "7", siteId: "4", actif: true, valide: true }] });
   const urls = async (d) => (await admin.menu(d)).map((m) => m.url);
   const origApps = admin.applications;
   assert.ok((await urls(dSuper)).includes("/cockpit/administration") && (await urls(dSuper)).includes("/cockpit/utilisateurs"));

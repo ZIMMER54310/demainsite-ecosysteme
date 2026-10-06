@@ -8,6 +8,7 @@ export async function initializeAuth(domaine = "") {
       authenticated: moi.connecte === true,
       displayName: moi.nom || null,
       reconnu: moi.reconnu === true,
+      identification: moi.identification || null,
       role: moi.role || null,
       accesType: moi.accesType || null,
       contexte: moi.contexte || null,

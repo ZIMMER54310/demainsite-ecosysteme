@@ -38,6 +38,7 @@ export function rendreVoirSite(user, current) {
 
 // Espaces clients du perimetre (fournis par le serveur) : lien direct si peu nombreux, sinon via « Mes sites ».
 export function rendreEspacesClients(user, current, lien) {
+  if (user?.porteeGlobale) return lien("/cockpit/espaces", "Espaces", "users", current === "/cockpit/espaces");
   const clients = Array.isArray(user?.clients) ? user.clients : [];
   if (!clients.length) return "";
   if (clients.length > 3) return lien("/cockpit/sites", "Espaces clients", "users", false);
@@ -70,5 +71,5 @@ export function renderSidebar() {
   return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${correspond
     ? `${global(entrees.filter(([p]) => ["/cockpit", "/cockpit/sites"].includes(p)))}${rendreGestionContenus(user, current, lien)}${rendreEspacesClients(user, current, lien)}${local}<div class="cockpit-nav-globale">${global(entrees.filter(([p]) => !["/cockpit", "/cockpit/sites"].includes(p)))}</div>`
     : `${rendreVoirSite(user, current)}${global(entrees)}${rendreGestionContenus(user, current, lien)}${rendreEspacesClients(user, current, lien)}`}</div>
-    <div class="cockpit-sidebar-bas"><button type="button" class="nav-link" data-reduire-menu aria-expanded="true">${icon("panel")}<span>Réduire le menu</span></button><small>${escapeHtml(user?.role?.titre || "Espace de gestion")}</small></div></nav>`;
+    <div class="cockpit-sidebar-bas"><button type="button" class="nav-link" data-reduire-menu aria-expanded="true">${icon("panel")}<span>Réduire le menu</span></button><small>Espace de gestion</small><small>${escapeHtml(user?.displayName || "")}</small></div></nav>`;
 }

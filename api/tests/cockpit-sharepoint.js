@@ -22,7 +22,7 @@ const admin = require("../shared/administration");
   assert.deepStrictEqual(politiqueDepuisRoles([{ ...roles[0], actif: false }]).roles, {});
   const clients = [{ id: "a" }, { id: "b" }];
   const utilisateurs = [
-    { id: "u1", titre: "a@example.test", roleId: "200", clientId: "a", actif: true, valide: true },
+    { id: "u1", titre: "a@example.test", entraObjectId: "subject", roleId: "200", clientId: "a", actif: true, valide: true },
     { id: "u2", titre: "b@example.test", roleId: "200", clientId: "b", actif: true, valide: true }
   ];
   const base = { politique, clients, utilisateurs, sites: [{ id: "10", clientId: "a" }, { id: "20", clientId: "b" }],
@@ -30,6 +30,8 @@ const admin = require("../shared/administration");
       { utilisateurId: "u1", clientId: "b", siteId: "20", actif: true, valide: true }],
     identite: { fournisseur: "entra", sujet: "subject", email: "a@example.test" } };
   const d = droits.calculerDroits(base);
+  assert.equal(droits.calculerDroits({ ...base, utilisateurs: utilisateurs.map(({ entraObjectId, ...u }) => u) }).reconnu, false,
+    "un titre ressemblant a l'email OAuth ne constitue pas une identite");
   assert.deepStrictEqual(d.siteIds, ["10", "20"], "plusieurs clients autorises par les relations, sans droit hors contexte");
   assert.deepStrictEqual(d.fonctions, []);
   assert.deepStrictEqual(d.clientIds, ["a"]);

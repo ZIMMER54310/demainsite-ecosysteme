@@ -11,7 +11,8 @@ export const getEdition = (domaine, composant, element = "") => apiGet("/cockpit
 export const apercuEdition = (domaine, composant, valeurs, element = "") => apiPost("/cockpit/edition/apercu", { domaine, composant, valeurs, element });
 export const confirmerEdition = (jeton) => apiPost("/cockpit/edition/confirmer", { jeton });
 export const getAdminTableau = (contexteDomaine = "") => apiGet("/cockpit/admin/tableau", { contexteDomaine });
-export const getAdminUtilisateurs = (contexteDomaine = "") => apiGet("/cockpit/admin/utilisateurs", { contexteDomaine });
+export const getAdminUtilisateurs = (contexteDomaine = "", criteres = {}) => apiGet("/cockpit/admin/utilisateurs", { ...criteres, contexteDomaine });
+export const getEspaces = (criteres = {}) => apiGet("/cockpit/espaces", criteres);
 export const apercuAdmin = (action, params) => apiPost("/cockpit/admin/apercu", { action, params });
 export const confirmerAdmin = (jeton) => apiPost("/cockpit/admin/confirmer", { jeton });
 export const getIncidents = () => apiGet("/cockpit/incidents");

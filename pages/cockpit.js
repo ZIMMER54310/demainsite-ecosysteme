@@ -16,6 +16,8 @@ import { rendreSynchronisations, activerSynchronisations } from "../modules/cock
 import { getSynchronisations } from "../services/cockpit.service.js";
 import { rendreContenus, rendreRaccourcisContenus, activerContenus } from "../modules/cockpit/contenus.js";
 import { getContenusCockpit } from "../services/cockpit.service.js";
+import { getEspaces } from "../services/cockpit.service.js";
+import { rendreComptes, rendreEspaces, activerFiltresComptes, activerFiltresEspaces } from "../modules/cockpit/comptes.js";
 
 const CLE_ASSISTANT = "dseAssistantSite";
 const MESSAGES_CONNEXION = {
@@ -39,7 +41,10 @@ async function contexte(params = {}) {
   setState({ user, selectedSite: null });
   if (user.erreur) return { html: `<section class="cockpit card"><p role="alert">${escapeHtml(user.erreur)}</p><a href="#/cockpit/sites">Mes sites</a></section>` };
   if (!user.authenticated) return { html: rendreConnexion({ fournisseurs: user.fournisseurs, message: MESSAGES_CONNEXION[params.connexion] || "" }) };
-  if (!user.reconnu) return { html: rendreSansAcces(moiDepuis(user)) };
+  if (!user.reconnu) return { html: rendreSansAcces(moiDepuis(user)) + (user.identification?.codeLiaison
+    ? `<section class="cockpit card"><h2>Lier votre compte existant</h2><p>${escapeHtml(user.identification.message)}</p>
+      <p>Transmettez uniquement à votre administrateur ce code de liaison OAuth :</p><input readonly aria-label="Code personnel de liaison" value="${escapeHtml(user.identification.codeLiaison)}">
+      <p>Ne publiez pas ce code. Après liaison, rechargez Mes sites ; aucun rôle ne sera créé.</p></section>` : "") };
   return { moi: moiDepuis(user) };
 }
 
@@ -253,15 +258,22 @@ function brancherConfirmation(zone, apercu, confirmer, apresSucces) {
     zone.innerHTML = rendreApercu(r);
     zone.querySelector("[data-annuler]")?.addEventListener("click", () => { zone.innerHTML = ""; });
     const bouton = zone.querySelector("[data-confirmer]");
-    bouton?.addEventListener("click", async () => {
-      bouton.disabled = true;
-      bouton.textContent = "Enregistrement…";
+    const enregistrer = async () => {
+      const courant = zone.querySelector("[data-confirmer]");
+      if (courant) { courant.disabled = true; courant.textContent = "Enregistrement…"; }
       try {
         const res = (await confirmer(r.jeton))?.donnees;
         zone.innerHTML = rendreResultatEcriture(res);
         await apresSucces?.(res);
-      } catch (err) { afficherErreur(err); }
-    }, { once: true });
+      } catch (err) {
+        afficherErreur(err);
+        if (err.details?.enregistrementEffectue) {
+          zone.insertAdjacentHTML("beforeend", '<button type="button" class="btn btn-secondary" data-confirmer>Reprendre uniquement la journalisation</button>');
+          zone.querySelector("[data-confirmer]").addEventListener("click", enregistrer, { once: true });
+        }
+      }
+    };
+    bouton?.addEventListener("click", enregistrer, { once: true });
   };
 }
 
@@ -298,14 +310,18 @@ export async function cockpitUtilisateursPage(params) {
     const c = await contexte(params);
     if (c.html) return c.html;
     if (!c.moi.fonctions.includes("utilisateurs")) return nonDisponible("La gestion des utilisateurs n'est pas disponible pour votre profil.");
-    const r = await getAdminUtilisateurs(params.domaine || "").catch(() => null);
+    const r = await getAdminUtilisateurs(params.domaine || "", params);
     if (!r?.donnees) return indisponible;
     if (r.donnees.peutGererIncidents) r.donnees.incidents = (await getIncidents()).donnees;
-    return rendreUtilisateurs(c.moi, r.donnees);
-  } catch { return indisponible; }
+    return rendreComptes(c.moi, r.donnees, params);
+  } catch (err) {
+    console.error("[DSE Comptes]", err.message);
+    return `<section class="cockpit card"><p role="alert">${escapeHtml(err.message)}</p></section>`;
+  }
 }
 
 export function activerUtilisateurs(racine = document) {
+  activerFiltresComptes(racine);
   racine.querySelectorAll("[data-decision-incident]").forEach((bouton) => {
     bouton.addEventListener("click", async () => {
       if (!confirm("Confirmer cette décision après vérification de l’incident ?")) return;
@@ -322,7 +338,8 @@ export function activerUtilisateurs(racine = document) {
   });
   const zone = racine.querySelector("[data-apercu]");
   if (!zone) return;
-  const lancer = brancherConfirmation(zone, (d) => apercuAdmin(d.action, d.params), confirmerAdmin);
+  const lancer = brancherConfirmation(zone, (d) => apercuAdmin(d.action, d.params), confirmerAdmin,
+    (resultat) => { if (resultat.succes) location.reload(); });
   racine.querySelectorAll("form[data-action-admin]").forEach((form) => {
     form.addEventListener("submit", (ev) => {
       ev.preventDefault();
@@ -333,6 +350,19 @@ export function activerUtilisateurs(racine = document) {
     });
   });
 }
+
+export async function cockpitEspacesPage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return c.html;
+    return rendreEspaces(c.moi, (await getEspaces(params)).donnees, params);
+  } catch (err) {
+    console.error("[DSE Espaces]", err.message);
+    return `<section class="cockpit card"><p role="alert">${escapeHtml(err.message)}</p></section>`;
+  }
+}
+
+export { activerFiltresEspaces };
 
 export async function cockpitMonComptePage(params) {
   try {

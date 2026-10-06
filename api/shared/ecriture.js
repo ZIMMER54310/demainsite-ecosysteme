@@ -22,6 +22,7 @@ const DUREE_JETON_S = 900;
 const MAX_MULTILIGNE = 10000;
 
 const executees = new Map();
+const journauxEnAttente = new Map();
 
 const hash = (v) => crypto.createHash("sha256").update(JSON.stringify(v)).digest("hex");
 const cleChamp = (nom) => `c${hash(["champ", nom]).slice(0, 10)}`;
@@ -174,10 +175,23 @@ async function executer({ identite, jeton, revalider, acteur }) {
   const { cle, op } = lu;
   if (executees.has(cle)) {
     const resultat = executees.get(cle);
+    const journal = journauxEnAttente.get(cle);
+    if (journal) {
+      if (enCours.has(cle)) return { status: 409, erreur: "Journalisation déjà en cours." };
+      enCours.add(cle);
+      try {
+        resultat.journal = await require("./journal-comptes").enregistrer(await contexteGraph(), journal);
+        resultat.succes = true;
+        delete resultat.erreur;
+        journauxEnAttente.delete(cle);
+      } catch (e) {
+        console.error("[DSE Comptes reprise journal]", e.message);
+      } finally { enCours.delete(cle); }
+    }
     return { status: resultat.succes ? 200 : 502, ...resultat, deja: true };
   }
   if (enCours.has(cle)) return { status: 409, erreur: "Cet enregistrement est déjà en cours." };
-  const ressource = `${op.listId}:${op.itemId || op.cleDoublon || cle}`;
+  const ressource = `${op.listId}:${op.journalComptes ? op.cleDoublon || op.itemId || cle : op.itemId || op.cleDoublon || cle}`;
   if (ressourcesEnCours.has(ressource)) return { status: 409, erreur: "Une modification de cet élément est déjà en cours." };
   enCours.add(cle);
   ressourcesEnCours.add(ressource);
@@ -246,9 +260,26 @@ async function executerOperation({ cle, op, revalider, acteur }) {
   invaliderCaches();
   const conforme = noms.every((n) => normaliserTexte(relu[n]) === normaliserTexte(op.champs[n]));
   const r = { succes: conforme, relecture: conforme ? "conforme" : "différente", journal: null };
+  if (conforme && op.journalComptes) {
+    const journal = { cle: `DSE-COMPTES-${cle}`, action: op.action, avant: ancien, apres: relu,
+      contexte: { ...op.contexteJournal, itemId } };
+    try {
+      r.journal = await require("./journal-comptes").enregistrer(g, journal);
+    } catch (e) {
+      console.error("[DSE Comptes journal]", e.message);
+      r.succes = false;
+      r.enregistrementEffectue = true;
+      r.erreur = "L'opération est enregistrée et relue, mais sa journalisation a échoué. Rejouer la même confirmation reprend uniquement le journal, sans réécrire les données.";
+      journauxEnAttente.set(cle, journal);
+    }
+  }
   executees.set(cle, r);
-  if (executees.size > 500) executees.delete(executees.keys().next().value);
-  return { status: conforme ? 200 : 502, ...r, ...(conforme ? {} : { erreur: "La relecture ne correspond pas à la valeur demandée." }) };
+  if (executees.size > 500) {
+    const ancienne = executees.keys().next().value;
+    executees.delete(ancienne);
+    journauxEnAttente.delete(ancienne);
+  }
+  return { status: r.succes ? 200 : 502, ...r, ...(conforme ? {} : { erreur: "La relecture ne correspond pas à la valeur demandée." }) };
 }
 
 function etatJournalisation() {

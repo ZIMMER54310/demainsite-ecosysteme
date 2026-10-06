@@ -44,6 +44,7 @@ registerRoute("/cockpit/site/:domaine/modifier/:composant",async p=>{ mount(awai
 registerRoute("/cockpit/site/:domaine/construire",async p=>{ const page=await cockpitConstruirePage(p); mount(page.html,["Cockpit","Mes sites",p.domaine,"Construire"]); activerConstruire(document.querySelector("#app-page"),page,p.domaine); });
 registerRoute("/cockpit/administration",async p=>mount(await cockpitAdministrationPage(p),["Cockpit","Administration"]));
 registerRoute("/cockpit/utilisateurs",async p=>{ mount(await cockpitUtilisateursPage(p),["Cockpit","Utilisateurs et accès"]); activerUtilisateurs(document.querySelector("#app-page")); });
+registerRoute("/cockpit/espaces",async p=>{ const {cockpitEspacesPage,activerFiltresEspaces}=await import("../pages/cockpit.js"); mount(await cockpitEspacesPage(p),["Cockpit","Espaces"]); activerFiltresEspaces(document.querySelector("#app-page")); });
 registerRoute("/cockpit/creer",async p=>{ mount(await cockpitAssistantPage(p),["Cockpit","Créer un site"]); activerAssistant(document.querySelector("#app-page")); });
 // Anciennes entrees : redirigees vers le cockpit unique.
 for (const ancienne of ["/sites","/site/:id","/domaines","/pages","/modules","/medias","/seo","/parametres","/journal"]) registerRoute(ancienne,()=>{ location.replace("#/cockpit"); });
