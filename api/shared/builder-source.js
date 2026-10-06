@@ -13,6 +13,8 @@ const TOUT = { pages: "OBJ-PAGES-SITE", sections: "OBJ-SECTION-SITE", lignes: "O
   logos: "OBJ-LOGO-SITE", structures: "OBJ-LIGNE-STRUCTURE", typesSection: "OBJ-SECTION-TYPE", actifs: "OBJ-ACTIF", valides: "OBJ-VALIDE",
   // Moteur Design : types de style (groupes de reglages), theme du site, referentiels d alignement et d appareil.
   styleTypes: "OBJ-STYLE-TYPE", themes: "OBJ-SITE-THEME", alignements: "OBJ-ALIGNEMENT", appareils: "OBJ-APPAREIL",
+  // Articles : contenus construits avec le meme moteur (racine OBJ-BUILDER-ELEMENT -> OBJ-ARTICLE).
+  articles: "OBJ-ARTICLE",
   builderTypes: "OBJ-BUILDER-TYPE", builderElements: "OBJ-BUILDER-ELEMENT",
   builderRegles: "OBJ-BUILDER-REGLE-IMBRICATION", builderChamps: "OBJ-BUILDER-CHAMP", builderValeurs: "OBJ-BUILDER-VALEUR" };
 
@@ -24,13 +26,22 @@ async function charger() {
   const site = await dse.obtenirSiteGraph(token);
   const listes = await dse.collecter(token, `/sites/${site.id}/lists?$select=id,displayName,name`);
   const titres = new Map();
+  const siteListeId = dse.trouverListe(listes, ["OBJ-SITE-PUBLIC"])?.id || null;
   const lire = async (nom) => {
     const liste = dse.trouverListe(listes, [nom]);
-    return liste ? lireElements(token, site.id, liste, titres,
-      nom === "OBJ-BUILDER-CHAMP" ? { exclureChamps: ["APPAREIL"] } : {}) : [];
+    if (!liste) return [];
+    const options = nom === "OBJ-BUILDER-CHAMP" ? { exclureChamps: ["APPAREIL"] } : nom === "OBJ-ARTICLE" ? { siteListeId } : {};
+    try {
+      return await lireElements(token, site.id, liste, titres, options);
+    } catch (e) {
+      // Article modifie pendant la double lecture du site cible : une seule relecture coherente.
+      if (nom !== "OBJ-ARTICLE") throw e;
+      return lireElements(token, site.id, liste, titres, options);
+    }
   };
 
-  const donnees = { contenus: {} };
+  // Identifiant natif de la liste OBJ-ARTICLE : reference d'edition des informations d'un article.
+  const donnees = { contenus: {}, listeArticlesId: dse.trouverListe(listes, ["OBJ-ARTICLE"])?.id || null };
   // Lectures paralleles bornees : rapide sans saturer Graph (limitation de debit).
   const taches = [
     ...Object.entries(TOUT).map(([cle, nom]) => async () => { donnees[cle] = await lire(nom); }),

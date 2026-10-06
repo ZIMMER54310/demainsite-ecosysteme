@@ -23,7 +23,9 @@ const signer = (v) => crypto.createHmac("sha256", SEL).update(String(v)).digest(
 const CONTENEURS = {
   entete: { liste: "OBJ-ENTETE-SITE", cle: "entetes", fonction: "entete", relation: "OBJ-ENTETE-SITE", libelle: "En-tête" },
   footer: { liste: "OBJ-FOOTER-SITE", cle: "footers", fonction: "footer", relation: "OBJ-FOOTER-SITE", libelle: "Footer" },
-  page: { liste: "OBJ-PAGES-SITE", cle: "pages", fonction: "pages", relation: "OBJ-PAGES-SITE", libelle: "Page" }
+  page: { liste: "OBJ-PAGES-SITE", cle: "pages", fonction: "pages", relation: "OBJ-PAGES-SITE", libelle: "Page" },
+  // Article : uniquement compose avec DSE-CONSTRUCTION (racine OBJ-BUILDER-ELEMENT -> OBJ-ARTICLE), jamais en mode historique.
+  article: { liste: "OBJ-ARTICLE", cle: "articles", fonction: "articles", relation: "OBJ-ARTICLE", libelle: "Article" }
 };
 const NIVEAUX = {
   section: { liste: "OBJ-SECTION-SITE", cle: "sections", enfant: "ligne", libelle: "Section" },
@@ -79,7 +81,16 @@ function racine(d, type, el) {
   return null;
 }
 
-const siteDuConteneur = (c) => rel(c?.el, "OBJ-SITE-PUBLIC")?.id || null;
+// Article : SITE-CIBLE (site unique officiel) sinon relation historique OBJ-SITE-PUBLIC ; plusieurs sites = ambigu, refuse.
+const sitesArticle = (el) => { const cible = rel(el, "SITE-CIBLE"); return cible ? [cible.id] : rels(el, "OBJ-SITE-PUBLIC").map((s) => s.id); };
+const siteDuConteneur = (c) => {
+  if (c?.type !== "article") return rel(c?.el, "OBJ-SITE-PUBLIC")?.id || null;
+  const sites = [...new Set(sitesArticle(c.el))];
+  return sites.length === 1 ? sites[0] : null;
+};
+// La construction d'articles exige la relation native OBJ-BUILDER-ELEMENT.OBJ-ARTICLE dans SharePoint.
+const relationArticleBuilder = (d) => (d.builderElements || []).some((x) =>
+  (x._colonnes || []).some((c) => cleChamp(c.displayName) === "OBJARTICLE" || cleChamp(c.name) === "OBJARTICLE"));
 const siteDe = (d, type, el) => siteDuConteneur(racine(d, type, el));
 
 function enfantsDe(d, type, el) {
@@ -126,10 +137,10 @@ function noeud(d, type, el) {
 }
 
 function arbre(d, type, el, perimetre) {
-  const root = R.trouverRacine(d, siteDuConteneur({ el }), type, el.id);
+  const root = R.trouverRacine(d, siteDuConteneur({ type, el }), type, el.id);
   return { ref: ref(type, el.id), type, titre: titreDe(el), etat: etat(el),
     ...(root ? { generique: R.arbre(d, root, { reference: referenceBuilder,
-      mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetreBuilder(perimetre, siteDuConteneur({ el })))) }) } : {}),
+      mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetreBuilder(perimetre, siteDuConteneur({ type, el })))) }) } : {}),
     sections: enfantsDe(d, type, el).map((s) => noeud(d, "section", s)) };
 }
 
@@ -188,11 +199,22 @@ function vue(d, perimetre) {
         ref: ref("buildertype", t.id), titre: R.titre(t), conteneur: R.f(t, "EST-CONTENEUR") === true,
         racine: R.f(t, "EST-RACINE") === true
       })),
+      articles: relationArticleBuilder(d),
+      messageArticles: relationArticleBuilder(d) ? null : MESSAGE_RELATION_ARTICLE,
       message: (d.builderTypes || []).some(R.actif) ? null :
         "Les types, règles et champs génériques Builder sont encore vides dans SharePoint. Le constructeur existant reste disponible."
     },
     entetes: conteneur("entete"),
     footers: conteneur("footer"),
+    articles: (d.articles || []).filter((a) => perimetre.sites.has(siteDuConteneur({ type: "article", el: a })))
+      .sort((a, b) => ordreDe(a) - ordreDe(b) || Number(b.id) - Number(a.id)).map((a) => {
+        const root = R.trouverRacine(d, siteDuConteneur({ type: "article", el: a }), "article", a.id);
+        const types = R.index(d).types;
+        return { ref: ref("article", a.id), titre: titreDe(a) || "Article sans titre", etat: etat(a),
+          edition: d.listeArticlesId ? require("./edition").referenceElement(d.listeArticlesId, a.id) : null,
+          chemin: texte(a, "URL"), noteCourte: texte(a, "NOTE-COURTE"), construit: Boolean(root),
+          sections: root ? R.sousArbre(d, root).filter((x) => R.f(types.get(R.lien(x, "OBJ-BUILDER-TYPE")), "CLE-RENDU") === "SECTION").length : 0 };
+      }),
     pages: pages.map((p) => ({
       ref: ref("page", p.id), titre: titreDe(p), url: texte(p, "URL") || "/", etat: etat(p),
       sections: nombreSections("page", p),
@@ -228,7 +250,7 @@ function vue(d, perimetre) {
 
 /* Apercu (ordinateur / tablette / mobile) : meme moteur que le public, brouillons inclus, elements desactives exclus.
  * Chaque element recoit sa reference signee (_ref) pour le reperage du panneau Design ; aucun ID natif n'est expose. */
-const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE" };
+const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE", article: "PAGE" };
 function apercu(d, siteId, type, el, appareil, perimetre) {
   const site = { id: String(siteId) };
   const ctx = B.contexteComposition(d, site);
@@ -594,7 +616,19 @@ function presetPropre(d, preset, type, el) {
 
 /* ---------------- Execution d'une action ---------------- */
 
-const FONCTION_PAR_RACINE = { entete: "entete", footer: "footer", page: "pages" };
+const FONCTION_PAR_RACINE = { entete: "entete", footer: "footer", page: "pages", article: "articles" };
+const MESSAGE_RELATION_ARTICLE = "La construction des articles nécessite la colonne de recherche « OBJ-ARTICLE » (liste OBJ-ARTICLE) dans OBJ-BUILDER-ELEMENT. Elle n'existe pas encore dans SharePoint.";
+// Droits dynamiques : une action du constructeur sur un article correspond aux operations Articles existantes.
+const OPERATIONS_ARTICLE = {
+  creer: ["builder.initialiser", "builder.ajouter", "builder.dupliquer"],
+  modifier: ["builder.enregistrer", "builder.deplacer", "builder.restaurer", "design.lire", "design.preset",
+    "design.enregistrer", "contenu.formulaire", "contenu.enregistrer"],
+  publier: ["builder.publier", "builder.reactiver", "builder.desactiver", "conteneur.publier", "element.etat"]
+};
+const operationArticle = (action) => {
+  const suffixe = Object.keys(OPERATIONS_ARTICLE).find((k) => OPERATIONS_ARTICLE[k].includes(action));
+  return suffixe ? `articles.${suffixe}` : null;
+};
 
 /*
  * perimetre : { sites:Set(ID natifs du groupe), clients:Set, superAdmin, peut(fonction) }.
@@ -626,8 +660,9 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
   if (action.startsWith("builder.")) {
     let parametres = p;
     if (action === "builder.initialiser") {
-      const c = cible(["page", "entete", "footer"], p.ref);
+      const c = cible(["page", "entete", "footer", "article"], p.ref);
       if (c.refus) return c;
+      if (c.type === "article" && !relationArticleBuilder(d)) return { refus: MESSAGE_RELATION_ARTICLE };
       if (enfantsDe(d, c.type, c.el).length) return { refus: "Le conteneur possède une composition existante : aucune migration automatique." };
       parametres = { ...p, type: c.type, id: c.el.id, titre: titreDe(c.el) };
     }
@@ -728,7 +763,7 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
 
     case "conteneur.publier":
     case "conteneur.desactiver": {
-      const c = cible(["entete", "footer", "page"], p.ref);
+      const c = cible(action === "conteneur.publier" ? ["entete", "footer", "page", "article"] : ["entete", "footer", "page"], p.ref);
       if (c.refus) return c;
       const def = CONTENEURS[c.type];
       if (action === "conteneur.desactiver") {
@@ -1158,4 +1193,5 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
   }
 }
 
-module.exports = { plat, DESIGN, policesDe, siteDe, CONTENEURS, NIVEAUX, vue, arbre, apercu, racine, resoudre, executer, ref, referenceBuilder, mediaAutorise, modeleDisponible, visibleApercu, inactif, brouillon, Ecrivain, signer };
+module.exports = { plat, DESIGN, policesDe, siteDe, CONTENEURS, NIVEAUX, vue, arbre, apercu, racine, resoudre, executer, ref, referenceBuilder, mediaAutorise, modeleDisponible, visibleApercu, inactif, brouillon, Ecrivain, signer,
+  siteDuConteneur, relationArticleBuilder, operationArticle, MESSAGE_RELATION_ARTICLE };

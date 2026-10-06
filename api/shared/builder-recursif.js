@@ -8,7 +8,7 @@ const actif = (el) => el && vrai(f(el, "ACTIF"));
 const titre = (el) => String(el?._fields?.Title || f(el, "Title") || f(el, "Titre") || "");
 const ordre = (el) => Number(f(el, "ORDRE")) || 0;
 const trier = (a, b) => ordre(a) - ordre(b) || Number(a.id) - Number(b.id);
-const CIBLES = { page: "OBJ-PAGES-SITE", entete: "OBJ-ENTETE-SITE", footer: "OBJ-FOOTER-SITE" };
+const CIBLES = { page: "OBJ-PAGES-SITE", entete: "OBJ-ENTETE-SITE", footer: "OBJ-FOOTER-SITE", article: "OBJ-ARTICLE" };
 const TYPES_VALEUR = new Set(["TEXTE", "NOMBRE", "BOOLEEN", "MEDIA"]);
 const APPAREILS = ["ORDINATEUR", "TABLETTE", "MOBILE"];
 const CATEGORIES = ["CONTENU", "DESIGN", "AVANCE"];

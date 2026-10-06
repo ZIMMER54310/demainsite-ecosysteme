@@ -734,7 +734,7 @@ function deconnexion(req, res) {
 
 /* ---------------- Constructeur (En-tetes / Pages / Footer) ---------------- */
 
-const FONCTIONS_CONSTRUCTEUR = ["entete", "footer", "pages"];
+const FONCTIONS_CONSTRUCTEUR = ["entete", "footer", "pages", "articles"];
 const constructeurEnCours = new Map();
 const constructeurExecutees = new Map();
 
@@ -772,6 +772,9 @@ async function construireLire(req, res) {
       operationsInterdites: ctx.droits.contraintesOperations || [],
       droits: Object.fromEntries([...FONCTIONS_CONSTRUCTEUR, "logo-medias"].map((f) => [f, { lecture: p.lecture(f), ecriture: p.peut(f) }])),
       superAdmin: p.superAdmin, ...C.vue(d, p) };
+    // Les articles ne sont transmis qu'avec le droit de lecture Articles ; un profil Articles seul ne recoit pas les autres conteneurs.
+    if (!p.lecture("articles")) donnees.articles = [];
+    if (!["entete", "footer", "pages"].some((f) => p.lecture(f))) Object.assign(donnees, { entetes: [], footers: [], pages: [] });
     const experience = await t.etape("experience", () => experienceCockpit.lire());
     donnees.accompagnement = experience.accompagnement;
     if (mediasSeulement) {
@@ -787,7 +790,7 @@ async function construireLire(req, res) {
     }
     const reference = String(req.query.conteneur || "");
     if (reference) {
-      const r = C.resoudre(d, reference, ["entete", "footer", "page"]);
+      const r = C.resoudre(d, reference, ["entete", "footer", "page", "article"]);
       if (!r || !p.sites.has(String(C.siteDe(d, r.type, r.el))) || !p.lecture(C.CONTENEURS[r.type].fonction)) {
         return refuser(res, 404, "Élément introuvable dans ce site.");
       }
@@ -844,6 +847,11 @@ async function construireAction(req, res) {
     if (ctx.droits.autorisations || ctx.droits.contraintesOperations?.length) {
       p.peut = (fonction) => {
         const racines = Object.entries(C.CONTENEURS).filter(([, def]) => def.fonction === fonction).map(([type]) => type);
+        if (fonction === "articles") {
+          const operation = C.operationArticle(action);
+          return Boolean(operation) && peutOperation(ctx.droits, operation, fonction) &&
+            (action !== "element.etat" || params.etat !== "actif" || peutOperation(ctx.droits, "articles.publier", fonction));
+        }
         return racines.some((type) => peutOperation(ctx.droits, `constructeur.${type}.${action}`, fonction) &&
           (action !== "element.etat" || params.etat !== "actif" ||
             peutOperation(ctx.droits, `constructeur.${type}.conteneur.publier`, fonction)));

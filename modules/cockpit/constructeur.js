@@ -12,10 +12,11 @@ export const ONGLETS = Object.freeze([
   { cle: "entetes", libelle: "En-têtes" },
   { cle: "pages", libelle: "Pages" },
   { cle: "footers", libelle: "Footer" },
+  { cle: "articles", libelle: "Articles" },
   { cle: "bibliotheque", libelle: "Bibliothèque" },
   { cle: "catalogue", libelle: "Catalogue / Modèles" }
 ]);
-const LIBELLES = { entete: "En-tête", footer: "Footer", page: "Page", section: "Section", ligne: "Ligne", colonne: "Colonne", module: "Module" };
+const LIBELLES = { entete: "En-tête", footer: "Footer", page: "Page", article: "Article", section: "Section", ligne: "Ligne", colonne: "Colonne", module: "Module" };
 const MESSAGE_IA = "Cette fonctionnalité est en cours de préparation. Revenez bientôt.";
 
 export function badgeEtat(etat = {}) {
@@ -29,9 +30,25 @@ const realisation = (r) => r?.titre ? `<span class="badge constructeur-badge"${/
 
 const bouton = (libelle, action, attrs = "", classe = "btn btn-secondary") =>
   `<button type="button" class="${classe}" data-c-action="${e(action)}" ${attrs}>${libelle}</button>`;
-const FONCTION = { entete: "entete", footer: "footer", page: "pages" };
-export const peutAction = (d, type, action) => !d.operationsInterdites?.includes(`constructeur.${type}.${action}`) &&
-  (Array.isArray(d.operations) ? d.operations.includes(`constructeur.${type}.${action}`) : Boolean(d.droits?.[FONCTION[type]]?.ecriture));
+const FONCTION = { entete: "entete", footer: "footer", page: "pages", article: "articles" };
+// Article : memes correspondances que le serveur (operations Articles existantes), le serveur recontrole chaque action.
+const OPERATIONS_ARTICLE = {
+  creer: ["builder.initialiser", "builder.ajouter", "builder.dupliquer"],
+  modifier: ["conteneur.modifier", "builder.enregistrer", "builder.deplacer", "builder.restaurer", "design.lire", "design.preset",
+    "design.enregistrer", "contenu.formulaire", "contenu.enregistrer"],
+  publier: ["builder.publier", "builder.reactiver", "builder.desactiver", "conteneur.publier", "element.etat"]
+};
+export const operationArticle = (action) => {
+  const suffixe = Object.keys(OPERATIONS_ARTICLE).find((k) => OPERATIONS_ARTICLE[k].includes(action));
+  return suffixe ? `articles.${suffixe}` : null;
+};
+const operationDe = (type, action) => type === "article" ? operationArticle(action) : `constructeur.${type}.${action}`;
+export const peutAction = (d, type, action) => {
+  const operation = operationDe(type, action);
+  if (!operation || d.operationsInterdites?.includes(operation)) return false;
+  if (type === "article" && !d.builder?.articles) return false;
+  return Array.isArray(d.operations) ? d.operations.includes(operation) : Boolean(d.droits?.[FONCTION[type]]?.ecriture);
+};
 const ecrit = (d, fonction) => {
   const type = Object.keys(FONCTION).find((t) => FONCTION[t] === fonction);
   return type ? peutAction(d, type, "conteneur.modifier") : Boolean(d.droits?.[fonction]?.ecriture);
@@ -68,6 +85,32 @@ function ongletConteneurs(d, type) {
     </form>` : ""}
     ${liste.length ? `<div class="constructeur-grille">${liste.map((c) => carteConteneur(d, type, c)).join("")}</div>`
       : `<p class="card muted">Aucun ${LIBELLES[type]} pour ce site dans SharePoint.</p>`}`;
+}
+
+function ongletArticles(d, domaine) {
+  const articles = d.articles || [];
+  const lecture = d.droits?.articles?.lecture;
+  const peutEdition = (op) => Array.isArray(d.operations) ? d.operations.includes(op) && !d.operationsInterdites?.includes(op) : Boolean(d.droits?.articles?.ecriture);
+  const edition = (element) => `#/cockpit/site/${encodeURIComponent(domaine || "")}/modifier/articles?element=${encodeURIComponent(element)}`;
+  const adresse = (chemin) => d.site?.domaine && chemin ? `https://${d.site.domaine}${chemin.startsWith("/") ? "" : "/"}${chemin}` : "";
+  if (!lecture) return `<p class="card muted">Les articles ne sont pas disponibles dans votre espace pour ce site.</p>`;
+  return `<div class="card constructeur-articles-intro">
+      <h3>📰 Articles de ${e(d.site?.titre || "ce site")}</h3>
+      <p class="muted">Chaque article reste rattaché à ce site. Son adresse publique utilise automatiquement le domaine principal${d.site?.domaine ? ` <strong>${e(d.site.domaine)}</strong>` : ""} : vous ne saisissez que le chemin de l'article.</p>
+      <ol class="constructeur-etapes"><li>Informations de l'article</li><li>Construction visuelle (sections, lignes, colonnes, modules, design)</li><li>Aperçu ordinateur / tablette / mobile</li><li>Valider et activer avec confirmation</li></ol>
+      ${peutEdition("articles.creer") ? `<a class="btn btn-primary" href="${edition("nouveau")}">➕ Créer un article</a>` : ""}
+    </div>
+    ${d.builder?.articles ? "" : `<p class="alerte-info" role="status">${e(d.builder?.messageArticles || "La construction visuelle des articles n'est pas encore activée dans SharePoint.")}</p>`}
+    ${articles.length ? `<div class="constructeur-grille">${articles.map((a) => `<article class="card constructeur-carte" data-ref="${e(a.ref)}">
+      <header><h3>${e(a.titre)}</h3>${badgeEtat(a.etat)}</header>
+      ${a.noteCourte ? `<p class="muted">${e(a.noteCourte)}</p>` : ""}
+      <p class="muted">${adresse(a.chemin) ? `Adresse : ${e(adresse(a.chemin))}` : "Chemin de l'article non renseigné"}</p>
+      <p class="muted">${a.construit ? `${a.sections} section(s) construite(s)` : "Pas encore construit"}</p>
+      <div class="constructeur-boutons">
+        ${d.builder?.articles ? bouton(a.construit ? "🧱 Construire / aperçu" : "🧱 Construire", "ouvrir", `data-ref="${e(a.ref)}"`, "btn btn-primary") : ""}
+        ${peutEdition("articles.modifier") && a.edition ? `<a class="btn btn-secondary" href="${edition(a.edition)}">✏️ Modifier les informations</a>` : ""}
+      </div></article>`).join("")}</div>`
+      : `<p class="card muted">Aucun article pour ce site dans SharePoint.</p>`}`;
 }
 
 function ongletPages(d) {
@@ -170,7 +213,7 @@ function noeudHtml(d, n, peut, colonnes) {
 
 const colonnesDe = (sections) => sections.flatMap((s) => (s.enfants || []).flatMap((l) => (l.enfants || []).map((c) => ({ ref: c.ref, titre: `${s.titre} › ${c.titre}` }))));
 
-const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE" };
+const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE", article: "PAGE" };
 function arbreGeneriqueHtml(n, peut, racine = true, d = {}) {
   const type = d.arbre?.type;
   return `<li class="constructeur-noeud"><div class="constructeur-noeud-entete" data-c-noeud="${e(n.ref)}" data-c-type="builder"${peut && !n.verrouille && peutAction(d, type, "builder.deplacer") ? ' draggable="true"' : ""}>
@@ -266,7 +309,7 @@ function editeur(d) {
     <header class="constructeur-editeur-entete">
       <div><span class="constructeur-type">${LIBELLES[type]}</span><h3>${e(a.titre)}</h3>${a.realisation ? realisation(a.realisation) : badgeEtat(a.etat)}</div>
       <div class="constructeur-boutons">${bouton("← Retour à la liste", "fermer")}
-        ${peut ? bouton(`🎨 Design · ${LIBELLES[type]}`, "design", `data-ref="${e(a.ref)}"`) : ""}
+        ${peut && type !== "article" ? bouton(`🎨 Design · ${LIBELLES[type]}`, "design", `data-ref="${e(a.ref)}"`) : ""}
         ${peutAction(d, type, "conteneur.dupliquer") ? bouton("Dupliquer le conteneur", "dupliquer", `data-ref="${e(a.ref)}" data-type="${type}"`) : ""}
         ${peutAction(d, type, "conteneur.publier") && (!a.etat.publiable || a.generique) ? bouton("✅ Valider et activer", "publier", `data-ref="${e(a.ref)}"`, "btn btn-primary") : ""}
         ${bouton("✨ Demander à Pasc ARA IA", "ia")}</div>
@@ -304,6 +347,7 @@ export function rendreConstructeur(moi, d, etat = {}) {
     : onglet === "entetes" ? ongletConteneurs(d, "entete")
       : onglet === "footers" ? ongletConteneurs(d, "footer")
         : onglet === "pages" ? ongletPages(d)
+          : onglet === "articles" ? ongletArticles(d, etat.domaine)
           : onglet === "bibliotheque" ? ongletBibliotheque(d) : ongletCatalogue(d);
   return `<section class="cockpit constructeur${d.arbre ? " constructeur--plein-ecran" : ""}" data-constructeur>
     ${rendreEnteteCockpit(moi)}

@@ -226,5 +226,5 @@ async function preparer({ identite, composant, siteId, siteNom, valeurs, element
   return { status: 200, jeton, changements: diff.map(({ libelle, avant: a, apres }) => ({ libelle, avant: a, apres })) };
 }
 
-module.exports = { COMPOSANTS_EDITABLES, lire, preparer, resoudre, elementsLies, champsCreation,
+module.exports = { referenceElement, COMPOSANTS_EDITABLES, lire, preparer, resoudre, elementsLies, champsCreation,
   _test: { normaliserChemin, champsDuComposant } };

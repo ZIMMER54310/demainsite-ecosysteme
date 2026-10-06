@@ -2,7 +2,7 @@ const sections = [
   { fonction: "pages", libelle: "Pages", icone: "file", onglet: "pages" },
   { fonction: "entete", libelle: "En-tête", icone: "panel", onglet: "entetes" },
   { fonction: "footer", libelle: "Footer", icone: "panel", onglet: "footers" },
-  { fonction: "articles", libelle: "Articles", icone: "file", composant: "articles" },
+  { fonction: "articles", libelle: "Articles", icone: "file", onglet: "articles", composant: "articles" },
   { fonction: "menu", libelle: "Menu", icone: "list", composant: "menu" },
   { fonction: "logo-medias", libelle: "Médias", icone: "image", route: "medias" },
   { fonction: "seo", libelle: "SEO", icone: "search", composant: "seo" }
@@ -13,7 +13,7 @@ export function navigationSite(vue, niveau) {
   if (!domaine) return [];
   const base = `/cockpit/site/${encodeURIComponent(domaine)}`;
   const fonctions = new Set(vue.fonctions || []);
-  const construction = ["pages", "entete", "footer"].some((f) => fonctions.has(f));
+  const construction = ["pages", "entete", "footer", "articles"].some((f) => fonctions.has(f));
   const operations = vue.contexteUtilisateur?.autorisations?.operations;
   const ecriture = ["ecriture", "administration"].includes(niveau);
   return [
