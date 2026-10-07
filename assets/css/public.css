@@ -546,6 +546,27 @@ body.dse-public .dse-situation > .dse-public-centre {
 
 .dse-site-public-main {
   flex: 1 0 auto;
+  color: #172033;
+  background: #f5f7fa;
+}
+
+/* Bandeau HERO sombre (assorti aux visuels) avec texte clair et lisible. */
+.dse-site-public-main .dse-hero {
+  box-sizing: border-box;
+  padding: clamp(24px, 5vw, 56px);
+  color: #e8edf5;
+  background: #071b2b;
+}
+
+.dse-site-public-main .dse-hero-title,
+.dse-site-public-main .dse-hero-kicker,
+.dse-site-public-main .dse-hero-text {
+  color: inherit;
+}
+
+.dse-site-public-main .dse-hero-kicker {
+  color: #8fd3b6;
+  font-weight: 600;
 }
 
 .dse-site-public-header {
