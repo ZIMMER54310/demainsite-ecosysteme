@@ -518,7 +518,11 @@ async function editionLire(req, res) {
     t.appliquer(res);
     repondre(res, 200, { succes: true, donnees: { site: info.titre, domaine: perimetre.domaineAcces(info),
       domainePrincipal: perimetre.domainesDuSite(info).principal || null,
-      peutCreer: !!def.creation && peutOperation(ctx.droits, `${def.fonction}.creer`, def.fonction), ...r }, meta: meta() });
+      peutCreer: !!def.creation && peutOperation(ctx.droits, `${def.fonction}.creer`, def.fonction),
+      ...r,
+      peutDesactiver: ["menu", "logo"].includes(composant) && r.peutDesactiver !== false &&
+        peutOperation(ctx.droits, `${def.fonction}.modifier`, def.fonction)
+    }, meta: meta() });
   } catch (e) {
     console.error("[DSE cockpit] edition", e.message);
     refuser(res, 503, "Le service est momentanément indisponible.");
@@ -532,10 +536,15 @@ async function editionApercu(req, res) {
     const composant = String(req.body?.composant || "");
     const def = edition.COMPOSANTS_EDITABLES[composant];
     const info = await siteDuPerimetre(ctx, req.body?.domaine);
+    const action = String(req.body?.action || "modifier");
     const suffixe = req.body?.element === "nouveau" ? "creer" : "modifier";
     if (!info || !def || !peutOperation(ctx.droits, `${def.fonction}.${suffixe}`, def.fonction)) return refuserEcriture(res, ctx, req.body?.domaine, "Cockpit : aperçu édition",
       "Ce réglage n'est pas disponible dans votre espace.");
-    const r = await edition.preparer({ identite: ctx.identite, composant, siteId: info.id, siteNom: info.titre, valeurs: req.body?.valeurs, element: String(req.body?.element || "") });
+    if (action !== "modifier" && action !== "desactiver") return repondreResultat(res, { status: 400, erreur: "Action d'édition non autorisée." });
+    if (action === "desactiver" && !["menu", "logo"].includes(composant)) return repondreResultat(res, { status: 400, erreur: "Cette désactivation n'est pas prise en charge." });
+    const r = action === "desactiver"
+      ? await edition.preparerDesactivation({ identite: ctx.identite, composant, siteId: info.id, siteNom: info.titre, element: String(req.body?.element || "") })
+      : await edition.preparer({ identite: ctx.identite, composant, siteId: info.id, siteNom: info.titre, valeurs: req.body?.valeurs, element: String(req.body?.element || "") });
     repondreResultat(res, r);
   } catch (e) {
     console.error("[DSE cockpit] edition apercu", e.message);
@@ -606,6 +615,7 @@ async function confirmer(req, res) {
           if (op.operation === "site.valider") {
             return siteEcriture.revaliderValidation({ identite: ctx.identite, op, droits: d, donnees });
           }
+          if (op.editionEtat) return edition.revaliderDesactivation(op);
           return null;
         }
         if (op.portee === "global-site-creer") {

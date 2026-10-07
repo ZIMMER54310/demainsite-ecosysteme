@@ -98,7 +98,7 @@ async function commencer(g, { cle, action, nom, avant, apres, domaine, contexte 
   const relu = await dse.graphSansCache(g.token,
     `/sites/${g.siteGraphId}/lists/${liste.id}/items/${encodeURIComponent(id)}?$expand=fields($select=${Object.keys(valeurs).join(",")})`);
   if (!Object.entries(valeurs).every(([k, v]) => k === champs.date
-    ? Date.parse(relu.fields?.[k]) === Date.parse(v)
+    ? Number.isFinite(Date.parse(relu.fields?.[k])) && Math.abs(Date.parse(relu.fields[k]) - Date.parse(v)) < 1000
     : String(relu.fields?.[k] ?? "") === String(v))) {
     throw new Error("OBJ-JRN : relecture de l'entrée DÉBUT différente.");
   }

@@ -584,7 +584,7 @@ function brancherConfirmation(zone, apercu, confirmer, apresSucces) {
       try {
         const res = (await confirmer(r.jeton))?.donnees;
         zone.innerHTML = rendreResultatEcriture(res);
-        await apresSucces?.(res);
+        await apresSucces?.(res, demande);
       } catch (err) {
         afficherErreur(err);
         if (err.details?.enregistrementEffectue) {
@@ -600,20 +600,27 @@ function brancherConfirmation(zone, apercu, confirmer, apresSucces) {
 export function activerEdition(racine = document) {
   const form = racine.querySelector("[data-edition]");
   const zone = racine.querySelector("[data-apercu]");
-  if (!form || !zone) return;
-  const lancer = brancherConfirmation(zone, (d) => apercuEdition(d.domaine, d.composant, d.valeurs, d.element), confirmerEdition, () => {
-    form.querySelectorAll("[data-champ]").forEach((c) => { c.defaultValue = c.value; });
+  if (!zone) return;
+  const lancer = brancherConfirmation(zone, (d) =>
+    apercuEdition(d.domaine, d.composant, d.valeurs, d.element, d.action), confirmerEdition, (_res, demande) => {
+    if (demande?.action === "desactiver") location.hash = `#/cockpit/site/${encodeURIComponent(demande.domaine || "")}`;
+    form?.querySelectorAll("[data-champ]").forEach((c) => { c.defaultValue = c.value; });
   });
-  form.querySelectorAll("[data-chemin]").forEach((champ) => {
+  form?.querySelectorAll("[data-chemin]").forEach((champ) => {
     const apercu = champ.closest(".cockpit-chemin")?.querySelector("[data-chemin-apercu]");
     if (apercu) champ.addEventListener("input", () => { apercu.textContent = adressePublique(champ.dataset.domainePrincipal, champ.value); });
   });
-  form.addEventListener("submit", (ev) => {
+  form?.addEventListener("submit", (ev) => {
     ev.preventDefault();
     const valeurs = {};
     form.querySelectorAll("[data-champ]").forEach((c) => { valeurs[c.name] = c.value; });
     lancer({ domaine: form.dataset.domaine, composant: form.dataset.composant, element: form.dataset.element, valeurs });
   });
+  racine.querySelectorAll("[data-edition-etat]").forEach((bouton) => bouton.addEventListener("click", () => {
+    const domaine = bouton.dataset.domaine || "";
+    lancer({ domaine, composant: bouton.dataset.composant || "", element: bouton.dataset.element || "",
+      action: bouton.dataset.action || "" });
+  }));
 }
 
 /* ---------------- Administration ---------------- */

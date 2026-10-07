@@ -21,7 +21,8 @@ export const getClientCockpit = (id, criteres = {}) => apiGet("/cockpit/client",
 export const getStatutsSite = (domaine) => apiGet("/cockpit/sites/statuts", { domaine });
 export const getSiteCockpit = (domaine) => apiGet("/cockpit/site", { domaine }, { timeoutMs: 45000 });
 export const getEdition = (domaine, composant, element = "") => apiGet("/cockpit/edition", { domaine, composant, element }, { timeoutMs: 45000 });
-export const apercuEdition = (domaine, composant, valeurs, element = "") => apiPost("/cockpit/edition/apercu", { domaine, composant, valeurs, element });
+export const apercuEdition = (domaine, composant, valeurs, element = "", action = "modifier") =>
+  apiPost("/cockpit/edition/apercu", { domaine, composant, valeurs, element, action });
 export const confirmerEdition = (jeton) => apiPost("/cockpit/edition/confirmer", { jeton });
 export const apercuDemandeAcces = (domaine, operation, motif) => apiPost("/cockpit/demandes-acces/apercu", { domaine, operation, motif });
 export const confirmerDemandeAcces = (jeton) => apiPost("/cockpit/demandes-acces/confirmer", { jeton });

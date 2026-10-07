@@ -14,11 +14,32 @@ const COMPOSANTS_EDITABLES = {
   seo: { fonction: "seo", libelle: "Référencement SEO", listes: ["OBJ-SEO"], creation: true },
   footer: { fonction: "footer", libelle: "Footer", listes: ["OBJ-FOOTER-SITE", "OBJ-FOOTER"] },
   menu: { fonction: "menu", libelle: "Menu", listes: ["OBJ-MENU-SITE"], collection: true },
+  logo: { fonction: "logo-medias", libelle: "Logo", listes: ["OBJ-LOGO-SITE"], collection: true },
   pages: { fonction: "pages", libelle: "Pages", listes: ["OBJ-PAGES-SITE"], collection: true },
   articles: { fonction: "articles", libelle: "Articles", listes: ["OBJ-ARTICLE"], collection: true, creation: true }
 };
 
 const referenceElement = (listeId, id) => ecriture.hash([listeId, String(id)]).slice(0, 24);
+const cleNormalisee = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+async function configurationEtatActif(g, r) {
+  const listeEtat = dse.trouverListe(g.listes, ["OBJ-ACTIF"]);
+  const colonnes = r.colonnes.filter((c) => cleNormalisee(c.displayName) === "OBJACTIF" &&
+    c.lookup && !c.lookup.allowMultipleValues && listeEtat && c.lookup.listId.toLowerCase() === listeEtat.id.toLowerCase());
+  if (colonnes.length !== 1) return { erreur: "Le statut actif de cet élément n'est pas configuré de manière unique." };
+  const items = await ecriture.collecterFrais(g,
+    `/sites/${g.siteGraphId}/lists/${listeEtat.id}/items?$expand=fields($select=Title)&$top=100`);
+  const oui = items.filter((i) => /^oui\b/i.test(String(i.fields?.Title || "").trim()));
+  const non = items.filter((i) => /^non\b/i.test(String(i.fields?.Title || "").trim()));
+  if (oui.length !== 1 || non.length !== 1) return { erreur: "Les états actif/inactif ne sont pas configurés de manière unique." };
+  return { colonne: colonnes[0], ouiId: String(oui[0].id), nonId: String(non[0].id) };
+}
+
+function statutActif(fields, configuration) {
+  if (!configuration?.colonne) return false;
+  return String(fields?.[`${configuration.colonne.name}LookupId`] || "") === configuration.ouiId;
+}
 
 /*
  * Articles : la colonne texte URL de OBJ-ARTICLE contient le chemin de l'article sur son site.
@@ -113,7 +134,8 @@ async function resoudre(g, composant, siteId, element = "") {
     return { indisponible: `${def.libelle} : aucun élément n'est encore rattaché à ce site. Le rattachement doit être complété avant modification.` };
   }
   if (def.collection && !element) {
-    return { selection: true, def, elements: lies.map((i) => ({ ref: referenceElement(liste.id, i.id), titre: i.fields?.Title || def.libelle })) };
+    return { selection: true, def, listId: liste.id, colonnes, items: lies,
+      elements: lies.map((i) => ({ ref: referenceElement(liste.id, i.id), titre: i.fields?.Title || def.libelle })) };
   }
   const cible = def.collection ? lies.find((i) => referenceElement(liste.id, i.id) === element) : lies[0];
   if (def.collection && !cible) return { indisponible: "Élément introuvable dans ce site." };
@@ -125,7 +147,7 @@ async function resoudre(g, composant, siteId, element = "") {
   }
   const itemId = String(cible.id);
   const actuel = ecriture.valeursDe(await ecriture.lireItemFrais(g, liste.id, itemId, selectionChamps), champs.map((c) => c.nom));
-  return { def, listId: liste.id, itemId, champs, actuel, colonnes, selectionChamps, listeSiteId: listeSite.id };
+  return { def, listId: liste.id, itemId, champs, actuel, colonnes, selectionChamps, listeSiteId: listeSite.id, cible };
 }
 
 const formulaire = (r) => ({
@@ -153,7 +175,17 @@ async function champsCreation(g, r, siteId, composant) {
 async function lire({ composant, siteId, element }) {
   const g = await ecriture.contexteGraph();
   const r = await resoudre(g, composant, siteId, element);
-  if (r.selection) return { disponible: true, selection: true, libelle: r.def.libelle, elements: r.elements };
+  if (r.selection) {
+    if (["menu", "logo"].includes(composant)) {
+      const configuration = await configurationEtatActif(g, r);
+      if (configuration.erreur) return { disponible: true, selection: true, libelle: r.def.libelle,
+        peutDesactiver: false, etatIndisponible: configuration.erreur, elements: r.elements };
+      return { disponible: true, selection: true, libelle: r.def.libelle, peutDesactiver: true,
+        elements: r.items.map((i) => ({ ref: referenceElement(r.listId, i.id), titre: i.fields?.Title || r.def.libelle,
+          actif: statutActif(i.fields, configuration) })) };
+    }
+    return { disponible: true, selection: true, libelle: r.def.libelle, elements: r.elements };
+  }
   if (r.indisponible) return { disponible: false, raison: r.indisponible, libelle: COMPOSANTS_EDITABLES[composant]?.libelle || null };
   return { disponible: true, creation: !r.itemId, ...formulaire(r) };
 }
@@ -226,5 +258,46 @@ async function preparer({ identite, composant, siteId, siteNom, valeurs, element
   return { status: 200, jeton, changements: diff.map(({ libelle, avant: a, apres }) => ({ libelle, avant: a, apres })) };
 }
 
+async function preparerDesactivation({ identite, composant, siteId, siteNom, element }) {
+  if (!["menu", "logo"].includes(composant)) return { status: 400, erreur: "Cette désactivation n'est pas prise en charge." };
+  const g = await ecriture.contexteGraph();
+  const r = await resoudre(g, composant, siteId, element);
+  if (r.indisponible || !r.itemId) return { status: 409, erreur: r.indisponible || "Élément introuvable dans ce site." };
+  const configuration = await configurationEtatActif(g, r);
+  if (configuration.erreur) return { status: 409, erreur: configuration.erreur };
+  const nomLookup = `${configuration.colonne.name}LookupId`;
+  const actuel = String(r.cible?.fields?.[nomLookup] || "");
+  if (actuel !== configuration.ouiId) return { status: 409, erreur: "Cet élément n'est plus actif. Relisez la liste avant de continuer." };
+  const champs = { [nomLookup]: configuration.nonId };
+  const avant = { [nomLookup]: actuel };
+  const fonction = r.def.fonction;
+  const jeton = ecriture.emettreJeton(identite, {
+    type: "modifier", portee: "site", composant, fonction, operation: `${fonction}.modifier`,
+    editionEtat: true, siteId: String(siteId), listId: r.listId, itemId: r.itemId,
+    champs, avant: ecriture.hash(avant), selectionChamps: [nomLookup], journalComptes: true,
+    cleDoublon: `${composant}:${siteId}:${r.itemId}`,
+    action: `Cockpit : désactivation ${r.def.libelle}`,
+    nom: `${r.def.libelle} désactivé — ${siteNom || "site"}`,
+    notes: `Site ${siteId} (${siteNom || "-"}) | Composant ${composant} | Élément ${r.itemId}`
+  }).jeton;
+  return { status: 200, jeton, changements: [{ libelle: "Publication", avant: "Actif et visible",
+    apres: "Inactif — conservé dans SharePoint" }] };
+}
+
+async function revaliderDesactivation(op) {
+  if (!op?.editionEtat || !["menu", "logo"].includes(op.composant)) return "Action de désactivation non autorisée.";
+  const g = await ecriture.contexteGraph();
+  const r = await resoudre(g, op.composant, op.siteId, referenceElement(op.listId, op.itemId));
+  if (r.indisponible || String(r.itemId) !== String(op.itemId)) return "L'élément n'est plus lié au site autorisé.";
+  const configuration = await configurationEtatActif(g, r);
+  if (configuration.erreur) return configuration.erreur;
+  const nomLookup = `${configuration.colonne.name}LookupId`;
+  const valeurAttendue = String(op.champs?.[nomLookup] || "");
+  if (String(r.cible?.fields?.[nomLookup] || "") !== configuration.ouiId ||
+    valeurAttendue !== configuration.nonId) return "Le statut de l'élément a changé. Relisez avant de confirmer.";
+  return null;
+}
+
 module.exports = { referenceElement, COMPOSANTS_EDITABLES, lire, preparer, resoudre, elementsLies, champsCreation,
-  _test: { normaliserChemin, champsDuComposant } };
+  preparerDesactivation, revaliderDesactivation,
+  _test: { normaliserChemin, champsDuComposant, statutActif } };

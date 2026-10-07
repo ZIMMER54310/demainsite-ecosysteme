@@ -49,7 +49,9 @@ const remplacer = (objet, nom, valeur) => {
     const match = chemin.match(/\/items\/(\d+)\?/);
     assert.ok(match, "relecture d'un élément OBJ-JRN");
     const ligne = lignes.get(match[1]);
-    return { id: ligne.id, eTag: ligne.eTag, fields: { ...ligne.fields } };
+    const fields = { ...ligne.fields };
+    if (fields.DATEEVENEMENT) fields.DATEEVENEMENT = new Date(fields.DATEEVENEMENT).toISOString().replace(/\.\d{3}Z$/, "Z");
+    return { id: ligne.id, eTag: ligne.eTag, fields };
   });
   remplacer(ecriture, "collecterFrais", async (_g, chemin) => {
     const cle = decodeURIComponent(chemin).match(/fields\/CLEIDEMPOTENCE eq '([^']+)'/)?.[1];

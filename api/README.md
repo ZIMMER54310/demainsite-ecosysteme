@@ -173,6 +173,8 @@ node tools/provision-autorisations.js
 node tools/provision-autorisations.js --apply
 node tools/provision-autorisations.js --configure --apply
 node tools/provision-autorisations.js --article-site --apply
+node tools/provision-autorisations.js --menu-logo
+node tools/provision-autorisations.js --menu-logo --apply
 node tests/droits-dynamiques-reels.js
 ```
 
@@ -181,6 +183,12 @@ existante differente est refusee, pas remplacee automatiquement. Graph peut
 autoriser les items et refuser la creation de listes/colonnes (403) ; aucune
 modification Azure n'est entreprise. Les deux structures peuvent alors etre
 ajoutees par une session SharePoint administrateur reellement authentifiee.
+
+`--menu-logo` ne configure que `menu.modifier` et `logo-medias.modifier`, en
+reliant les capacités/action déjà présentes et en exigeant un périmètre direct
+existant vers `OBJ-SITE-PUBLIC`. `--apply` crée les opérations manquantes,
+relit leurs valeurs et journalise chaque écriture dans `OBJ-JRN`. Il ne crée ni
+permission utilisateur, ni affectation, ni périmètre, ni site.
 
 Le test natif est en lecture seule : il verifie les donnees du pilote et les
 refus calcules, mais **ne constitue ni une preuve OAuth ni une ecriture metier**.
@@ -358,7 +366,7 @@ GESTION-SITES-ATTRIBUES. Les codes individuels des fonctions cockpit sont aussi 
 Tout code inconnu invalide la politique. Les politiques des autres roles peuvent etre
 completees dans le cockpit global, avec apercu, confirmation et controle anti-elevation.
 
-L'editeur generique propose En-tete, SEO, Pages, Menu et Footer lorsque leur structure le permet.
+L'editeur generique propose En-tete, SEO, Pages, Menu, Logo et Footer lorsque leur structure le permet.
 Pages et Menu proposent une selection d'element dans le seul site autorise ; les references
 opaques ne permettent pas de modifier un autre site. Plusieurs SEO ou En-tetes lies bloquent
 l'edition : aucun choix arbitraire. SEO utilise
@@ -372,8 +380,14 @@ a Graph ; sans version, l'ecriture est refusee. Les POST ne sont pas
 rejoues automatiquement sur 503 : une relecture est necessaire avant un nouvel apercu.
 L'anti-doublon suppose le service Node unique actuel ; avant un deploiement multi-processus,
 une contrainte d'unicite SharePoint ou un verrou distribue sera necessaire.
+Menu et Logo permettent une desactivation logique uniquement apres apercu et confirmation.
+Elle ne supprime aucun element, revalide le rattachement au site, exige l'operation dynamique
+`menu.modifier` ou `logo-medias.modifier`, relit l'etat SharePoint et journalise le cycle dans
+OBJ-JRN. Une operation absente ou un droit insuffisant bloque l'action sans ecriture.
 
-OBJ-JRN n'est plus consulte ni ecrit dans les chemins applicatifs. La liste et ses
+Les chemins generiques d'edition de texte ne journalisent pas OBJ-JRN ; les flux qui le
+requièrent explicitement (dont Articles et la desactivation Menu/Logo) utilisent le contrat
+OBJ-JRN et refusent l'ecriture si le journal ne peut pas commencer ou etre relu. La liste et ses
 donnees ne sont pas supprimees. Les adaptateurs historiques renvoient un etat explicite
 de desactivation, jamais une fausse confirmation de journalisation.
 Les erreurs techniques serveur restent signalees. L'idempotence des commandes, les

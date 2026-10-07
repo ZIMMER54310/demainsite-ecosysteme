@@ -5,6 +5,51 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env"), quiet: true
 const dse = require("../shared/dse");
 const ecriture = require("../shared/ecriture");
 const autorisations = require("../auth/autorisations");
+const journal = require("../shared/journal-comptes");
+const normaliser = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+async function reprendreJournalDebut(g, cle, action, avant, apres, contexte) {
+  const liste = dse.trouverListe(g.listes, "OBJ-JRN");
+  if (!liste) throw new Error("OBJ-JRN indisponible : reprise refusée.");
+  const colonnes = await dse.collecter(g.token, `/sites/${g.siteGraphId}/lists/${liste.id}/columns`);
+  const nom = (label, type) => journal._test.champ(colonnes, label, type).name;
+  const champs = {
+    id: nom("Title", "text"), code: nom("CODE", "text"), nom: nom("NOM", "text"),
+    action: nom("ACTION", "text"), date: nom("DATEEVENEMENT", "dateTime"),
+    cle: nom("CLEIDEMPOTENCE", "text"), statut: nom("STATUTJRN", "choice"),
+    nouvelle: nom("NOUVELLEVALEUR", "text"), anomalie: nom("ANOMALIE", "boolean")
+  };
+  const ancienne = colonnes.find((c) => !c.hidden && !c.readOnly &&
+    normaliser(c.name) === "ANCIENNEVALEUR" && c.text);
+  const anomalieDetectee = colonnes.find((c) => !c.hidden && !c.readOnly &&
+    normaliser(c.name) === "ANOMALIEDETECTEE" && c.boolean);
+  if (ancienne) champs.ancienne = ancienne.name;
+  if (anomalieDetectee) champs.anomalieDetectee = anomalieDetectee.name;
+  const filtre = `fields/${champs.cle} eq '${cle.replace(/'/g, "''")}'`;
+  const items = await ecriture.collecterFrais(g,
+    `/sites/${g.siteGraphId}/lists/${liste.id}/items?$filter=${encodeURIComponent(filtre)}&$expand=fields($select=${champs.cle},${champs.statut},${champs.action},${champs.nouvelle})&$top=2`);
+  if (!items.length) return null;
+  if (items.length !== 1) throw new Error("OBJ-JRN : clé d'idempotence dupliquée ; reprise refusée.");
+  const item = items[0];
+  let demande;
+  try { demande = JSON.parse(item.fields?.[champs.nouvelle] || ""); }
+  catch { throw new Error("OBJ-JRN : entrée incomplète illisible ; reprise refusée."); }
+  const attendu = { etat: "DÉBUT", avant: avant ?? null, demande: apres ?? null, contexte: contexte ?? null };
+  if (item.fields?.[champs.action] !== action) {
+    throw new Error("OBJ-JRN : entrée existante différente de la demande ; reprise refusée.");
+  }
+  if (item.fields?.[champs.statut] === "FIN" && demande?.etat === "SUCCÈS" &&
+    JSON.stringify(demande.avant) === JSON.stringify(avant ?? null) &&
+    JSON.stringify(demande.contexte) === JSON.stringify(contexte ?? null) &&
+    Object.entries(apres || {}).filter(([cleApres]) => cleApres !== "perimetreDirect")
+      .every(([cleApres, valeur]) => demande.apres?.[cleApres] === valeur) &&
+    /^\d+$/.test(String(demande.apres?.idNatif || ""))) return null;
+  if (item.fields?.[champs.statut] !== "DÉBUT" || JSON.stringify(demande) !== JSON.stringify(attendu)) {
+    throw new Error("OBJ-JRN : entrée existante différente de la demande ; reprise refusée.");
+  }
+  return { listeId: liste.id, itemId: String(item.id), champs, idempotence: cle, action, avant, apres, contexte };
+}
 
 const DEFINITIONS = {
   "OBJ-DROIT-OPERATION": [
@@ -222,11 +267,119 @@ async function siteArticle(appliquer) {
   }));
 }
 
+async function configurerOperationsMenuLogo(appliquer = false) {
+  const g = await ecriture.contexteGraph();
+  const liste = (nom) => {
+    const l = dse.trouverListe(g.listes, nom);
+    if (!l) throw new Error(`Liste officielle absente : ${nom}.`);
+    return l;
+  };
+  const identifiant = async (nom, titre) => {
+    const l = liste(nom);
+    const xs = await dse.chargerItemsListe(g.token, g.siteGraphId, l.id);
+    const trouves = xs.filter((x) => normaliser(x.fields?.Title) === normaliser(titre));
+    if (trouves.length !== 1) throw new Error(`${nom} : référence ${titre} absente ou ambiguë.`);
+    return { liste: l, id: String(trouves[0].id) };
+  };
+  const [capEntete, capMedias, actionModifier] = await Promise.all([
+    identifiant("OBJ-CAPACITE", "EN-TÊTE"), identifiant("OBJ-CAPACITE", "MÉDIAS"),
+    identifiant("OBJ-ACTION", "MODIFIER")
+  ]);
+  const droits = await autorisations.charger(g.token, g.siteGraphId, g.listes);
+  const capacites = [
+    { operation: "menu.modifier", fonction: "menu", capacite: capEntete.id, action: actionModifier.id, libelle: "Menu", route: "menu" },
+    { operation: "logo-medias.modifier", fonction: "logo-medias", capacite: capMedias.id, action: actionModifier.id, libelle: "Logo et médias", route: "logo-medias" }
+  ];
+  const cibleSite = liste("OBJ-SITE-PUBLIC");
+  const portees = droits.configurations.filter((c) => c.mode === "direct" &&
+    c.listeCible.toLowerCase() === cibleSite.id.toLowerCase());
+  if (!portees.length) throw new Error("Aucun périmètre direct existant vers OBJ-SITE-PUBLIC ; opération non créée.");
+
+  for (const def of capacites) {
+    const capaciteAction = droits.possibles.filter((x) => x.capaciteId === def.capacite && x.actionId === def.action);
+    if (capaciteAction.length !== 1) throw new Error(`${def.operation} : relation capacité/action existante absente ou ambiguë.`);
+    const existantes = droits.operations.filter((o) => o.operation === def.operation);
+    if (existantes.length > 1) throw new Error(`${def.operation} : opération déjà dupliquée.`);
+    const l = liste("OBJ-DROIT-OPERATION");
+    const colonnes = await dse.chargerColonnesListe(g.token, g.siteGraphId, l.id, { contraintes: true });
+    const champ = (label, type) => {
+      const cs = colonnes.filter((c) => normaliser(c.displayName) === normaliser(label) &&
+        (!type || c[type]) && !c.readOnly && !c.hidden);
+      if (cs.length !== 1) throw new Error(`OBJ-DROIT-OPERATION : colonne ${label} absente ou ambiguë.`);
+      return cs[0];
+    };
+    const champs = {};
+    const simples = [
+      ["OPERATION-TECHNIQUE", def.operation], ["FONCTION-COCKPIT", def.fonction],
+      ["MODE-TECHNIQUE", "write"], ["LIBELLE-INTERFACE", def.libelle], ["ROUTE-COCKPIT", def.route]
+    ];
+    for (const [label, value] of simples) champs[champ(label, "text").name] = value;
+    champs.Title = def.operation;
+    champs[`${champ("OBJ-CAPACITE", "lookup").name}LookupId`] = def.capacite;
+    champs[`${champ("OBJ-ACTION", "lookup").name}LookupId`] = def.action;
+    const actif = colonnes.filter((c) => normaliser(c.displayName) === "ACTIF" && c.boolean && !c.readOnly && !c.hidden);
+    if (actif.length !== 1) throw new Error("OBJ-DROIT-OPERATION : état actif unique requis.");
+    champs[actif[0].name] = true;
+    const cle = `DSE-DROIT-OPERATION-${ecriture.hash([l.id, def.operation, champs])}`;
+    const contexte = { siteListeId: cibleSite.id, configuration: "OBJ-DROIT-OPERATION" };
+    const avant = { operationAbsente: true };
+    const apres = { operation: def.operation, fonction: def.fonction,
+      capaciteId: def.capacite, actionId: def.action, perimetreDirect: true };
+    if (existantes.length === 1) {
+      const courant = existantes[0];
+      if (courant.fonction !== def.fonction || courant.mode !== "write" ||
+        courant.capaciteId !== def.capacite || courant.actionId !== def.action) {
+        throw new Error(`${def.operation} existe avec une configuration différente ; aucune modification automatique.`);
+      }
+      const entree = await reprendreJournalDebut(g, cle, "DROIT-OPERATION-CREER", avant, apres, contexte);
+      if (entree) await journal.terminer(g, entree, { statut: "SUCCÈS", avant,
+        apres: { ...apres, idNatif: courant.id }, contexte });
+      console.log(`Déjà configurée : ${def.operation}`);
+      continue;
+    }
+    if (!appliquer) {
+      console.log(`À créer : ${def.operation} | capacité native ${def.capacite} | action native ${def.action} | périmètre direct OBJ-SITE-PUBLIC existant`);
+      continue;
+    }
+    const entree = await reprendreJournalDebut(g, cle, "DROIT-OPERATION-CREER", avant, apres, contexte) ||
+      await journal.commencer(g, {
+      cle, action: "DROIT-OPERATION-CREER", nom: `Opération ${def.operation}`,
+      avant, apres, contexte
+    });
+    try {
+      const cree = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${l.id}/items`, { fields: champs });
+      if (!cree?.id) throw new Error(`${def.operation} : ID natif absent après création.`);
+      const relu = await dse.graphSansCache(g.token,
+        `/sites/${g.siteGraphId}/lists/${l.id}/items/${encodeURIComponent(cree.id)}?$expand=fields($select=${Object.keys(champs).join(",")})`);
+      if (!Object.entries(champs).every(([k, v]) => String(relu.fields?.[k] ?? "") === String(v))) {
+        throw new Error(`${def.operation} : relecture SharePoint différente.`);
+      }
+      await journal.terminer(g, entree, { statut: "SUCCÈS", avant: { operationAbsente: true },
+        apres: { idNatif: String(cree.id), operation: def.operation, fonction: def.fonction,
+          capaciteId: def.capacite, actionId: def.action, perimetreDirect: true }, contexte: entree.contexte });
+      console.log(`Créée, relue et journalisée : ${def.operation} (ID natif ${cree.id})`);
+    } catch (erreur) {
+      try {
+        await journal.terminer(g, entree, { statut: "ÉCHEC", avant: { operationAbsente: true },
+          apres: null, anomalie: true, erreur: erreur.message, contexte: entree.contexte });
+      } catch (journalErreur) {
+        console.error("[DSE droits opération journal]", journalErreur.message);
+      }
+      throw erreur;
+    }
+  }
+  if (appliquer) {
+    ecriture.invaliderCaches();
+    console.log("Aucun rôle, permission utilisateur, affectation, périmètre ni site n'a été créé ou modifié.");
+  }
+}
+
 if (require.main === module) (process.argv.includes("--article-site")
-  ? siteArticle(process.argv.includes("--apply")) : process.argv.includes("--configure")
-    ? configurer(process.argv.includes("--apply")) : provisionner(process.argv.includes("--apply"))).catch((err) => {
+  ? siteArticle(process.argv.includes("--apply")) : process.argv.includes("--menu-logo")
+    ? configurerOperationsMenuLogo(process.argv.includes("--apply")) : process.argv.includes("--configure")
+      ? configurer(process.argv.includes("--apply")) : provisionner(process.argv.includes("--apply"))).catch((err) => {
   console.error("[DSE droits structure]", err.message);
   process.exitCode = 1;
 });
 
-module.exports = { provisionner, configurer, siteArticle, DEFINITIONS };
+module.exports = { provisionner, configurer, siteArticle, configurerOperationsMenuLogo, DEFINITIONS };

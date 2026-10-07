@@ -7,6 +7,7 @@ process.env.DSE_SESSION_SECRET = require("node:crypto").randomBytes(32).toString
 const A = require("../auth/autorisations");
 const E = require("../shared/experience-cockpit");
 const C = require("../shared/constructeur");
+const edition = require("../shared/edition");
 const dse = require("../shared/dse");
 const ecriture = require("../shared/ecriture");
 
@@ -32,6 +33,9 @@ async function tester() {
     relations: { "OBJ-SITE-PUBLIC": { id: "site-technique" } } }] }, "site-technique", null);
   assert.equal(progression.progression, 63, "La progression exploite le pourcentage du référentiel, pas le nombre de statuts validés.");
   assert.equal(require("../shared/construction-confirmation").SENSIBLES.has("conteneur.publier"), true);
+  assert.equal(edition._test.statutActif({ ActifLookupId: "1" }, { colonne: { name: "Actif" }, ouiId: "1" }), true);
+  assert.equal(edition._test.statutActif({ ActifLookupId: "2" }, { colonne: { name: "Actif" }, ouiId: "1" }), false);
+  assert.equal(edition._test.statutActif({}, null), false, "un statut inconnu ne doit jamais être considéré actif");
 
   const original = { graph: dse.graphSansCache, ecriture: dse.graphEcriture };
   let writes = 0, version = '"version-1"', fields = { Title: "Titre technique de test", Champ: "avant" };
@@ -62,6 +66,51 @@ async function tester() {
   assert.equal(ecriture.consommerJeton(identite, t), true);
   assert.equal(ecriture.consommerJeton(identite, t), false);
 
+  const depsEdition = {
+    contexteGraph: ecriture.contexteGraph, collecterFrais: ecriture.collecterFrais,
+    lireItemFrais: ecriture.lireItemFrais, chargerColonnesListe: dse.chargerColonnesListe,
+    chargerItemsListe: dse.chargerItemsListe, correspondAuSite: dse.correspondAuSite
+  };
+  const itemMenu = { id: "5", fields: { Title: "TEST-DSE — Menu", OBJ_x002d_SITELookupId: "4", OBJ_x002d_ACTIFLookupId: "1" } };
+  const graph = { token: "offline", siteGraphId: "offline", listes: [
+    { id: "site-list", displayName: "OBJ-SITE-PUBLIC" }, { id: "menu-list", displayName: "OBJ-MENU-SITE" },
+    { id: "active-list", displayName: "OBJ-ACTIF" }
+  ] };
+  try {
+    ecriture.contexteGraph = async () => graph;
+    ecriture.collecterFrais = async () => [
+      { id: "1", fields: { Title: "Oui - Actif" } }, { id: "2", fields: { Title: "NON - Actif" } }
+    ];
+    ecriture.lireItemFrais = async () => ({ ...itemMenu.fields });
+    dse.chargerColonnesListe = async (_token, _siteId, listId) => listId === "menu-list" ? [
+      { name: "Title", displayName: "Titre", text: {} },
+      { name: "OBJ_x002d_SITE", displayName: "OBJ-SITE", lookup: { listId: "site-list", allowMultipleValues: false } },
+      { name: "OBJ_x002d_ACTIF", displayName: "OBJ-ACTIF", lookup: { listId: "active-list", allowMultipleValues: false } }
+    ] : [];
+    dse.chargerItemsListe = async (_token, _siteId, listId) => listId === "menu-list" ? [itemMenu] : [];
+    dse.correspondAuSite = (fields, _cols, siteId) => String(fields.OBJ_x002d_SITELookupId) === String(siteId);
+    const ref = edition.referenceElement("menu-list", "5");
+    const preview = await edition.preparerDesactivation({
+      identite, composant: "menu", siteId: "4", siteNom: "Site technique", element: ref
+    });
+    assert.equal(preview.status, 200);
+    assert.match(preview.changements[0].apres, /conservé/);
+    const prepared = ecriture.lireJeton(identite, preview.jeton);
+    assert.equal(prepared.op.operation, "menu.modifier");
+    assert.equal(prepared.op.journalComptes, true);
+    assert.deepEqual(prepared.op.champs, { OBJ_x002d_ACTIFLookupId: "2" });
+    assert.equal(await edition.revaliderDesactivation(prepared.op), null);
+    itemMenu.fields.OBJ_x002d_SITELookupId = "9";
+    assert.match(await edition.revaliderDesactivation(prepared.op), /n'est plus lié/);
+  } finally {
+    ecriture.contexteGraph = depsEdition.contexteGraph;
+    ecriture.collecterFrais = depsEdition.collecterFrais;
+    ecriture.lireItemFrais = depsEdition.lireItemFrais;
+    dse.chargerColonnesListe = depsEdition.chargerColonnesListe;
+    dse.chargerItemsListe = depsEdition.chargerItemsListe;
+    dse.correspondAuSite = depsEdition.correspondAuSite;
+  }
+
   const ui = await import(pathToFileURL(path.join(__dirname, "../../modules/cockpit/constructeur.js")).href);
   const d = { operations: ["constructeur.entete.conteneur.modifier"],
     droits: { entete: { ecriture: true }, pages: { ecriture: true } }, site: {},
@@ -75,6 +124,18 @@ async function tester() {
   assert.equal(ui.peutAction({ droits: d.droits, operationsInterdites: ["constructeur.entete.conteneur.modifier"] },
     "entete", "conteneur.modifier"), false, "Une interdiction source reste prioritaire en compatibilité.");
   const cockpitUI = await import(pathToFileURL(path.join(__dirname, "../../modules/cockpit/cockpit.js")).href);
+  const selectionMenu = cockpitUI.rendreEdition({}, {
+    domaine: "dseco.fr", libelle: "Menu", selection: true, peutDesactiver: true,
+    elements: [
+      { ref: "opaque-actif", titre: "TEST-DSE — Menu", actif: true },
+      { ref: "opaque-inactif", titre: "Menu conservé", actif: false }
+    ]
+  }, { composant: "menu" });
+  assert.match(selectionMenu, /data-edition-etat/);
+  assert.match(selectionMenu, /Désactiver sans supprimer/);
+  assert.doesNotMatch(selectionMenu, /data-element="opaque-inactif"[^>]*data-action="desactiver"/);
+  const editions = cockpitUI.editionsVisibles({ niveau: "ecriture", fonctions: ["logo-medias"] }, ["logo-medias"]);
+  assert.ok(editions.some((x) => x.composant === "logo"), "le parcours logo respecte la fonction réellement autorisée");
   const accompagnement = cockpitUI.rendreAccompagnement({ texte: E.TEXTE_ACCOMPAGNEMENT, identites: [
     { type: "humain", libelle: "Identité source humaine", avatar: "/api/v1/media/1" },
     { type: "ia", libelle: "Identité source IA", avatar: "/api/v1/media/2" }
