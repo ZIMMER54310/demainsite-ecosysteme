@@ -75,9 +75,9 @@ const nomSite = (d) => {
 };
 const ONGLETS = { entetes: "En-tête", pages: "Pages", footers: "Footer", bibliotheque: "Bibliothèque", catalogue: "Catalogue / Modèles" };
 const COMPOSANTS = { articles: "Articles", menu: "Menu", seo: "SEO", entete: "En-tête", footer: "Footer" };
-registerRoute("/cockpit/site/:domaine/menu",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Menu"],`Chargement des menus de ${nomSite(p.domaine)}`,()=>cockpitMenusPage(p),activerMenusPage));
-registerRoute("/cockpit/site/:domaine/demandes-comptes",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Demandes de compte"],`Chargement des demandes de ${nomSite(p.domaine)}`,()=>cockpitDemandesComptesPage(p),activerDemandesComptesPage));
-registerRoute("/cockpit/site/:domaine/reglages-acces",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Accès et comptes"],`Chargement des réglages de ${nomSite(p.domaine)}`,()=>cockpitReglagesAccesPage(p),activerReglagesAccesPage));
+registerRoute("/cockpit/site/:domaine/menu",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Menu"],`Chargement des menus de ${nomSite(p.domaine)}`,()=>cockpitMenusPage(p),(r,pg)=>activerMenusPage(r,pg,p.domaine)));
+registerRoute("/cockpit/site/:domaine/demandes-comptes",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Demandes de compte"],`Chargement des demandes de ${nomSite(p.domaine)}`,()=>cockpitDemandesComptesPage(p),(r,pg)=>activerDemandesComptesPage(r,pg,p.domaine)));
+registerRoute("/cockpit/site/:domaine/reglages-acces",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Accès et comptes"],`Chargement des réglages de ${nomSite(p.domaine)}`,()=>cockpitReglagesAccesPage(p),(r,pg)=>activerReglagesAccesPage(r,pg,p.domaine)));
 registerRoute("/cockpit",p=>naviguer(p,["Cockpit"],"Chargement du cockpit",()=>cockpitAccueilPage(p)));
 registerRoute("/cockpit/sites",p=>naviguer(p,["Cockpit","Mes sites"],"Chargement de Mes sites",()=>cockpitSitesPage(p),activerFiltresSites));
 registerRoute("/cockpit/galerie",p=>naviguer(p,["Cockpit","Galerie"],"Chargement de la Galerie",async()=>{ const {cockpitGaleriePage}=await import("../pages/cockpit.js"); return cockpitGaleriePage(p); },(r)=>activerGalerie(r)));
