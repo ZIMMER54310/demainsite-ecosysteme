@@ -1025,7 +1025,8 @@ async function construireLire(req, res) {
       const { zone } = require("../dsePageBuilder");
       const apercu = C.apercu(d, p.info.id, r.type, r.el, req.query.appareil, p);
       const z = (x) => (x ? { ...zone(x), _ref: x._ref } : null);
-      donnees.apercu = { mode: apercu.mode, ...z(apercu), theme: apercu.theme || {}, entete: z(apercu.entete), footer: z(apercu.footer) };
+      donnees.apercu = { mode: apercu.mode, ...z(apercu), theme: apercu.theme || {}, entete: z(apercu.entete), footer: z(apercu.footer),
+        ...(apercu.contexte ? { contexte: { entete: z(apercu.contexte.entete), footer: z(apercu.contexte.footer), page: apercu.contexte.page || "" } } : {}) };
     }
     experienceCockpit.decorerConstruction(donnees, experience.realisations);
     res.set("Cache-Control", "no-store");
