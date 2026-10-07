@@ -66,13 +66,16 @@ async function main() {
   // est projeté dans le rendu, sans créer de composition SharePoint ni dupliquer un module déjà imbriqué.
   const legacy = donneesBase();
   legacy.modules.push(el(7004, {}, { "OBJ-PAGES-SITE": lien(10), OBJMODULESITEPUBLICTYPE: lien(3, "HERO") }));
-  legacy.contenus["OBJ-MODULE-HERO"] = [el(14, { "TITRE-PRINCIPAL": "Hero historique" }, { "OBJ-MODULE-SITE-PUBLIC": lien(7004) })];
+  legacy.contenus["OBJ-MODULE-HERO"] = [el(14, { "TITRE-PRINCIPAL": "Hero historique", "Titre OBJ-MODULE-HERO": "Interne",
+    "ID-OBJ-MODULE-HERO": "999" }, { "OBJ-MODULE-SITE-PUBLIC": lien(7004) })];
   const avecHero = B.composerPage(legacy, site1);
   assert.equal(avecHero.mode, "builder");
   const heroes = avecHero.sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
     .filter((m) => m.type === "HERO");
   assert.equal(heroes.length, 1);
   assert.equal(heroes[0].contenu[0].champs.TITREPRINCIPAL, "Hero historique");
+  assert.equal(heroes[0].contenu[0].champs.TITREOBJMODULEHERO, undefined);
+  assert.equal(heroes[0].contenu[0].champs.IDOBJMODULEHERO, undefined);
   assert.equal(B.composerPage(legacy, site2).sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
     .some((m) => m.type === "HERO"), false, "module historique isolé au site de sa page");
   legacy.modules[5].relations["OBJ-COLONNE-SITE"] = lien(5002);
