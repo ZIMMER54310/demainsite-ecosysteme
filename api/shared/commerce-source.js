@@ -14,6 +14,10 @@ const REFERENTIELS_CREATION = Object.freeze({
   decisionsClient: "OBJ-DECISION-CLIENT"
 });
 
+const CHAMPS_JOURNAL_AUTORISES = new Set([
+  "ACTION", "DATEEVENEMENT", "CLEIDEMPOTENCE", "ANCIENNEVALEUR", "NOUVELLEVALEUR",
+  "STATUTJRN", "ANOMALIE", "ANOMALIEDETECTEE"
+]);
 const cle = (nom) => catalogue.cleChamp(nom);
 
 function relation(element, nom) {
@@ -56,6 +60,21 @@ function filtrerActifs(elements, champs = []) {
     .map((x) => fiche(x, champs));
 }
 
+function verifierContratJournal(colonnes) {
+  const visibles = (colonnes || []).filter((c) => !c.hidden);
+  const requisesInterdites = visibles.filter((c) => c.required && !CHAMPS_JOURNAL_AUTORISES.has(cle(c.name)));
+  const parCle = new Map(visibles.map((c) => [cle(c.name), c]));
+  const date = parCle.get("DATEEVENEMENT");
+  const cleIdempotence = parCle.get("CLEIDEMPOTENCE");
+  const statut = parCle.get("STATUTJRN");
+  return requisesInterdites.length === 0 &&
+    Boolean(date?.dateTime && cleIdempotence?.text && parCle.get("ACTION")?.text &&
+      parCle.get("ANOMALIE")?.boolean &&
+      statut?.choice?.choices?.includes("DÉBUT") && statut.choice.choices.includes("SUCCÈS") &&
+      statut.choice.choices.includes("ÉCHEC") && statut.choice.choices.includes("REFUS") &&
+      statut.choice.choices.includes("FIN"));
+}
+
 async function chargerReferentielsCreation() {
   const g = await require("./ecriture").contexteGraph();
   const listes = await dse.collecter(g.token, `/sites/${g.siteGraphId}/lists?$select=id,displayName,name`);
@@ -79,7 +98,21 @@ async function chargerReferentielsCreation() {
     (x.relations["OBJ-TYPE-BOUTIQUE"] || []).some((r) => types.has(r.id))) ?? null;
   resultat.disponibilite = Object.fromEntries(Object.entries(resultat).filter(([k]) => k !== "disponibilite")
     .map(([k, v]) => [k, v !== null]));
+  const listeJournal = listes.filter((l) => l.displayName === "OBJ-JRN");
+  if (listeJournal.length > 1) throw new Error("Journal SharePoint dupliqué.");
+  let journalCompatible = false;
+  if (listeJournal.length === 1) {
+    const colonnes = await dse.collecter(g.token,
+      `/sites/${g.siteGraphId}/lists/${listeJournal[0].id}/columns`);
+    journalCompatible = verifierContratJournal(colonnes);
+  }
+  resultat.ecritures = {
+    journalCompatible,
+    message: journalCompatible ? null :
+      "Les enregistrements sont suspendus : la configuration du journal ne permet pas encore de respecter le cycle sécurisé approuvé."
+  };
   return resultat;
 }
 
-module.exports = { REFERENTIELS_CREATION, chargerReferentielsCreation, _test: { relation, etatOui, fiche, filtrerActifs } };
+module.exports = { REFERENTIELS_CREATION, CHAMPS_JOURNAL_AUTORISES, chargerReferentielsCreation,
+  _test: { relation, etatOui, fiche, filtrerActifs, verifierContratJournal } };

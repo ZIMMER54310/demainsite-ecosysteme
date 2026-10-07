@@ -155,6 +155,11 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   } });
   assert.ok(activites.includes('value="native-usage"') && activites.includes('value="native-type"'));
   assert.ok(activites.includes('value="native-option"') && activites.includes("leur enregistrement n’est pas encore disponible"));
+  const ecritureSuspendue = ui.rendreAssistant({ moi, numero: 12, referentiels: {
+    ecritures: { journalCompatible: false, message: "Configuration de journal incompatible." }
+  } });
+  assert.ok(ecritureSuspendue.includes("Configuration de journal incompatible."));
+  assert.ok(ecritureSuspendue.includes("Enregistrement suspendu") && ecritureSuspendue.includes("disabled"));
 
   // --- Client -> site principal -> domaine principal -> alias ------------
   // Jamais deduit de l'ordre : plusieurs domaines sans designation => a preciser.

@@ -26,4 +26,20 @@ const option = { id: "native-option", relations: { "OBJ-TYPE-BOUTIQUE": [
 ] } };
 assert.deepEqual(_test.relation(option, "OBJ-TYPE-BOUTIQUE"), [{ id: "native-type", titre: "Boutique" }]);
 
+const contratAutorise = [
+  { name: "ACTION", text: {} }, { name: "DATEEVENEMENT", dateTime: {} },
+  { name: "CLEIDEMPOTENCE", text: {} }, { name: "ANCIENNEVALEUR", text: {} },
+  { name: "NOUVELLEVALEUR", text: {} }, { name: "STATUTJRN", required: true,
+    choice: { choices: ["DÉBUT", "SUCCÈS", "ÉCHEC", "FIN", "REFUS"] } },
+  { name: "ANOMALIE", required: true, boolean: {} }, { name: "ANOMALIEDETECTEE", boolean: {} }
+];
+assert.equal(_test.verifierContratJournal(contratAutorise), true);
+assert.equal(_test.verifierContratJournal([...contratAutorise, { name: "ID-JRN", required: true, text: {} }]), false,
+  "un champ obligatoire hors contrat désactive les écritures");
+assert.equal(_test.verifierContratJournal(contratAutorise.filter((x) => x.name !== "CLEIDEMPOTENCE")), false,
+  "pas d'idempotence sans clé");
+assert.equal(_test.verifierContratJournal([{ ...contratAutorise[0] }, ...contratAutorise.slice(1).map((x) =>
+  x.name === "STATUTJRN" ? { ...x, choice: { choices: ["DÉBUT", "SUCCÈS", "ÉCHEC", "FIN"] } } : x)]), false,
+  "le refus humain explicite doit être un état journalisable");
+
 console.log("Référentiels SharePoint commerce : filtres dynamiques et IDs natifs OK");

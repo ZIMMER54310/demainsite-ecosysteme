@@ -52,7 +52,11 @@ pas remplacees par des donnees fictives :
   les listes natives. La route exige une session reconnue, le périmètre global
   et la fonction dynamique `creer`; elle n'écrit aucune donnée. Les sélections
   de l'assistant restent locales tant que la création de site n'a pas son flux
-  d'aperçu, confirmation, revalidation et journalisation OBJ-JRN.
+  d'aperçu, confirmation, revalidation et journalisation OBJ-JRN. Avant toute
+  écriture, le schéma réel du journal est vérifié contre le contrat autorisé ;
+  un champ obligatoire hors contrat suspend l'opération. Le schéma de production
+  impose actuellement des champs supplémentaires, donc aucune écriture n'est
+  proposée.
 
 Les boutons de conteneurs et de l'arbre generique consomment les operations
 effectivement autorisees. Publication/desactivation de conteneur, affectation

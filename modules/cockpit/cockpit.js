@@ -416,9 +416,13 @@ export function rendreAssistant({ moi, numero = 1, valeurs = {}, referentiels = 
       ? `<dl class="kv">${lignes.map((c) => `<dt>${e(c.libelle)}</dt><dd>${e(c.valeur).replaceAll("\n", "<br>")}</dd>`).join("")}</dl>`
       : `<div class="empty">Aucune information saisie pour l'instant.</div>`;
   } else if (etape.cle === "validation") {
-    corps = `<p>Votre demande sera transmise pour création lorsque l'enregistrement sera ouvert.</p>
-      <button class="btn btn-primary" type="button" disabled aria-disabled="true">Enregistrement bientôt disponible</button>
-      <p class="muted">Aucune information n'est enregistrée pour le moment : vos saisies restent sur cet appareil.</p>`;
+    const ecritures = referentiels?.ecritures;
+    corps = ecritures?.journalCompatible
+      ? `<p>La préparation des changements est disponible. Aucune écriture n’aura lieu sans aperçu et confirmation.</p>
+        <button class="btn btn-primary" type="button" disabled aria-disabled="true">Aperçu sécurisé indisponible</button>`
+      : `<p role="alert">${e(ecritures?.message || "L’écriture reste désactivée tant que le journal sécurisé n’a pas été vérifié.")}</p>
+        <button class="btn btn-primary" type="button" disabled aria-disabled="true">Enregistrement suspendu</button>`;
+    corps += `<p class="muted">Aucune donnée métier n’a été enregistrée. Les saisies restent sur cet appareil.</p>`;
   } else if (etape.cle === "progression") {
     corps = `<ul class="cockpit-etapes">${suivi.map((x) =>
       `<li class="cockpit-etape ${e(x.etat)}"><span class="cockpit-picto" aria-hidden="true">${PICTOS[x.etat]}</span><div><strong>${e(x.libelle)}</strong> <span class="muted">· ${e(LIBELLES_ETAT[x.etat])}</span></div></li>`).join("")}</ul>`;
