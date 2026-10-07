@@ -271,13 +271,16 @@ function apercu(d, siteId, type, el, appareil, perimetre) {
   if (type === "entete" || type === "footer") {
     // Contexte de lecture : la zone complementaire (footer ou en-tete) d'une page du site utilisant ce conteneur.
     const autre = type === "entete" ? "footer" : "entete";
-    const page = (d.pages || []).filter((p) => !inactif(p) && rel(p, CONTENEURS[type].relation)?.id === el.id &&
-      rels(p, "OBJ-SITE-PUBLIC").some((s) => String(s.id) === String(siteId))).sort(parOrdre)[0];
-    const r = page ? rel(page, CONTENEURS[autre].relation) : null;
-    // Sans page liee : premier conteneur complementaire actif du meme site.
-    const c = r ? (d[CONTENEURS[autre].cle] || []).find((x) => x.id === r.id)
-      : (d[CONTENEURS[autre].cle] || []).filter((x) => !inactif(x) && String(rel(x, "OBJ-SITE-PUBLIC")?.id) === String(siteId)).sort(parOrdre)[0];
-    return { mode: "builder", ...zone(type, el), theme, contexte: { [autre]: c && !inactif(c) ? zone(autre, c) : null, page: page ? titreDe(page) : "" } };
+    const duSite = (x) => rels(x, "OBJ-SITE-PUBLIC").some((s) => String(s.id) === String(siteId));
+    const pagesSite = (d.pages || []).filter((p) => !inactif(p) && duSite(p)).sort(parOrdre);
+    const liste = d[CONTENEURS[autre].cle] || [];
+    const actif = (r) => r ? liste.find((x) => String(x.id) === String(r.id) && !inactif(x)) : null;
+    const page = pagesSite.find((p) => String(rel(p, CONTENEURS[type].relation)?.id) === String(el.id));
+    // Sans page liee : conteneur complementaire d'une page du site, sinon premier conteneur actif du site.
+    const c = (page && actif(rel(page, CONTENEURS[autre].relation)))
+      || pagesSite.map((p) => actif(rel(p, CONTENEURS[autre].relation))).find(Boolean)
+      || liste.filter((x) => !inactif(x) && duSite(x)).sort(parOrdre)[0];
+    return { mode: "builder", ...zone(type, el), theme, contexte: { [autre]: c ? zone(autre, c) : null, page: page ? titreDe(page) : "" } };
   }
   if (type !== "page") return { mode: "builder", ...zone(type, el), theme };
   const lie = (t) => {
