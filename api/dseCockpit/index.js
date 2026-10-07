@@ -162,9 +162,7 @@ async function moi(req, res) {
       if (!await t.etape("perimetre", () => siteDuPerimetre(ctx, req.query.domaine))) return refuser(res, 403, ctx.droits.contexte?.message || "Site non autorisé.");
     }
     const groupes = ctx.droits.reconnu ? (await groupesAutorises(ctx)).groupes : [];
-    const attribues = new Set(ctx.droits.sitesAttribues || ctx.droits.siteIds);
-    const nombreSites = ctx.droits.reconnu
-      ? perimetre.regrouperSites([...(await droits.sitesIndex()).sites.values()]).filter((g) => attribues.has(String(g.id))).length : 0;
+    const nombreSites = groupes.length;
     const [menu, accueil] = await Promise.all([
       t.etape("menu", async () => administration.menu(ctx.droits, req.query.domaine || null, { galerie: await galerieVisible(ctx, groupes) })),
       domaineAccueil(req, ctx, groupes)
@@ -264,6 +262,16 @@ async function listeSites(ctx, query, groupes, statuts) {
   return liste;
 }
 
+function groupesVisiblesMesSites(ctx, groupes, donnees) {
+  if (ctx.droits.global) return groupes;
+  const attribues = new Set([...(ctx.droits.sitesAttribues || []), ...donnees.liens.filter((l) => l.actif && l.valide &&
+    String(l.utilisateurId) === ctx.droits.utilisateurId && l.siteId && l.clientId &&
+    donnees.clients.some((c) => String(c.id) === String(l.clientId)) &&
+    donnees.sites.some((s) => String(s.id) === String(l.siteId) && String(s.clientId) === String(l.clientId)))
+    .map((l) => String(l.siteId))]);
+  return groupes.filter((g) => attribues.has(String(g.id)));
+}
+
 async function sites(req, res) {
   try {
     const ctx = await contexteUtilisateur(req);
@@ -271,11 +279,7 @@ async function sites(req, res) {
     if (!ctx.droits.reconnu) return refuser(res, 403, "Accès non autorisé.");
     const { groupes: tousGroupes, statuts } = await groupesAutorises(ctx);
     const donnees = await droits.donneesDroits();
-    const attribues = new Set([...(ctx.droits.sitesAttribues || []), ...donnees.liens.filter((l) => l.actif && l.valide &&
-      String(l.utilisateurId) === ctx.droits.utilisateurId && l.siteId && l.clientId &&
-      donnees.clients.some((c) => String(c.id) === String(l.clientId)) &&
-      donnees.sites.some((s) => String(s.id) === String(l.siteId) && String(s.clientId) === String(l.clientId))).map((l) => String(l.siteId))]);
-    const groupes = tousGroupes.filter((g) => attribues.has(String(g.id)));
+    const groupes = groupesVisiblesMesSites(ctx, tousGroupes, donnees);
     const liste = await listeSites(ctx, req.query, groupes, statuts);
     liste.clientsCockpit = clientsDuPerimetre(ctx, groupes);
     repondre(res, 200, { succes: true, donnees: liste, meta: meta() });
@@ -1263,5 +1267,5 @@ module.exports = {
   contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, referentielsCreationSite,
   domainesCreationSite, brouillonsSiteLire, siteCreationApercu, siteModificationApercu, siteValidationApercu,
   usageSiteApercu, usagesSiteLire, adminTableau, adminUtilisateurs, adminApercu,
-  _test: { origineValide, clientsDuPerimetre, peutOperation }
+  _test: { origineValide, clientsDuPerimetre, groupesVisiblesMesSites, peutOperation }
 };

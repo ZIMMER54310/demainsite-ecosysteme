@@ -44,6 +44,13 @@ const admin = require("../shared/administration");
   assert.deepStrictEqual(d.siteIds, ["10", "20"], "plusieurs clients autorises par les relations, sans droit hors contexte");
   assert.deepStrictEqual(d.fonctions, []);
   assert.deepStrictEqual(d.clientIds, ["a"]);
+  const groupesSites = [{ id: "10" }, { id: "20" }];
+  const groupesVisiblesMesSites = require("../dseCockpit")._test.groupesVisiblesMesSites;
+  const sansRelations = { liens: [], clients, sites: base.sites };
+  assert.deepStrictEqual(groupesVisiblesMesSites({ droits: { ...d, global: true, sitesAttribues: [] } },
+    groupesSites, sansRelations), groupesSites, "un super administrateur voit les sites du périmètre global sans liens individuels");
+  assert.deepStrictEqual(groupesVisiblesMesSites({ droits: { ...d, global: false, sitesAttribues: ["10"] } },
+    groupesSites, sansRelations), [{ id: "10" }], "un utilisateur non global reste limité aux sites attribués");
   const multi = { ...base, sites: [...base.sites, { id: "11", clientId: "a" }, { id: "12", clientId: "a" }],
     liens: [...base.liens, { utilisateurId: "u1", clientId: "a", siteId: "11", actif: true, valide: true },
       { utilisateurId: "u1", clientId: "b", siteId: "12", actif: true, valide: true }] };
@@ -108,6 +115,7 @@ const admin = require("../shared/administration");
     res = reponse();
     await controleur.moi({ query: {}, hostname: "a.example.test", get: () => null }, res);
     assert.strictEqual(res.corps.donnees.sitesPublics.length, 2, "le super administrateur recoit un choix, pas un site arbitraire");
+    assert.strictEqual(res.corps.donnees.nombreSites, 2, "le compteur reprend tous les sites visibles par le super administrateur");
     droits.droitsPour = async () => d;
     res = reponse();
     await controleur.editionLire(requete("b.example.test"), res);
