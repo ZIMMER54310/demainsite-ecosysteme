@@ -4,6 +4,10 @@ export const getMoi = (domaine = "") => apiGet("/moi", { domaine }, { timeoutMs:
 export const getMonCompte = () => apiGet("/cockpit/compte");
 export const getSitesCockpit = (criteres = {}) => apiGet("/cockpit/sites", criteres);
 export const getReferentielsCreationSite = () => apiGet("/cockpit/creer/referentiels", {}, { timeoutMs: 45000 });
+export const getUsagesSite = (domaine) => apiGet("/cockpit/site/usages", { domaine }, { timeoutMs: 45000 });
+export const apercuAjoutUsageSite = (domaine, usageReference, dateEffet) =>
+  apiPost("/cockpit/usages/apercu", { domaine, usageReference, dateEffet });
+export const confirmerAjoutUsageSite = (jeton) => apiPost("/cockpit/edition/confirmer", { jeton });
 export const getGalerie = (criteres = {}) => apiGet("/cockpit/galerie", criteres);
 // Ouverture d'un cockpit : delai elargi, un depassement est un incident et jamais un refus.
 export const getGalerieCockpit = (domaine) => apiGet("/cockpit/galerie/cockpit", { domaine }, { timeoutMs: 45000 });

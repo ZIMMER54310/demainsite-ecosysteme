@@ -293,6 +293,7 @@ export function rendreVueSite(moi, vue, section) {
       <div class="cockpit-site-identification"><h1>${e(vue.nom || domaine)} ${badgeStatut(vue.statut)}</h1><p>${e(vue.domaine || "Domaine principal à préciser")}</p>${vue.client ? `<p>Client : ${vue.clientCockpit ? `<a href="${e(lienClient(vue.clientCockpit))}" title="Ouvrir l'espace client">${e(vue.client)}</a>` : e(vue.client)}</p>` : ""}${vue.statut?.message ? `<p>${e(vue.statut.message)}</p>` : ""}${moi?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "globe") : ""}</div>
       ${vue.domaine && vue.fonctions?.includes("apercu") ? `<a class="btn cockpit-public-site" href="https://${e(vue.domaine)}/" target="_blank" rel="noopener noreferrer">Voir le site public ${icon("external")}</a>` : ""}
     </header>
+    ${rendreUsagesSite(vue)}
     <div class="cockpit-site-metriques"><article class="card cockpit-site-metrique cockpit-site-progression"${styleProgression(vue.progressionVisuelle)}><h2>${icon("chart")} Progression globale</h2><strong class="metric">${Number(vue.progression) || 0} %</strong><div class="cockpit-jauge"><span style="width:${Math.max(0, Math.min(100, Number(vue.progression) || 0))}%"></span></div><p class="muted">${terminees} / ${etapes.length} étapes terminées</p><a class="cockpit-lien-texte" href="#progression-site" data-ouvrir-progression>Voir le détail ${icon("arrow")}</a></article>${metriques}</div>
     <div class="cockpit-site-pilotage"><article class="card cockpit-site-prochaines"><h2>${icon("chart")} Que dois-je faire maintenant ?</h2><p class="muted">Les étapes non terminées de ce site.</p>
       ${prochaines.length ? `<ol>${prochaines.map((x) => `<li><div><strong>${e(x.libelle)}</strong><p class="muted">${e(x.alerte || x.realisations?.map((r) => `${r.nom} – ${r.titre}`).join(" · ") || LIBELLES_ETAT[x.etat] || LIBELLES_ETAT.afaire)}</p></div>${lien(cibleEtape(x), x.realisations?.find((r) => r.actionAutorisee && r.libelleAction)?.libelleAction || "Continuer", "arrow")}</li>`).join("")}</ol>` : "<p>Toutes les étapes de configuration sont terminées.</p>"}</article>
@@ -456,6 +457,30 @@ export function adressePublique(domaine, chemin) {
   if (/^https?:\/\//i.test(v)) return v;
   if (!domaine) return "(domaine principal non renseigné)";
   return `https://${domaine}/${v.replace(/^\/+/, "")}`;
+}
+
+function rendreUsagesSite(vue) {
+  const donnees = vue.usagesSite;
+  if (!donnees) return "";
+  if (donnees.erreur) return `<article class="card cockpit-usages-site" role="status">
+    <h2>Usages du site</h2><p class="muted">${e(donnees.erreur)}</p></article>`;
+  const usages = (donnees.usages || []).map((usage) =>
+    `<li><strong>${e(usage.usage || usage.titre || "Usage")}</strong>${usage.dateEffet ? `<small>${e(usage.dateEffet.slice(0, 10))}</small>` : ""}</li>`).join("");
+  const choix = donnees.autorisations?.creer ? (donnees.choix || []) : [];
+  return `<article class="card cockpit-usages-site"><h2>Usages du site</h2>
+    ${donnees.autorisations?.voir
+      ? usages ? `<ul class="cockpit-usages-liste">${usages}</ul>` : '<p class="muted">Aucun usage rattaché à ce site.</p>'
+      : '<p class="muted">La consultation des usages existants n’est pas autorisée.</p>'}
+    ${donnees.autorisations?.creer ? choix.length
+      ? `<form data-usages-site-form data-domaine="${e(vue.acces || vue.domaine)}">
+          <label class="cockpit-champ"><span>Ajouter un usage</span><select name="usageReference" required>
+            <option value="">Choisir un usage configuré</option>${choix.map((x) => `<option value="${e(x.reference)}">${e(x.titre)}</option>`).join("")}
+          </select></label>
+          <label class="cockpit-champ"><span>Date d'effet</span><input name="dateEffet" type="date" required></label>
+          <button class="btn btn-primary" type="submit">Préparer l'aperçu</button>
+        </form>`
+      : '<p class="muted">Aucun usage actif et validé n’est disponible dans SharePoint.</p>' : ""}
+    <div data-usage-site-result aria-live="polite"></div></article>`;
 }
 
 export function rendreEdition(moi, d, params = {}) {

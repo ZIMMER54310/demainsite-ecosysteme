@@ -303,12 +303,28 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   const state = await import(url("js/state.js"));
   const ancienLocation = global.location;
   global.location = { hash: "#/cockpit/site/alias.example.test" };
-  state.setState({ user: publicUser });
+  state.setState({ user: { ...publicUser, fonctions: ["sites", "pages"], porteeGlobale: false } });
   const navigation = sidebar.renderSidebar();
   assert.ok(navigation.indexOf("Voir le site") < navigation.indexOf('href="#/cockpit"'), "sortie publique avant Cockpit");
   state.setState({ selectedSite: { nom: "Site choisi <b>", acces: "alias.example.test", domaine: "principal.example.test", fonctions: ["pages", "seo"] } });
   const navigationLocale = sidebar.renderSidebar();
   assert.ok(navigationLocale.includes("Site sélectionné") && navigationLocale.includes("Vue d&#039;ensemble"));
+  assert.ok(navigationLocale.includes('class="cockpit-nav-groupe cockpit-nav-administration"') &&
+    navigationLocale.includes('class="cockpit-nav-groupe cockpit-nav-site"'),
+  "les contextes administration et site ont chacun leur groupe visuel");
+  assert.ok(navigationLocale.indexOf("Administration générale") < navigationLocale.indexOf("Site sélectionné"),
+    "le contexte global précède le site sélectionné");
+  assert.ok(navigationLocale.indexOf("Site choisi") > navigationLocale.indexOf("Site sélectionné"),
+    "la carte dynamique du site est dans son groupe contextuel");
+  assert.ok(navigationLocale.includes("Gérer ce site") &&
+    navigationLocale.indexOf("Gérer ce site") > navigationLocale.indexOf("Site sélectionné"),
+  "Gérer ce site appartient au contexte sélectionné");
+  const styles = require("node:fs").readFileSync(path.join(__dirname, "../../assets/css/cockpit.css"), "utf8");
+  assert.ok(styles.includes("--cockpit-nav-admin-bg") && styles.includes("--cockpit-nav-site-bg") &&
+    styles.includes("background:var(--cockpit-nav-admin-bg)") && styles.includes("background:var(--cockpit-nav-site-bg)"),
+  "deux variables de fond séparées pilotent les zones");
+  assert.ok(styles.includes("@media (max-width: 760px)") && styles.includes(".cockpit-nav-groupe{display:flex"),
+    "les groupes de navigation restent adaptés au mobile");
   assert.ok(navigationLocale.includes("/cockpit/site/alias.example.test/construire?onglet=pages"));
   assert.ok(!navigationLocale.includes("<b>"), "nom du site echappe");
   global.location = { hash: "#/cockpit/site/second.example.test" };
@@ -316,6 +332,31 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   state.setState({ selectedSite: null });
   state.setState({ user: null });
   global.location = ancienLocation;
+  const vueUsages = ui.rendreVueSite({ niveau: "ecriture", fonctions: ["sites"] }, {
+    acces: "alias.example.test", domaine: "principal.example.test", nom: "Site réel",
+    fonctions: ["sites"], etapes: [], progression: 0, usagesSite: {
+      usages: [{ usage: "Actualités", dateEffet: "2026-10-07T00:00:00Z" }],
+      choix: [{ reference: "opaque-reference", titre: "Blog" }],
+      autorisations: { voir: true, creer: true }
+    }, contexteUtilisateur: { autorisations: { operations: [{ operation: "usage-site.creer" }] } }
+  });
+  assert.ok(vueUsages.includes("Usages du site") && vueUsages.includes("Actualités") &&
+    vueUsages.includes('name="usageReference"') && vueUsages.includes("opaque-reference"),
+  "l’interface usage-site affiche les données SharePoint et le formulaire autorisé");
+  const vueUsagesSansLecture = ui.rendreVueSite({ niveau: "ecriture", fonctions: ["sites"] }, {
+    acces: "alias.example.test", domaine: "principal.example.test", nom: "Site réel",
+    fonctions: ["sites"], etapes: [], progression: 0, usagesSite: {
+      usages: [], choix: [{ reference: "opaque-reference", titre: "Blog" }],
+      autorisations: { voir: false, creer: true }
+    }
+  });
+  assert.ok(vueUsagesSansLecture.includes("consultation des usages existants n’est pas autorisée") &&
+    !vueUsagesSansLecture.includes("Aucun usage rattaché"),
+  "un droit de création seul ne révèle pas ni ne prétend connaître les usages existants");
+  assert.ok(!ui.rendreVueSite({ niveau: "lecture", fonctions: ["sites"] }, {
+    acces: "alias.example.test", domaine: "principal.example.test", fonctions: ["sites"],
+    etapes: [], progression: 0
+  }).includes("data-usages-site-form"), "aucune écriture affichée sans permission");
 
   // --- Ecriture, droits d'administration, refus hors perimetre ---------------
   const droitsMod = require("../auth/droits");

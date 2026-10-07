@@ -1,6 +1,15 @@
 /* Cockpit DSE unique et adaptatif */
 .dse-icon { width: 20px; height: 20px; flex: 0 0 auto; vertical-align: middle; }
-body:not(.dse-public) { --accent: #0860ed; --bg: #f2f5fa; --nav: #0c223e; --shadow: 0 3px 16px rgba(16, 36, 62, .04); }
+body:not(.dse-public) {
+  --accent: #0860ed;
+  --bg: #f2f5fa;
+  --nav: #0c223e;
+  --shadow: 0 3px 16px rgba(16, 36, 62, .04);
+  /* Theme tokens: distinct defaults, ready for a future SharePoint-backed cockpit palette. */
+  --cockpit-nav-admin-bg: #174667;
+  --cockpit-nav-site-bg: #0a2c4d;
+  --cockpit-nav-group-border: rgba(206, 226, 245, .2);
+}
 body:not(.dse-public) .app-shell { grid-template-columns: 224px minmax(0, 1fr); }
 body:not(.dse-public) .topbar { gap: 20px; }
 body:not(.dse-public) .brand { color: var(--text); text-decoration: none; font-size: .95rem; }
@@ -211,7 +220,6 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .cockpit-site-selection strong { font-size: .8rem; }
 .cockpit-site-selection small { display: block; font-size: .7rem; margin-top: 4px; }
 .cockpit-site-selection span { min-width: 0; overflow-wrap: anywhere; }
-.cockpit-nav-globale { display: grid; gap: 6px; padding-top: 14px; margin-top: 8px; border-top: 1px solid #ffffff33; }
 .cockpit-menu-reduit .cockpit-site-selection > small, .cockpit-menu-reduit .cockpit-site-selection a span { display: none; }
 .cockpit-menu-reduit .cockpit-site-selection a { justify-content: center; }
 .cockpit-site-banniere { display: flex; align-items: center; gap: 24px; background: linear-gradient(115deg, #10243e, #174660); color: white; box-shadow: none; padding: 28px; min-height: 180px; }
@@ -259,7 +267,6 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
   .cockpit-site-selection { padding: 0; margin: 0; border: 0; }
   .cockpit-site-selection > small { display: none; }
   .cockpit-site-selection > a { padding: 6px 10px; }
-  .cockpit-nav-globale { display: flex; padding: 0; margin: 0; border: 0; }
   .cockpit-menu-reduit .cockpit-site-selection a span { display: block; }
 }
 .constructeur-onglets { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
@@ -431,26 +438,49 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .dse-travail strong{display:block;font-size:.85rem}
 .dse-travail small{display:block;font-size:.75rem;color:#4a5d73;overflow-wrap:anywhere}
 /* Menu du site selectionne : groupes et fonctions de construction imbriquees. */
-.cockpit-nav-groupe{display:grid;gap:6px}
-.cockpit-nav-groupe + .cockpit-nav-groupe{padding-top:12px;margin-top:8px;border-top:1px solid #ffffff33}
-.cockpit-nav-titre{margin:0;padding:0 10px 2px;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:#adbed5}
+.cockpit-nav-groupe{display:grid;align-content:start;gap:6px;padding:12px 8px;border:1px solid var(--cockpit-nav-group-border);border-radius:14px;box-shadow:inset 0 1px rgba(255,255,255,.05)}
+.cockpit-nav-administration{background:var(--cockpit-nav-admin-bg)}
+.cockpit-nav-site{background:var(--cockpit-nav-site-bg)}
+.cockpit-nav-groupe + .cockpit-nav-groupe{margin-top:4px}
+.cockpit-nav-titre{margin:0;padding:2px 10px 6px;font-size:.67rem;text-transform:uppercase;font-weight:700;letter-spacing:.075em;color:#d1e4f5}
+.cockpit-nav-groupe .nav-link{min-width:0}
+.cockpit-nav-groupe .nav-link:hover:not(.active){background:rgba(255,255,255,.12);color:#fff}
+.cockpit-nav-groupe .nav-link:focus-visible{outline-color:#b8d8ff;outline-offset:1px}
+.cockpit-nav-groupe .nav-link svg{color:currentColor}
 .cockpit-nav-site .cockpit-site-selection{padding:0;margin:0 0 4px;border-top:0}
 .cockpit-site-statut{display:inline-block;margin-top:6px;padding:1px 8px;border-radius:999px;font-size:.65rem;font-style:normal;background:#ffffff1f;color:#dbe6f3}
 .cockpit-site-statut.est-actif{background:#1f9d5533;color:#c6f2d7}
+.cockpit-site-selection > a{background:rgba(255,255,255,.08);border-color:rgba(206,226,245,.24)}
 .cockpit-nav-construire{display:grid;gap:4px}
 .cockpit-nav-enfants{display:grid;gap:2px;margin-left:18px;padding-left:10px;border-left:2px solid #ffffff33}
 .cockpit-nav-enfants[hidden]{display:none}
 .cockpit-nav-enfants .nav-link{padding-top:6px;padding-bottom:6px;font-size:.85rem}
 .nav-link.is-parent-actif{background:#ffffff14;font-weight:600}
+.cockpit-usages-site{display:grid;gap:12px}
+.cockpit-usages-site h2,.cockpit-usages-apercu h3{margin:0;font-size:1rem}
+.cockpit-usages-site form{display:flex;align-items:end;flex-wrap:wrap;gap:12px}
+.cockpit-usages-site .cockpit-champ{min-width:min(220px,100%);flex:1}
+.cockpit-usages-site select,.cockpit-usages-site input[type=date]{min-height:40px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;color:var(--text);font:inherit}
+.cockpit-usages-liste{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.cockpit-usages-liste li{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;background:var(--bg);border-radius:8px}
+.cockpit-usages-liste small{color:var(--muted)}
+.cockpit-usages-apercu{display:grid;gap:8px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.cockpit-usages-apercu dl{display:grid;grid-template-columns:minmax(110px,auto) 1fr;gap:6px 12px;margin:0}
+.cockpit-usages-apercu dd{margin:0;font-weight:600}
+.cockpit-ecriture-erreur{color:#a61b1b}
 .cockpit-menu-reduit .cockpit-nav-titre,.cockpit-menu-reduit .cockpit-site-statut{display:none}
 .cockpit-menu-reduit .cockpit-nav-enfants{margin-left:0;padding-left:0;border-left:0}
 @media (max-width: 760px){
   .dse-travail{top:auto;bottom:12px;right:12px;left:12px;max-width:none}
-  .cockpit-nav-groupe{display:flex;flex-wrap:wrap;gap:6px}
-  .cockpit-nav-groupe + .cockpit-nav-groupe{padding-top:6px;margin-top:6px}
+  .cockpit-nav-groupe{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border-radius:12px}
+  .cockpit-nav-groupe + .cockpit-nav-groupe{margin-top:2px}
   .cockpit-nav-titre{flex-basis:100%}
   .cockpit-nav-construire{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%}
   .cockpit-nav-enfants{display:flex;flex-wrap:wrap;margin-left:0;padding-left:8px}
+  .cockpit-usages-site form{align-items:stretch}
+  .cockpit-usages-site form .btn{width:100%}
+  .cockpit-usages-apercu dl{grid-template-columns:1fr;gap:2px}
+  .cockpit-usages-apercu dd{margin-bottom:6px}
 }
 
 /* Articles : chemin relatif au domaine principal du site selectionne */

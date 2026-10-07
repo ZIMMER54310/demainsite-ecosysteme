@@ -205,6 +205,22 @@ async function moi(req, res) {
   }
 }
 
+async function usagesSiteLire(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const info = await siteDuPerimetre(ctx, req.query?.domaine);
+    if (!info) return refuser(res, 403, "Ce site n'est pas disponible dans votre espace.");
+    const donnees = await require("../shared/commerce-ecriture").chargerUsagesSite({
+      droits: ctx.droits, siteId: String(info.id)
+    });
+    return repondreResultat(res, donnees);
+  } catch (e) {
+    console.error("[DSE cockpit] lecture usages du site", e.message);
+    return refuser(res, 503, "Les usages SharePoint du site ne sont pas disponibles.");
+  }
+}
+
 /*
  * Cockpit client : uniquement pour une portee « tous » ou « client » ; seuls les clients
  * du perimetre (ID natifs) ayant au moins un site autorise sont proposes.
@@ -574,6 +590,9 @@ async function confirmer(req, res) {
             clientId: s?.clientId || null, siteId: String(op.siteId) };
           if (!peutOperation(d, op.operation || `${op.fonction}.modifier`, op.fonction) ||
             !d.siteIds.includes(String(op.siteId))) return "Vous n'avez plus l'autorisation de réaliser cette opération.";
+          if (op.operation === "usage-site.creer") {
+            return require("../shared/commerce-ecriture").revaliderAjoutUsage({ op, droits: d });
+          }
           return null;
         }
         if (op.portee === "admin") {
@@ -823,6 +842,29 @@ async function referentielsCreationSite(req, res) {
   } catch (e) {
     console.error("[DSE cockpit] référentiels création site", e.message);
     return refuser(res, 503, "Les référentiels SharePoint ne sont pas disponibles.");
+  }
+}
+
+async function usageSiteApercu(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const info = await siteDuPerimetre(ctx, req.body?.domaine);
+    if (!info || !peutOperation(ctx.droits, "usage-site.creer", "usage-site")) {
+      return refuserEcriture(res, ctx, req.body?.domaine, "usage-site.creer",
+        "L'opération usage-site.creer n'est pas autorisée dans le périmètre de ce site.");
+    }
+    const resultat = await require("../shared/commerce-ecriture").preparerAjoutUsage({
+      identite: ctx.identite,
+      droits: ctx.droits,
+      siteId: String(info.id),
+      usageReference: String(req.body?.usageReference || ""),
+      dateEffet: String(req.body?.dateEffet || "")
+    });
+    repondreResultat(res, resultat);
+  } catch (e) {
+    console.error("[DSE cockpit] aperçu usage site", e.message);
+    refuser(res, 503, "L'aperçu de l'usage n'a pas pu être préparé. Aucune donnée n'a été écrite.");
   }
 }
 
@@ -1112,6 +1154,6 @@ const synchroConfirmer = (req, res) => synchroEcriture(req, res, "SYNCHRO-RESTAU
 module.exports = {
   client, synchroVue, synchroSauvegardes, synchroReglage, synchroLancer, synchroApercu, synchroConfirmer,
   moi, monCompte, sites, site, galerieListe, galerieCockpit, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
-  contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, referentielsCreationSite, adminTableau, adminUtilisateurs, adminApercu,
+  contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, referentielsCreationSite, usageSiteApercu, usagesSiteLire, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide, clientsDuPerimetre }
 };

@@ -4,7 +4,7 @@ import { setState, getState } from "../js/state.js";
 import {
   getSitesCockpit, getClientCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
   getAdminTableau, getAdminUtilisateurs, getMonCompte, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident, getStatutsSite, getConstruire,
-  apercuDemandeAcces, confirmerDemandeAcces
+  apercuDemandeAcces, confirmerDemandeAcces, getUsagesSite, apercuAjoutUsageSite, confirmerAjoutUsageSite
 } from "../services/cockpit.service.js";
 import { activerConstructeur } from "../modules/cockpit/constructeur.js";
 import {
@@ -280,6 +280,17 @@ export async function cockpitSitePage(params) {
     }
     const resultat = etatOuverture(await chargement);
     if (resultat.etat === "READY") {
+      const ops = resultat.site.contexteUtilisateur?.autorisations?.operations || [];
+      if (ops.some((operation) => ["usage-site.voir", "usage-site.creer"].includes(operation.operation))) {
+        try {
+          resultat.site.usagesSite = (await getUsagesSite(params.domaine))?.donnees || {
+            erreur: "Les usages du site n’ont pas pu être chargés."
+          };
+        } catch (err) {
+          console.error("[DSE cockpit] usages du site", err.message);
+          resultat.site.usagesSite = { erreur: err.message || "Les usages du site ne sont pas disponibles." };
+        }
+      }
       appliquerVue(resultat.site, params.domaine);
       return rendreVueSite(c.moi, resultat.site, params.section);
     }
@@ -297,6 +308,62 @@ function lireAssistant() {
 }
 
 export function activerVueSite(racine) {
+  racine.querySelectorAll("[data-usages-site-form]").forEach((form) => {
+    const zone = racine.querySelector("[data-usage-site-result]");
+    let jeton = null;
+    const afficherErreur = (message) => {
+      if (zone) zone.innerHTML = `<p class="cockpit-ecriture-erreur" role="alert">${escapeHtml(message)}</p>`;
+    };
+    form.addEventListener("input", () => {
+      jeton = null;
+      if (zone) zone.replaceChildren();
+    });
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const donnees = new FormData(form);
+      const bouton = form.querySelector('[type="submit"]');
+      bouton.disabled = true;
+      try {
+        const apercu = (await apercuAjoutUsageSite(form.dataset.domaine,
+          String(donnees.get("usageReference") || ""), String(donnees.get("dateEffet") || "")))?.donnees;
+        if (!apercu?.jeton || !apercu.apercu) throw new Error("L’aperçu sécurisé n’a pas pu être préparé.");
+        jeton = apercu.jeton;
+        const lignes = (apercu.apercu.changements || []).map((x) =>
+          `<dt>${escapeHtml(x.libelle)}</dt><dd>${escapeHtml(x.apres)}</dd>`).join("");
+        zone.innerHTML = `<div class="cockpit-usages-apercu"><h3>Vérifier le changement</h3>
+          <p>Site : ${escapeHtml(apercu.apercu.contexte?.site || "")}</p><dl>${lignes}</dl>
+          <p class="muted">${escapeHtml(apercu.apercu.impact || "")}</p>
+          <button type="button" class="btn btn-primary" data-confirmer-usage>Confirmer l’ajout</button>
+          <button type="button" class="btn btn-secondary" data-annuler-usage>Annuler</button>
+          <p role="status" data-usage-message></p></div>`;
+        zone.querySelector("[data-annuler-usage]").addEventListener("click", () => {
+          jeton = null;
+          zone.replaceChildren();
+        });
+        zone.querySelector("[data-confirmer-usage]").addEventListener("click", async (confirmationEvent) => {
+          const boutonConfirmer = confirmationEvent.currentTarget;
+          boutonConfirmer.disabled = true;
+          const message = zone.querySelector("[data-usage-message]");
+          try {
+            const resultat = (await confirmerAjoutUsageSite(jeton))?.donnees;
+            if (!resultat?.succes) throw new Error(resultat?.erreur || "L’enregistrement doit être vérifié.");
+            message.textContent = "Usage enregistré, relu dans SharePoint et journalisé dans OBJ-JRN.";
+            form.hidden = true;
+            jeton = null;
+          } catch (err) {
+            message.textContent = err.message;
+            boutonConfirmer.disabled = false;
+            if (err.details?.enregistrementEffectue) boutonConfirmer.textContent = "Reprendre la journalisation";
+          }
+        });
+      } catch (err) {
+        jeton = null;
+        afficherErreur(err.message);
+      } finally {
+        bouton.disabled = false;
+      }
+    });
+  });
   racine.querySelectorAll("[data-demande-acces]").forEach((bouton) => bouton.addEventListener("click", () => {
     const dialogue = document.createElement("dialog");
     dialogue.className = "cockpit-statut-dialogue";

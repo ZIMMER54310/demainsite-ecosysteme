@@ -61,6 +61,18 @@ pas remplacees par des donnees fictives :
   Les opérations commerce doivent en outre être explicitement accordées par les
   relations dynamiques de capacité/action et un périmètre réel ; aucun accès
   n'est créé si ces données sont absentes.
+- `GET /api/v1/cockpit/site/usages` expose, après contrôle site/périmètre et
+  opération, les usages existants et/ou les choix autorisés.
+  `POST /api/v1/cockpit/usages/apercu` prépare le rattachement d'un usage réel
+  à un site déjà accessible. Le flux utilise les colonnes internes constatées
+  `ObjSitePublic`, `ObjUsageSite`, `DateEffet` et `EmpreinteSiteUsage` de
+  `OBJ-SITE-USAGE`, ainsi que les IDs natifs des références. Il relit les
+  références actives/valides et les relations existantes. Le jeton émis est
+  lié à la session et à l'opération ; il doit être confirmé via
+  `POST /api/v1/cockpit/edition/confirmer`, qui revalide droits, périmètre,
+  référence et doublon avant toute écriture. Une relation déjà existante ou
+  une structure SharePoint incomplète bloque l'opération. Ce flux ne crée ni
+  site ni droit.
 
 Les boutons de conteneurs et de l'arbre generique consomment les operations
 effectivement autorisees. Publication/desactivation de conteneur, affectation

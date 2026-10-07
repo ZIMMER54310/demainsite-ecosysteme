@@ -47,13 +47,16 @@ export function rendreEspacesClients(user, current, lien) {
 }
 
 // Gestion transverse (medias, pages, En-tetes, Footer, articles de tous les sites du perimetre).
-export function rendreGestionContenus(user, current, lien) {
+export function rendreGestionContenus(user, current, lien, { domaineSelectionne = null } = {}) {
   if (!user?.fonctions?.includes("sites") || !["logo-medias", "pages", "entete", "footer"].some((f) => user.fonctions.includes(f))) return "";
-  return lien(`/cockpit/contenus${user.contexte?.domaine ? `?domaine=${encodeURIComponent(user.contexte.domaine)}` : ""}`, user.porteeGlobale ? "Gérer tous les sites" : "Gérer ce site", "grid", current === "/cockpit/contenus");
+  const domaine = domaineSelectionne || user.contexte?.domaine || "";
+  const libelle = domaineSelectionne ? "Gérer ce site"
+    : user.porteeGlobale ? "Gérer tous les sites" : "Gérer ce site";
+  return lien(`/cockpit/contenus${domaine ? `?domaine=${encodeURIComponent(domaine)}` : ""}`,
+    libelle, "grid", current === "/cockpit/contenus");
 }
 
 const titreGroupe = (texte) => `<p class="cockpit-nav-titre">${escapeHtml(texte)}</p>`;
-const GENERAL = ["/cockpit", "/cockpit/sites"];
 
 /*
  * Menu du site selectionne : carte du site (conservee pendant LOADING et ERROR), Vue d'ensemble,
@@ -76,10 +79,11 @@ function rendreSiteSelectionne(vue, user, route, current, lien) {
     }
     return lien(x.url, x.libelle, x.icone, actif === x || (parent === x && !actif));
   };
-  return `<div class="cockpit-nav-groupe cockpit-nav-site">${titreGroupe("Site sélectionné")}
+  return `<section class="cockpit-nav-groupe cockpit-nav-site" aria-label="Travail sur le site sélectionné">${titreGroupe("Site sélectionné")}
     <div class="cockpit-site-selection"><a href="#${escapeHtml(`/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}`)}" title="${escapeHtml(vue.nom || vue.domaine)}">${icon("globe")}<span><strong>${escapeHtml(vue.nom || vue.domaine || vue.acces)}</strong><small>${escapeHtml(vue.domaine || vue.acces)}</small>${statut}</span></a></div>
     ${items.map(entree).join("")}
-    ${rendreVoirSite(user, current)}${user?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "arrow", false) : ""}</div>`;
+    ${rendreGestionContenus(user, current, lien, { domaineSelectionne: vue.acces || vue.domaine })}
+    ${rendreVoirSite(user, current)}${user?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "arrow", current === "/cockpit/sites") : ""}</section>`;
 }
 
 export function renderSidebar() {
@@ -94,13 +98,15 @@ export function renderSidebar() {
   const vue = getState().selectedSite;
   const correspond = selection && vue && selection[1] === encodeURIComponent(vue.acces || vue.domaine);
   const lien = (p, l, i, actif, classe = "", attributs = "") => `<a class="nav-link ${actif ? "active" : ""} ${classe}"${actif ? ' aria-current="page"' : ""}${attributs} href="#${escapeHtml(p)}" title="${escapeHtml(l)}">${icon(i)}<span>${escapeHtml(l)}</span></a>`;
-  const global = (items) => items.map(([p, , l]) => lien(p, correspond && p === "/cockpit" ? "Cockpit général" : l, iconForRoute(p.split("?")[0]), current === p.split("?")[0])).join("");
-  const generales = entrees.filter(([p]) => GENERAL.includes(p));
-  const globales = entrees.filter(([p]) => !GENERAL.includes(p));
+  const global = (items) => items.map(([p, , l]) => lien(p,
+    correspond && p === "/cockpit" ? "Cockpit général" : l,
+    iconForRoute(p.split("?")[0]), current === p.split("?")[0])).join("");
+  const navigationGenerale = (avecVoirSite = false, avecGestionSite = true) => `<section class="cockpit-nav-groupe cockpit-nav-administration" aria-label="Administration générale">${titreGroupe("Administration générale")}
+    ${avecVoirSite ? rendreVoirSite(user, current) : ""}
+    ${global(entrees)}${avecGestionSite ? rendreGestionContenus(user, current, lien) : ""}${rendreEspacesClients(user, current, lien)}</section>`;
   return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${correspond
-    ? `<div class="cockpit-nav-groupe">${titreGroupe("Navigation générale")}${global(generales)}</div>
-      ${rendreSiteSelectionne(vue, user, route, current, lien)}
-      <div class="cockpit-nav-groupe cockpit-nav-globale">${titreGroupe("Fonctions globales")}${global(globales)}${rendreGestionContenus(user, current, lien)}${rendreEspacesClients(user, current, lien)}</div>`
-    : `${rendreVoirSite(user, current)}${global(entrees)}${rendreGestionContenus(user, current, lien)}${rendreEspacesClients(user, current, lien)}`}</div>
+    ? `${navigationGenerale(false, Boolean(user?.porteeGlobale))}
+      ${rendreSiteSelectionne(vue, user, route, current, lien)}`
+    : navigationGenerale(true)}</div>
     <div class="cockpit-sidebar-bas"><button type="button" class="nav-link" data-reduire-menu aria-expanded="true">${icon("panel")}<span>Réduire le menu</span></button><small>Espace de gestion</small><small>${escapeHtml(user?.displayName || "")}</small></div></nav>`;
 }

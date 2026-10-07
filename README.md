@@ -11,11 +11,13 @@ GitHub (code, branche ovh/api-native)
              -> front statique (JS ES modules)
              -> API Node (dse-api.service, 127.0.0.1:3000)
                   -> Microsoft Graph
-                       -> SharePoint (source officielle, LECTURE SEULE)
+                       -> SharePoint (source officielle; écritures cockpit limitées et contrôlées)
 ```
 
 - **GitHub** : depot et versionnement du code uniquement.
-- **SharePoint** : source officielle des donnees et configurations. L'API ne fait que lire.
+- **SharePoint** : source officielle des donnees et configurations. Les lectures sont la regle ;
+  seules les routes cockpit explicitement autorisees executent des ecritures controlees,
+  avec apercu, revalidation des droits/perimetres, idempotence, relecture et OBJ-JRN.
 - **OVH VPS** : hebergement public du front, de l'API, de Nginx. OVH gere aussi domaines et DNS.
 - **Azure** : abandonne comme hebergeur DSE (aucun deploiement Azure depuis ce depot).
 - HTTPS / HSTS : pas encore en place (a traiter separement).
@@ -63,6 +65,11 @@ securisee et journalisee existante. Les raccourcis medias ouvrent cet ecran.
 La route actuelle de fichiers reste limitee aux images publiques supportees :
 sons, videos et autres types sont catalogues sans faux lecteur ni image cassee.
 L'import reste realise dans la bibliotheque SharePoint existante.
+
+Le menu distingue visuellement l'administration générale du compte et le travail sur
+le site sélectionné au moyen de fonds configurables par variables CSS. Le parcours
+usage-site présente les rattachements SharePoint autorisés et demande un aperçu avant
+confirmation; il n'ajoute aucun droit et ne crée pas de site ou de boutique.
 
 - Branche de travail et de production : `ovh/api-native` (pas de fusion vers `main` pour l'instant).
 - API : service systemd `dse-api.service` (`api/server.js`, ecoute **127.0.0.1:3000**).
