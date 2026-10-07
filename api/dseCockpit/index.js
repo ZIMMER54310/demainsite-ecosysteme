@@ -35,8 +35,18 @@ function refuser(res, status, message) {
   repondre(res, status, { succes: false, erreur: { message }, meta: meta() });
 }
 
+function diagnosticRefus(ctx, operation) {
+  const d = ctx?.droits || {};
+  const fonction = String(operation || "").split(".")[0];
+  return { fournisseur: ctx?.identite?.fournisseur || null, reconnu: !!d.reconnu, global: d.global === true,
+    contexte: d.contexte?.etat || null, motif: d.contexte?.message || null, niveau: d.niveau || null,
+    fonction: Array.isArray(d.fonctions) && d.fonctions.includes(fonction), dynamique: !!d.autorisations,
+    operationDynamique: d.autorisations ? autorisations.autoriser(d.autorisations, operation).autorise : null,
+    contrainte: !!d.contraintesOperations?.includes(operation) };
+}
+
 async function refuserEcriture(res, ctx, domaine, action, message) {
-  console.warn("[DSE cockpit] écriture refusée", action);
+  console.warn("[DSE cockpit] écriture refusée", action, JSON.stringify(diagnosticRefus(ctx, action)));
   return refuser(res, 403, message);
 }
 
