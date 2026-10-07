@@ -89,7 +89,7 @@ async function assurerMenu(g, s, siteId, states) {
     [`${c.actif.name}LookupId`]: states.actif,
     [`${c.valide.name}LookupId`]: states.valide,
     [c.empreinte.name]: empreinte,
-    [c.modifie.name]: new Date().toISOString()
+    [c.modifie.name]: new Date().toISOString().replace(/\.\d{3}Z$/, "Z")
   };
   const id = await enregistrerCreation(g, { list: l, fields, action: "MENU-PRINCIPAL-CREER",
     nom: "Création du Menu principal", siteId });

@@ -9,6 +9,8 @@ const normaliser = (v) => String(v ?? "").normalize("NFD").replace(/[\u0300-\u03
   .toUpperCase().replace(/[^A-Z0-9]/g, "");
 const empreinte = (parts) => crypto.createHash("sha256").update(parts.map((x) => normaliser(x)).join("|")).digest("hex");
 const ref = (type, id) => `${type}.${crypto.createHmac("sha256", REFS).update(`${type}:${id}`).digest("hex").slice(0, 32)}`;
+// SharePoint stocke les dates à la seconde : sans cela la relecture ne correspond jamais.
+const maintenantSharePoint = () => new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 const isRef = (candidate, type, id) => candidate === ref(type, id);
 const pathList = (g, name) => {
   const liste = dse.trouverListe(g.listes, name);
@@ -317,7 +319,7 @@ async function preparer({ identite, siteId, siteNom, action, params }) {
     Object.assign(fields,simpleField(s,"OBJ-MENU","Title",titre),lookupField(s,"OBJ-MENU","OBJSITEPUBLIC",siteId),
       simpleField(s,"OBJ-MENU","DESCRIPTION",String(params.description||"").trim().slice(0,4000)),
       lookupField(s,"OBJ-MENU","OBJACTIF",states.actif),lookupField(s,"OBJ-MENU","OBJVALIDE",states.invalide),
-      simpleField(s,"OBJ-MENU","EMPREINTEMENU",empreinte([siteId,titre])),simpleField(s,"OBJ-MENU","DATEMODIFICATION",new Date().toISOString()));
+      simpleField(s,"OBJ-MENU","EMPREINTEMENU",empreinte([siteId,titre])),simpleField(s,"OBJ-MENU","DATEMODIFICATION",maintenantSharePoint()));
   } else if(action==="menu.modifier"||action==="menu.publier"||action==="menu.desactiver"){
     const item=trouverRef(menus,params.menuRef,"menu"); itemId=item.id; type="menu"; label=String(item.fields.Title||""); operation=action==="menu.publier"?"menu.publier":"menu.modifier";
     if(action==="menu.modifier"){
@@ -326,12 +328,12 @@ async function preparer({ identite, siteId, siteNom, action, params }) {
         throw new Error("Un menu de ce nom existe déjà sur ce site.");
       Object.assign(fields,simpleField(s,"OBJ-MENU","Title",titre),simpleField(s,"OBJ-MENU","DESCRIPTION",String(params.description||"").trim().slice(0,4000)),
         simpleField(s,"OBJ-MENU","EMPREINTEMENU",empreinte([siteId,titre])),
-        simpleField(s,"OBJ-MENU","DATEMODIFICATION",new Date().toISOString()));
+        simpleField(s,"OBJ-MENU","DATEMODIFICATION",maintenantSharePoint()));
       old=Object.fromEntries(Object.keys(fields).map(k=>[k,item.fields[k]??""]));
     } else {
       Object.assign(fields,lookupField(s,"OBJ-MENU","OBJACTIF",action==="menu.publier"?states.actif:states.inactif));
       if(action==="menu.publier")Object.assign(fields,lookupField(s,"OBJ-MENU","OBJVALIDE",states.valide));
-      Object.assign(fields,simpleField(s,"OBJ-MENU","DATEMODIFICATION",new Date().toISOString()));
+      Object.assign(fields,simpleField(s,"OBJ-MENU","DATEMODIFICATION",maintenantSharePoint()));
       old=Object.fromEntries(Object.keys(fields).map(k=>[k,item.fields[k]??""]));
     }
   } else if(action==="entree.ajouter"||action==="entree.modifier"||action==="entree.publier"||action==="entree.masquer"||action==="entree.afficher"||action==="entree.retirer"||action==="entree.ordre"){
