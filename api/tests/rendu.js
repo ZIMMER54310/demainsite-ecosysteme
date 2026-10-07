@@ -45,6 +45,19 @@ const url = (f) => require("url").pathToFileURL(path.join(__dirname, "..", "..",
   assert.ok(e1.includes("Titre SP") && !e1.includes("Repli"), "titre SharePoint prioritaire");
   assert.ok(e1.includes("Accroche SP") && e1.includes('src="/api/v1/media/9"'));
   assert.ok(e1.includes('href="/contact"') && !/Brouillon|Pirate|Sans URL|javascript:/.test(e1));
+  const arbre = rendreEntete({
+    nomSite: "Site",
+    menuArbre: { titre: "Menu principal", entrees: [
+      { titre: "Accueil", url: "/", enfants: [] },
+      { titre: "Services", url: "/services", enfants: [
+        { titre: "Créations", url: "https://example.test/creations", enfants: [] }
+      ] },
+      { titre: "Dangereux", url: "javascript:alert(1)", enfants: [] }
+    ] },
+    pageUrl: "/"
+  });
+  assert.ok(arbre.includes('aria-label="Menu principal"') && arbre.includes('aria-current="page"'));
+  assert.ok(arbre.includes("Créations") && !arbre.includes("javascript:"));
   const e2 = rendreEntete({ nomSite: "Repli", entete: [{ ...non, configuration: { Titre: "Inactif" } }] });
   assert.ok(e2.includes("Repli") && !e2.includes("Inactif"), "entete non valide ignore");
 

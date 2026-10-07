@@ -13,15 +13,19 @@ const erreur = (res, code, message) => res.status(code).set("Cache-Control", "no
 const domaine = (req) => req.hostname || String(req.get("host") || "").split(":")[0];
 
 async function etat(identite, nom) {
-  if (!identite) return { etat: "visiteur", cible: "/api/v1/auth/entra/connexion" };
-  if (await incidents.verifier(identite)) return { etat: "bloque", cible: null };
   const g = await ecriture.contexteGraph();
   const ctx = await inscription.domaineContexte(g, nom);
+  const reglages = ctx ? await inscription.reglagesSite(g, ctx) : null;
+  const configurationAcces = reglages || {
+    afficherAccesCockpit: true, creationCompteAutorisee: false, approbationProprietaire: true
+  };
+  if (!identite) return { etat: "visiteur", cible: "/api/v1/auth/entra/connexion", ...configurationAcces };
+  if (await incidents.verifier(identite)) return { etat: "bloque", cible: null, ...configurationAcces };
   const d = await droits.droitsPour(identite);
   if (!d.reconnu) {
     const x = await droits.donneesDroits();
     const u = x.utilisateurs.find((u) => String(u.entraObjectId || "").toLowerCase() === String(identite.sujet).toLowerCase());
-    return { etat: u && !u.actif ? "refuse" : "attente", cible: null };
+    return { etat: u && !u.actif ? "refuse" : "attente", cible: null, ...configurationAcces };
   }
   let metier = ctx && d.siteIds.includes(ctx.siteId);
   let siteMetierId = ctx?.siteId;
@@ -32,14 +36,14 @@ async function etat(identite, nom) {
     if (metier) siteMetierId = String(groupe.id);
   }
   if (!ctx || (!metier && !(d.sitesCommuns || []).includes(ctx.siteId))) {
-    return { etat: "refuse", cible: null };
+    return { etat: "refuse", cible: null, ...configurationAcces };
   }
   if (metier && !d.global) {
     const contexte = droits.contexteSite(d, await droits.donneesDroits(), siteMetierId);
-    if (contexte.contexte?.etat !== "COMPLET") return { etat: "contexte-incomplet", cible: "/#/cockpit/sites" };
+    if (contexte.contexte?.etat !== "COMPLET") return { etat: "contexte-incomplet", cible: "/#/cockpit/sites", ...configurationAcces };
   }
   return { etat: "autorise", cible: metier && !d.global
-    ? `/#/cockpit/site/${encodeURIComponent(ctx.domaine)}` : "/#/cockpit" };
+    ? `/#/cockpit/site/${encodeURIComponent(ctx.domaine)}` : "/#/cockpit", ...configurationAcces };
 }
 
 async function status(req, res) {
@@ -49,6 +53,23 @@ async function status(req, res) {
     res.set("Cache-Control", "no-store").json({ succes: true, donnees: { ...resultat,
       csrf: id ? session.signer({ usage: "csrf", sub: id.sujet }, 600) : null } });
   } catch (e) { console.error("[DSE accès]", e.message); erreur(res, 503, "Accès momentanément indisponible."); }
+}
+
+async function demanderCompte(req, res) {
+  try {
+    const id = session.identiteSession(req);
+    if (!id || id.fournisseur !== "entra") return erreur(res, 401, "Connexion Microsoft requise.");
+    if (!session.origineValide(req)) return erreur(res, 403, "Requête refusée.");
+    const csrf = session.verifier(req.get("x-dse-csrf"));
+    if (csrf?.usage !== "csrf" || csrf.sub !== id.sujet) return erreur(res, 403, "Requête refusée.");
+    if (Object.keys(req.body || {}).length) return erreur(res, 400, "Aucune attribution ne peut être demandée depuis ce formulaire.");
+    const resultat = await inscription.soumettreDemandeCompte(id, domaine(req));
+    if (resultat.erreur) return erreur(res, resultat.status, resultat.erreur);
+    return res.status(resultat.status).set("Cache-Control", "no-store").json({ succes: true, donnees: resultat.donnees });
+  } catch (e) {
+    console.error("[DSE demande compte]", e.message);
+    return erreur(res, 503, "Demande de compte momentanément indisponible.");
+  }
 }
 
 async function entrer(req, res) {
@@ -137,4 +158,4 @@ async function decision(req, res) {
   } catch (e) { console.error("[DSE incidents décision]", e.message); erreur(res, 503, "Décision momentanément indisponible."); }
 }
 
-module.exports = { etat, status, entrer, limiter, proteger, liste, decision };
+module.exports = { etat, status, demanderCompte, entrer, limiter, proteger, liste, decision };

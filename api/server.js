@@ -218,6 +218,7 @@ application.use(["/api/v1/auth", "/api/v1/cockpit", "/api/v1/acces"], acces.limi
 application.use(["/api/v1/cockpit", "/api/v1/moi"], acces.proteger);
 application.get("/api/v1/acces/status", acces.status);
 application.get("/api/v1/acces/entrer", acces.entrer);
+application.post("/api/v1/auth/demande-compte", acces.demanderCompte);
 application.get("/api/v1/cockpit/incidents", acces.liste);
 application.post("/api/v1/cockpit/incidents/decision", acces.decision);
 application.get("/api/v1/moi", controleurCockpit.moi);
@@ -256,6 +257,13 @@ application.get("/api/v1/cockpit/client", controleurCockpit.client);
 application.get("/api/v1/cockpit/contenus", controleurCockpit.contenus);
 application.get("/api/v1/cockpit/construire", controleurCockpit.construireLire);
 application.post("/api/v1/cockpit/construire/action", controleurCockpit.construireAction);
+application.get("/api/v1/cockpit/menus", controleurCockpit.menusLire);
+application.post("/api/v1/cockpit/menus/apercu", controleurCockpit.menusApercu);
+application.post("/api/v1/cockpit/menus/initialiser", controleurCockpit.menusInitialiser);
+application.get("/api/v1/cockpit/demandes-comptes", controleurCockpit.demandesComptesLire);
+application.post("/api/v1/cockpit/demandes-comptes/decision", controleurCockpit.demandesComptesDecision);
+application.get("/api/v1/cockpit/site/reglages-acces", controleurCockpit.reglagesAccesLire);
+application.post("/api/v1/cockpit/site/reglages-acces", controleurCockpit.reglagesAccesEnregistrer);
 application.post("/api/v1/cockpit/medias/televerser",
   (req, res, next) => express.raw({ type: "application/octet-stream", limit: require("./shared/medias-televersement").tailleMaxOctets() })(req, res, (err) => {
     if (!err) return next();

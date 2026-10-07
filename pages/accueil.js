@@ -75,7 +75,8 @@ function donneesEntete(complet) {
   return {
     entete: complet?.entete?.donnees ?? null,
     logo: complet?.logo?.donnees ?? null,
-    menu: complet?.menu?.donnees ?? []
+    menu: complet?.menu?.donnees ?? [],
+    menuArbre: complet?.menu?.menuPublie ?? null
   };
 }
 
@@ -475,7 +476,8 @@ function rendreSitePublic({
       )
     )
   );
-  const enteteHistorique = () => enteteSharePoint({ nomSite, ...entete, nettoyerTexte: texteSharePoint });
+  const pageUrl = String(page?.configuration?.URL ?? page?.url ?? "/");
+  const enteteHistorique = () => enteteSharePoint({ nomSite, ...entete, pageUrl, nettoyerTexte: texteSharePoint });
   const footerHistorique = rendreFooter(footer, { nomSite, nettoyerTexte: texteSharePoint });
   // En-tete / Footer construits (Constructeur DSE) : prioritaires s'ils sont affectes a la page, actifs et valides.
   const zone = (z, classe) => {

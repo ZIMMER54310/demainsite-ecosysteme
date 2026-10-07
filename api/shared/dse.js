@@ -596,7 +596,7 @@ async function chargerColonnesListe(
     `/lists/${listeId}` +
     "/columns" +
     "?$select=" +
-    "id,name,displayName,hidden," +
+    "id,name,displayName,hidden,indexed,enforceUniqueValues," +
     "lookup,boolean,text,number,dateTime" +
     (options.contraintes ? ",readOnly,required" : "")
   );

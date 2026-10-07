@@ -765,6 +765,15 @@ module.exports =
           }
         )
       );
+      const enteteActive = resultatsSite.entete?.donnees;
+      if (enteteActive?.id && dse.trouverListe(listes, "OBJ-MENU") &&
+        dse.trouverListe(listes, "OBJ-MENU-ENTREE") && dse.trouverListe(listes, "OBJ-MENU-AFFECTATION")) {
+        const menuPublie = await require("../shared/multi-menus").publicMenu({
+          siteId: siteIdDemande,
+          headerId: enteteActive.id
+        });
+        if (menuPublie) resultatsSite.menu = { ...resultatsSite.menu, menuPublie };
+      }
 
       /* -----------------------------------------------------
          SITE → PAGES

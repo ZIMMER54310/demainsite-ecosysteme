@@ -42,6 +42,145 @@ async function domaineContexte(g, domaine) {
   return { domaine: nom, domaineId: String(matches[0].id), siteId, clientId };
 }
 
+async function reglagesSite(g, ctx) {
+  if (!ctx) return null;
+  const liste = dse.trouverListe(g.listes, ["OBJ-SITE-PUBLIC"]);
+  if (!liste) throw new Error("Liste OBJ-SITE-PUBLIC indisponible.");
+  const colonnes = await dse.chargerColonnesListe(g.token, g.siteGraphId, liste.id);
+  const trouverBooleen = (nom) => {
+    const resultat = colonnes.filter((c) => !c.hidden && c.name === nom && c.boolean);
+    if (resultat.length !== 1) throw new Error(`Réglage SharePoint absent ou ambigu : ${nom}.`);
+    return resultat[0];
+  };
+  const champs = {
+    cockpit: trouverBooleen("OBJACCESCOCKPIT"),
+    comptes: trouverBooleen("OBJCREATIONCOMPTE"),
+    approbation: trouverBooleen("OBJAPPROBATIONPROPRIETAIRE")
+  };
+  const item = await ecriture.lireItemFrais(g, liste.id, ctx.siteId, Object.values(champs).map((c) => c.name));
+  return {
+    afficherAccesCockpit: item[champs.cockpit.name] !== false,
+    creationCompteAutorisee: item[champs.comptes.name] === true,
+    approbationProprietaire: item[champs.approbation.name] !== false
+  };
+}
+
+async function soumettreDemandeCompte(identite, domaine) {
+  if (identite?.fournisseur !== "entra" || !identite.sujet) return { status: 401, erreur: "Connexion Microsoft requise." };
+  dse.viderCacheGraph();
+  droits.viderCache();
+  const g = await ecriture.contexteGraph();
+  const ctx = await domaineContexte(g, domaine);
+  if (!ctx) return { status: 404, erreur: "Le site demandé n’est pas disponible." };
+  const reglages = await reglagesSite(g, ctx);
+  if (!reglages.creationCompteAutorisee) return { status: 403, erreur: "La création de comptes n’est pas autorisée pour ce site." };
+  if (!reglages.approbationProprietaire) {
+    return { status: 403, erreur: "Les demandes de compte sont suspendues tant que l’approbation du propriétaire n’est pas activée." };
+  }
+  const donneesDroits = await droits.donneesDroits();
+  if (donneesDroits.utilisateurs.some((u) => String(u.entraObjectId || "").toLowerCase() === identite.sujet.toLowerCase())) {
+    return { status: 409, erreur: "Un compte existe déjà pour cette identité. Aucun doublon n’a été créé." };
+  }
+
+  const nomsListes = ["OBJ-DEMANDE-COMPTE", "OBJ-DEMANDE-COMPTE-ETAT", "OBJ-CLIENT", "OBJ-SITE-PUBLIC", "OBJ-ACTIF", "OBJ-VALIDE"];
+  const listes = Object.fromEntries(nomsListes.map((nom) => [nom, dse.trouverListe(g.listes, [nom])]));
+  if (Object.values(listes).some((l) => !l)) throw new Error("Structure OBJ-DEMANDE-COMPTE incomplète.");
+  const [colonnes, etatColonnes, actifs, valides, etats, demandes] = await Promise.all([
+    dse.chargerColonnesListe(g.token, g.siteGraphId, listes["OBJ-DEMANDE-COMPTE"].id, { contraintes: true }),
+    dse.chargerColonnesListe(g.token, g.siteGraphId, listes["OBJ-DEMANDE-COMPTE-ETAT"].id),
+    dse.chargerItemsListe(g.token, g.siteGraphId, listes["OBJ-ACTIF"].id),
+    dse.chargerItemsListe(g.token, g.siteGraphId, listes["OBJ-VALIDE"].id),
+    ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${listes["OBJ-DEMANDE-COMPTE-ETAT"].id}/items?$expand=fields&$top=500`),
+    ecriture.collecterFrais(g, `/sites/${g.siteGraphId}/lists/${listes["OBJ-DEMANDE-COMPTE"].id}/items?$expand=fields&$top=500`)
+  ]);
+  const champ = (nom, type) => {
+    const trouve = colonnes.filter((c) => !c.hidden && c.name === nom && (!type || c[type]));
+    if (trouve.length !== 1) throw new Error(`Colonne de demande absente ou ambiguë : ${nom}.`);
+    return trouve[0];
+  };
+  const lookup = (nom, target) => {
+    const c = champ(nom, "lookup");
+    if (c.lookup.listId.toLowerCase() !== target.toLowerCase() || c.lookup.allowMultipleValues) {
+      throw new Error(`Lookup de demande incohérent : ${nom}.`);
+    }
+    return c;
+  };
+  const [utilisateurs, jrn] = [dse.trouverListe(g.listes, ["OBJ-UTILISATEUR"]), dse.trouverListe(g.listes, ["OBJ-JRN"])];
+  const F = {
+    titre: champ("Title", "text"), entra: champ("ENTRAOBJECTID", "text"),
+    client: lookup("OBJCLIENT", listes["OBJ-CLIENT"].id),
+    site: lookup("OBJSITEPUBLIC", listes["OBJ-SITE-PUBLIC"].id),
+    etat: lookup("OBJETATDEMANDECOMPTE", listes["OBJ-DEMANDE-COMPTE-ETAT"].id),
+    date: champ("DATEDEMANDE", "dateTime"), decision: champ("DECISION", "text"),
+    dateDecision: champ("DATEDECISION", "dateTime"),
+    responsable: utilisateurs && lookup("RESPONSABLETRAITEMENT", utilisateurs.id),
+    cle: champ("CLEIDEMPOTENCE", "text"),
+    actif: lookup("OBJACTIF", listes["OBJ-ACTIF"].id),
+    valide: lookup("OBJVALIDE", listes["OBJ-VALIDE"].id)
+  };
+  if (!jrn || !F.responsable || !F.entra.required || !F.client.required || !F.etat.required ||
+      !F.date.required || !F.cle.required || !F.cle.indexed || !F.cle.enforceUniqueValues ||
+      !F.actif.required || !F.valide.required) throw new Error("Schéma OBJ-DEMANDE-COMPTE non conforme.");
+  const valeurOui = (items) => {
+    const xs = items.filter((x) => /^oui\b/i.test(String(x.fields?.Title || "").trim()));
+    if (xs.length !== 1) throw new Error("Référentiel Oui/Non absent ou ambigu.");
+    return String(xs[0].id);
+  };
+  const actifId = valeurOui(actifs);
+  const valideId = valeurOui(valides);
+  const etatCol = etatColonnes.find((c) => !c.hidden && c.name === "CODEETATDEMANDECOMPTE" && c.text);
+  const actifCol = etatColonnes.find((c) => !c.hidden && c.name === "OBJACTIF" && c.lookup?.listId === listes["OBJ-ACTIF"].id);
+  const valideCol = etatColonnes.find((c) => !c.hidden && c.name === "OBJVALIDE" && c.lookup?.listId === listes["OBJ-VALIDE"].id);
+  if (!etatCol || !actifCol || !valideCol) throw new Error("Référentiel d’états de demande non conforme.");
+  const enAttente = etats.filter((x) => x.fields?.[etatCol.name] === "EN-ATTENTE" &&
+    String(x.fields?.[`${actifCol.name}LookupId`]) === actifId &&
+    String(x.fields?.[`${valideCol.name}LookupId`]) === valideId);
+  if (enAttente.length !== 1) throw new Error("État EN ATTENTE absent ou ambigu.");
+  const cleIdempotence = ecriture.hash(["demande-compte", ctx.siteId, identite.sujet.toLowerCase()]);
+  const deja = demandes.filter((x) => x.fields?.[F.cle.name] === cleIdempotence);
+  if (deja.length > 1) throw new Error("Demandes de compte dupliquées : intervention requise.");
+  if (deja.length === 1) return { status: 200, donnees: { etat: "EN ATTENTE", dejaSoumise: true } };
+
+  const journal = require("../shared/journal-comptes");
+  const empreinteIdentite = ecriture.hash(["entra", identite.sujet.toLowerCase()]);
+  const entree = await journal.commencer(g, {
+    cle: `DEMANDE-COMPTE:${cleIdempotence}`, action: "DEMANDE-COMPTE-CREATION",
+    nom: "Demande de création de compte", domaine: ctx.domaine,
+    apres: { siteId: ctx.siteId, clientId: ctx.clientId, identite: empreinteIdentite },
+    contexte: { approbationProprietaire: reglages.approbationProprietaire }
+  });
+  let cree;
+  try {
+    const fields = {
+      [F.titre.name]: String(identite.email || identite.nom || "Demande de compte").slice(0, 255),
+      [F.entra.name]: identite.sujet,
+      [`${F.client.name}LookupId`]: ctx.clientId,
+      [`${F.site.name}LookupId`]: ctx.siteId,
+      [`${F.etat.name}LookupId`]: String(enAttente[0].id),
+      [F.date.name]: new Date().toISOString(),
+      [F.cle.name]: cleIdempotence,
+      [`${F.actif.name}LookupId`]: actifId,
+      [`${F.valide.name}LookupId`]: valideId
+    };
+    cree = await dse.graphEcriture(g.token, "POST",
+      `/sites/${g.siteGraphId}/lists/${listes["OBJ-DEMANDE-COMPTE"].id}/items`, { fields });
+    const relu = await ecriture.lireItemFrais(g, listes["OBJ-DEMANDE-COMPTE"].id, cree.id, Object.keys(fields));
+    if (!Object.entries(fields).every(([k, v]) => k === F.date.name
+      ? Number.isFinite(Date.parse(relu[k])) && Math.abs(Date.parse(relu[k]) - Date.parse(v)) < 1000
+      : String(relu[k] ?? "") === String(v))) throw new Error("Relecture de la demande différente.");
+    await journal.terminer(g, entree, {
+      statut: "SUCCÈS", apres: { demandeId: String(cree.id), siteId: ctx.siteId, identite: empreinteIdentite }
+    });
+    return { status: 201, donnees: { etat: "EN ATTENTE", dejaSoumise: false } };
+  } catch (err) {
+    await journal.terminer(g, entree, {
+      statut: "ÉCHEC", anomalie: true, erreur: err.message,
+      apres: { demandeCreee: !!cree, siteId: ctx.siteId, identite: empreinteIdentite }
+    });
+    throw err;
+  }
+}
+
 async function journal(g, identite, ctx, action, resultat, motif, utilisateurId = null) {
   if (resultat !== "SUCCÈS") console.warn("[DSE inscription]", action, resultat);
   return { ok: false, desactive: true };
@@ -277,4 +416,4 @@ async function apresAuthentification(identite, domaine) {
   return resultat.status === 200 || (d.reconnu && resultat.status === 204);
 }
 
-module.exports = { domaineContexte, identifier, inscrire, journal, apresAuthentification };
+module.exports = { domaineContexte, reglagesSite, soumettreDemandeCompte, identifier, inscrire, journal, apresAuthentification };

@@ -23,6 +23,11 @@ import { getEspaces } from "../services/cockpit.service.js";
 import { getGalerie, getGalerieCockpit } from "../services/cockpit.service.js";
 import { rendreGalerie, CRITERES_GALERIE, lienGalerie } from "../modules/cockpit/galerie-sites.js";
 import { rendreComptes, rendreEspaces, activerFiltresComptes, activerFiltresEspaces } from "../modules/cockpit/comptes.js";
+import { rendreMenus, activerMenus } from "../modules/cockpit/menus.js";
+import { getMenus } from "../services/cockpit.service.js";
+import { getDemandesComptes, getReglagesAccesSite } from "../services/cockpit.service.js";
+import { rendreDemandesComptes, activerDemandesComptes } from "../modules/cockpit/demandes-comptes.js";
+import { rendreReglagesAcces, activerReglagesAcces } from "../modules/cockpit/reglages-acces.js";
 
 const CLE_ASSISTANT = "dseAssistantSite";
 const MESSAGES_CONNEXION = {
@@ -524,7 +529,13 @@ export function activerAssistant(racine = document) {
         (resultat) => {
           if (!resultat?.succes) return;
           creation.disabled = true;
-          zone.insertAdjacentHTML("beforeend", '<p role="status">Le site est créé en brouillon, inactif et non validé. Rechargez la page pour le voir dans la liste des validations.</p>');
+          const init = resultat.initialisationMenu;
+          const messageMenu = !init
+            ? "Le menu automatique n’a pas été confirmé. Vérifiez l’initialisation avant de publier le site."
+            : init.aReparer
+              ? `Menu principal créé ; réparation nécessaire : ${init.accueil?.raison || init.affectation?.raison || init.erreur || "page d’accueil ou en-tête réel manquant"}.`
+              : "Menu principal créé, page d’accueil ajoutée et menu affecté à l’en-tête.";
+          zone.insertAdjacentHTML("beforeend", `<p role="status">Le site est créé en brouillon, inactif et non validé. ${escapeHtml(messageMenu)} Rechargez la page pour le voir dans la liste des validations.</p>`);
         });
       lancer({});
     });
@@ -723,6 +734,67 @@ export async function cockpitConstruirePage(params) {
 export function activerConstruire(racinePage, page, domaine) {
   const racine = racinePage.querySelector("[data-constructeur-racine]");
   if (racine && page.donnees) activerConstructeur(racine, { moi: page.moi, domaine, donnees: page.donnees, onglet: new URLSearchParams(location.hash.split("?")[1] || "").get("onglet") });
+}
+
+export async function cockpitMenusPage(params) {
+  try {
+    const c = await contexte(params, { reutiliser: true });
+    if (c.html) return c.html;
+    const r = await getMenus(params.domaine);
+    return { html: `<div data-menus-root></div>`, donnees: r?.donnees || null };
+  } catch (err) {
+    console.error("[DSE cockpit] menus page", err.message);
+    return echec(err);
+  }
+}
+
+export function activerMenusPage(racinePage, page, domaine) {
+  const root = racinePage.querySelector("[data-menus-root]");
+  if (!root || !page.donnees) return;
+  const menuRef = new URLSearchParams(location.hash.split("?")[1] || "").get("menuRef") || "";
+  root.innerHTML = rendreMenus(page.donnees, { domaine, menuRef });
+  activerMenus(root, page.donnees, { domaine, menuRef });
+}
+
+export async function cockpitDemandesComptesPage(params) {
+  try {
+    const c = await contexte(params, { reutiliser: true });
+    if (c.html) return c.html;
+    const resultat = await getDemandesComptes(params.domaine);
+    return { html: `<div data-demandes-comptes-root></div>`, donnees: resultat?.donnees || null };
+  } catch (err) {
+    console.error("[DSE cockpit] demandes de compte page", err.message);
+    return echec(err);
+  }
+}
+
+export function activerDemandesComptesPage(racinePage, page, domaine) {
+  const root = racinePage.querySelector("[data-demandes-comptes-root]");
+  if (!root || !page.donnees) return;
+  root.innerHTML = rendreDemandesComptes(page.donnees, domaine);
+  activerDemandesComptes(root, page.donnees, domaine);
+}
+
+export async function cockpitReglagesAccesPage(params) {
+  try {
+    const c = await contexte(params, { reutiliser: true });
+    if (c.html) return c.html;
+    const resultat = await getReglagesAccesSite(params.domaine);
+    const peutTraiterDemandes = c.moi.autorisations?.operations?.some((o) =>
+      o.operation === "utilisateurs.demande-compte") === true;
+    return { html: `<div data-reglages-acces-root></div>`,
+      donnees: resultat?.donnees ? { ...resultat.donnees, peutTraiterDemandes } : null };
+  } catch (err) {
+    console.error("[DSE cockpit] réglages accès page", err.message);
+    return echec(err);
+  }
+}
+
+export function activerReglagesAccesPage(racinePage, page, domaine) {
+  const root = racinePage.querySelector("[data-reglages-acces-root]");
+  if (!root || !page.donnees) return;
+  root.innerHTML = rendreReglagesAcces(page.donnees, domaine);
+  activerReglagesAcces(root, page.donnees, domaine);
 }
 
 export async function cockpitMediasPage(params) {

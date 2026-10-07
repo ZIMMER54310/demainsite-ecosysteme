@@ -3,7 +3,7 @@ const sections = [
   { fonction: "entete", libelle: "En-tête", icone: "panel", onglet: "entetes" },
   { fonction: "footer", libelle: "Footer", icone: "panel", onglet: "footers" },
   { fonction: "articles", libelle: "Articles", icone: "file", onglet: "articles", composant: "articles" },
-  { fonction: "menu", libelle: "Menu", icone: "list", composant: "menu" },
+  { fonction: "menu", libelle: "Menu", icone: "list", route: "menu" },
   { fonction: "logo-medias", libelle: "Médias", icone: "image", route: "medias" },
   { fonction: "seo", libelle: "SEO", icone: "search", composant: "seo" }
 ];
@@ -28,6 +28,12 @@ export function navigationSite(vue, niveau) {
           operations.some((o) => o.operation === `${x.fonction}.creer`) ? "?element=nouveau" : ""}`
           : `${base}?section=${x.fonction === "logo-medias" ? "identite" : x.fonction}`
     })),
+    ...(operations?.some((o) => o.operation === "site.modifier") ? [{
+      libelle: "Accès et comptes", icone: "users", url: `${base}/reglages-acces`
+    }] : []),
+    ...(operations?.some((o) => o.operation === "utilisateurs.demande-compte") ? [{
+      libelle: "Demandes de compte", icone: "users", url: `${base}/demandes-comptes`
+    }] : []),
     ...(construction ? [{ libelle: "Catalogue / Modèles", icone: "layers", url: `${base}/construire?onglet=catalogue`, enfant: true }] : [])
   ];
 }

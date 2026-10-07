@@ -46,6 +46,16 @@ export const getMediasCockpit = (domaine) => apiGet("/cockpit/construire", { dom
 // Cle d'idempotence par action : un double clic ou une relance reseau ne cree jamais de doublon.
 export const actionConstruire = (domaine, action, params = {}, confirmation = {}) =>
   apiPost("/cockpit/construire/action", { domaine, action, params, cle: crypto.randomUUID(), ...confirmation });
+export const getMenus = (domaine) => apiGet("/cockpit/menus", { domaine }, { timeoutMs: 45000 });
+export const apercuMenu = (domaine, action, params = {}) => apiPost("/cockpit/menus/apercu", { domaine, action, params });
+export const initialiserMenusSite = (domaine) => apiPost("/cockpit/menus/initialiser", { domaine });
+export const getDemandesComptes = (domaine) => apiGet("/cockpit/demandes-comptes", { domaine }, { timeoutMs: 45000 });
+export const deciderDemandeCompte = (domaine, reference, decision) =>
+  apiPost("/cockpit/demandes-comptes/decision", { domaine, reference, decision });
+export const getReglagesAccesSite = (domaine) =>
+  apiGet("/cockpit/site/reglages-acces", { domaine }, { timeoutMs: 45000 });
+export const enregistrerReglagesAccesSite = (domaine, valeurs) =>
+  apiPost("/cockpit/site/reglages-acces", { domaine, valeurs });
 
 // Import d'un media (corps binaire) avec suivi de progression ; cle d'idempotence par envoi.
 export async function televerserMedia(domaine, fichier, { type, titre }, progression = () => {}) {

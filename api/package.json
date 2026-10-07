@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node server.js",
     "check": "node tests/check-syntax.js",
-    "test": "node tests/unit.js && node tests/rendu.js && node tests/catalogue.js && node tests/commerce-source.js && node tests/commerce-ecriture.js && node tests/site-ecriture.js && node tests/journal-comptes.js && npm run test:builder && node tests/resolveur-domaine.js && node tests/ovh-sharepoint.js && npm run test:statuts && npm run test:progression && node tests/cockpit.js && node tests/cockpit-lot.js && node tests/cockpit-sharepoint.js && node tests/inscription.js && node tests/acces.js && node tests/galerie.js && node tests/ouverture-site.js && node tests/articles-chemin.js && node tests/articles-constructeur.js",
+    "test": "node tests/unit.js && node tests/rendu.js && node tests/catalogue.js && node tests/commerce-source.js && node tests/commerce-ecriture.js && node tests/site-ecriture.js && node tests/journal-comptes.js && npm run test:builder && node tests/multi-menus-schema.js && node tests/initialisation-menu-site.js && node tests/resolveur-domaine.js && node tests/ovh-sharepoint.js && npm run test:statuts && npm run test:progression && node tests/cockpit.js && node tests/cockpit-lot.js && node tests/cockpit-sharepoint.js && node tests/inscription.js && node tests/acces.js && node tests/demande-compte.js && node tests/site-reglages-acces.js && node tests/galerie.js && node tests/ouverture-site.js && node tests/articles-chemin.js && node tests/articles-constructeur.js",
     "smoke": "node tests/smoke.js",
     "test:rendu-domaines": "node tests/domaines-rendu.js",
     "test:sharepoint-access": "node tools/test-sharepoint-access.js",
@@ -25,7 +25,9 @@
     "test:catalogue": "node tests/catalogue.js",
     "provision:sharepoint-production": "node tools/provision-sharepoint-production.js",
     "provision:dse-builder": "node tools/provision-dse-builder.js",
-    "test:builder": "node tests/builder.js && node tests/constructeur.js && node tests/builder-recursif.js && node tests/builder-proprietes.js"
+    "provision:demandes-comptes": "node tools/provision-autorisations.js --demandes-comptes",
+    "test:builder": "node tests/builder.js && node tests/constructeur.js && node tests/builder-recursif.js && node tests/builder-proprietes.js",
+    "test:menus": "node tests/multi-menus-schema.js"
   },
   "engines": {
     "node": ">=22"

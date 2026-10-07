@@ -141,6 +141,15 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.ok(navigationLecture.every((x) => x.url.startsWith("/cockpit/site/alias.example.test")));
   assert.ok(navigationLecture.some((x) => x.url.endsWith("?onglet=pages")));
   assert.ok(!navigationLecture.some((x) => x.url.includes("/modifier/")), "aucune edition dans le menu lecteur");
+  const navigationGestionSite = navSite.navigationSite({ acces: "alias.example.test", fonctions: ["sites"],
+    contexteUtilisateur: { autorisations: { operations: [{ operation: "site.modifier" }] } } }, "ecriture");
+  assert.ok(navigationGestionSite.some((x) => x.url.endsWith("/reglages-acces")));
+  assert.ok(!navigationGestionSite.some((x) => x.url.endsWith("/demandes-comptes")),
+    "site.modifier ne révèle pas les demandes de compte");
+  const navigationGestionComptes = navSite.navigationSite({ acces: "alias.example.test", fonctions: ["sites"],
+    contexteUtilisateur: { autorisations: { operations: [{ operation: "utilisateurs.demande-compte" }] } } }, "ecriture");
+  assert.ok(navigationGestionComptes.some((x) => x.url.endsWith("/demandes-comptes")),
+    "l’opération dynamique dédiée révèle les demandes autorisées");
   // Cartes filtrees par fonctions
   assert.deepStrictEqual(ui.cartesVisibles(["sites", "apercu", "inconnue"]).map((x) => x.fonction), ["sites", "apercu"]);
   assert.ok(!ui.rendreCartes(["apercu"], "exemple.fr").includes("Créer"));
@@ -382,6 +391,12 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     "site.voir", "sites"), true);
   assert.equal(peutOperation({ autorisations: { actif: true, operations: [] } },
     "site.voir", "sites"), false, "la consultation d’un site exige l’opération dynamique site.voir");
+  assert.equal(peutOperation({ autorisations: { actif: true, operations: [{ operation: "site.modifier" }] } },
+    "utilisateurs.demande-compte", "utilisateurs"), false,
+  "modifier un site ne donne pas accès aux demandes de compte");
+  assert.equal(peutOperation({ autorisations: { actif: true, operations: [{ operation: "utilisateurs.demande-compte" }] } },
+    "utilisateurs.demande-compte", "utilisateurs"), true,
+  "le traitement des demandes exige son opération dynamique dédiée");
 
   // peutAttribuer : jamais au-dessus de soi
   const dSuper = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "super@ex.fr" }, utilisateurs: [u("1", "super@ex.fr", "1", { entraObjectId: "s" })] });

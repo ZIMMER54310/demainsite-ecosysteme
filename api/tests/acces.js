@@ -15,12 +15,15 @@ const entra = require("../auth/fournisseurs/entra");
   const restaurer = [];
   const changer = (o, c, v) => { const avant = o[c]; restaurer.push(() => { o[c] = avant; }); o[c] = v; };
   const journaux = [];
-  const g = { token: "simule", siteGraphId: "graph", listes: [{ id: "journal", displayName: "OBJ-JRN" }] };
+  const g = { token: "simule", siteGraphId: "graph", listes: [
+    { id: "journal", displayName: "OBJ-JRN" }, { id: "site-list", displayName: "OBJ-SITE-PUBLIC" }
+  ] };
   const id = { fournisseur: "entra", sujet: "objet-stable", email: "compte@example.test" };
   const admin = { fournisseur: "entra", sujet: "admin-stable" };
   let donnees = { utilisateurs: [{ id: "u", titre: "Compte", entraObjectId: id.sujet, roleId: "r", actif: true, valide: true },
     { id: "admin", titre: "Admin", entraObjectId: admin.sujet, roleId: "global", actif: true, valide: true }],
     politique: { roles: { global: { portee: "tous", niveau: "administration" } } } };
+  let approbationActive = true;
   let politiqueItems = [];
   const d = { reconnu: true, siteIds: ["site"], sitesCommuns: ["commun"], fonctions: ["sites"], portee: "attribues" };
   changer(ecriture, "contexteGraph", async () => g);
@@ -37,12 +40,17 @@ const entra = require("../auth/fournisseurs/entra");
     ? { reconnu: true, portee: "tous", niveau: "administration", fonctions: ["utilisateurs"], utilisateurId: "admin" } : d);
   changer(droits, "sitesIndex", async () => ({ sites: new Map() }));
   changer(inscription, "domaineContexte", async (_g, nom) => ({ siteId: nom === "commun.example.test" ? "commun" : nom === "autre.example.test" ? "autre" : "site", domaine: nom }));
-  changer(dse, "chargerColonnesListe", async () => [
-    { name: "A", lookup: { listId: "actif" } }, { name: "V", lookup: { listId: "valide" } }
-  ]);
+  changer(dse, "chargerColonnesListe", async (_token, _site, listId) => listId === "site-list" ? [
+    { name: "OBJACCESCOCKPIT", boolean: {} }, { name: "OBJCREATIONCOMPTE", boolean: {} },
+    { name: "OBJAPPROBATIONPROPRIETAIRE", boolean: {} }
+  ] : [{ name: "A", lookup: { listId: "actif" } }, { name: "V", lookup: { listId: "valide" } }]);
+  changer(ecriture, "lireItemFrais", async (_graph, listId) => listId === "site-list"
+    ? { OBJACCESCOCKPIT: true, OBJCREATIONCOMPTE: true, OBJAPPROBATIONPROPRIETAIRE: approbationActive } : {});
   changer(dse, "chargerItemsListe", async () => [{ id: "oui", fields: { Title: "Oui" } }]);
   try {
     assert.strictEqual((await acces.etat(null, "site.example.test")).etat, "visiteur");
+    assert.strictEqual((await acces.etat(null, "site.example.test")).creationCompteAutorisee, true);
+    assert.strictEqual((await acces.etat(null, "site.example.test")).approbationProprietaire, true);
     assert.strictEqual((await acces.etat(id, "site.example.test")).cible, "/#/cockpit/sites");
     assert.strictEqual((await acces.etat(id, "commun.example.test")).cible, "/#/cockpit");
     assert.strictEqual((await acces.etat(id, "autre.example.test")).etat, "refuse");
@@ -70,6 +78,9 @@ const entra = require("../auth/fournisseurs/entra");
     const bloque = { status(n) { this.code = n; return this; }, set() { return this; }, json(c) { this.corps = c; return this; } };
     changer(session, "identiteSession", () => id);
     let autorise = false;
+    changer(inscription, "reglagesSite", async () => ({
+      afficherAccesCockpit: true, creationCompteAutorisee: true, approbationProprietaire: approbationActive
+    }));
     await acces.proteger({ method: "GET", get: () => null }, bloque, () => { autorise = true; });
     assert.strictEqual(autorise, true);
     assert.strictEqual((await acces.etat(id, "site.example.test")).etat, "contexte-incomplet");
@@ -150,6 +161,33 @@ const entra = require("../auth/fournisseurs/entra");
     assert.strictEqual(abandon.ok, false);
     assert.strictEqual(journaux.length, avantAnnulation);
 
+    changer(acces, "etat", async () => ({ etat: "attente", cible: null,
+      creationCompteAutorisee: true, approbationProprietaire: true }));
+    const debutDemande = response();
+    await entra.demarrer({ hostname: "site.example.test", query: { mode: "demande-compte" } }, debutDemande);
+    const urlDemande = new URL(debutDemande.cible);
+    const etatDemande = urlDemande.searchParams.get("state");
+    const cookieDemande = debutDemande.headers["Set-Cookie"][0].split(";")[0];
+    const transactionDemande = session.verifier(session.lireCookies({ headers: { cookie: cookieDemande } }).dse_auth_tx);
+    assert.strictEqual(transactionDemande.mode, "demande-compte");
+    global.fetch = async () => ({ ok: true, json: async () => ({ id_token: `e30.${Buffer.from(JSON.stringify({
+      aud: "client", tid: "tenant", iss: "https://login.microsoftonline.com/tenant/v2.0",
+      nonce: transactionDemande.nonce, oid: id.sujet, exp: Math.floor(Date.now() / 1000) + 60
+    })).toString("base64url")}.signature` }) });
+    const retourDemande = await entra.rappel({ hostname: "central.example.test",
+      query: { state: etatDemande, code: "code-simule" } }, response());
+    const codeDemande = new URL(retourDemande.cible).searchParams.get("code");
+    const finDemande = response();
+    await entra.continuer({ hostname: "site.example.test", query: { code: codeDemande },
+      headers: { cookie: cookieDemande } }, finDemande);
+    assert.strictEqual(finDemande.cible, "/#/demande-compte");
+    approbationActive = false;
+    const debutSuspendu = response();
+    const oauthSuspendu = await entra.demarrer({ hostname: "site.example.test",
+      query: { mode: "demande-compte" } }, debutSuspendu);
+    assert.strictEqual(oauthSuspendu, false, "l’entrée OAuth refuse les demandes sans approbation");
+    approbationActive = true;
+
     changer(global, "window", { location: { origin: "https://site.example.test" } });
     changer(global, "document", { createElement: (tag) => ({ tag, isConnected: true, enfants: [],
       setAttribute() {}, append(e) { this.enfants.push(e); } }) });
@@ -163,6 +201,14 @@ const entra = require("../auth/fournisseurs/entra");
       if (bouton.tag === "a") assert.strictEqual(bouton.href, "/api/v1/acces/entrer");
       assert.ok(bouton.textContent.length > 0);
     }
+    global.fetch = async () => ({ ok: true, json: async () => ({ donnees: {
+      etat: "visiteur", afficherAccesCockpit: true, creationCompteAutorisee: true
+    } }) });
+    const inscriptionPublique = { enfants: [], append(e) { this.enfants.push(e); } };
+    await monterAccesPublic(inscriptionPublique);
+    assert.strictEqual(inscriptionPublique.enfants[0].enfants.length, 2);
+    assert.strictEqual(inscriptionPublique.enfants[0].enfants[1].textContent, "Créer mon compte");
+    assert.strictEqual(inscriptionPublique.enfants[0].enfants[1].href, "/api/v1/auth/entra/connexion?mode=demande-compte");
   } finally { restaurer.reverse().forEach((f) => f()); incidents.viderCache(); }
   console.log("Acces public sans journal ni blocage automatique, CSRF, droits et retour Entra domaine origine OK (simulation uniquement)");
 })().catch((e) => { console.error(e); process.exitCode = 1; });

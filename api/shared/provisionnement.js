@@ -46,7 +46,7 @@ async function appel(token, methode, chemin, corps) {
 }
 
 function colonneGraph(c, ids) {
-  const base = { name: c.name, indexed: false };
+  const base = { name: c.name, indexed: Boolean(c.indexed) };
   switch (c.type) {
     case "text": return { ...base, text: {} };
     case "note": return { ...base, text: { allowMultipleLines: true, textType: "plain" } };

@@ -1,4 +1,4 @@
-import { getHealth } from "../services/health.service.js"; import { initializeAuth } from "./auth.js"; import { setState,getState } from "./state.js"; import { registerRoute,startRouter,navigationCourante,resolveRoute } from "./router.js"; import { renderHeader } from "../components/header.js"; import { renderSidebar } from "../components/sidebar.js"; import { renderBreadcrumb } from "../components/breadcrumb.js"; import { renderFooter } from "../components/footer.js"; import { showAlert,clearAlert } from "../components/alert.js"; import { notFoundPage } from "../pages/generic.js"; import { cockpitAccueilPage,cockpitSitesPage,cockpitClientPage,cockpitSitePage,activerVueSite,cockpitAssistantPage,activerAssistant,activerFiltresSites,cockpitEditionPage,activerEdition,cockpitAdministrationPage,cockpitUtilisateursPage,activerUtilisateurs,cockpitConstruirePage,activerConstruire,rendreOuverture,preparerContexteSite,echecChargement,activerGalerie,activerFiltresEspaces } from "../pages/cockpit.js"; import { commencerNavigation,terminerNavigation,rendreChargement,etatPage } from "./chargement.js";
+import { getHealth } from "../services/health.service.js"; import { initializeAuth } from "./auth.js"; import { setState,getState } from "./state.js"; import { registerRoute,startRouter,navigationCourante,resolveRoute } from "./router.js"; import { renderHeader } from "../components/header.js"; import { renderSidebar } from "../components/sidebar.js"; import { renderBreadcrumb } from "../components/breadcrumb.js"; import { renderFooter } from "../components/footer.js"; import { showAlert,clearAlert } from "../components/alert.js"; import { notFoundPage } from "../pages/generic.js"; import { cockpitAccueilPage,cockpitSitesPage,cockpitClientPage,cockpitSitePage,activerVueSite,cockpitAssistantPage,activerAssistant,activerFiltresSites,cockpitEditionPage,activerEdition,cockpitAdministrationPage,cockpitUtilisateursPage,activerUtilisateurs,cockpitConstruirePage,activerConstruire,cockpitMenusPage,activerMenusPage,cockpitDemandesComptesPage,activerDemandesComptesPage,cockpitReglagesAccesPage,activerReglagesAccesPage,rendreOuverture,preparerContexteSite,echecChargement,activerGalerie,activerFiltresEspaces } from "../pages/cockpit.js"; import { commencerNavigation,terminerNavigation,rendreChargement,etatPage } from "./chargement.js";
 function mount(page,breadcrumb){ clearAlert(); document.querySelector("#app-header").innerHTML=renderHeader(getState().apiStatus,getState().user); document.querySelector("#app-sidebar").innerHTML=renderSidebar(); activerCadre(); document.querySelector("#app-breadcrumb").innerHTML=renderBreadcrumb(breadcrumb); document.querySelector("#app-page").innerHTML=page; document.querySelector("#app-page").insertAdjacentHTML("beforeend",renderFooter()); document.querySelector("#main").focus(); }
 function activerCadre() {
   const bouton = document.querySelector("[data-reduire-menu]");
@@ -35,6 +35,11 @@ registerRoute("/", async () => {
     });
   }
 }); // Cockpit unique : l'interface s'adapte aux droits renvoyes par le serveur.
+registerRoute("/demande-compte", async () => {
+  document.body.classList.add("dse-public");
+  mount("<main id=\"demande-compte\"></main>", ["Accueil", "Créer mon compte"]);
+  await monterDemandeCompte(document.querySelector("#demande-compte"));
+});
 /*
  * Navigation cockpit commune : etat LOADING immediat (indicateur global + squelette), menu et site
  * selectionne conserves, puis seule la reponse de la navigation la plus recente est montee.
@@ -70,6 +75,9 @@ const nomSite = (d) => {
 };
 const ONGLETS = { entetes: "En-tête", pages: "Pages", footers: "Footer", bibliotheque: "Bibliothèque", catalogue: "Catalogue / Modèles" };
 const COMPOSANTS = { articles: "Articles", menu: "Menu", seo: "SEO", entete: "En-tête", footer: "Footer" };
+registerRoute("/cockpit/site/:domaine/menu",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Menu"],`Chargement des menus de ${nomSite(p.domaine)}`,()=>cockpitMenusPage(p),activerMenusPage));
+registerRoute("/cockpit/site/:domaine/demandes-comptes",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Demandes de compte"],`Chargement des demandes de ${nomSite(p.domaine)}`,()=>cockpitDemandesComptesPage(p),activerDemandesComptesPage));
+registerRoute("/cockpit/site/:domaine/reglages-acces",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Accès et comptes"],`Chargement des réglages de ${nomSite(p.domaine)}`,()=>cockpitReglagesAccesPage(p),activerReglagesAccesPage));
 registerRoute("/cockpit",p=>naviguer(p,["Cockpit"],"Chargement du cockpit",()=>cockpitAccueilPage(p)));
 registerRoute("/cockpit/sites",p=>naviguer(p,["Cockpit","Mes sites"],"Chargement de Mes sites",()=>cockpitSitesPage(p),activerFiltresSites));
 registerRoute("/cockpit/galerie",p=>naviguer(p,["Cockpit","Galerie"],"Chargement de la Galerie",async()=>{ const {cockpitGaleriePage}=await import("../pages/cockpit.js"); return cockpitGaleriePage(p); },(r)=>activerGalerie(r)));
@@ -99,6 +107,7 @@ boot();
 import { accueilPage } from "../pages/accueil.js";
 import { monterCatalogue } from "../modules/catalogue/catalogue.js";
 import { monterAccesPublic } from "../modules/public/acces.js";
+import { monterDemandeCompte } from "../modules/public/demande-compte.js";
 import { cockpitMediasPage, activerMedias, cockpitContenusPage, activerContenus } from "../pages/cockpit.js";
 registerRoute("/cockpit/contenus", p => naviguer(p, ["Cockpit", "Gestion des contenus"], "Chargement des contenus", () => cockpitContenusPage(p), activerContenus));
 import { cockpitSynchronisationsPage, activerSynchronisations } from "../pages/cockpit.js";

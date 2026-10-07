@@ -850,6 +850,16 @@ body.dse-public .dse-public-page > .dse-footer {
 .dse-entete-logo { max-height: 40px; width: auto; }
 .dse-entete-accroche { margin: 4px 0 0; opacity: .8; font-size: .9rem; }
 .dse-entete-menu { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 6px; }
+.dse-entete-menu > ul,
+.dse-entete-menu ul ul { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.dse-entete-menu li { position: relative; }
+.dse-entete-menu li > ul { padding-top: 8px; }
+.dse-entete-menu a[aria-current="page"] { text-decoration-thickness: 2px; text-underline-offset: 4px; }
+@media (max-width: 640px) {
+  .dse-entete-menu { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .dse-entete-menu > ul { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .dse-entete-menu li > ul { align-items: flex-start; flex-direction: column; gap: 8px; padding: 8px 0 0 16px; }
+}
 
 .dse-acces-public {
   position: fixed;
@@ -870,3 +880,5 @@ body.dse-public .dse-public-page > .dse-footer {
   text-decoration: none;
 }
 .dse-acces-bouton:focus-visible { outline: 3px solid #19a974; outline-offset: 3px; }
+.dse-demande-compte { max-width: 680px; margin: 24px auto; padding: 24px; }
+.dse-demande-compte [role="status"] { min-height: 1.5em; }

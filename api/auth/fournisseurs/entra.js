@@ -50,16 +50,22 @@ async function demarrer(req, res) {
   const c = configuration();
   if (!c) return false;
   const domaine = domaineRetour(req.hostname || req.get?.("host")?.split(":")[0]);
-  const contexte = await inscription.domaineContexte(await ecriture.contexteGraph(), domaine);
+  const graph = await ecriture.contexteGraph();
+  const contexte = await inscription.domaineContexte(graph, domaine);
   if (!contexte) return false;
+  const mode = req.query?.mode === "demande-compte" ? "demande-compte" : null;
+  if (mode) {
+    const reglages = await inscription.reglagesSite(graph, contexte);
+    if (!reglages.creationCompteAutorisee || !reglages.approbationProprietaire) return false;
+  }
   const etat = crypto.randomBytes(24).toString("base64url");
   const nonce = crypto.randomBytes(24).toString("base64url");
   const verificateur = crypto.randomBytes(48).toString("base64url");
   const defi = crypto.createHash("sha256").update(verificateur).digest("base64url");
-  if (!session.ouvrirTransaction(res, { etat, nonce, verificateur, domaine })) return false;
+  if (!session.ouvrirTransaction(res, { etat, nonce, verificateur, domaine, mode })) return false;
   nettoyer();
   if (transactions.size >= 10000) throw new Error("Trop de connexions en cours.");
-  transactions.set(etat, { etat, nonce, verificateur, domaine, expiration: Date.now() + 600000 });
+  transactions.set(etat, { etat, nonce, verificateur, domaine, mode, expiration: Date.now() + 600000 });
   const url = new URL(`https://login.microsoftonline.com/${c.tenant}/oauth2/v2.0/authorize`);
   url.search = new URLSearchParams({
     client_id: c.client,
@@ -129,12 +135,20 @@ async function rappel(req, res) {
   const origine = `https://${transaction.domaine}`;
   if (!identite) return { ok: false, cible: `${origine}/#/cockpit?connexion=echec` };
   if (await incidents.verifier(identite)) return { ok: false, cible: `${origine}/#/cockpit?connexion=securise` };
-  const reconnu = await inscription.apresAuthentification(identite, transaction.domaine);
-  const resultat = reconnu ? await acces.etat(identite, transaction.domaine) : { etat: "attente", cible: null };
-  if (reconnu && !resultat.cible) await incidents.refuser(identite, transaction.domaine, "Site courant non autorisé");
+  let resultat;
+  if (transaction.mode === "demande-compte") {
+    resultat = await acces.etat(identite, transaction.domaine);
+    if (resultat.etat !== "autorise" && resultat.creationCompteAutorisee && resultat.approbationProprietaire) {
+      resultat = { ...resultat, cible: "/#/demande-compte" };
+    }
+  } else {
+    const reconnu = await inscription.apresAuthentification(identite, transaction.domaine);
+    resultat = reconnu ? await acces.etat(identite, transaction.domaine) : { etat: "attente", cible: null };
+  }
+  if (resultat.etat === "autorise" && !resultat.cible) await incidents.refuser(identite, transaction.domaine, "Site courant non autorisé");
   const code = crypto.randomBytes(32).toString("base64url");
   if (passages.size >= 10000) throw new Error("Trop de retours de connexion en cours.");
-  passages.set(code, { identite, domaine: transaction.domaine, etat: transaction.etat,
+  passages.set(code, { identite, domaine: transaction.domaine, etat: transaction.etat, mode: transaction.mode,
     cible: resultat.cible || "/#/cockpit?connexion=inscription-refusee", expiration: Date.now() + 60000 });
   res.setHeader("Referrer-Policy", "no-referrer");
   return { ok: !!resultat.cible, cible: `${origine}/api/v1/auth/continuer?code=${code}` };
@@ -155,7 +169,14 @@ async function continuer(req, res) {
       return res.redirect(302, "/#/cockpit?connexion=securise");
     }
     const courant = await acces.etat(passage.identite, passage.domaine);
-    if (passage.cible !== "/#/cockpit?connexion=inscription-refusee" && !courant.cible) {
+    if (passage.mode === "demande-compte") {
+      if (courant.etat === "autorise" && courant.cible) passage.cible = courant.cible;
+      else if (!courant.creationCompteAutorisee || !courant.approbationProprietaire) {
+        return res.redirect(302, "/#/cockpit?connexion=inscription-refusee");
+      }
+      else passage.cible = "/#/demande-compte";
+    }
+    if (passage.mode !== "demande-compte" && passage.cible !== "/#/cockpit?connexion=inscription-refusee" && !courant.cible) {
       await incidents.refuser(passage.identite, passage.domaine, "Droits modifiés avant ouverture de session");
       return res.redirect(302, "/#/cockpit?connexion=inscription-refusee");
     }

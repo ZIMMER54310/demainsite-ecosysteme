@@ -475,6 +475,7 @@ function origineValide(req) {
 }
 
 const RANG = { lecture: 0, ecriture: 1, administration: 2 };
+const OP_DEMANDE_COMPTE = "utilisateurs.demande-compte";
 const peutOperation = (d, operation, fonction) => !d.contraintesOperations?.includes(operation) && (d.autorisations
   ? autorisations.autoriser(d.autorisations, operation).autorise
   : d.reconnu && d.fonctions.includes(fonction) && RANG[d.niveau] >= RANG.ecriture);
@@ -571,11 +572,152 @@ async function demandeAccesApercu(req, res) {
   }
 }
 
+async function menusLire(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const info = await siteDuPerimetre(ctx, req.query.domaine);
+    const lectureAutorisee = peutOperation(ctx.droits, "menu.voir", "menu") ||
+      peutOperation(ctx.droits, "menu.modifier", "menu");
+    if (!info || !lectureAutorisee) return refuser(res, 403, "Les menus de ce site ne sont pas disponibles dans votre espace.");
+    const donnees = await require("../shared/multi-menus").lire({ siteId: info.id });
+    repondre(res, 200, { succes: true, donnees: { site: info.titre, ...donnees,
+      peutInitialiser: peutOperation(ctx.droits, "menu.creer", "menu") &&
+        peutOperation(ctx.droits, "menu.affecter", "menu") }, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] menus lecture", e.message);
+    refuser(res, 503, "Les menus ne peuvent pas être chargés pour le moment.");
+  }
+}
+
+async function menusInitialiser(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const info = await siteDuPerimetre(ctx, req.body?.domaine);
+    if (!info || !peutOperation(ctx.droits, "menu.creer", "menu") ||
+        !peutOperation(ctx.droits, "menu.affecter", "menu")) {
+      return refuserEcriture(res, ctx, req.body?.domaine, "MENU-PRINCIPAL-INITIALISER",
+        "La réparation du Menu principal nécessite les capacités de création et d’affectation.");
+    }
+    const resultat = await require("../shared/initialisation-menu-site").initialiser({ siteId: info.id });
+    repondre(res, 200, { succes: true, donnees: resultat, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] initialisation menu principal", e.message);
+    refuser(res, 503, "Le Menu principal n’a pas pu être vérifié ou réparé. Aucune page fictive n’a été créée.");
+  }
+}
+
+async function menusApercu(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const domaine = String(req.body?.domaine || "").slice(0, 255);
+    const action = String(req.body?.action || "").slice(0, 80);
+    const params = req.body?.params && typeof req.body.params === "object" && !Array.isArray(req.body.params) ? req.body.params : {};
+    if (JSON.stringify(params).length > 12000) return refuser(res, 413, "Saisie trop volumineuse.");
+    const info = await siteDuPerimetre(ctx, domaine);
+    const operation = action === "menu.creer" ? "menu.creer"
+      : action === "menu.publier" || action === "entree.publier" ? "menu.publier"
+        : action === "affectation.creer" ? "menu.affecter" : "menu.modifier";
+    if (!info || !peutOperation(ctx.droits, operation, "menu")) {
+      return refuserEcriture(res, ctx, domaine, operation, "Cette opération de menu n'est pas autorisée dans le périmètre du site.");
+    }
+    const resultat = await require("../shared/multi-menus").preparer({
+      identite: ctx.identite, siteId: info.id, siteNom: info.titre, action, params
+    });
+    repondreResultat(res, resultat);
+  } catch (e) {
+    console.error("[DSE cockpit] menus aperçu", e.message);
+    refuser(res, e.refus ? 400 : 503, e.refus ? e.message : "L’aperçu du menu n’a pas pu être préparé.");
+  }
+}
+
+async function demandesComptesLire(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const info = await siteDuPerimetre(ctx, req.query.domaine);
+    if (!info || !peutOperation(ctx.droits, OP_DEMANDE_COMPTE, "utilisateurs")) {
+      return refuser(res, 403, "Les demandes de compte ne sont pas disponibles dans votre espace.");
+    }
+    const g = await ecriture.contexteGraph();
+    const reglages = await inscription.reglagesSite(g, { siteId: String(info.id) });
+    if (!reglages.approbationProprietaire) return refuser(res, 403, "L’approbation du propriétaire n’est pas activée pour ce site.");
+    const donnees = await require("../shared/demandes-comptes").lire({ siteId: info.id });
+    repondre(res, 200, { succes: true, donnees: { site: info.titre, demandes: donnees }, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] demandes de compte lecture", e.message);
+    refuser(res, 503, "Les demandes de compte ne peuvent pas être chargées pour le moment.");
+  }
+}
+
+async function demandesComptesDecision(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const info = await siteDuPerimetre(ctx, req.body?.domaine);
+    if (!info || !peutOperation(ctx.droits, OP_DEMANDE_COMPTE, "utilisateurs")) {
+      return refuserEcriture(res, ctx, req.body?.domaine, "DEMANDE-COMPTE-DECISION",
+        "Vous n’êtes pas autorisé à traiter les demandes de ce site.");
+    }
+    const g = await ecriture.contexteGraph();
+    const reglages = await inscription.reglagesSite(g, { siteId: String(info.id) });
+    if (!reglages.approbationProprietaire) return refuser(res, 403, "L’approbation du propriétaire n’est pas activée pour ce site.");
+    const resultat = await require("../shared/demandes-comptes").decider({
+      siteId: info.id, reference: String(req.body?.reference || ""),
+      decision: req.body?.decision, responsableId: ctx.droits.utilisateurId
+    });
+    repondre(res, 200, { succes: true, donnees: resultat, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] décision demande de compte", e.message);
+    refuser(res, e.message?.includes("invalide") ? 400 : 503,
+      e.message?.includes("invalide") ? e.message : "La décision ne peut pas être enregistrée pour le moment.");
+  }
+}
+
+async function reglagesAccesLire(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const info = await siteDuPerimetre(ctx, req.query.domaine);
+    if (!info || !peutOperation(ctx.droits, "site.modifier", "sites")) {
+      return refuser(res, 403, "Ces réglages ne sont pas disponibles dans votre espace.");
+    }
+    const valeurs = await require("../shared/site-reglages-acces").lire(info.id);
+    repondre(res, 200, { succes: true, donnees: { site: info.titre, valeurs }, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] lecture réglages accès", e.message);
+    refuser(res, 503, "Les réglages d’accès ne peuvent pas être chargés pour le moment.");
+  }
+}
+
+async function reglagesAccesEnregistrer(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const info = await siteDuPerimetre(ctx, req.body?.domaine);
+    if (!info || !peutOperation(ctx.droits, "site.modifier", "sites")) {
+      return refuserEcriture(res, ctx, req.body?.domaine, "SITE-REGLAGES-ACCES",
+        "Vous n’êtes pas autorisé à modifier les réglages de ce site.");
+    }
+    const resultat = await require("../shared/site-reglages-acces").enregistrer({
+      siteId: info.id, acteurId: ctx.droits.utilisateurId, valeurs: req.body?.valeurs
+    });
+    repondre(res, 200, { succes: true, donnees: resultat, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] enregistrement réglages accès", e.message);
+    refuser(res, e.message?.includes("invalides") ? 400 : 503,
+      e.message?.includes("invalides") ? e.message : "Les réglages n’ont pas pu être enregistrés.");
+  }
+}
+
 /* Confirmation commune : les droits sont recalcules au moment de l'ecriture. */
 async function confirmer(req, res) {
   try {
     const ctx = await contexteEcriture(req, res);
     if (!ctx) return;
+    const lectureJeton = ecriture.lireJeton(ctx.identite, req.body?.jeton);
     const r = await ecriture.executer({
       identite: ctx.identite,
       jeton: req.body?.jeton,
@@ -599,6 +741,15 @@ async function confirmer(req, res) {
         if (op.portee === "global-site-valider") {
           const donnees = await droits.donneesDroits();
           return siteEcriture.revaliderValidation({ identite: ctx.identite, op, droits: d, donnees });
+        }
+        if (op.portee === "menus") {
+          const donnees = await droits.donneesDroits();
+          d = droits.contexteSite(d, donnees, op.siteId);
+          if (!peutOperation(d, op.operation || "menu.modifier", "menu") ||
+            !d.siteIds.includes(String(op.siteId))) return "Vous n'avez plus l'autorisation de réaliser cette opération.";
+          op.contexteJournal = { ...op.contexteJournal, acteur: ctx.identite.sujet,
+            utilisateurId: d.utilisateurId, siteId: String(op.siteId) };
+          return require("../shared/multi-menus").revalider(op);
         }
         if (op.portee === "site") {
           const donnees = await droits.donneesDroits();
@@ -646,6 +797,14 @@ async function confirmer(req, res) {
         return "Opération non autorisée.";
       }
     });
+    if (r.succes && r.itemId && lectureJeton.op?.portee === "global-site-creer") {
+      try {
+        r.initialisationMenu = await require("../shared/initialisation-menu-site").initialiser({ siteId: String(r.itemId) });
+      } catch (e) {
+        console.error("[DSE création site] initialisation du menu à reprendre", e.message);
+        r.initialisationMenu = { aReparer: true, erreur: "Le menu ou son emplacement n’a pas pu être initialisé automatiquement." };
+      }
+    }
     repondreResultat(res, r);
   } catch (e) {
     console.error("[DSE cockpit] confirmer", e.message);
@@ -1267,5 +1426,9 @@ module.exports = {
   contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, referentielsCreationSite,
   domainesCreationSite, brouillonsSiteLire, siteCreationApercu, siteModificationApercu, siteValidationApercu,
   usageSiteApercu, usagesSiteLire, adminTableau, adminUtilisateurs, adminApercu,
+  menusLire, menusApercu,
+  menusInitialiser,
+  demandesComptesLire, demandesComptesDecision,
+  reglagesAccesLire, reglagesAccesEnregistrer,
   _test: { origineValide, clientsDuPerimetre, groupesVisiblesMesSites, peutOperation }
 };

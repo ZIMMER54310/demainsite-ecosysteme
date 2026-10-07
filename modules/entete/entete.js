@@ -19,7 +19,20 @@ function champ(element, ...prefixes) {
 
 const liste = (v) => (Array.isArray(v) ? v : v ? [v] : []);
 
-export function rendreEntete({ nomSite = "", entete = null, logo = null, menu = [], nettoyerTexte = (v) => String(v ?? "") } = {}) {
+function rendreArbreMenu(entrees, pageUrl) {
+  if (!Array.isArray(entrees)) return "";
+  return entrees.map((item) => {
+    const href = urlSure(item?.url);
+    const titre = String(item?.titre ?? "").trim();
+    if (!href || !titre) return "";
+    const active = pageUrl && urlSure(pageUrl) === href;
+    const cible = item.nouvelleFenetre ? ' target="_blank" rel="noopener noreferrer"' : "";
+    const enfants = rendreArbreMenu(item.enfants, pageUrl);
+    return `<li><a href="${escapeHtml(href)}"${active ? ' aria-current="page"' : ""}${cible}>${escapeHtml(titre)}</a>${enfants ? `<ul>${enfants}</ul>` : ""}</li>`;
+  }).join("");
+}
+
+export function rendreEntete({ nomSite = "", entete = null, logo = null, menu = [], menuArbre = null, pageUrl = "", nettoyerTexte = (v) => String(v ?? "") } = {}) {
   const e = liste(entete).find(publie) || null;
   const l = liste(logo).find(publie) || null;
   const titre = String((e && champ(e, "TITRE")) || nomSite || "").trim();
@@ -29,13 +42,19 @@ export function rendreEntete({ nomSite = "", entete = null, logo = null, menu = 
     texte: String(champ(m, "TITRE") ?? "").trim(),
     url: urlSure(champ(m, "URL", "LIEN"))
   })).filter((m) => m.texte && m.url);
+  const arbre = rendreArbreMenu(menuArbre?.entrees, pageUrl);
+  const navigation = arbre
+    ? `<nav class="dse-entete-menu" aria-label="${escapeHtml(menuArbre.titre || "Navigation")}"><ul>${arbre}</ul></nav>`
+    : liens.length
+      ? `<nav class="dse-entete-menu" aria-label="Menu principal">${liens.map((m) => `<a href="${escapeHtml(m.url)}">${escapeHtml(m.texte)}</a>`).join("")}</nav>`
+      : "";
 
-  if (!titre && !image && !liens.length) return "";
+  if (!titre && !image && !navigation) return "";
 
   return `<div class="dse-site-public-header" role="banner">
       <a href="/" aria-label="${escapeHtml(titre || "Accueil")}">${image ? `<img class="dse-entete-logo" src="${escapeHtml(image)}" alt="${escapeHtml(titre)}">` : ""}${titre ? `<span>${escapeHtml(titre)}</span>` : ""}</a>
       ${accroche ? `<p class="dse-entete-accroche">${escapeHtml(accroche)}</p>` : ""}
-      ${liens.length ? `<nav class="dse-entete-menu" aria-label="Menu principal">${liens.map((m) => `<a href="${escapeHtml(m.url)}">${escapeHtml(m.texte)}</a>`).join("")}</nav>` : ""}
+      ${navigation}
     </div>`;
 }
 
