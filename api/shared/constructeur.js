@@ -268,6 +268,15 @@ function apercu(d, siteId, type, el, appareil, perimetre) {
       ...B.styleElement(ctx, TYPE_CONTENEUR[t], e), _ref: ref(t, e.id) };
   };
   const theme = B.themeGlobal(ctx);
+  if (type === "entete" || type === "footer") {
+    // Contexte de lecture : la zone complementaire (footer ou en-tete) d'une page du site utilisant ce conteneur.
+    const autre = type === "entete" ? "footer" : "entete";
+    const page = (d.pages || []).filter((p) => !inactif(p) && rel(p, CONTENEURS[type].relation)?.id === el.id &&
+      rels(p, "OBJ-SITE-PUBLIC").some((s) => String(s.id) === String(siteId))).sort(parOrdre)[0];
+    const r = page ? rel(page, CONTENEURS[autre].relation) : null;
+    const c = r ? (d[CONTENEURS[autre].cle] || []).find((x) => x.id === r.id) : null;
+    return { mode: "builder", ...zone(type, el), theme, contexte: { [autre]: c && !inactif(c) ? zone(autre, c) : null, page: page ? titreDe(page) : "" } };
+  }
   if (type !== "page") return { mode: "builder", ...zone(type, el), theme };
   const lie = (t) => {
     const r = rel(el, CONTENEURS[t].relation);

@@ -56,7 +56,10 @@ export function rendreModule(module, ctx = {}) {
     interieur = `<section class="dse-catalogue" data-dse-catalogue-builder="${CATALOGUES[module.type]}" aria-label="Catalogue" hidden></section>`;
   } else if (MODULES[module.type]) interieur = MODULES[module.type](module.contenu || [], ctx);
 
-  if (!String(interieur).trim()) return "";
+  // En apercu, un module sans contenu (brouillon) reste visible sous forme de bloc reperable.
+  const vide = !String(interieur).trim();
+  if (vide && !(ctx.apercu && module._ref)) return "";
+  if (vide) interieur = `<span class="dse-b-vide">Module ${escapeHtml(module.type)} · contenu à renseigner</span>`;
 
   const h = habiller(module, module.type, "m", ctx);
   const classes = ["dse-b-module", `dse-b-module--${String(module.type).toLowerCase()}`, h.identifiant, ...h.cache, module.avance?.classe || ""].filter(Boolean);
@@ -66,7 +69,8 @@ export function rendreModule(module, ctx = {}) {
 }
 
 export function rendreColonne(colonne, ctx) {
-  const modules = (colonne.modules || []).map((m) => rendreModule(m, ctx)).filter(Boolean).join("");
+  let modules = (colonne.modules || []).map((m) => rendreModule(m, ctx)).filter(Boolean).join("");
+  if (!modules && ctx.apercu && colonne._ref) modules = `<span class="dse-b-vide">Colonne vide</span>`;
   if (!modules) return "";
   const largeur = Number(colonne.largeur) > 0 ? Math.min(100, Number(colonne.largeur)) : 100;
   const tablette = Number(colonne.largeurTablette) > 0 ? Math.min(100, Number(colonne.largeurTablette)) : "";
@@ -76,7 +80,8 @@ export function rendreColonne(colonne, ctx) {
 }
 
 export function rendreLigne(ligne, ctx) {
-  const colonnes = (ligne.colonnes || []).map((c) => rendreColonne(c, ctx)).filter(Boolean).join("");
+  let colonnes = (ligne.colonnes || []).map((c) => rendreColonne(c, ctx)).filter(Boolean).join("");
+  if (!colonnes && ctx.apercu && ligne._ref) colonnes = `<span class="dse-b-vide">Ligne vide</span>`;
   if (!colonnes) return "";
   const espace = Number(ligne.espacement) >= 0 && ligne.espacement !== null ? ` style="--dse-b-espace:${Math.min(120, Number(ligne.espacement))}px"` : "";
   const h = habiller(ligne, "LIGNE", "l", ctx);
@@ -84,7 +89,8 @@ export function rendreLigne(ligne, ctx) {
 }
 
 export function rendreSection(section, ctx) {
-  const lignes = (section.lignes || []).map((l) => rendreLigne(l, ctx)).filter(Boolean).join("");
+  let lignes = (section.lignes || []).map((l) => rendreLigne(l, ctx)).filter(Boolean).join("");
+  if (!lignes && ctx.apercu && section._ref) lignes = `<span class="dse-b-vide">Section vide</span>`;
   if (!lignes) return "";
   const type = String(section.type || "STANDARD").toLowerCase().replace(/[^a-z-]/g, "");
   const ancre = section.ancrage ? ` id="${escapeHtml(section.ancrage)}"` : "";

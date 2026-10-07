@@ -169,6 +169,8 @@ function ongletCatalogue(d) {
 
 /* ---------------- Editeur d'arbre ---------------- */
 
+const REPLIER = '<button type="button" class="constructeur-replier" data-c-replier aria-label="Replier ou déplier" title="Replier / déplier">▾</button>';
+
 function actionsNoeud(n, peut, colonnes, d) {
   if (!peut) return "";
   const action = (a) => peutAction(d, d.arbre.type, a);
@@ -188,12 +190,12 @@ function actionsNoeud(n, peut, colonnes, d) {
 }
 
 function noeudHtml(d, n, peut, colonnes) {
-  const entete = `<div class="constructeur-noeud-entete"${peut && peutAction(d, d.arbre.type, "element.deplacer") ? ' draggable="true"' : ""} data-c-noeud="${e(n.ref)}" data-c-type="${e(n.type)}"><span class="constructeur-type">${LIBELLES[n.type]}</span>
+  const entete = `<div class="constructeur-noeud-entete"${peut && peutAction(d, d.arbre.type, "element.deplacer") ? ' draggable="true"' : ""} data-c-noeud="${e(n.ref)}" data-c-type="${e(n.type)}">${n.type !== "module" ? REPLIER : ""}<span class="constructeur-type constructeur-type--${e(n.type)}">${LIBELLES[n.type]}</span>
     <strong>${e(n.titre)}</strong>${n.typeModule ? ` <span class="badge">${e(n.typeModule)}</span>` : ""}
     ${n.structure && n.type === "ligne" ? ` <span class="muted">${e(n.structure)}</span>` : ""}
     ${n.type === "colonne" && n.largeur ? ` <span class="muted">${e(n.largeur)} %</span>` : ""}
     ${badgeEtat(n.etat)}
-    ${n.type === "module" ? ` <span class="muted">${n.utilisations} utilisation(s)${n.formulaire ? (n.contenuRenseigne ? " · contenu renseigné" : " · contenu à renseigner") : ""}${n.modele ? ` · modèle ${e(n.modele)}` : ""}</span>` : ""}
+    ${n.type === "module" ? ` <span class="muted constructeur-noeud-detail">${n.utilisations} utilisation(s)${n.formulaire ? (n.contenuRenseigne ? " · contenu renseigné" : " · contenu à renseigner") : ""}${n.modele ? ` · modèle ${e(n.modele)}` : ""}</span>` : ""}
     ${actionsNoeud(n, peut, colonnes, d)}</div>`;
   if (n.type === "module") return `<li class="constructeur-noeud constructeur-noeud--module">${entete}</li>`;
   const enfants = (n.enfants || []).map((x) => noeudHtml(d, x, peut, colonnes)).join("");
@@ -221,7 +223,7 @@ const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE", artic
 function arbreGeneriqueHtml(n, peut, racine = true, d = {}) {
   const type = d.arbre?.type;
   return `<li class="constructeur-noeud"><div class="constructeur-noeud-entete" data-c-noeud="${e(n.ref)}" data-c-type="builder"${peut && !n.verrouille && peutAction(d, type, "builder.deplacer") ? ' draggable="true"' : ""}>
-    <button type="button" class="btn btn-mini" data-c-action="design" data-ref="${e(n.ref)}">${e(n.titre)}</button>
+    ${(n.enfants || []).length ? REPLIER : ""}<button type="button" class="btn btn-mini" data-c-action="design" data-ref="${e(n.ref)}">${e(n.titre)}</button>
     <span class="badge">${e(n.rendu)}</span>${realisation(n.realisation)}${n.verrouille ? "🔒" : ""}
     ${peut && !n.verrouille ? `${n.ajouts?.length && peutAction(d, type, "builder.ajouter") ? bouton("Ajouter dans", "builder-ajouter", `data-ref="${e(n.ref)}"`, "btn btn-mini") : ""}
       ${!racine ? ["monter", "descendre", "deplacer", "dupliquer", "retirer"].filter((a) =>
@@ -294,15 +296,35 @@ export function documentApercu(composition, type = "page") {
     return `<section class="dse-apercu-hero">${image}<div><p>${e(valeur("SOUS-TITRE"))}</p><h1>${e(valeur("TITRE-PRINCIPAL"))}</h1><div>${nettoyerHtml(texte)}</div><nav>${bouton(valeur("BOUTON-1-TEXTE"), bouton1)}${bouton(valeur("BOUTON-2-TEXTE"), bouton2)}</nav></div></section>`;
   };
   const optionsPage = (prefixe, typeConteneur) => ({ ...options(prefixe, typeConteneur), adapteurs: { HERO: heroApercu } });
-  const corps = `${zone(composition?.entete, "header", "e", "ENTETE")}${rendreBuilder(composition || {}, optionsPage(type === "page" ? "p" : type[0], TYPE_CONTENEUR[type] || "PAGE"))}${zone(composition?.footer, "footer", "f", "FOOTER")}`;
+  const principal = rendreBuilder(composition || {}, optionsPage(type === "page" ? "p" : type[0], TYPE_CONTENEUR[type] || "PAGE"));
+  const vide = `<p class="dse-apercu-vide">Aperçu vide : ajoutez une section depuis la colonne Structure.</p>`;
+  const contexte = composition?.contexte || {};
+  // Squelette constant : en-tete en haut, contenu au centre, pied de page en bas, quel que soit le conteneur edite.
+  const zoneContexte = (z, balise, prefixe, t, libelle) => z?.sections?.length || z?.noeuds?.length
+    ? `<div class="dse-apercu-contexte" title="${e(libelle)} (lecture seule)">${zone(z, balise, prefixe, t)}</div>`
+    : `<${balise} class="dse-apercu-repere">${e(libelle)} : non associé à une page de ce site</${balise}>`;
+  const pageRepere = `<div class="dse-apercu-repere dse-apercu-repere--page">Contenu des pages${contexte.page ? ` · exemple : ${e(contexte.page)}` : ""}</div>`;
+  const corps = type === "entete"
+    ? `<header class="dse-apercu-edite">${principal || vide}</header><main class="dse-apercu-principal">${pageRepere}</main>${zoneContexte(contexte.footer, "footer", "f", "FOOTER", "Pied de page")}`
+    : type === "footer"
+      ? `${zoneContexte(contexte.entete, "header", "e", "ENTETE", "En-tête")}<main class="dse-apercu-principal">${pageRepere}</main><footer class="dse-apercu-edite">${principal || vide}</footer>`
+      : `${zone(composition?.entete, "header", "e", "ENTETE")}<main class="dse-apercu-principal">${principal || vide}</main>${zone(composition?.footer, "footer", "f", "FOOTER")}`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>body{margin:0;font-family:system-ui,sans-serif}${STYLES_BUILDER}.dse-apercu-hero{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;padding:clamp(24px,6vw,80px);background:#f4f8fc}.dse-apercu-hero img{width:100%;height:auto;object-fit:cover}.dse-apercu-hero h1{font-size:clamp(2rem,5vw,4rem)}.dse-apercu-hero nav{display:flex;flex-wrap:wrap;gap:12px}.dse-apercu-hero nav a{padding:10px 16px;border-radius:6px;background:#0755a4;color:white;text-decoration:none}@media(max-width:640px){.dse-apercu-hero{grid-template-columns:1fr}}[data-dse-ref].dse-design-cible{outline:2px dashed #7c3aed;outline-offset:2px}
-    [data-dse-ref]{min-height:24px}.dse-b-recursif{position:relative}.dse-b-recursif:hover{outline:1px dashed #7c3aed}
-    .dse-b-recursif:hover>.dse-b-outils,.dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:relative;z-index:2}
+    <style>body{margin:0;font-family:system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column}.dse-apercu-principal{flex:1 0 auto}${STYLES_BUILDER}.dse-apercu-hero{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;padding:clamp(24px,6vw,80px);background:#f4f8fc}.dse-apercu-hero img{width:100%;height:auto;object-fit:cover}.dse-apercu-hero h1{font-size:clamp(2rem,5vw,4rem)}.dse-apercu-hero nav{display:flex;flex-wrap:wrap;gap:12px}.dse-apercu-hero nav a{padding:10px 16px;border-radius:6px;background:#0755a4;color:white;text-decoration:none}@media(max-width:640px){.dse-apercu-hero{grid-template-columns:1fr}}
+    .dse-apercu-vide{padding:24px;color:#667}.dse-apercu-contexte{opacity:.55;pointer-events:none;filter:grayscale(.3)}
+    .dse-apercu-repere{display:flex;align-items:center;justify-content:center;min-height:56px;margin:8px;border:2px dashed #cbd5e1;border-radius:8px;color:#64748b;font:13px system-ui;background:#f8fafc}.dse-apercu-repere--page{min-height:260px}
+    .dse-b-vide{display:flex;align-items:center;justify-content:center;min-height:56px;padding:8px;border:1px dashed #94a3b8;border-radius:6px;background:repeating-linear-gradient(45deg,#f8fafc,#f8fafc 8px,#f1f5f9 8px,#f1f5f9 16px);color:#475569;font:13px system-ui}
+    [data-dse-ref]{min-height:24px;position:relative;cursor:pointer}.dse-b-recursif{position:relative}
+    [data-dse-ref].dse-survol{outline:2px solid var(--dse-c,#7c3aed);outline-offset:-2px}
+    [data-dse-ref].dse-survol::before,[data-dse-ref].dse-design-cible::before{content:attr(data-dse-libelle);position:absolute;top:0;left:0;z-index:5;padding:2px 8px;font:600 11px/18px system-ui;color:#fff;background:var(--dse-c,#7c3aed);border-radius:0 0 6px 0;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
+    [data-dse-ref].dse-design-cible{outline:3px solid var(--dse-c,#7c3aed);outline-offset:-3px}
+    [data-dse-type=section]{--dse-c:#2b87da}[data-dse-type=ligne]{--dse-c:#29c4a9}[data-dse-type=colonne]{--dse-c:#8f42ec}[data-dse-type=module],[data-dse-type=builder]{--dse-c:#4c5866}[data-dse-type=entete],[data-dse-type=footer],[data-dse-type=page],[data-dse-type=article]{--dse-c:#e09900}
+    .dse-b-recursif:hover>.dse-b-outils,.dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:relative;z-index:6}
     .dse-builder-glisse .dse-b-depot{display:block;border:1px dashed #7c3aed;padding:5px;font:12px system-ui;color:#4c1d95;background:#f5f3ff}
-    .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot{display:none}
+    .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
+    body.dse-apercu-seul [data-dse-ref]{outline:none!important;cursor:auto}body.dse-apercu-seul [data-dse-ref]::before{display:none!important}
     </style></head>
-    <body>${corps.trim() || `<p style="padding:24px;color:#667">Aperçu vide : ajoutez des modules actifs avec un contenu renseigné.</p>`}</body></html>`;
+    <body>${corps}</body></html>`;
 }
 
 export function historiqueStructure(avant, apres, racine) {
@@ -325,48 +347,53 @@ function editeur(d) {
   const colonnes = colonnesDe(a.sections);
   const publicationRequise = !a.etat.publiable || a.generique || contientBrouillon(a.sections);
   return `<header class="constructeur-barre-visuelle"><strong>${e(d.site?.titre || "")} · ${e(a.titre)}</strong>
-    <div class="constructeur-boutons">${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini" data-c-appareil="${x.cle}">${x.libelle}</button>`).join("")}
+    <div class="constructeur-boutons"><span class="constructeur-boutons" role="group" aria-label="Appareil">${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "ORDINATEUR") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}" aria-pressed="${x.cle === (d.appareil || "ORDINATEUR")}">${x.libelle}</button>`).join("")}</span>
       <button type="button" class="btn btn-mini" data-c-action="annuler-design">↶ Annuler</button>
       <button type="button" class="btn btn-mini" data-c-action="retablir-design">↷ Rétablir</button>
       <button type="button" class="btn btn-mini" data-c-action="copier-style">Copier style</button>
       <button type="button" class="btn btn-mini" data-c-action="coller-style">Coller style</button>
       <button type="button" class="btn btn-mini" data-c-action="apercu-seul">Aperçu</button>
       ${peutAction(d, type, a.generique ? "builder.enregistrer" : "design.enregistrer") ? '<button type="button" class="btn btn-primary" data-c-action="enregistrer-design">Enregistrer</button>' : ""}
-      ${bouton("Fermer", "fermer")}</div></header>
-    <div class="constructeur-espace-visuel"><aside class="card constructeur-editeur">
+      ${bouton("← Fermer", "fermer")}</div></header>
+    <div class="constructeur-espace-visuel">
+  <div class="constructeur-design-zone">
+    <div class="card constructeur-apercus">
+      <div class="constructeur-apercu-cadre" data-apercu-cadre><iframe class="constructeur-apercu" title="Aperçu" sandbox="allow-same-origin" data-apercu></iframe></div>
+    </div>
+  </div>
+  <aside class="card constructeur-editeur" aria-label="Composition">
     <header class="constructeur-editeur-entete">
       <div><span class="constructeur-type">${LIBELLES[type]}</span><h3>${e(a.titre)}</h3>${a.realisation ? realisation(a.realisation) : badgeEtat(a.etat)}</div>
-      <div class="constructeur-boutons">${bouton("← Retour à la liste", "fermer")}
-        ${peut && type !== "article" ? bouton(`🎨 Design · ${LIBELLES[type]}`, "design", `data-ref="${e(a.ref)}"`) : ""}
-        ${peutAction(d, type, "conteneur.dupliquer") ? bouton("Dupliquer le conteneur", "dupliquer", `data-ref="${e(a.ref)}" data-type="${type}"`) : ""}
-        ${peutAction(d, type, "conteneur.publier") && publicationRequise ? bouton("✅ Valider et activer", "publier", `data-ref="${e(a.ref)}"`, "btn btn-primary") : ""}
-        ${bouton("✨ Demander à Pasc ARA IA", "ia")}</div>
+      <div class="constructeur-boutons constructeur-boutons--compacts">
+        ${peut && type !== "article" ? bouton("🎨 Design", "design", `data-ref="${e(a.ref)}" title="Design · ${LIBELLES[type]}"`, "btn btn-mini") : ""}
+        ${peutAction(d, type, "conteneur.dupliquer") ? bouton("⧉ Dupliquer", "dupliquer", `data-ref="${e(a.ref)}" data-type="${type}" title="Dupliquer le conteneur"`, "btn btn-mini") : ""}
+        ${bouton("✨ Pasc ARA IA", "ia", 'title="Demander à Pasc ARA IA"', "btn btn-mini")}
+        ${peutAction(d, type, "conteneur.publier") && publicationRequise ? bouton("✅ Valider et activer", "publier", `data-ref="${e(a.ref)}"`, "btn btn-mini btn-primary") : ""}</div>
     </header>
-    <h3>Arborescence · Ajouter</h3>
-    ${a.generique ? '<div data-builder-palette aria-label="Éléments autorisés"></div>' : ""}
-    ${bouton("Médias du site", "builder-medias")}
-    ${d.builder?.message ? `<p class="alerte-info">${e(d.builder.message)}</p>` : ""}
-    ${peutAction(d, type, "builder.initialiser") && !a.generique && !a.sections.length && d.builder?.types?.some((x) => x.racine) ?
-      bouton("Initialiser la racine générique", "builder-initialiser", `data-ref="${e(a.ref)}"`) : ""}
-    <ul class="constructeur-arbre">${a.generique ? arbreGeneriqueHtml(a.generique, peut, true, d) :
-      a.sections.map((s) => noeudHtml(d, s, peut, colonnes)).join("") || `<li class="muted">Aucune section : commencez par ajouter une section.</li>`}</ul>
-    ${peut && !a.generique && peutAction(d, type, "section.ajouter") ? `<form class="constructeur-ajout" data-c-ajout="section" data-ref="${e(a.ref)}">
-      <input name="titre" maxlength="255" placeholder="Nom de la section" aria-label="Nom de la section">
-      ${d.typesSection.length ? `<select name="typeSection" aria-label="Type de section"><option value="">Type standard</option>${d.typesSection.map((t) => `<option value="${e(t.ref)}">${e(t.titre)}</option>`).join("")}</select>` : ""}
-      <button class="btn btn-primary" type="submit">➕ Ajouter une section</button></form>` : ""}
-    <p class="muted">Les nouveaux éléments sont créés en brouillon : visibles dans l'aperçu, publiés uniquement après « Valider et activer ».</p>
-    <details><summary>Médias</summary>${(d.medias || []).map((m) => `<a href="${e(m.url)}" target="_blank" rel="noopener">${e(m.titre)}</a>`).join("<br>") || "Aucun média autorisé."}</details>
-    <p class="muted">Glissez un élément de l'arbre ou du Canvas sur sa destination. Les retraits sont logiques, jamais destructifs.</p>
-  </aside>
-  <div class="constructeur-design-zone">
     <div data-c-panneau></div>
-    <div class="card constructeur-apercus">
-      <header class="constructeur-editeur-entete"><h3>Aperçu</h3>
-        <div class="constructeur-boutons" role="group" aria-label="Appareil">${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "ORDINATEUR") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}" aria-pressed="${x.cle === (d.appareil || "ORDINATEUR")}">${x.libelle}</button>`).join("")}</div></header>
-      <div class="constructeur-apercu-cadre" data-apercu-cadre><iframe class="constructeur-apercu" title="Aperçu" sandbox="allow-same-origin" data-apercu></iframe></div>
-      ${peut ? `<p class="muted">Astuce : cliquez sur un élément de l'aperçu pour ouvrir son panneau Design.</p>` : ""}
-    </div>
-  </div></div>`;
+    <details class="constructeur-volet" data-c-volet="structure" open><summary>Structure <span class="muted">· ${a.generique ? "éléments" : `${a.sections.length} section(s)`}</span></summary>
+      ${a.generique ? '<div data-builder-palette aria-label="Éléments autorisés"></div>' : ""}
+      ${d.builder?.message ? `<p class="alerte-info">${e(d.builder.message)}</p>` : ""}
+      ${peutAction(d, type, "builder.initialiser") && !a.generique && !a.sections.length && d.builder?.types?.some((x) => x.racine) ?
+        bouton("Initialiser la racine générique", "builder-initialiser", `data-ref="${e(a.ref)}"`) : ""}
+      <ul class="constructeur-arbre">${a.generique ? arbreGeneriqueHtml(a.generique, peut, true, d) :
+        a.sections.map((s) => noeudHtml(d, s, peut, colonnes)).join("") || `<li class="muted">Aucune section : commencez par ajouter une section.</li>`}</ul>
+      ${peut && !a.generique && peutAction(d, type, "section.ajouter") ? `<form class="constructeur-ajout" data-c-ajout="section" data-ref="${e(a.ref)}">
+        <input name="titre" maxlength="255" placeholder="Nom de la section" aria-label="Nom de la section">
+        ${d.typesSection.length ? `<select name="typeSection" aria-label="Type de section"><option value="">Type standard</option>${d.typesSection.map((t) => `<option value="${e(t.ref)}">${e(t.titre)}</option>`).join("")}</select>` : ""}
+        <button class="btn btn-primary btn-mini" type="submit">➕ Ajouter une section</button></form>` : ""}
+    </details>
+    <details class="constructeur-volet" data-c-volet="medias"><summary>Médias du site</summary>
+      ${bouton("Parcourir les médias", "builder-medias", "", "btn btn-mini")}
+      <p>${(d.medias || []).map((m) => `<a href="${e(m.url)}" target="_blank" rel="noopener">${e(m.titre)}</a>`).join("<br>") || "Aucun média autorisé."}</p>
+    </details>
+    <details class="constructeur-volet" data-c-volet="aide"><summary>Aide</summary>
+      <p class="muted">Survolez l'aperçu pour repérer les sections (bleu), lignes (vert), colonnes (violet) et modules (gris) ; cliquez pour ouvrir leurs réglages ici.</p>
+      <p class="muted">Les nouveaux éléments sont créés en brouillon : visibles dans l'aperçu, publiés uniquement après « Valider et activer ».</p>
+      <p class="muted">Glissez un élément de l'arbre ou du Canvas sur sa destination. Les retraits sont logiques, jamais destructifs.</p>
+    </details>
+  </aside>
+</div>`;
 }
 
 export function rendreConstructeur(moi, d, etat = {}) {
@@ -421,6 +448,9 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   let copieReglages = null;
   let enCours = false;
   let glisse = null;
+  const replies = new Set();
+  const volets = new Map();
+  racine.addEventListener("toggle", (ev) => { if (ev.target.dataset?.cVolet) volets.set(ev.target.dataset.cVolet, ev.target.open); }, true);
   const trouverNoeud = (reference) => {
     const chercher = (n, parent = null) => n?.ref === reference ? { n, parent } :
       (n?.enfants || n?.sections || []).map((x) => chercher(x, n)).find(Boolean);
@@ -507,7 +537,18 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     for (const x of doc.querySelectorAll(".dse-design-cible")) x.classList.remove("dse-design-cible");
     doc.getElementById("dse-design-live")?.remove();
     const selection = etat.design?.ref;
-    for (const n of racine.querySelectorAll("[data-c-noeud]")) n.classList.toggle("constructeur-selection", n.dataset.cNoeud === selection);
+    for (const n of racine.querySelectorAll("[data-c-noeud]")) {
+      const choisi = n.dataset.cNoeud === selection;
+      n.classList.toggle("constructeur-selection", choisi);
+      if (!choisi) continue;
+      // L'arbre se deplie jusqu'a l'element choisi dans l'apercu.
+      for (let li = n.closest(".constructeur-noeud"); li; li = li.parentElement?.closest(".constructeur-noeud")) {
+        li.classList.remove("constructeur-noeud--replie");
+        replies.delete(li.querySelector(":scope > [data-c-noeud]")?.dataset.cNoeud);
+      }
+      n.closest("details.constructeur-volet")?.setAttribute("open", "");
+      n.scrollIntoView({ block: "nearest" });
+    }
     if (selection) doc.querySelector(`[data-dse-ref="${CSS.escape(selection)}"]`)?.classList.add("dse-design-cible");
     const form = racine.querySelector("[data-design-form]");
     if (!etat.design?.data || !form) return;
@@ -538,7 +579,19 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       for (const el of doc?.querySelectorAll("[data-dse-ref]") || []) {
         const node = trouverNoeud(el.dataset.dseRef);
         el.draggable = Boolean(node?.parent && !node.n.verrouille && peutAction(d, d.arbre.type, "builder.deplacer"));
+        const sorte = node?.n?.rendu ? "builder" : node?.n?.type || el.dataset.dseRef.split(".")[0];
+        el.dataset.dseType = sorte;
+        el.dataset.dseLibelle = `${node?.n?.rendu || LIBELLES[sorte] || "Élément"}${node?.n?.titre ? ` · ${node.n.titre}` : ""}`;
       }
+      let survol = null;
+      doc?.addEventListener("mouseover", (ev) => {
+        const el = ev.target.closest?.("[data-dse-ref]");
+        if (el === survol) return;
+        survol?.classList.remove("dse-survol");
+        survol = el;
+        el?.classList.add("dse-survol");
+      });
+      doc?.documentElement.addEventListener("mouseleave", () => { survol?.classList.remove("dse-survol"); survol = null; });
       doc?.addEventListener("dragstart", demarrerGlisse);
       doc?.addEventListener("dragover", autoriserDepot);
       doc?.addEventListener("drop", deposer);
@@ -617,6 +670,8 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   };
   const afficher = () => {
     racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil }, etat);
+    for (const ref of replies) racine.querySelector(`[data-c-noeud="${CSS.escape(ref)}"]`)?.closest(".constructeur-noeud")?.classList.add("constructeur-noeud--replie");
+    for (const v of racine.querySelectorAll("details[data-c-volet]")) if (volets.has(v.dataset.cVolet)) v.open = volets.get(v.dataset.cVolet);
     preparerApercu();
     if (!d.arbre) etat.design = null;
     afficherPanneau();
@@ -799,6 +854,14 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     }
     const d1 = ev.target.closest("[data-c-appareil],[data-design-onglet],[data-design-choix-appareil],[data-design-fermer],[data-design-reset],[data-design-media],[data-design-appliquer]");
     if (d1 && racine.contains(d1)) return actionDesign(d1);
+    const replier = ev.target.closest("[data-c-replier]");
+    if (replier && racine.contains(replier)) {
+      const li = replier.closest(".constructeur-noeud");
+      const refNoeud = li?.querySelector(":scope > [data-c-noeud]")?.dataset.cNoeud;
+      const replie = li?.classList.toggle("constructeur-noeud--replie");
+      if (refNoeud) replie ? replies.add(refNoeud) : replies.delete(refNoeud);
+      return;
+    }
     const cible = ev.target.closest("[data-c-onglet],[data-c-action]");
     if (!cible) {
       const n = ev.target.closest("[data-c-noeud]");
