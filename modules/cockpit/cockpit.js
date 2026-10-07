@@ -319,6 +319,7 @@ export const ETAPES_ASSISTANT = Object.freeze([
     { nom: "nom", libelle: "Nom du site", requis: true }, { nom: "description", libelle: "Description courte", type: "textarea" }] },
   { cle: "domaine", libelle: "Domaine", aide: "Adresse publique du site.", champs: [
     { nom: "domaine", libelle: "Nom de domaine", requis: true, exemple: "exemple.fr", controle: "domaine" }] },
+  { cle: "activites", libelle: "Usages et boutique", aide: "Choix disponibles selon la configuration de l’écosystème.", champs: [] },
   { cle: "identite", libelle: "Identité visuelle", aide: "Logo et couleurs.", champs: [
     { nom: "logo", libelle: "Logo (nom du fichier)" }, { nom: "couleur", libelle: "Couleur principale", type: "color" }] },
   { cle: "entete", libelle: "En-tête", aide: "Haut de page.", champs: [
@@ -365,16 +366,54 @@ function champHtml(c, valeurs) {
   return `<label class="field cockpit-champ" for="assistant-${e(c.nom)}"><span>${e(c.libelle)}${c.requis ? " *" : ""}</span>${saisie}</label>`;
 }
 
-export function rendreAssistant({ moi, numero = 1, valeurs = {} }) {
+function choixMultiples(nom, titre, items, selection = [], { types = null } = {}) {
+  const ids = new Set(Array.isArray(selection) ? selection.map(String) : []);
+  return `<fieldset class="field"${nom === "optionsBoutique" ? ' data-options-boutique' : ""}><legend>${e(titre)}</legend>${items?.length
+    ? `<div class="cockpit-choix-dynamiques">${items.map((x) => {
+      const typeIds = (x.relations?.["OBJ-TYPE-BOUTIQUE"] || []).map((t) => String(t.id));
+      const visible = !types || typeIds.some((id) => types.has(id));
+      return `<label${nom === "optionsBoutique" ? ` data-types-boutique="${e(typeIds.join(" "))}"${visible ? "" : " hidden"}` : ""}><input type="checkbox" name="${e(nom)}" value="${e(x.id)}" data-assistant-multiple${ids.has(String(x.id)) ? " checked" : ""}> ${e(x.titre || x.code || "Valeur")}</label>`;
+    }).join("")}</div>`
+    : '<p class="muted">Aucune valeur configurée.</p>'}</fieldset>`;
+}
+
+function selectionLibelles(refs, nom, selection) {
+  const items = refs?.[nom];
+  if (!Array.isArray(items) || !Array.isArray(selection)) return "";
+  const choisis = new Set(selection.map(String));
+  return items.filter((x) => choisis.has(String(x.id))).map((x) => x.titre || x.code).filter(Boolean).join(", ");
+}
+
+export function rendreAssistant({ moi, numero = 1, valeurs = {}, referentiels = null }) {
   const total = ETAPES_ASSISTANT.length;
   const n = Math.min(total, Math.max(1, Number(numero) || 1));
   const etape = ETAPES_ASSISTANT[n - 1];
   const suivi = progressionAssistant(valeurs);
   let corps = etape.champs.map((c) => champHtml(c, valeurs)).join("");
-  if (etape.cle === "apercu") {
-    const lignes = ETAPES_ASSISTANT.flatMap((x) => x.champs).filter((c) => String(valeurs[c.nom] ?? "").trim());
+  if (etape.cle === "activites") {
+    const typesSelectionnes = new Set((valeurs.typesBoutique || []).map(String));
+    corps = `${referentiels ? "" : '<p role="alert">Les choix ne sont pas disponibles pour le moment.</p>'}
+      ${choixMultiples("usages", "Usages du site", referentiels?.usages, valeurs.usages)}
+      ${choixMultiples("typesBoutique", "Types de boutique", referentiels?.typesBoutique, valeurs.typesBoutique)}
+      ${choixMultiples("optionsBoutique", "Options proposées pour les types sélectionnés", referentiels?.optionsBoutique,
+        valeurs.optionsBoutique, { types: typesSelectionnes })}
+      ${choixMultiples("modesCommerciaux", "Modes commerciaux disponibles", referentiels?.modesCommerciaux, valeurs.modesCommerciaux)}
+      ${choixMultiples("periodicites", "Périodicités disponibles", referentiels?.periodicites, valeurs.periodicites)}
+      ${choixMultiples("licences", "Licences disponibles", referentiels?.licences, valeurs.licences)}
+      ${choixMultiples("decisionsClient", "Décisions client disponibles", referentiels?.decisionsClient, valeurs.decisionsClient)}
+      <p class="muted">Ces sélections restent locales à cette session : leur enregistrement n’est pas encore disponible.</p>`;
+  } else if (etape.cle === "apercu") {
+    const lignes = ETAPES_ASSISTANT.flatMap((x) => x.champs)
+      .filter((c) => String(valeurs[c.nom] ?? "").trim())
+      .map((c) => ({ libelle: c.libelle, valeur: valeurs[c.nom] }));
+    for (const [nom, libelle] of [["usages", "Usages"], ["typesBoutique", "Types de boutique"],
+      ["optionsBoutique", "Options boutique"], ["modesCommerciaux", "Modes commerciaux"],
+      ["periodicites", "Périodicités"], ["licences", "Licences"], ["decisionsClient", "Décisions client"]]) {
+      const valeur = selectionLibelles(referentiels, nom, valeurs[nom]);
+      if (valeur) lignes.push({ libelle, valeur });
+    }
     corps = lignes.length
-      ? `<dl class="kv">${lignes.map((c) => `<dt>${e(c.libelle)}</dt><dd>${e(valeurs[c.nom]).replaceAll("\n", "<br>")}</dd>`).join("")}</dl>`
+      ? `<dl class="kv">${lignes.map((c) => `<dt>${e(c.libelle)}</dt><dd>${e(c.valeur).replaceAll("\n", "<br>")}</dd>`).join("")}</dl>`
       : `<div class="empty">Aucune information saisie pour l'instant.</div>`;
   } else if (etape.cle === "validation") {
     corps = `<p>Votre demande sera transmise pour création lorsque l'enregistrement sera ouvert.</p>

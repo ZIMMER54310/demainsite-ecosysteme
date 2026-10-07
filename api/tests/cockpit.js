@@ -104,8 +104,8 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
 
   // --- Rendu frontend -----------------------------------------------------
   const ui = await import(url("modules/cockpit/cockpit.js"));
-  assert.strictEqual(ui.ETAPES_ASSISTANT.length, 12);
-  assert.deepStrictEqual(ui.ETAPES_ASSISTANT.map((x) => x.libelle), ["Informations", "Domaine", "Identité visuelle", "En-tête", "Menu", "Pages", "Contenus / médias", "Footer", "SEO", "Aperçu", "Validation", "Progression"]);
+  assert.strictEqual(ui.ETAPES_ASSISTANT.length, 13);
+  assert.deepStrictEqual(ui.ETAPES_ASSISTANT.map((x) => x.libelle), ["Informations", "Domaine", "Usages et boutique", "Identité visuelle", "En-tête", "Menu", "Pages", "Contenus / médias", "Footer", "SEO", "Aperçu", "Validation", "Progression"]);
   const moi = { nom: "Pascal <b>", role: { titre: "Profil test" }, fonctions: toutes, nombreSites: 1 };
   vue = vueSite({ siteComplet, info, statut: actif, fonctions: toutes });
   const pages = [
@@ -141,12 +141,20 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.ok(!ui.rendreCartes(["apercu"], "exemple.fr").includes("Créer"));
   assert.ok(ui.rendreCartes([], null).includes("Aucune fonction"));
   // Assistant : validation non enregistrable, controle du domaine, etats
-  assert.ok(pages[5 + 10].includes("disabled"));
+  assert.ok(pages[5 + 11].includes("disabled"));
   assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[1], { domaine: "pas un domaine" }), "attention");
   assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[1], { domaine: "exemple.fr" }), "termine");
   assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[0], { nom: "X" }), "encours");
   assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[0], { description: "X" }), "attention");
-  assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[2], {}), "afaire");
+  assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[3], {}), "afaire");
+  const activites = ui.rendreAssistant({ moi, numero: 3, referentiels: {
+    usages: [{ id: "native-usage", titre: "Usage configuré" }],
+    typesBoutique: [{ id: "native-type", titre: "Type configuré" }],
+    optionsBoutique: [{ id: "native-option", titre: "Option configurée", relations: { "OBJ-TYPE-BOUTIQUE": [{ id: "native-type" }] } }],
+    modesCommerciaux: [], periodicites: [], licences: [], decisionsClient: []
+  } });
+  assert.ok(activites.includes('value="native-usage"') && activites.includes('value="native-type"'));
+  assert.ok(activites.includes('value="native-option"') && activites.includes("leur enregistrement n’est pas encore disponible"));
 
   // --- Client -> site principal -> domaine principal -> alias ------------
   // Jamais deduit de l'ordre : plusieurs domaines sans designation => a preciser.

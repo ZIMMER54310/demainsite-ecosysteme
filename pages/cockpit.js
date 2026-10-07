@@ -18,7 +18,7 @@ import { rendreSynchronisations, activerSynchronisations } from "../modules/cock
 import { getSynchronisations } from "../services/cockpit.service.js";
 import { rendreContenus, rendreRaccourcisContenus, activerContenus } from "../modules/cockpit/contenus.js";
 import { getContenusCockpit } from "../services/cockpit.service.js";
-import { getEspaces } from "../services/cockpit.service.js";
+import { getEspaces, getReferentielsCreationSite } from "../services/cockpit.service.js";
 import { getGalerie, getGalerieCockpit } from "../services/cockpit.service.js";
 import { rendreGalerie, CRITERES_GALERIE, lienGalerie } from "../modules/cockpit/galerie-sites.js";
 import { rendreComptes, rendreEspaces, activerFiltresComptes, activerFiltresEspaces } from "../modules/cockpit/comptes.js";
@@ -57,6 +57,8 @@ const REUTILISATION_MOI_MS = 30000;
 const REUTILISATION_VUE_MS = 60000;
 let moiCharge = null;
 let vueChargee = null;
+let referentielsCreationSite = null;
+let referentielsCreationSiteLe = 0;
 
 async function contexte(params = {}, { reutiliser = false } = {}) {
   document.body.classList.remove("dse-public");
@@ -350,7 +352,15 @@ export async function cockpitAssistantPage(params) {
     const c = await contexte(params);
     if (c.html) return c.html;
     if (!c.moi.fonctions.includes("creer")) return `<section class="cockpit card"><p>La création de site n'est pas disponible pour votre profil.</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
-    return rendreAssistant({ moi: c.moi, numero: params.etape, valeurs: lireAssistant() });
+    if (!referentielsCreationSite || Date.now() - referentielsCreationSiteLe > 30000) {
+      referentielsCreationSite = getReferentielsCreationSite().then((r) => r.donnees).catch((err) => {
+        referentielsCreationSite = null;
+        throw err;
+      });
+      referentielsCreationSiteLe = Date.now();
+    }
+    const referentiels = await referentielsCreationSite;
+    return rendreAssistant({ moi: c.moi, numero: params.etape, valeurs: lireAssistant(), referentiels });
   } catch (err) { return echec(err); }
 }
 
@@ -413,13 +423,29 @@ export function activerFiltresSites(racine = document) {
 export function activerAssistant(racine = document) {
   const form = racine.querySelector("[data-assistant]");
   if (!form) return;
-  form.addEventListener("input", (ev) => {
+  const enregistrer = (ev) => {
     const champ = ev.target.closest("[data-assistant-champ]");
-    if (!champ) return;
+    const multiple = ev.target.closest("[data-assistant-multiple]");
     const valeurs = lireAssistant();
-    valeurs[champ.name] = champ.value;
+    if (champ) valeurs[champ.name] = champ.value;
+    else if (multiple) {
+      valeurs[multiple.name] = [...form.querySelectorAll("[data-assistant-multiple]:checked")]
+        .filter((x) => x.name === multiple.name).map((x) => x.value);
+    } else return;
+    if (multiple?.name === "typesBoutique") {
+      const types = new Set(valeurs.typesBoutique || []);
+      form.querySelectorAll("[data-types-boutique]").forEach((label) => {
+        label.hidden = !label.dataset.typesBoutique.split(" ").some((id) => types.has(id));
+      });
+      const disponibles = new Set([...form.querySelectorAll("[data-types-boutique]:not([hidden]) input")]
+        .map((x) => x.value));
+      valeurs.optionsBoutique = (valeurs.optionsBoutique || []).filter((id) => disponibles.has(id));
+      form.querySelectorAll("[data-types-boutique][hidden] input").forEach((x) => { x.checked = false; });
+    }
     sessionStorage.setItem(CLE_ASSISTANT, JSON.stringify(valeurs));
-  });
+  };
+  form.addEventListener("input", enregistrer);
+  form.addEventListener("change", enregistrer);
 }
 
 /* ---------------- Edition : formulaire -> apercu -> confirmation -> resultat ---------------- */

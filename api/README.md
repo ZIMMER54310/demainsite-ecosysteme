@@ -47,6 +47,12 @@ pas remplacees par des donnees fictives :
   L'assistant actuel ne cree pas de site serveur : l'instanciation automatique
   n'est donc pas activee. Les modeles non valides restent inutilisables ;
   la construction libre est conservee.
+- `GET /api/v1/cockpit/creer/referentiels` lit les usages, types de boutique,
+  options, modes commerciaux, périodicités, licences et décisions client depuis
+  les listes natives. La route exige une session reconnue, le périmètre global
+  et la fonction dynamique `creer`; elle n'écrit aucune donnée. Les sélections
+  de l'assistant restent locales tant que la création de site n'a pas son flux
+  d'aperçu, confirmation, revalidation et journalisation OBJ-JRN.
 
 Les boutons de conteneurs et de l'arbre generique consomment les operations
 effectivement autorisees. Publication/desactivation de conteneur, affectation

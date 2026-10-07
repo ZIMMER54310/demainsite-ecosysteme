@@ -810,6 +810,22 @@ async function construireLire(req, res) {
   }
 }
 
+async function referentielsCreationSite(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    if (!ctx.droits.reconnu || !ctx.droits.global || !ctx.droits.fonctions.includes("creer")) {
+      return refuser(res, 403, "Accès non autorisé.");
+    }
+    const donnees = await require("../shared/commerce-source").chargerReferentielsCreation();
+    res.set("Cache-Control", "no-store");
+    return repondre(res, 200, { succes: true, donnees, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] référentiels création site", e.message);
+    return refuser(res, 503, "Les référentiels SharePoint ne sont pas disponibles.");
+  }
+}
+
 /*
  * Action du constructeur : origine + session + perimetre + droit d'ecriture recontroles a chaque appel,
  * un seul traitement simultane par site, idempotence par cle cliente, sans dependance au journal.
@@ -1073,6 +1089,6 @@ const synchroConfirmer = (req, res) => synchroEcriture(req, res, "SYNCHRO-RESTAU
 module.exports = {
   client, synchroVue, synchroSauvegardes, synchroReglage, synchroLancer, synchroApercu, synchroConfirmer,
   moi, monCompte, sites, site, galerieListe, galerieCockpit, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
-  contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, adminTableau, adminUtilisateurs, adminApercu,
+  contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, referentielsCreationSite, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide, clientsDuPerimetre }
 };

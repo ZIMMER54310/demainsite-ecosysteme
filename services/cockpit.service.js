@@ -3,6 +3,7 @@ import { CONFIG } from "../js/config.js";
 export const getMoi = (domaine = "") => apiGet("/moi", { domaine }, { timeoutMs: 30000 });
 export const getMonCompte = () => apiGet("/cockpit/compte");
 export const getSitesCockpit = (criteres = {}) => apiGet("/cockpit/sites", criteres);
+export const getReferentielsCreationSite = () => apiGet("/cockpit/creer/referentiels", {}, { timeoutMs: 45000 });
 export const getGalerie = (criteres = {}) => apiGet("/cockpit/galerie", criteres);
 // Ouverture d'un cockpit : delai elargi, un depassement est un incident et jamais un refus.
 export const getGalerieCockpit = (domaine) => apiGet("/cockpit/galerie/cockpit", { domaine }, { timeoutMs: 45000 });
