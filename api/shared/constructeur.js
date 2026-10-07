@@ -422,6 +422,20 @@ class Ecrivain {
 async function formulaireContenu(w, nomListe, perimetre, d) {
   const cols = await w.cols(nomListe);
   const textes = ecriture.champsModifiables(cols).filter((c) => !/^ORDRE/i.test(c.nom));
+  const libre = (c) => !c.readOnly && !c.hidden && !String(c.name).startsWith("_");
+  // Texte riche : saisi en texte simple puis converti en HTML minimal sur (paragraphes).
+  for (const c of cols) {
+    if (!libre(c) || c.text?.textType !== "richText") continue;
+    textes.push({ cle: ecriture.cleChamp(c.name), nom: c.name, libelle: ecriture.libelleChamp(c), obligatoire: !!c.required,
+      multiligne: true, max: 8000, type: "riche" });
+  }
+  // Colonnes Lien SharePoint (Graph n'expose aucune facette de type) : reconnues par leur nom affiche *URL.
+  for (const c of cols) {
+    if (!libre(c) || c.lookup || c.text || c.number || c.boolean || c.dateTime || c.calculated || c.choice) continue;
+    if (!/URL$/i.test(String(c.displayName || ""))) continue;
+    textes.push({ cle: ecriture.cleChamp(c.name), nom: c.name, libelle: ecriture.libelleChamp(c).replace(/ url$/i, " (lien)"),
+      obligatoire: !!c.required, multiligne: false, max: 255, type: "lien" });
+  }
   const exclus = new Set([...ETATS, "OBJ-MODULE-SITE-PUBLIC"].map(cleChamp));
   const listes = [];
   for (const c of cols) {
@@ -443,7 +457,8 @@ async function formulaireContenu(w, nomListe, perimetre, d) {
 
 function formulairePublic(form, valeurs = {}) {
   return {
-    textes: form.textes.map((c) => ({ cle: c.cle, libelle: c.libelle, obligatoire: c.obligatoire, multiligne: c.multiligne, max: c.max, valeur: String(valeurs[c.nom] ?? "") })),
+    textes: form.textes.map((c) => ({ cle: c.cle, libelle: c.libelle, obligatoire: c.obligatoire, multiligne: c.multiligne, max: c.max,
+      valeur: c.type === "lien" ? String(valeurs[c.nom]?.Url ?? "") : c.type === "riche" ? ecriture.htmlVersTexte(valeurs[c.nom]) : String(valeurs[c.nom] ?? "") })),
     listes: form.listes.map((l) => ({ cle: l.cle, libelle: l.libelle, obligatoire: l.obligatoire,
       options: l.options.map((o) => ({ ref: signer(`opt:${l.nom}:${o.id}`), titre: o.titre, url: o.media ? `/api/v1/media/${encodeURIComponent(o.id)}` : null })),
       valeur: valeurs[l.nom] ? signer(`opt:${l.nom}:${valeurs[l.nom]}`) : "" }))
@@ -453,6 +468,18 @@ function formulairePublic(form, valeurs = {}) {
 function validerFormulaire(form, valeurs) {
   const textesSaisis = Object.fromEntries(Object.entries(valeurs || {}).filter(([k]) => form.textes.some((c) => c.cle === k)));
   const { erreurs, propres } = ecriture.validerValeurs(form.textes, textesSaisis);
+  for (const c of form.textes) {
+    if (!Object.hasOwn(propres, c.nom)) continue;
+    const v = propres[c.nom];
+    if (c.type === "riche") propres[c.nom] = ecriture.texteVersHtml(v);
+    if (c.type !== "lien") continue;
+    if (!v) { propres[c.nom] = null; continue; }
+    // Lien accepte : https absolu uniquement, sans espace.
+    if (/\s/.test(v) || !/^https:\/\/[^/\s]+/i.test(v)) {
+      erreurs.push(`${c.libelle} : lien invalide (adresse https://… attendue).`); delete propres[c.nom]; continue;
+    }
+    propres[c.nom] = { Url: v, Description: v };
+  }
   for (const l of form.listes) {
     if (!Object.hasOwn(valeurs || {}, l.cle)) continue;
     const brut = String(valeurs[l.cle] || "");
@@ -981,6 +1008,11 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const { erreurs, propres } = validerFormulaire(form, p.valeurs);
       if (erreurs.length) return { erreur: erreurs.join(" "), status: 400 };
       if (ct.element) {
+        // Seuls les champs reellement modifies sont ecrits (preserve la mise en forme riche non retouchee).
+        const avant = ecriture.valeursDe(ct.element._fields || {}, Object.keys(propres));
+        const nouveaux = ecriture.valeursDe(propres, Object.keys(propres));
+        for (const n of Object.keys(propres)) if (avant[n] === nouveaux[n]) delete propres[n];
+        if (!Object.keys(propres).length) return res("Aucune modification à enregistrer.");
         await w.maj(ct.liste, ct.element.id, propres);
         return res("Contenu du module enregistré.");
       }

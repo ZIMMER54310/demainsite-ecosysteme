@@ -284,8 +284,9 @@ export function documentApercu(composition, type = "page") {
     const texte = String(valeur("TEXTE") || "");
     const bouton1 = urlSure(valeur("BOUTON-1-URL"));
     const bouton2 = urlSure(valeur("BOUTON-2-URL"));
-    const imageUrl = urlSure(valeur("IMAGE-URL"), { lien: false }) ||
-      (contenu.media || []).find((media) => /^\d{1,12}$/.test(String(media?.id || "")))?.id;
+    // Même priorité que le site public : le média OBJ-MEDIA d'abord, IMAGE-URL seulement en repli.
+    const imageUrl = (contenu.media || []).find((media) => /^\d{1,12}$/.test(String(media?.id || "")))?.id ||
+      urlSure(valeur("IMAGE-URL"), { lien: false });
     const image = imageUrl
       ? `<img src="${e(/^\d+$/.test(imageUrl) ? `/api/v1/media/${imageUrl}` : imageUrl)}" alt="${e(valeur("IMAGE-ALT"))}">`
       : "";

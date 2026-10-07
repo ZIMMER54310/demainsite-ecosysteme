@@ -222,6 +222,9 @@ async function graphEcriture(token, methode, chemin, corps, etag = null) {
     }
   };
   if (etag) options.headers["If-Match"] = etag;
+  // Les colonnes Lien SharePoint ({ Url, Description }) ne sont acceptees par Graph qu'avec cette version d'API.
+  const champs = corps?.fields || corps || {};
+  if (Object.values(champs).some((v) => v && typeof v === "object" && Object.hasOwn(v, "Url"))) options.headers.Prefer = "apiversion=2.1";
   let resultat = await requete(url, options, donnees);
   for (let t = 0; t < GRAPH_REESSAIS_MAX && (resultat.status === 429 || (methode === "PATCH" && resultat.status === 503)); t++) {
     const s = Number(resultat.headers["retry-after"]);

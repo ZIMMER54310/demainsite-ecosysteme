@@ -26,7 +26,29 @@ const journauxEnAttente = new Map();
 
 const hash = (v) => crypto.createHash("sha256").update(JSON.stringify(v)).digest("hex");
 const cleChamp = (nom) => `c${hash(["champ", nom]).slice(0, 10)}`;
-const normaliserTexte = (v) => (v === undefined || v === null ? "" : String(v));
+/* Texte comparable : un lien vaut son URL, un texte riche vaut son contenu sans balises (SharePoint reformate le HTML). */
+const normaliserTexte = (v) => {
+  if (v === undefined || v === null) return "";
+  if (typeof v === "object" && Object.hasOwn(v, "Url")) return String(v.Url || "");
+  const s = String(v);
+  return /<[a-z/][^>]*>/i.test(s) ? htmlVersTexte(s).replace(/\s+/g, " ").trim() : s;
+};
+
+const ENTITES = { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " " };
+function htmlVersTexte(html) {
+  return String(html || "")
+    .replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|h[1-6])>/gi, "\n\n").replace(/<\/li>/gi, "\n").replace(/<[^>]*>/g, "")
+    .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => e[0] === "#"
+      ? String.fromCodePoint(parseInt(e[1].toLowerCase() === "x" ? e.slice(2) : e.slice(1), e[1].toLowerCase() === "x" ? 16 : 10) || 32)
+      : ENTITES[e.toLowerCase()] ?? m)
+    .replace(/\u200B/g, "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function texteVersHtml(texte) {
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return String(texte || "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
+    .map((p) => `<p>${p.split("\n").map(esc).join("<br>")}</p>`).join("");
+}
 
 /* Libelles d'interface des colonnes de texte communes (aucun nom technique affiche). */
 function libelleChamp(col) {
@@ -336,7 +358,7 @@ function etatJournalisation() {
 }
 
 module.exports = {
-  champsModifiables, validerValeurs, differences, valeursDe, hash, emettreJeton, lireJeton, consommerJeton,
+  champsModifiables, validerValeurs, differences, valeursDe, hash, emettreJeton, lireJeton, consommerJeton, htmlVersTexte, texteVersHtml, libelleChamp, cleChamp,
   contexteGraph, lireItemFrais, collecterFrais, executer, journaliser, invaliderCaches, etatJournalisation, etatStructureJournal,
   _test: { libelleChamp, cleChamp, executees, enAttente }
 };

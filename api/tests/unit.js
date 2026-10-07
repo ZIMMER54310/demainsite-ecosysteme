@@ -37,4 +37,12 @@ const colSite = [{ name: "OBJ_x002d_SITE", displayName: "OBJ-SITE", lookup: { li
 assert.ok(correspondAuSite({ OBJ_x002d_SITELookupId: "4" }, colSite, 4, "abc"));
 assert.ok(!correspondAuSite({ OBJ_x002d_SITELookupId: "5" }, colSite, 4, "abc"));
 assert.ok(!correspondAuSite({ OBJ_x002d_SITELookupId: "4" }, colSite, 4, "autre"));
+
+// Texte riche et liens SharePoint (editeur de contenu HERO).
+const ecr = require("../shared/ecriture");
+const html = ecr.texteVersHtml("A <b>&\nb\n\nC");
+assert.strictEqual(html, "<p>A &lt;b&gt;&amp;<br>b</p><p>C</p>");
+assert.strictEqual(ecr.texteVersHtml(ecr.htmlVersTexte(html)), html);
+assert.deepStrictEqual(ecr.valeursDe({ u: { Url: "https://x.fr/", Description: "d" }, t: `<div class="ExternalClass1">${html}</div>` }, ["u", "t"]),
+  ecr.valeursDe({ u: { Url: "https://x.fr/", Description: "https://x.fr/" }, t: html }, ["u", "t"]));
 console.log("unit OK");
