@@ -104,8 +104,8 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
 
   // --- Rendu frontend -----------------------------------------------------
   const ui = await import(url("modules/cockpit/cockpit.js"));
-  assert.strictEqual(ui.ETAPES_ASSISTANT.length, 13);
-  assert.deepStrictEqual(ui.ETAPES_ASSISTANT.map((x) => x.libelle), ["Informations", "Domaine", "Usages et boutique", "Identité visuelle", "En-tête", "Menu", "Pages", "Contenus / médias", "Footer", "SEO", "Aperçu", "Validation", "Progression"]);
+  assert.strictEqual(ui.ETAPES_ASSISTANT.length, 3);
+  assert.deepStrictEqual(ui.ETAPES_ASSISTANT.map((x) => x.libelle), ["Informations", "Domaine", "Aperçu et validation"]);
   const moi = { nom: "Pascal <b>", role: { titre: "Profil test" }, fonctions: toutes, nombreSites: 1 };
   vue = vueSite({ siteComplet, info, statut: actif, fonctions: toutes });
   const pages = [
@@ -113,7 +113,12 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     ui.rendreSansAcces(moi), ui.rendreAccueil({ moi, vueCourante: vue }),
     ui.rendreListeSites(moi, filtrerSites([resumeSite(info, actif, siteComplet), { ...resumeSite(info, null), nom: "Autre <b>", client: "Client <b>" }], { statut: "Actif" })),
     ui.rendreVueSite(moi, vue, "menu"),
-    ...ui.ETAPES_ASSISTANT.map((_, i) => ui.rendreAssistant({ moi, numero: i + 1, valeurs: { nom: "Test", domaine: "pas un domaine" } }))
+    ...ui.ETAPES_ASSISTANT.map((_, i) => ui.rendreAssistant({
+      moi, numero: i + 1, valeurs: { nom: "Test", domaineReference: "domain-reference" },
+      domaines: [{ reference: "domain-reference", domaine: "site.example", client: "Client réel" }],
+      brouillons: [{ reference: "draft-reference", nom: "Brouillon", domaine: "site.example",
+        client: "Client réel", statut: "Brouillon · à valider", peutValider: true }]
+    }))
   ];
   for (const html of pages) {
     assert.ok(!TERMES_TECHNIQUES.test(html.replace(/\/api\/v1\/auth\/[^"]+/g, "")), `terme technique visible : ${html.match(TERMES_TECHNIQUES)?.[0]}`);
@@ -140,26 +145,18 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.deepStrictEqual(ui.cartesVisibles(["sites", "apercu", "inconnue"]).map((x) => x.fonction), ["sites", "apercu"]);
   assert.ok(!ui.rendreCartes(["apercu"], "exemple.fr").includes("Créer"));
   assert.ok(ui.rendreCartes([], null).includes("Aucune fonction"));
-  // Assistant : validation non enregistrable, controle du domaine, etats
-  assert.ok(pages[5 + 11].includes("disabled"));
-  assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[1], { domaine: "pas un domaine" }), "attention");
-  assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[1], { domaine: "exemple.fr" }), "termine");
-  assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[0], { nom: "X" }), "encours");
-  assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[0], { description: "X" }), "attention");
-  assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[3], {}), "afaire");
-  const activites = ui.rendreAssistant({ moi, numero: 3, referentiels: {
-    usages: [{ id: "native-usage", titre: "Usage configuré" }],
-    typesBoutique: [{ id: "native-type", titre: "Type configuré" }],
-    optionsBoutique: [{ id: "native-option", titre: "Option configurée", relations: { "OBJ-TYPE-BOUTIQUE": [{ id: "native-type" }] } }],
-    modesCommerciaux: [], periodicites: [], licences: [], decisionsClient: []
-  } });
-  assert.ok(activites.includes('value="native-usage"') && activites.includes('value="native-type"'));
-  assert.ok(activites.includes('value="native-option"') && activites.includes("leur enregistrement n’est pas encore disponible"));
-  const ecritureSuspendue = ui.rendreAssistant({ moi, numero: 12, referentiels: {
-    ecritures: { journalCompatible: false, message: "Configuration de journal incompatible." }
-  } });
-  assert.ok(ecritureSuspendue.includes("Configuration de journal incompatible."));
-  assert.ok(ecritureSuspendue.includes("Enregistrement suspendu") && ecritureSuspendue.includes("disabled"));
+  // Assistant site : uniquement un domaine SharePoint réel + brouillon et confirmations explicites.
+  assert.ok(pages[6].includes('value="domain-reference" selected'));
+  assert.ok(pages[7].includes("data-site-creer-apercu") && pages[7].includes("data-site-valider=\"draft-reference\""));
+  assert.ok(!pages[7].includes("data-site-creer-apercu disabled"));
+  assert.ok(ui.rendreAssistant({ moi, numero: 3 }).includes("data-site-creer-apercu disabled"));
+  assert.ok(ui.rendreAssistant({
+    moi, numero: 3, valeurs: { nom: "Test", domaineReference: "stale-reference" },
+    domaines: [{ reference: "domain-reference", domaine: "site.example", client: "Client réel" }]
+  }).includes("data-site-creer-apercu disabled"));
+  assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[1], { domaineReference: "opaque" }), "termine");
+  assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[0], { nom: "X" }), "termine");
+  assert.strictEqual(ui.etatEtapeAssistant(ui.ETAPES_ASSISTANT[0], {}), "afaire");
 
   // --- Client -> site principal -> domaine principal -> alias ------------
   // Jamais deduit de l'ordre : plusieurs domaines sans designation => a preciser.

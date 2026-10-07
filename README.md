@@ -69,11 +69,14 @@ L'import reste realise dans la bibliotheque SharePoint existante.
 Le menu distingue la navigation générale, le site sélectionné et les fonctions globales
 dans trois groupes accordéon exclusifs, ouverts selon la page active. Leurs fonds sont
 configurables par variables CSS. Le parcours usage-site présente les rattachements
-SharePoint autorisés et demande un aperçu avant confirmation; il n'ajoute aucun droit
-et ne crée pas de site ou de boutique. La lecture d'un site exige l'opération dynamique
-`site.voir`; les parcours d'écriture `site.creer`, `site.modifier` et `site.valider`
-restent suspendus tant que le schéma, les Lookups requis et leurs écritures associées
-ne sont pas couverts par un flux sécurisé complet.
+autorisés et demande un aperçu avant confirmation. La lecture d'un site exige
+`site.voir`. Le parcours site est raccordé à l'aperçu et à la confirmation :
+la création n'utilise qu'un domaine existant, actif, valide et non rattaché, avec
+client dérivé côté serveur, et crée un brouillon inactif/non validé ; une autorisation
+globale explicite dans SharePoint est obligatoire, sans héritage d'un site. L'édition
+est limitée au nom. La validation humaine ne déclenche jamais l'activation. Toutes
+les écritures refusent par défaut si le droit, le périmètre, le schéma, les champs
+obligatoires ou le journal OBJ-JRN ne peuvent pas être vérifiés.
 
 - Branche de travail et de production : `ovh/api-native` (pas de fusion vers `main` pour l'instant).
 - API : service systemd `dse-api.service` (`api/server.js`, ecoute **127.0.0.1:3000**).

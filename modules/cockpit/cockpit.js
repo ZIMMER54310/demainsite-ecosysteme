@@ -294,6 +294,12 @@ export function rendreVueSite(moi, vue, section) {
       ${vue.domaine && vue.fonctions?.includes("apercu") ? `<a class="btn cockpit-public-site" href="https://${e(vue.domaine)}/" target="_blank" rel="noopener noreferrer">Voir le site public ${icon("external")}</a>` : ""}
     </header>
     ${rendreUsagesSite(vue)}
+    ${vue.contexteUtilisateur?.autorisations?.operations?.some((op) => op.operation === "site.modifier")
+      ? `<article class="card cockpit-site-modifier"><h2>Modifier le nom du site</h2>
+        <form data-site-modifier-form data-domaine="${e(domaine)}">
+          <label class="field cockpit-champ"><span>Nom du site</span><input name="nom" required maxlength="255" value="${e(vue.nom || "")}"></label>
+          <button class="btn btn-secondary" type="submit">Préparer l’aperçu</button>
+        </form><div data-site-modifier-result aria-live="polite"></div></article>` : ""}
     <div class="cockpit-site-metriques"><article class="card cockpit-site-metrique cockpit-site-progression"${styleProgression(vue.progressionVisuelle)}><h2>${icon("chart")} Progression globale</h2><strong class="metric">${Number(vue.progression) || 0} %</strong><div class="cockpit-jauge"><span style="width:${Math.max(0, Math.min(100, Number(vue.progression) || 0))}%"></span></div><p class="muted">${terminees} / ${etapes.length} étapes terminées</p><a class="cockpit-lien-texte" href="#progression-site" data-ouvrir-progression>Voir le détail ${icon("arrow")}</a></article>${metriques}</div>
     <div class="cockpit-site-pilotage"><article class="card cockpit-site-prochaines"><h2>${icon("chart")} Que dois-je faire maintenant ?</h2><p class="muted">Les étapes non terminées de ce site.</p>
       ${prochaines.length ? `<ol>${prochaines.map((x) => `<li><div><strong>${e(x.libelle)}</strong><p class="muted">${e(x.alerte || x.realisations?.map((r) => `${r.nom} – ${r.titre}`).join(" · ") || LIBELLES_ETAT[x.etat] || LIBELLES_ETAT.afaire)}</p></div>${lien(cibleEtape(x), x.realisations?.find((r) => r.actionAutorisee && r.libelleAction)?.libelleAction || "Continuer", "arrow")}</li>`).join("")}</ol>` : "<p>Toutes les étapes de configuration sont terminées.</p>"}</article>
@@ -316,36 +322,16 @@ export function rendreVueSite(moi, vue, section) {
 /* ---------------- Assistant « Créer un nouveau site » (interface seule) ---------------- */
 
 export const ETAPES_ASSISTANT = Object.freeze([
-  { cle: "informations", libelle: "Informations", aide: "Présentez le site en quelques mots.", champs: [
-    { nom: "nom", libelle: "Nom du site", requis: true }, { nom: "description", libelle: "Description courte", type: "textarea" }] },
-  { cle: "domaine", libelle: "Domaine", aide: "Adresse publique du site.", champs: [
-    { nom: "domaine", libelle: "Nom de domaine", requis: true, exemple: "exemple.fr", controle: "domaine" }] },
-  { cle: "activites", libelle: "Usages et boutique", aide: "Choix disponibles selon la configuration de l’écosystème.", champs: [] },
-  { cle: "identite", libelle: "Identité visuelle", aide: "Logo et couleurs.", champs: [
-    { nom: "logo", libelle: "Logo (nom du fichier)" }, { nom: "couleur", libelle: "Couleur principale", type: "color" }] },
-  { cle: "entete", libelle: "En-tête", aide: "Haut de page.", champs: [
-    { nom: "enteteTitre", libelle: "Titre affiché" }, { nom: "enteteAccroche", libelle: "Accroche" }] },
-  { cle: "menu", libelle: "Menu", aide: "Un lien par ligne : libellé | adresse.", champs: [
-    { nom: "menu", libelle: "Liens du menu", type: "textarea" }] },
-  { cle: "pages", libelle: "Pages", aide: "Une page par ligne.", champs: [
-    { nom: "pages", libelle: "Pages souhaitées", type: "textarea" }] },
-  { cle: "contenus", libelle: "Contenus / médias", aide: "Texte d'accueil et image principale.", champs: [
-    { nom: "accueil", libelle: "Texte d'accueil", type: "textarea" }, { nom: "image", libelle: "Image principale (nom du fichier)" }] },
-  { cle: "footer", libelle: "Footer", aide: "Bas de page.", champs: [
-    { nom: "footerTexte", libelle: "Texte" }, { nom: "footerMentions", libelle: "Mentions" }] },
-  { cle: "seo", libelle: "SEO", aide: "Référencement.", champs: [
-    { nom: "seoTitre", libelle: "Titre pour les moteurs de recherche" }, { nom: "seoDescription", libelle: "Description", type: "textarea" }] },
-  { cle: "apercu", libelle: "Aperçu", aide: "Vérifiez les informations saisies.", champs: [] },
-  { cle: "validation", libelle: "Validation", aide: "Envoi de la demande de création.", champs: [] },
-  { cle: "progression", libelle: "Progression", aide: "Avancement de votre demande.", champs: [] }
+  { cle: "informations", libelle: "Informations", aide: "Choisissez le nom du site.", champs: [
+    { nom: "nom", libelle: "Nom du site", requis: true }] },
+  { cle: "domaine", libelle: "Domaine", aide: "Sélectionnez un domaine existant, actif, validé et non rattaché.", champs: [
+    { nom: "domaineReference", libelle: "Domaine existant", requis: true }] },
+  { cle: "validation", libelle: "Aperçu et validation", aide: "Le site sera créé en brouillon, inactif et non validé.", champs: [] }
 ]);
-
-const domaineValide = (v) => /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(String(v || "").trim());
 
 export function etatEtapeAssistant(etape, valeurs = {}) {
   const champs = etape.champs || [];
   if (!champs.length) return null;
-  if (champs.some((c) => c.controle === "domaine" && valeurs[c.nom] && !domaineValide(valeurs[c.nom]))) return "attention";
   const remplis = champs.filter((c) => String(valeurs[c.nom] ?? "").trim()).length;
   if (remplis === 0) return "afaire";
   if (champs.some((c) => c.requis && !String(valeurs[c.nom] ?? "").trim())) return "attention";
@@ -367,66 +353,34 @@ function champHtml(c, valeurs) {
   return `<label class="field cockpit-champ" for="assistant-${e(c.nom)}"><span>${e(c.libelle)}${c.requis ? " *" : ""}</span>${saisie}</label>`;
 }
 
-function choixMultiples(nom, titre, items, selection = [], { types = null } = {}) {
-  const ids = new Set(Array.isArray(selection) ? selection.map(String) : []);
-  return `<fieldset class="field"${nom === "optionsBoutique" ? ' data-options-boutique' : ""}><legend>${e(titre)}</legend>${items?.length
-    ? `<div class="cockpit-choix-dynamiques">${items.map((x) => {
-      const typeIds = (x.relations?.["OBJ-TYPE-BOUTIQUE"] || []).map((t) => String(t.id));
-      const visible = !types || typeIds.some((id) => types.has(id));
-      return `<label${nom === "optionsBoutique" ? ` data-types-boutique="${e(typeIds.join(" "))}"${visible ? "" : " hidden"}` : ""}><input type="checkbox" name="${e(nom)}" value="${e(x.id)}" data-assistant-multiple${ids.has(String(x.id)) ? " checked" : ""}> ${e(x.titre || x.code || "Valeur")}</label>`;
-    }).join("")}</div>`
-    : '<p class="muted">Aucune valeur configurée.</p>'}</fieldset>`;
-}
-
-function selectionLibelles(refs, nom, selection) {
-  const items = refs?.[nom];
-  if (!Array.isArray(items) || !Array.isArray(selection)) return "";
-  const choisis = new Set(selection.map(String));
-  return items.filter((x) => choisis.has(String(x.id))).map((x) => x.titre || x.code).filter(Boolean).join(", ");
-}
-
-export function rendreAssistant({ moi, numero = 1, valeurs = {}, referentiels = null }) {
+export function rendreAssistant({ moi, numero = 1, valeurs = {}, domaines = [], brouillons = [],
+  erreurDomaines = null, erreurBrouillons = null }) {
   const total = ETAPES_ASSISTANT.length;
   const n = Math.min(total, Math.max(1, Number(numero) || 1));
   const etape = ETAPES_ASSISTANT[n - 1];
   const suivi = progressionAssistant(valeurs);
   let corps = etape.champs.map((c) => champHtml(c, valeurs)).join("");
-  if (etape.cle === "activites") {
-    const typesSelectionnes = new Set((valeurs.typesBoutique || []).map(String));
-    corps = `${referentiels ? "" : '<p role="alert">Les choix ne sont pas disponibles pour le moment.</p>'}
-      ${choixMultiples("usages", "Usages du site", referentiels?.usages, valeurs.usages)}
-      ${choixMultiples("typesBoutique", "Types de boutique", referentiels?.typesBoutique, valeurs.typesBoutique)}
-      ${choixMultiples("optionsBoutique", "Options proposées pour les types sélectionnés", referentiels?.optionsBoutique,
-        valeurs.optionsBoutique, { types: typesSelectionnes })}
-      ${choixMultiples("modesCommerciaux", "Modes commerciaux disponibles", referentiels?.modesCommerciaux, valeurs.modesCommerciaux)}
-      ${choixMultiples("periodicites", "Périodicités disponibles", referentiels?.periodicites, valeurs.periodicites)}
-      ${choixMultiples("licences", "Licences disponibles", referentiels?.licences, valeurs.licences)}
-      ${choixMultiples("decisionsClient", "Décisions client disponibles", referentiels?.decisionsClient, valeurs.decisionsClient)}
-      <p class="muted">Ces sélections restent locales à cette session : leur enregistrement n’est pas encore disponible.</p>`;
-  } else if (etape.cle === "apercu") {
-    const lignes = ETAPES_ASSISTANT.flatMap((x) => x.champs)
-      .filter((c) => String(valeurs[c.nom] ?? "").trim())
-      .map((c) => ({ libelle: c.libelle, valeur: valeurs[c.nom] }));
-    for (const [nom, libelle] of [["usages", "Usages"], ["typesBoutique", "Types de boutique"],
-      ["optionsBoutique", "Options boutique"], ["modesCommerciaux", "Modes commerciaux"],
-      ["periodicites", "Périodicités"], ["licences", "Licences"], ["decisionsClient", "Décisions client"]]) {
-      const valeur = selectionLibelles(referentiels, nom, valeurs[nom]);
-      if (valeur) lignes.push({ libelle, valeur });
-    }
-    corps = lignes.length
-      ? `<dl class="kv">${lignes.map((c) => `<dt>${e(c.libelle)}</dt><dd>${e(c.valeur).replaceAll("\n", "<br>")}</dd>`).join("")}</dl>`
-      : `<div class="empty">Aucune information saisie pour l'instant.</div>`;
+  if (etape.cle === "domaine") {
+    corps = `${erreurDomaines ? `<p role="alert">${e(erreurDomaines)}</p>` : ""}
+      <label class="field cockpit-champ" for="assistant-domaineReference"><span>Domaine existant *</span>
+        <select id="assistant-domaineReference" name="domaineReference" data-assistant-champ required>
+          <option value="">Choisir un domaine disponible</option>${domaines.map((x) =>
+      `<option value="${e(x.reference)}"${String(valeurs.domaineReference || "") === String(x.reference) ? " selected" : ""}>${e(x.domaine)} — ${e(x.client)}</option>`).join("")}
+        </select></label>
+      ${!domaines.length ? '<p class="muted">Aucun domaine admissible n’est disponible dans votre espace.</p>' : ""}`;
   } else if (etape.cle === "validation") {
-    const ecritures = referentiels?.ecritures;
-    corps = ecritures?.journalCompatible
-      ? `<p>La préparation des changements est disponible. Aucune écriture n’aura lieu sans aperçu et confirmation.</p>
-        <button class="btn btn-primary" type="button" disabled aria-disabled="true">Aperçu sécurisé indisponible</button>`
-      : `<p role="alert">${e(ecritures?.message || "L’écriture reste désactivée tant que le journal sécurisé n’a pas été vérifié.")}</p>
-        <button class="btn btn-primary" type="button" disabled aria-disabled="true">Enregistrement suspendu</button>`;
-    corps += `<p class="muted">Aucune donnée métier n’a été enregistrée. Les saisies restent sur cet appareil.</p>`;
-  } else if (etape.cle === "progression") {
-    corps = `<ul class="cockpit-etapes">${suivi.map((x) =>
-      `<li class="cockpit-etape ${e(x.etat)}"><span class="cockpit-picto" aria-hidden="true">${PICTOS[x.etat]}</span><div><strong>${e(x.libelle)}</strong> <span class="muted">· ${e(LIBELLES_ETAT[x.etat])}</span></div></li>`).join("")}</ul>`;
+    const pretPourApercu = String(valeurs.nom || "").trim() &&
+      domaines.some((domaine) => String(domaine.reference) === String(valeurs.domaineReference || ""));
+    corps = `<p>Création autorisée uniquement après un aperçu serveur et une confirmation explicite.</p>
+      <button class="btn btn-primary" type="button" data-site-creer-apercu${pretPourApercu ? "" : " disabled"}>Préparer l’aperçu de création</button>
+      <div data-site-creer-result aria-live="polite"></div>
+      <h3>Sites en attente de validation</h3>${erreurBrouillons ? `<p role="alert">${e(erreurBrouillons)}</p>` : brouillons.length
+        ? `<ul class="cockpit-etapes">${brouillons.map((site) => `<li><div><strong>${e(site.nom)}</strong>
+            <p class="muted">${e(site.domaine)} · ${e(site.client)} · ${e(site.statut)}</p>
+            ${site.peutValider ? `<button class="btn btn-secondary" type="button" data-site-valider="${e(site.reference)}">Préparer la validation</button>` : ""}
+          </div></li>`).join("")}</ul>`
+        : '<p class="muted">Aucun brouillon accessible n’est en attente de validation.</p>'}
+      <p class="muted">La validation ne rendra pas le site actif ni public.</p>`;
   }
   const etatDe = (cle) => suivi.find((x) => x.cle === cle)?.etat;
   return `<section class="cockpit cockpit-assistant">

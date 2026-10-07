@@ -49,18 +49,34 @@ pas remplacees par des donnees fictives :
   la construction libre est conservee.
 - `GET /api/v1/cockpit/creer/referentiels` lit les usages, types de boutique,
   options, modes commerciaux, périodicités, licences et décisions client depuis
-  les listes natives. La route exige une session reconnue, le périmètre global
-  et la fonction dynamique `creer`; elle n'écrit aucune donnée. Les sélections
-  de l'assistant restent locales tant que la création de site n'a pas son flux
-  d'aperçu, confirmation, revalidation et journalisation OBJ-JRN. Avant toute
-  écriture, le schéma réel du journal est vérifié contre le contrat autorisé ;
+  les listes natives. `GET /api/v1/cockpit/creer/domaines` ne propose que des
+  domaines existants, actifs, valides, complets et non rattachés, avec leur
+  client dérivé du Lookup. La création requiert une autorisation globale
+  explicite dans SharePoint : opération `site.creer`, capacité/action du rôle
+  global et permission utilisateur sans affectation site. Une opération héritée
+  d'un site ne suffit pas. `POST /api/v1/cockpit/site/creer/apercu` prépare une
+  création à ligne unique dans `OBJ-SITE-PUBLIC`, en brouillon, inactive et non
+  validée. Le navigateur ne transmet qu'un nom et une référence opaque ; les
+  Lookups natifs, le client et les états sont reconstruits côté serveur.
+  L'assistant n'enregistre que le nom et le domaine ; les autres configurations
+  du site ne sont pas créées automatiquement.
+  `POST /api/v1/cockpit/site/modifier/apercu` limite l'édition au nom d'un site
+  du périmètre. `GET /api/v1/cockpit/sites/brouillons` et
+  `POST /api/v1/cockpit/site/valider/apercu` permettent une validation humaine
+  explicite via un jeton opaque lié à la session. Valider ne modifie jamais
+  l'état actif. Toutes les écritures revalident droits, périmètre, état actuel
+  et doublon, puis relisent SharePoint et journalisent OBJ-JRN. Si un champ
+  obligatoire, Lookup ou autorisation est absent ou ambigu, l'aperçu est refusé.
+  Avant toute écriture, le schéma réel du journal est vérifié contre le contrat autorisé ;
   les champs requis ID-JRN (Title), CODE, NOM et ANOMALIE sont renseignés,
   CLEIDEMPOTENCE doit être indexée et unique, et toute incompatibilité suspend
   l'opération. Les confirmations journalisées suivent DÉBUT, SUCCÈS/ÉCHEC/REFUS,
   puis FIN, avec relecture SharePoint et refus de réutiliser une clé existante.
   Les opérations commerce doivent en outre être explicitement accordées par les
   relations dynamiques de capacité/action et un périmètre réel ; aucun accès
-  n'est créé si ces données sont absentes.
+  n'est créé si ces données sont absentes. La permission globale de création
+  nécessite un enregistrement explicite sans affectation ; si le schéma courant
+  ne permet pas cette représentation, la création reste bloquée par défaut.
 - `GET /api/v1/cockpit/site/usages` expose, après contrôle site/périmètre et
   opération, les usages existants et/ou les choix autorisés.
   `POST /api/v1/cockpit/usages/apercu` prépare le rattachement d'un usage réel

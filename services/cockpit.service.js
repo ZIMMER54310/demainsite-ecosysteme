@@ -4,6 +4,11 @@ export const getMoi = (domaine = "") => apiGet("/moi", { domaine }, { timeoutMs:
 export const getMonCompte = () => apiGet("/cockpit/compte");
 export const getSitesCockpit = (criteres = {}) => apiGet("/cockpit/sites", criteres);
 export const getReferentielsCreationSite = () => apiGet("/cockpit/creer/referentiels", {}, { timeoutMs: 45000 });
+export const getDomainesCreationSite = () => apiGet("/cockpit/creer/domaines", {}, { timeoutMs: 45000 });
+export const getBrouillonsSite = () => apiGet("/cockpit/sites/brouillons", {}, { timeoutMs: 45000 });
+export const apercuCreationSite = (nom, reference) => apiPost("/cockpit/site/creer/apercu", { nom, reference });
+export const apercuModificationSite = (domaine, nom) => apiPost("/cockpit/site/modifier/apercu", { domaine, nom });
+export const apercuValidationSite = (reference) => apiPost("/cockpit/site/valider/apercu", { reference });
 export const getUsagesSite = (domaine) => apiGet("/cockpit/site/usages", { domaine }, { timeoutMs: 45000 });
 export const apercuAjoutUsageSite = (domaine, usageReference, dateEffet) =>
   apiPost("/cockpit/usages/apercu", { domaine, usageReference, dateEffet });

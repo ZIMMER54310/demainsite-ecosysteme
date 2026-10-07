@@ -4,7 +4,8 @@ import { setState, getState } from "../js/state.js";
 import {
   getSitesCockpit, getClientCockpit, getSiteCockpit, getEdition, apercuEdition, confirmerEdition,
   getAdminTableau, getAdminUtilisateurs, getMonCompte, apercuAdmin, confirmerAdmin, getIncidents, deciderIncident, getStatutsSite, getConstruire,
-  apercuDemandeAcces, confirmerDemandeAcces, getUsagesSite, apercuAjoutUsageSite, confirmerAjoutUsageSite
+  apercuDemandeAcces, confirmerDemandeAcces, getUsagesSite, apercuAjoutUsageSite, confirmerAjoutUsageSite,
+  getDomainesCreationSite, getBrouillonsSite, apercuCreationSite, apercuModificationSite, apercuValidationSite
 } from "../services/cockpit.service.js";
 import { activerConstructeur } from "../modules/cockpit/constructeur.js";
 import {
@@ -18,7 +19,7 @@ import { rendreSynchronisations, activerSynchronisations } from "../modules/cock
 import { getSynchronisations } from "../services/cockpit.service.js";
 import { rendreContenus, rendreRaccourcisContenus, activerContenus } from "../modules/cockpit/contenus.js";
 import { getContenusCockpit } from "../services/cockpit.service.js";
-import { getEspaces, getReferentielsCreationSite } from "../services/cockpit.service.js";
+import { getEspaces } from "../services/cockpit.service.js";
 import { getGalerie, getGalerieCockpit } from "../services/cockpit.service.js";
 import { rendreGalerie, CRITERES_GALERIE, lienGalerie } from "../modules/cockpit/galerie-sites.js";
 import { rendreComptes, rendreEspaces, activerFiltresComptes, activerFiltresEspaces } from "../modules/cockpit/comptes.js";
@@ -57,8 +58,6 @@ const REUTILISATION_MOI_MS = 30000;
 const REUTILISATION_VUE_MS = 60000;
 let moiCharge = null;
 let vueChargee = null;
-let referentielsCreationSite = null;
-let referentielsCreationSiteLe = 0;
 
 async function contexte(params = {}, { reutiliser = false } = {}) {
   document.body.classList.remove("dse-public");
@@ -308,6 +307,17 @@ function lireAssistant() {
 }
 
 export function activerVueSite(racine) {
+  racine.querySelectorAll("[data-site-modifier-form]").forEach((form) => {
+    const zone = form.parentElement.querySelector("[data-site-modifier-result]");
+    const lancer = brancherConfirmation(zone,
+      (donnees) => apercuModificationSite(form.dataset.domaine, donnees.nom),
+      confirmerEdition,
+      () => { form.querySelector("[name=nom]").defaultValue = form.querySelector("[name=nom]").value; });
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      lancer({ nom: String(new FormData(form).get("nom") || "") });
+    });
+  });
   racine.querySelectorAll("[data-usages-site-form]").forEach((form) => {
     const zone = racine.querySelector("[data-usage-site-result]");
     let jeton = null;
@@ -419,15 +429,14 @@ export async function cockpitAssistantPage(params) {
     const c = await contexte(params);
     if (c.html) return c.html;
     if (!c.moi.fonctions.includes("creer")) return `<section class="cockpit card"><p>La création de site n'est pas disponible pour votre profil.</p><a class="btn btn-secondary" href="#/cockpit">Retour au cockpit</a></section>`;
-    if (!referentielsCreationSite || Date.now() - referentielsCreationSiteLe > 30000) {
-      referentielsCreationSite = getReferentielsCreationSite().then((r) => r.donnees).catch((err) => {
-        referentielsCreationSite = null;
-        throw err;
-      });
-      referentielsCreationSiteLe = Date.now();
-    }
-    const referentiels = await referentielsCreationSite;
-    return rendreAssistant({ moi: c.moi, numero: params.etape, valeurs: lireAssistant(), referentiels });
+    const [domaines, brouillons] = await Promise.all([
+      lancer(getDomainesCreationSite), lancer(getBrouillonsSite)
+    ]);
+    return rendreAssistant({
+      moi: c.moi, numero: params.etape, valeurs: lireAssistant(),
+      domaines: domaines.r?.donnees || [], erreurDomaines: domaines.erreur?.message || null,
+      brouillons: brouillons.r?.donnees || [], erreurBrouillons: brouillons.erreur?.message || null
+    });
   } catch (err) { return echec(err); }
 }
 
@@ -489,30 +498,54 @@ export function activerFiltresSites(racine = document) {
 
 export function activerAssistant(racine = document) {
   const form = racine.querySelector("[data-assistant]");
-  if (!form) return;
-  const enregistrer = (ev) => {
-    const champ = ev.target.closest("[data-assistant-champ]");
-    const multiple = ev.target.closest("[data-assistant-multiple]");
-    const valeurs = lireAssistant();
-    if (champ) valeurs[champ.name] = champ.value;
-    else if (multiple) {
-      valeurs[multiple.name] = [...form.querySelectorAll("[data-assistant-multiple]:checked")]
-        .filter((x) => x.name === multiple.name).map((x) => x.value);
-    } else return;
-    if (multiple?.name === "typesBoutique") {
-      const types = new Set(valeurs.typesBoutique || []);
-      form.querySelectorAll("[data-types-boutique]").forEach((label) => {
-        label.hidden = !label.dataset.typesBoutique.split(" ").some((id) => types.has(id));
-      });
-      const disponibles = new Set([...form.querySelectorAll("[data-types-boutique]:not([hidden]) input")]
-        .map((x) => x.value));
-      valeurs.optionsBoutique = (valeurs.optionsBoutique || []).filter((id) => disponibles.has(id));
-      form.querySelectorAll("[data-types-boutique][hidden] input").forEach((x) => { x.checked = false; });
-    }
-    sessionStorage.setItem(CLE_ASSISTANT, JSON.stringify(valeurs));
-  };
-  form.addEventListener("input", enregistrer);
-  form.addEventListener("change", enregistrer);
+  if (form) {
+    const enregistrer = (ev) => {
+      const champ = ev.target.closest("[data-assistant-champ]");
+      if (!champ) return;
+      const valeurs = lireAssistant();
+      valeurs[champ.name] = champ.value;
+      sessionStorage.setItem(CLE_ASSISTANT, JSON.stringify(valeurs));
+    };
+    form.addEventListener("input", enregistrer);
+    form.addEventListener("change", enregistrer);
+  }
+  const creation = racine.querySelector("[data-site-creer-apercu]");
+  if (creation && form) {
+    creation.addEventListener("click", () => {
+      const zone = racine.querySelector("[data-site-creer-result]");
+      const valeurs = lireAssistant();
+      if (!String(valeurs.nom || "").trim() || !String(valeurs.domaineReference || "").trim()) {
+        zone.textContent = "Renseignez le nom et sélectionnez un domaine avant de continuer.";
+        return;
+      }
+      const lancer = brancherConfirmation(zone,
+        () => apercuCreationSite(String(valeurs.nom || ""), String(valeurs.domaineReference || "")),
+        confirmerEdition,
+        (resultat) => {
+          if (!resultat?.succes) return;
+          creation.disabled = true;
+          zone.insertAdjacentHTML("beforeend", '<p role="status">Le site est créé en brouillon, inactif et non validé. Rechargez la page pour le voir dans la liste des validations.</p>');
+        });
+      lancer({});
+    });
+  }
+  racine.querySelectorAll("[data-site-valider]").forEach((bouton) => {
+    bouton.addEventListener("click", () => {
+      const zone = document.createElement("div");
+      bouton.insertAdjacentElement("afterend", zone);
+      const lancer = brancherConfirmation(zone,
+        () => apercuValidationSite(bouton.dataset.siteValider),
+        confirmerEdition,
+        (resultat) => {
+          if (!resultat?.succes) return;
+          bouton.disabled = true;
+          bouton.textContent = "Validé · toujours inactif";
+          const statut = bouton.closest("li")?.querySelector(".muted");
+          if (statut) statut.textContent = "Validé · toujours inactif";
+        });
+      lancer({});
+    });
+  });
 }
 
 /* ---------------- Edition : formulaire -> apercu -> confirmation -> resultat ---------------- */

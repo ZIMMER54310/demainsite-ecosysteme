@@ -23,6 +23,7 @@ const autorisations = require("../auth/autorisations");
 const experienceCockpit = require("../shared/experience-cockpit");
 const demandesAcces = require("../shared/demandes-acces");
 const galerie = require("../shared/galerie");
+const siteEcriture = require("../shared/site-ecriture");
 
 const meta = () => ({ genereLe: new Date().toISOString() });
 
@@ -582,18 +583,34 @@ async function confirmer(req, res) {
           op.contexteJournal = plan.op.contexteJournal;
           return null;
         }
+        if (op.portee === "global-site-valider") {
+          const donnees = await droits.donneesDroits();
+          return siteEcriture.revaliderValidation({ identite: ctx.identite, op, droits: d, donnees });
+        }
         if (op.portee === "site") {
           const donnees = await droits.donneesDroits();
           d = droits.contexteSite(d, donnees, op.siteId);
           const s = donnees.sites.find((s) => String(s.id) === String(op.siteId));
-          op.contexteJournal = { acteur: ctx.identite.sujet, utilisateurId: d.utilisateurId,
-            clientId: s?.clientId || null, siteId: String(op.siteId) };
+          op.contexteJournal = { ...op.contexteJournal, acteur: ctx.identite.sujet, utilisateurId: d.utilisateurId,
+            clientId: op.operation === "site.valider" ? op.contexteJournal?.clientId || s?.clientId || null : s?.clientId || null,
+            siteId: String(op.siteId), ...(op.operation === "site.valider"
+              ? { siteCibleId: op.itemId } : {}) };
           if (!peutOperation(d, op.operation || `${op.fonction}.modifier`, op.fonction) ||
             !d.siteIds.includes(String(op.siteId))) return "Vous n'avez plus l'autorisation de réaliser cette opération.";
           if (op.operation === "usage-site.creer") {
             return require("../shared/commerce-ecriture").revaliderAjoutUsage({ op, droits: d });
           }
+          if (op.operation === "site.modifier") {
+            return siteEcriture.revaliderModification({ op, droits: d });
+          }
+          if (op.operation === "site.valider") {
+            return siteEcriture.revaliderValidation({ identite: ctx.identite, op, droits: d, donnees });
+          }
           return null;
+        }
+        if (op.portee === "global-site-creer") {
+          const donnees = await droits.donneesDroits();
+          return siteEcriture.revaliderCreation({ op, droits: d, donnees });
         }
         if (op.portee === "admin") {
           const adminCtx = { identite: ctx.identite, droits: d };
@@ -842,6 +859,85 @@ async function referentielsCreationSite(req, res) {
   } catch (e) {
     console.error("[DSE cockpit] référentiels création site", e.message);
     return refuser(res, 503, "Les référentiels SharePoint ne sont pas disponibles.");
+  }
+}
+
+async function domainesCreationSite(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const resultat = await siteEcriture.domainesDisponibles({
+      droits: ctx.droits, donnees: await droits.donneesDroits()
+    });
+    if (resultat.erreur) return repondreResultat(res, resultat);
+    return repondre(res, 200, { succes: true, donnees: resultat.donnees, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] domaines création site", e.message);
+    return refuser(res, 503, "Les domaines disponibles n'ont pas pu être vérifiés.");
+  }
+}
+
+async function brouillonsSiteLire(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    if (!ctx.droits.reconnu) return refuser(res, 403, "Accès non autorisé.");
+    const resultat = await siteEcriture.listeBrouillons({
+      identite: ctx.identite, droits: ctx.droits, donnees: await droits.donneesDroits()
+    });
+    if (resultat.erreur) return repondreResultat(res, resultat);
+    return repondre(res, 200, { succes: true, donnees: resultat.donnees, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] brouillons site", e.message);
+    return refuser(res, 503, "Les brouillons de site n'ont pas pu être vérifiés.");
+  }
+}
+
+async function siteCreationApercu(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const resultat = await siteEcriture.preparerCreation({
+      identite: ctx.identite, droits: ctx.droits, donnees: await droits.donneesDroits(),
+      nom: req.body?.nom, reference: String(req.body?.reference || "")
+    });
+    return repondreResultat(res, resultat);
+  } catch (e) {
+    console.error("[DSE cockpit] aperçu création site", e.message);
+    return refuser(res, 503, "L'aperçu de création n'a pas pu être préparé. Aucune donnée n'a été écrite.");
+  }
+}
+
+async function siteModificationApercu(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const info = await siteDuPerimetre(ctx, req.body?.domaine);
+    if (!info || !peutOperation(ctx.droits, "site.modifier", "sites")) {
+      return refuserEcriture(res, ctx, req.body?.domaine, "site.modifier",
+        "La modification du nom n'est pas autorisée pour ce site.");
+    }
+    return repondreResultat(res, await siteEcriture.preparerModification({
+      identite: ctx.identite, droits: ctx.droits, siteId: info.id, nom: req.body?.nom
+    }));
+  } catch (e) {
+    console.error("[DSE cockpit] aperçu modification site", e.message);
+    return refuser(res, 503, "L'aperçu de modification du site n'a pas pu être préparé.");
+  }
+}
+
+async function siteValidationApercu(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const resultat = await siteEcriture.preparerValidation({
+      identite: ctx.identite, droits: ctx.droits, donnees: await droits.donneesDroits(),
+      reference: String(req.body?.reference || "")
+    });
+    return repondreResultat(res, resultat);
+  } catch (e) {
+    console.error("[DSE cockpit] aperçu validation site", e.message);
+    return refuser(res, 503, "L'aperçu de validation du site n'a pas pu être préparé.");
   }
 }
 
@@ -1154,6 +1250,8 @@ const synchroConfirmer = (req, res) => synchroEcriture(req, res, "SYNCHRO-RESTAU
 module.exports = {
   client, synchroVue, synchroSauvegardes, synchroReglage, synchroLancer, synchroApercu, synchroConfirmer,
   moi, monCompte, sites, site, galerieListe, galerieCockpit, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
-  contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, referentielsCreationSite, usageSiteApercu, usagesSiteLire, adminTableau, adminUtilisateurs, adminApercu,
+  contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, referentielsCreationSite,
+  domainesCreationSite, brouillonsSiteLire, siteCreationApercu, siteModificationApercu, siteValidationApercu,
+  usageSiteApercu, usagesSiteLire, adminTableau, adminUtilisateurs, adminApercu,
   _test: { origineValide, clientsDuPerimetre, peutOperation }
 };
