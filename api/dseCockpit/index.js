@@ -828,10 +828,11 @@ async function referentielsCreationSite(req, res) {
 
 /*
  * Action du constructeur : origine + session + perimetre + droit d'ecriture recontroles a chaque appel,
- * un seul traitement simultane par site, idempotence par cle cliente, sans dependance au journal.
+ * un seul traitement simultane par site, idempotence par cle cliente et journal OBJ-JRN obligatoire.
  */
 async function construireAction(req, res) {
   let verrou = null;
+  let entreeJournal = null;
   try {
     const ctx = await contexteEcriture(req, res);
     if (!ctx) return;
@@ -909,6 +910,20 @@ async function construireAction(req, res) {
         confirmation.sauvegarder(cle, { siteId: String(p.info.id), action, modifications: attendus });
         if (!ecriture.consommerJeton(ctx.identite, req.body?.jeton)) return refuser(res, 409, "Cette confirmation a déjà été utilisée.");
       }
+      if (!lecture) {
+        const modifications = attendus.map((m) => ({ itemId: m.itemId, champs: m.apres }));
+        entreeJournal = await require("../shared/journal-comptes").commencer(
+          await ecriture.contexteGraph(), {
+            cle: `CONSTRUCTION-${cle}`,
+            action,
+            nom: `Constructeur ${action}`,
+            domaine: "CONSTRUCTION",
+            avant: attendus.map((m) => ({ itemId: m.itemId, champs: m.avant })),
+            apres: modifications,
+            contexte: { utilisateurId: ctx.droits.utilisateurId,
+              siteId: String(p.info.id), clientId: p.info.clientId }
+          });
+      }
       r = await C.executer({ d, perimetre: p, siteId: p.info.id, action, params, attendus });
     } catch (e) {
       if (e.refus) r = { refus: e.message };
@@ -918,27 +933,35 @@ async function construireAction(req, res) {
       }
     }
     if (lecture) return repondreResultat(res, r);
-    if (r.refus) return refuserEcriture(res, ctx, domaine, "CONSTRUCTEUR-REFUS", r.refus);
 
-    const succes = !r.erreur;
+    const succes = !r.erreur && !r.refus;
     ecriture.invaliderCaches();
     const sortie = succes
       ? { message: r.message, nouveau: r.nouveau || {} }
-      : { erreur: r.erreur, status: r.status };
+      : { erreur: r.erreur || r.refus, status: r.status };
     if (succes) {
       constructeurExecutees.set(cle, sortie);
+    }
+    if (entreeJournal) {
       try {
-        sortie.journal = await require("../shared/journal-comptes").enregistrer(await ecriture.contexteGraph(), {
-          cle: `CONSTRUCTION-${cle}`, action, avant: (r.modifications || []).map((m) => ({ itemId: m.itemId, champs: m.avant })),
-          apres: (r.modifications || []).map((m) => ({ itemId: m.itemId, champs: m.apres })),
-          contexte: { utilisateurId: ctx.droits.utilisateurId, siteId: String(p.info.id), clientId: p.info.clientId }
-        });
+        sortie.journal = await require("../shared/journal-comptes").terminer(
+          await ecriture.contexteGraph(), entreeJournal, {
+            statut: succes ? "SUCCÈS" : "ÉCHEC",
+            avant: entreeJournal.avant,
+            apres: (r.modifications || []).map((m) => ({ itemId: m.itemId, champs: m.apres })),
+            anomalie: !succes,
+            erreur: succes ? null : "Le constructeur n'a pas confirmé l'enregistrement attendu.",
+            contexte: entreeJournal.contexte
+          });
       } catch (e) {
         console.error("[DemainSite Ecosysteme construction journal]", e.message);
-        sortie.erreur = "L'opération est enregistrée et relue, mais sa journalisation doit être vérifiée. Ne répétez pas la modification.";
-        sortie.status = 502; sortie.enregistrementEffectue = true;
+        sortie.erreur = "L'opération doit être vérifiée dans OBJ-JRN. Ne répétez pas la modification.";
+        sortie.status = 502;
+        sortie.enregistrementEffectue = succes;
+        constructeurExecutees.set(cle, sortie);
       }
     }
+    if (r.refus) return refuserEcriture(res, ctx, domaine, action, r.refus);
     if (constructeurExecutees.size > 500) constructeurExecutees.delete(constructeurExecutees.keys().next().value);
     return repondreResultat(res, sortie);
   } catch (e) {

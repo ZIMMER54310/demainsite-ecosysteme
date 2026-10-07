@@ -186,9 +186,10 @@ async function executer({ identite, jeton, revalider, acteur }) {
       if (enCours.has(cle)) return { status: 409, erreur: "Journalisation déjà en cours." };
       enCours.add(cle);
       try {
-        resultat.journal = await require("./journal-comptes").enregistrer(await contexteGraph(), journal);
-        resultat.succes = true;
-        delete resultat.erreur;
+        resultat.journal = await require("./journal-comptes").terminer(
+          await contexteGraph(), journal.entree, journal.resultat);
+        resultat.succes = journal.resultat.statut === "SUCCÈS" && journal.operationReussie;
+        if (resultat.succes) delete resultat.erreur;
         journauxEnAttente.delete(cle);
       } catch (e) {
         console.error("[DSE Comptes reprise journal]", e.message);
@@ -247,8 +248,23 @@ async function executerOperation({ cle, op, revalider, acteur }) {
     return { status: 400, erreur: "Opération non autorisée." };
   }
 
+  let entreeJournal = null;
+  if (op.journalComptes) {
+    try {
+      entreeJournal = await require("./journal-comptes").commencer(g, {
+        cle: `DSE-COMPTES-${cle}`, action: op.action, nom: op.nom,
+        avant: ancien, apres: op.champs,
+        contexte: { ...op.contexteJournal, itemId: op.itemId || null }
+      });
+    } catch (e) {
+      console.error("[DSE Comptes journal début]", e.message);
+      return { status: 503, erreur: "L'écriture est bloquée : le journal OBJ-JRN n'a pas pu enregistrer son début." };
+    }
+  }
+
   let relu;
   let itemId = op.itemId || null;
+  let journalIncomplet = false;
   try {
     if (op.type === "modifier") {
       await dse.graphEcriture(g.token, "PATCH", `/sites/${g.siteGraphId}/lists/${op.listId}/items/${encodeURIComponent(op.itemId)}/fields`, op.champs, etag);
@@ -259,6 +275,26 @@ async function executerOperation({ cle, op, revalider, acteur }) {
     relu = valeursDe(await lireItemFrais(g, op.listId, itemId, op.selectionChamps), noms);
   } catch (e) {
     console.error("[DSE ecriture]", e.message);
+    if (entreeJournal) {
+      const resultatJournal = { statut: "ÉCHEC", avant: ancien, apres: null,
+        anomalie: true, erreur: "Échec de l'écriture ou de sa relecture.",
+        contexte: { ...op.contexteJournal, itemId } };
+      try {
+        await require("./journal-comptes").terminer(g, entreeJournal, resultatJournal);
+      } catch (journalErreur) {
+        console.error("[DSE Comptes journal échec]", journalErreur.message);
+        journalIncomplet = true;
+        const resultat = { succes: false, journal: null, enregistrementEffectue: true,
+          erreur: "L'écriture a échoué et l'état final du journal doit être vérifié avant toute nouvelle tentative." };
+        executees.set(cle, resultat);
+        journauxEnAttente.set(cle, { entree: entreeJournal, resultat: resultatJournal, operationReussie: false });
+      }
+    }
+    if (journalIncomplet) {
+      invaliderCaches();
+      return { status: 502, erreur: "L'état de l'écriture et la fin du journal doivent être vérifiés avant toute nouvelle tentative.",
+        enregistrementEffectue: true };
+    }
     if (e.status === 412 || e.statusCode === 412) return { status: 409, erreur: "Les données ont été modifiées entre-temps. Merci de les relire." };
     invaliderCaches();
     return { status: 502, erreur: "L'enregistrement ou sa vérification a échoué. Relisez les données avant de recommencer." };
@@ -266,17 +302,24 @@ async function executerOperation({ cle, op, revalider, acteur }) {
   invaliderCaches();
   const conforme = noms.every((n) => normaliserTexte(relu[n]) === normaliserTexte(op.champs[n]));
   const r = { succes: conforme, relecture: conforme ? "conforme" : "différente", journal: null };
-  if (conforme && op.journalComptes) {
-    const journal = { cle: `DSE-COMPTES-${cle}`, action: op.action, avant: ancien, apres: relu,
-      contexte: { ...op.contexteJournal, itemId } };
+  if (entreeJournal) {
+    const resultatJournal = {
+      statut: conforme ? "SUCCÈS" : "ÉCHEC",
+      avant: ancien,
+      apres: relu,
+      anomalie: !conforme,
+      erreur: conforme ? null : "La relecture SharePoint ne correspond pas aux valeurs demandées.",
+      contexte: { ...op.contexteJournal, itemId }
+    };
     try {
-      r.journal = await require("./journal-comptes").enregistrer(g, journal);
+      r.journal = await require("./journal-comptes").terminer(g, entreeJournal, resultatJournal);
+      if (!conforme) r.erreur = "La relecture ne correspond pas à la valeur demandée.";
     } catch (e) {
       console.error("[DSE Comptes journal]", e.message);
       r.succes = false;
       r.enregistrementEffectue = true;
-      r.erreur = "L'opération est enregistrée et relue, mais sa journalisation a échoué. Rejouer la même confirmation reprend uniquement le journal, sans réécrire les données.";
-      journauxEnAttente.set(cle, journal);
+      r.erreur = "L'opération est enregistrée et relue, mais sa journalisation doit être vérifiée. Rejouer la même confirmation reprend uniquement le journal, sans réécrire les données.";
+      journauxEnAttente.set(cle, { entree: entreeJournal, resultat: resultatJournal, operationReussie: conforme });
     }
   }
   executees.set(cle, r);

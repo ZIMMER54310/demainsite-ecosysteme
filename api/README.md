@@ -54,9 +54,13 @@ pas remplacees par des donnees fictives :
   de l'assistant restent locales tant que la création de site n'a pas son flux
   d'aperçu, confirmation, revalidation et journalisation OBJ-JRN. Avant toute
   écriture, le schéma réel du journal est vérifié contre le contrat autorisé ;
-  un champ obligatoire hors contrat suspend l'opération. Le schéma de production
-  impose actuellement des champs supplémentaires, donc aucune écriture n'est
-  proposée.
+  les champs requis ID-JRN (Title), CODE, NOM et ANOMALIE sont renseignés,
+  CLEIDEMPOTENCE doit être indexée et unique, et toute incompatibilité suspend
+  l'opération. Les confirmations journalisées suivent DÉBUT, SUCCÈS/ÉCHEC/REFUS,
+  puis FIN, avec relecture SharePoint et refus de réutiliser une clé existante.
+  Les opérations commerce doivent en outre être explicitement accordées par les
+  relations dynamiques de capacité/action et un périmètre réel ; aucun accès
+  n'est créé si ces données sont absentes.
 
 Les boutons de conteneurs et de l'arbre generique consomment les operations
 effectivement autorisees. Publication/desactivation de conteneur, affectation

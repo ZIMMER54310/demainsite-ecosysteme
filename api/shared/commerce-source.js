@@ -15,8 +15,8 @@ const REFERENTIELS_CREATION = Object.freeze({
 });
 
 const CHAMPS_JOURNAL_AUTORISES = new Set([
-  "ACTION", "DATEEVENEMENT", "CLEIDEMPOTENCE", "ANCIENNEVALEUR", "NOUVELLEVALEUR",
-  "STATUTJRN", "ANOMALIE", "ANOMALIEDETECTEE"
+  "TITLE", "CODE", "NOM", "ACTION", "DATEEVENEMENT", "CLEIDEMPOTENCE",
+  "ANCIENNEVALEUR", "NOUVELLEVALEUR", "STATUTJRN", "ANOMALIE", "ANOMALIEDETECTEE"
 ]);
 const cle = (nom) => catalogue.cleChamp(nom);
 
@@ -64,11 +64,17 @@ function verifierContratJournal(colonnes) {
   const visibles = (colonnes || []).filter((c) => !c.hidden);
   const requisesInterdites = visibles.filter((c) => c.required && !CHAMPS_JOURNAL_AUTORISES.has(cle(c.name)));
   const parCle = new Map(visibles.map((c) => [cle(c.name), c]));
+  const id = parCle.get("TITLE");
+  const code = parCle.get("CODE");
+  const nom = parCle.get("NOM");
   const date = parCle.get("DATEEVENEMENT");
   const cleIdempotence = parCle.get("CLEIDEMPOTENCE");
   const statut = parCle.get("STATUTJRN");
   return requisesInterdites.length === 0 &&
-    Boolean(date?.dateTime && cleIdempotence?.text && parCle.get("ACTION")?.text &&
+    Boolean(id?.text && id.enforceUniqueValues && code?.text && code.enforceUniqueValues &&
+      nom?.text && date?.dateTime && cleIdempotence?.text &&
+      cleIdempotence.enforceUniqueValues && cleIdempotence.indexed && parCle.get("ACTION")?.text &&
+      parCle.get("NOUVELLEVALEUR")?.text &&
       parCle.get("ANOMALIE")?.boolean &&
       statut?.choice?.choices?.includes("DÉBUT") && statut.choice.choices.includes("SUCCÈS") &&
       statut.choice.choices.includes("ÉCHEC") && statut.choice.choices.includes("REFUS") &&
