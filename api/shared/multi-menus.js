@@ -316,7 +316,7 @@ async function preparer({ identite, siteId, siteNom, action, params, siteAccessi
     const list=pathList(g,listName);
     return ecriture.emettreJeton(identite,{
       type:itemId?"modifier":"ajouter",portee:"menus",fonction:"menu",operation:op,siteId:String(siteId),
-      listId:list.id,itemId:itemId||undefined,champs:fields,avant:ecriture.hash(oldFields||{}),
+      listId:list.id,itemId:itemId||undefined,champs:fields,avant:ecriture.hash(Object.fromEntries(Object.entries(oldFields||{}).map(([k,v])=>[k,v===undefined||v===null?"":String(v)]))),
       selectionChamps:Object.keys(fields),journalComptes:true,cleDoublon:`menus:${type}:${empreinte([siteId,itemId||"",JSON.stringify(fields)])}`,
       action:`Menus : ${action}`,nom:`${label} — ${siteNom}`,
       notes:`site=${siteId};type=${type}`,
