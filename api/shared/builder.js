@@ -435,14 +435,9 @@ function composerModulesAdaptesPage(donnees, site, page, sections, options) {
   const base = options.ctx || contexteComposition(donnees, site);
   const visible = options.visible || publiable;
   const ctx = { ...base, visible, referentiels: { ...base.referentiels, mediaVisible: visible } };
-  const dejaComposes = new Set();
-  for (const section of enfants(donnees.sections, page.id, "OBJ-PAGES-SITE")) {
-    for (const ligne of enfants(donnees.lignes, section.id, "OBJ-SECTION-SITE")) {
-      for (const colonne of enfants(donnees.colonnes, ligne.id, "OBJ-LIGNE-SITE")) {
-        for (const module of enfants(donnees.modules, colonne.id, "OBJ-COLONNE-SITE")) dejaComposes.add(module.id);
-      }
-    }
-  }
+  const dejaComposes = new Set(sections.flatMap((s) =>
+    s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules.map((m) => m._id)))
+  ));
   const modules = (donnees.modules || [])
     .filter((m) => visible(m) &&
       rel(m, "OBJ-PAGES-SITE")?.id === page.id &&
