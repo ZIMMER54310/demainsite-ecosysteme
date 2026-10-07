@@ -181,7 +181,8 @@ function actionsNoeud(n, peut, colonnes, d) {
     ${action("design.enregistrer") ? bouton("🎨", "design", `${r} title="Design" aria-label="Design"`, "btn btn-mini") : ""}
     ${action("element.dupliquer") ? bouton("⧉", "dupliquer-element", `${r} title="Dupliquer / créer une variante" aria-label="Dupliquer"`, "btn btn-mini") : ""}
     ${action("element.etat") ? !n.etat.publiable
-      ? action("conteneur.publier") ? bouton(n.etat.inactif || n.etat.brouillon ? "Activer" : "✅ Valider et activer", "activer", r, "btn btn-mini") : ""
+      ? action("conteneur.publier") ? bouton(n.etat.inactif || n.etat.brouillon ? "Activer" : "✅ Valider et activer", "activer", r, "btn btn-mini") +
+        (n.etat.brouillon && !n.etat.inactif ? bouton("Désactiver", "desactiver-element", `${r} title="Désactiver sans supprimer"`, "btn btn-mini") : "") : ""
       : bouton("Désactiver", "desactiver-element", r, "btn btn-mini") : ""}
   </span>`;
 }
