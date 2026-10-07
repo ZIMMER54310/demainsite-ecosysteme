@@ -180,8 +180,8 @@ function actionsNoeud(n, peut, colonnes, d) {
     ${action("contenu.enregistrer") && n.type === "module" && n.formulaire ? bouton("✏️ Contenu", "contenu", r, "btn btn-mini") : ""}
     ${action("design.enregistrer") ? bouton("🎨", "design", `${r} title="Design" aria-label="Design"`, "btn btn-mini") : ""}
     ${action("element.dupliquer") ? bouton("⧉", "dupliquer-element", `${r} title="Dupliquer / créer une variante" aria-label="Dupliquer"`, "btn btn-mini") : ""}
-    ${action("element.etat") ? n.etat.inactif || n.etat.brouillon
-      ? action("conteneur.publier") ? bouton("Activer", "activer", r, "btn btn-mini") : ""
+    ${action("element.etat") ? !n.etat.publiable
+      ? action("conteneur.publier") ? bouton(n.etat.inactif || n.etat.brouillon ? "Activer" : "✅ Valider et activer", "activer", r, "btn btn-mini") : ""
       : bouton("Désactiver", "desactiver-element", r, "btn btn-mini") : ""}
   </span>`;
 }
@@ -213,6 +213,8 @@ function noeudHtml(d, n, peut, colonnes) {
 }
 
 const colonnesDe = (sections) => sections.flatMap((s) => (s.enfants || []).flatMap((l) => (l.enfants || []).map((c) => ({ ref: c.ref, titre: `${s.titre} › ${c.titre}` }))));
+const contientBrouillon = (noeuds) => (noeuds || []).some((n) =>
+  n.etat?.brouillon || contientBrouillon(n.enfants));
 
 const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE", article: "PAGE" };
 function arbreGeneriqueHtml(n, peut, racine = true, d = {}) {
@@ -319,6 +321,7 @@ function editeur(d) {
   const type = a.type;
   const peut = ecrit(d, FONCTION[type]);
   const colonnes = colonnesDe(a.sections);
+  const publicationRequise = !a.etat.publiable || a.generique || contientBrouillon(a.sections);
   return `<header class="constructeur-barre-visuelle"><strong>${e(d.site?.titre || "")} · ${e(a.titre)}</strong>
     <div class="constructeur-boutons">${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini" data-c-appareil="${x.cle}">${x.libelle}</button>`).join("")}
       <button type="button" class="btn btn-mini" data-c-action="annuler-design">↶ Annuler</button>
@@ -334,7 +337,7 @@ function editeur(d) {
       <div class="constructeur-boutons">${bouton("← Retour à la liste", "fermer")}
         ${peut && type !== "article" ? bouton(`🎨 Design · ${LIBELLES[type]}`, "design", `data-ref="${e(a.ref)}"`) : ""}
         ${peutAction(d, type, "conteneur.dupliquer") ? bouton("Dupliquer le conteneur", "dupliquer", `data-ref="${e(a.ref)}" data-type="${type}"`) : ""}
-        ${peutAction(d, type, "conteneur.publier") && (!a.etat.publiable || a.generique) ? bouton("✅ Valider et activer", "publier", `data-ref="${e(a.ref)}"`, "btn btn-primary") : ""}
+        ${peutAction(d, type, "conteneur.publier") && publicationRequise ? bouton("✅ Valider et activer", "publier", `data-ref="${e(a.ref)}"`, "btn btn-primary") : ""}
         ${bouton("✨ Demander à Pasc ARA IA", "ia")}</div>
     </header>
     <h3>Arborescence · Ajouter</h3>

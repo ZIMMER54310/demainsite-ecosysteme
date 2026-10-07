@@ -52,6 +52,7 @@ const perimetre = { sites: new Set(["4"]), clients: new Set(["A"]), superAdmin: 
 async function main() {
   const d = donnees();
   const v = C.vue(d, perimetre);
+  const uiConstructeur = await front("cockpit/constructeur.js");
   const mediasUI = await front("cockpit/medias.js");
   const mediasHtml = mediasUI.rendreMedias({ ...v, droits: { "logo-medias": { ecriture: true } },
     medias: [
@@ -100,6 +101,25 @@ async function main() {
   assert.equal(m.typeModule, "TITRE");
   assert.equal(m.utilisations, 1);
   assert.equal(m.contenuRenseigne, true);
+
+  const pageAvecBrouillons = donnees();
+  pageAvecBrouillons.sections.push(el(200, "Section en brouillon", { "OBJ-PAGES-SITE": lien(2) }, {}, BROUILLON, NON));
+  pageAvecBrouillons.lignes.push(el(2000, "Ligne", { "OBJ-SECTION-SITE": lien(200) }));
+  pageAvecBrouillons.colonnes.push(el(2001, "Colonne", { "OBJ-LIGNE-SITE": lien(2000) }));
+  pageAvecBrouillons.modules.push(
+    el(7002, "Module en brouillon", { "OBJ-COLONNE-SITE": lien(2001), OBJMODULESITEPUBLICTYPE: lien(1, "TITRE") }, {}, BROUILLON, NON),
+    el(7003, "Module actif non validé", { "OBJ-COLONNE-SITE": lien(2001), OBJMODULESITEPUBLICTYPE: lien(1, "TITRE") }, {}, OUI, NON)
+  );
+  const htmlConstructeur = uiConstructeur.rendreConstructeur({ nom: "Pascal" }, {
+    site: { titre: "DemainSite Écosystème" },
+    arbre: C.arbre(pageAvecBrouillons, "page", pageAvecBrouillons.pages[0]),
+    operations: ["constructeur.page.conteneur.modifier", "constructeur.page.conteneur.publier",
+      "constructeur.page.element.etat", "constructeur.page.element.deplacer"],
+    modeles: { disponibles: [] }, structures: [], typesSection: [], typesModules: [], medias: []
+  }, { domaine: "dseco.fr" });
+  assert.ok(htmlConstructeur.includes("data-c-action=\"publier\""), "un conteneur publié propose de publier ses nouveaux brouillons");
+  assert.ok(htmlConstructeur.includes("✅ Valider et activer"), "un élément actif mais non validé peut être validé depuis son nœud");
+  assert.ok(htmlConstructeur.includes("Activer"), "un nouvel élément en brouillon peut être activé depuis son nœud");
 
   // Apercu : brouillons inclus, desactives exclus.
   const apEntete = C.apercu(d, "4", "entete", d.entetes[0]);
