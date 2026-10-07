@@ -128,7 +128,25 @@ const etatOui = async (g) => {
   return { actif: ouiActif[0].id, inactif: nonActif[0].id, brouillon: brouillons[0].id, valide: ouiValide[0].id, invalide: nonValide[0].id };
 };
 
-async function lire({ siteId }) {
+/* Autres sites principaux du même client (ID natifs, catalogue SharePoint), avec leur domaine principal. */
+async function autresSitesDuClient(siteId) {
+  const perimetre = require("./perimetre");
+  const index = await require("./catalogue-source").obtenirIndex();
+  const groupes = perimetre.regrouperSites([...index.sites.values()]);
+  const courant = groupes.find((x) => String(x.id) === String(siteId));
+  if (!courant?.clientId) return [];
+  return groupes.filter((x) => String(x.id) !== String(siteId) && String(x.clientId) === String(courant.clientId))
+    .map((x) => ({ id: String(x.id), titre: String(x.titre || ""), domaine: perimetre.domainesDuSite(x).principal,
+      publie: x.actif === true && x.valide === true }))
+    .filter((x) => x.domaine);
+}
+const urlAbsolue = (domaine, chemin) => {
+  const c = String(chemin || "").trim();
+  if (/^https?:\/\//i.test(c)) return c;
+  return `https://${domaine}${c.startsWith("/") ? c : `/${c}`}`;
+};
+
+async function lire({ siteId, siteAccessible = null }) {
   const g = await ecriture.contexteGraph();
   const s = await schema(g);
   const [menusRaw, entreesRaw, affectationsRaw, statuts, pagesInfo, headersInfo, footersInfo] = await Promise.all([
@@ -162,6 +180,19 @@ async function lire({ siteId }) {
     .map((p) => ({ ref: ref("page", p.id), titre: String(p.fields.Title || ""), url: String(pageUrl?p.fields[pageUrl.name]||"":""),
       publie: String(p.fields[`${pageActifInfo.column.name}LookupId`]||"")===statuts.actif&&
         String(p.fields[`${pageValideInfo.column.name}LookupId`]||"")===statuts.valide }));
+  const autres = await autresSitesDuClient(site);
+  const pageExterne = (p, autre) => ({ ref: ref("page", p.id), titre: String(p.fields.Title || ""),
+    url: urlAbsolue(autre.domaine, pageUrl ? p.fields[pageUrl.name] : ""), site: autre.titre, siteRef: ref("site", autre.id),
+    publie: autre.publie && String(p.fields[`${pageActifInfo.column.name}LookupId`]||"")===statuts.actif&&
+      String(p.fields[`${pageValideInfo.column.name}LookupId`]||"")===statuts.valide });
+  const autreDe = (p) => autres.find((a) => a.id === String(p.fields[`${pagesInfo.column.name}LookupId`] || ""));
+  const pagesLiees = new Set(entreeSite.map((x) => val(x.fields, s, "OBJ-MENU-ENTREE", "OBJPAGESSITE")).filter(Boolean));
+  const pagesExternes = pagesRaw.filter((p) => pagesLiees.has(String(p.id)) && autreDe(p)).map((p) => pageExterne(p, autreDe(p)));
+  const sitesClient = typeof siteAccessible === "function"
+    ? autres.filter((a) => siteAccessible(a.id)).map((a) => ({ ref: ref("site", a.id), titre: a.titre, domaine: a.domaine,
+      pages: pagesRaw.filter((p) => autreDe(p)?.id === a.id).map((p) => pageExterne(p, a))
+        .sort((x, y) => x.titre.localeCompare(y.titre, "fr")) }))
+    : [];
   const entrees = entreeSite.map((x) => ({
     ref: ref("entry", x.id),
     titre: String(x.fields.Title || ""),
@@ -196,7 +227,7 @@ async function lire({ siteId }) {
     emplacements: affectations.filter((a) => a.menuRef === ref("menu", x.id)).map((a) => `${a.composant}${a.composantTitre ? ` · ${a.composantTitre}` : ""}`),
     entrees: entrees.filter((e) => e.menuRef === ref("menu", x.id))
   }));
-  return { menus, pages, affectations, entetes: entetesRaw.filter((x) => String(x.fields[`${headersInfo.column.name}LookupId`] || "") === site)
+  return { menus, pages, pagesExternes, sitesClient, affectations, entetes: entetesRaw.filter((x) => String(x.fields[`${headersInfo.column.name}LookupId`] || "") === site)
     .map((x) => ({ ref: ref("header", x.id), titre: String(x.fields.Title || "") })),
   footers: footersRaw.filter((x) => String(x.fields[`${footersInfo.column.name}LookupId`] || "") === site)
     .map((x) => ({ ref: ref("footer", x.id), titre: String(x.fields.Title || "") })) };
@@ -211,7 +242,7 @@ async function publicMenu({siteId,headerId}) {
   if(affectations.length>1)throw new Error("Plusieurs menus publiés sont affectés au même en-tête.");
   const menu=data.menus.find(m=>m.ref===affectations[0].menuRef&&m.etat==="Publié");
   if(!menu)return null;
-  const pages=new Map(data.pages.map(p=>[p.ref,p]));
+  const pages=new Map([...data.pages,...data.pagesExternes].map(p=>[p.ref,p]));
   const entrees=menu.entrees.filter(x=>x.visible&&x.etat==="Publié");
   const construire=(parent="", vus=new Set(), depth=0)=>{
     if(depth>20)return [];
@@ -243,7 +274,7 @@ function urlSecurisee(value) {
   return text;
 }
 
-async function preparer({ identite, siteId, siteNom, action, params }) {
+async function preparer({ identite, siteId, siteNom, action, params, siteAccessible = null }) {
   const g = await ecriture.contexteGraph();
   const s = await schema(g);
   const states = await etatOui(g);
@@ -265,6 +296,14 @@ async function preparer({ identite, siteId, siteNom, action, params }) {
   const menuIds=new Set(menus.map(x=>x.id));
   const entries=entriesAll.filter(x=>menuIds.has(String(x.fields[`${col(s,"OBJ-MENU-ENTREE","OBJMENU").name}LookupId`]||"")));
   const pages=pagesAll.filter(x=>String(x.fields[`${pagesInfo.column.name}LookupId`]||"")===site);
+  // Page d'un autre site du même client, uniquement si l'utilisateur a accès à ce site.
+  const pageAutreSite=async()=>{
+    const autres=(await autresSitesDuClient(site)).filter(a=>typeof siteAccessible==="function"&&siteAccessible(a.id));
+    const cible=autres.find(a=>isRef(params.siteRef,"site",a.id));
+    if(!cible)throw new Error("Ce site n’est pas disponible pour votre compte ou n’appartient pas au même client.");
+    const page=trouverRef(pagesAll.filter(x=>String(x.fields[`${pagesInfo.column.name}LookupId`]||"")===cible.id),params.pageRef,"page");
+    return page.id;
+  };
   const entetes=entetesAll.filter(x=>String(x.fields[`${headersInfo.column.name}LookupId`]||"")===site);
   const footers=footersAll.filter(x=>String(x.fields[`${footersInfo.column.name}LookupId`]||"")===site);
   const assignments=assignmentsRaw.filter(x=>menuIds.has(String(x.fields[`${col(s,"OBJ-MENU-AFFECTATION","OBJMENU").name}LookupId`]||"")));
@@ -347,7 +386,8 @@ async function preparer({ identite, siteId, siteNom, action, params }) {
         const page=trouverRef(pages,params.pageRef,"page");
         if(String(page.fields[`${pagesInfo.column.name}LookupId`]||"")!==String(siteId))throw new Error("Cette page n’appartient pas au site sélectionné.");
         pageId=page.id;
-      }else if(typeDest==="lien")url=urlSecurisee(params.url);
+      }else if(typeDest==="site")pageId=await pageAutreSite();
+      else if(typeDest==="lien")url=urlSecurisee(params.url);
       else throw new Error("Choisissez une destination prise en charge.");
       let parentId=null;
       if(params.parentRef){const parent=trouverRef(entries,params.parentRef,"entry");if(String(parent.fields.OBJMENULookupId)!==menuId)throw new Error("Le parent doit appartenir au même menu.");parentId=parent.id;}
@@ -379,7 +419,8 @@ async function preparer({ identite, siteId, siteNom, action, params }) {
           const page=trouverRef(pages,params.pageRef,"page");
           if(String(page.fields[`${pagesInfo.column.name}LookupId`]||"")!==String(siteId))throw new Error("Cette page n’appartient pas au site sélectionné.");
           pageId=page.id;
-        }else if(params.typeDestination==="lien")url=urlSecurisee(params.url);
+        }else if(params.typeDestination==="site")pageId=await pageAutreSite();
+        else if(params.typeDestination==="lien")url=urlSecurisee(params.url);
         else throw new Error("Choisissez une destination prise en charge.");
         let parentId=null;
         if(params.parentRef){const parent=trouverRef(entries,params.parentRef,"entry");if(parent.id===item.id)throw new Error("Une entrée ne peut pas être son propre parent.");if(String(parent.fields.OBJMENULookupId)!==menuId)throw new Error("Le parent doit appartenir au même menu.");parentId=parent.id;}

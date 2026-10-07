@@ -3,12 +3,13 @@ import { getMenus, apercuMenu, confirmerEdition, initialiserMenusSite } from "..
 
 const e = escapeHtml;
 const lienMenu = (domaine, menuRef = "") => `#/cockpit/site/${encodeURIComponent(domaine)}/menu${menuRef ? `?menuRef=${encodeURIComponent(menuRef)}` : ""}`;
+const toutesPages = (d) => [...(d.pages || []), ...(d.pagesExternes || []), ...(d.sitesClient || []).flatMap((x) => x.pages || [])];
 const parOrdre = (a, b) => Number(a.ordre) - Number(b.ordre) || a.titre.localeCompare(b.titre, "fr");
 
 function entreeHtml(entree, data, niveau = 0) {
   const enfants = data.menu.entrees.filter((x) => x.parentRef === entree.ref).sort(parOrdre);
-  const page = data.pages.find((x) => x.ref === entree.pageRef);
-  const destination = page ? page.titre : entree.url;
+  const page = toutesPages(data).find((x) => x.ref === entree.pageRef);
+  const destination = page ? (page.site ? `${page.site} · ${page.titre}` : page.titre) : entree.url;
   return `<li class="dse-menu-entry" data-entry="${e(entree.ref)}" style="--menu-level:${Math.min(niveau, 5)}">
     <div class="dse-menu-entry__row"><div><strong>${e(entree.titre)}</strong><span class="muted">${e(destination || "Destination à compléter")}</span>
       <small>${entree.visible ? "Visible" : "Masquée"} · ${e(entree.etat)}${entree.nouvelleFenetre ? " · Nouvelle fenêtre" : ""}</small></div>
@@ -29,12 +30,16 @@ function selectOptions(items, value = "", empty = "— Choisir —") {
 function formulaireEntree(donnees, entry = null) {
   const page = entry?.pageRef || "";
   const custom = !page && Boolean(entry?.url);
+  const sites = donnees.sitesClient || [];
+  const siteCible = page && !donnees.pages.some((x) => x.ref === page) ? sites.find((x) => x.pages.some((p) => p.ref === page)) : null;
+  const type = custom ? "lien" : siteCible ? "site" : "page";
   const menuEntrees = donnees.menu.entrees.filter((x) => x.ref !== entry?.ref);
   return `<form class="card dse-menu-form" data-entry-form-submit="${e(entry?.ref || "")}">
     <h3>${entry ? "Modifier l’entrée" : "Ajouter une entrée"}</h3>
     <label>Libellé<input name="titre" maxlength="255" required value="${e(entry?.titre || "")}"></label>
-    <label>Type de destination<select name="typeDestination"><option value="page"${!custom ? " selected" : ""}>Page du site</option><option value="lien"${custom ? " selected" : ""}>Lien personnalisé</option></select></label>
-    <label data-destination-page>Page<select name="pageRef">${selectOptions(donnees.pages, page, "Choisir une page")}</select></label>
+    <label>Type de destination<select name="typeDestination"><option value="page"${type === "page" ? " selected" : ""}>Page du site</option>${sites.length ? `<option value="site"${type === "site" ? " selected" : ""}>Autre site du client</option>` : ""}<option value="lien"${type === "lien" ? " selected" : ""}>Lien personnalisé</option></select></label>
+    <label data-destination-site>Site du client<select name="siteRef">${selectOptions(sites.map((x) => ({ ref: x.ref, titre: `${x.titre} (${x.domaine})` })), siteCible?.ref || "", "Choisir un site")}</select></label>
+    <label data-destination-page>Page<select name="pageRef">${selectOptions(siteCible ? siteCible.pages : donnees.pages, page, "Choisir une page")}</select></label>
     <label data-destination-url>Lien personnalisé<input name="url" type="url" placeholder="https://…" value="${e(entry?.url || "")}"></label>
     <label>Parent éventuel<select name="parentRef">${selectOptions(menuEntrees, entry?.parentRef || "", "Aucun (niveau principal)")}</select></label>
     <label>Ordre<input name="ordre" type="number" step="1" value="${Number(entry?.ordre || (donnees.menu.entrees.length + 1) * 10)}"></label>
@@ -56,7 +61,7 @@ function formulaireAffectation(donnees, menu) {
 function apercuHtml(menu, donnees) {
   const tree = menu.entrees.filter((x) => x.visible).sort(parOrdre);
   const htmlItems = (parent = "") => tree.filter((x) => x.parentRef === parent).map((x) => {
-    const page = donnees.pages.find((p) => p.ref === x.pageRef);
+    const page = toutesPages(donnees).find((p) => p.ref === x.pageRef);
     const url = urlSure(page?.url || x.url) || "#";
     return `<li><a href="${e(url)}"${x.nouvelleFenetre ? ' target="_blank" rel="noopener noreferrer"' : ""}>${e(x.titre)}</a>${tree.some((y) => y.parentRef === x.ref) ? `<ul>${htmlItems(x.ref)}</ul>` : ""}</li>`;
   }).join("");
@@ -188,13 +193,22 @@ export function activerMenus(root, donnees, { domaine, menuRef = "" } = {}) {
   function activerFormulaireEntree(zone, entry = null) {
     const form=zone.querySelector("[data-entry-form-submit]");
     if(!form)return;
-    const sync=()=>{const custom=form.elements.typeDestination.value==="lien";form.querySelector("[data-destination-page]").hidden=custom;form.querySelector("[data-destination-url]").hidden=!custom;};
-    form.elements.typeDestination.addEventListener("change",sync);sync();
+    const sites=donnees.sitesClient||[];
+    const remplirPages=()=>{
+      const type=form.elements.typeDestination.value;
+      const liste=type==="site"?(sites.find((x)=>x.ref===form.elements.siteRef.value)?.pages||[]):donnees.pages;
+      const actuel=form.elements.pageRef.value;
+      form.elements.pageRef.innerHTML=selectOptions(liste,liste.some((x)=>x.ref===actuel)?actuel:"",type==="site"&&!form.elements.siteRef.value?"Choisir d’abord un site":"Choisir une page");
+    };
+    const sync=()=>{const type=form.elements.typeDestination.value;form.querySelector("[data-destination-site]").hidden=type!=="site";
+      form.querySelector("[data-destination-page]").hidden=type==="lien";form.querySelector("[data-destination-url]").hidden=type!=="lien";};
+    form.elements.typeDestination.addEventListener("change",()=>{sync();remplirPages();});
+    form.elements.siteRef.addEventListener("change",remplirPages);sync();
     form.querySelector("[data-entry-cancel]").addEventListener("click",()=>zone.replaceChildren());
     form.addEventListener("submit",async(event)=>{
       event.preventDefault();const data=new FormData(form),button=form.querySelector('[type="submit"]');
       const params={menuRef,entryRef:entry?.ref,titre:String(data.get("titre")||""),typeDestination:String(data.get("typeDestination")||"page"),
-        pageRef:String(data.get("pageRef")||""),url:String(data.get("url")||""),parentRef:String(data.get("parentRef")||""),
+        siteRef:String(data.get("siteRef")||""),pageRef:String(data.get("pageRef")||""),url:String(data.get("url")||""),parentRef:String(data.get("parentRef")||""),
         ordre:Number(data.get("ordre")||0),visible:data.has("visible"),nouvelleFenetre:data.has("nouvelleFenetre")};
       await run(button,entry?"entree.modifier":"entree.ajouter",params);
     });

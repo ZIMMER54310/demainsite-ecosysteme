@@ -491,6 +491,12 @@ const peutOperation = (d, operation, fonction) => !d.contraintesOperations?.incl
   : d.reconnu && d.fonctions.includes(fonction) && RANG[d.niveau] >= RANG.ecriture);
 const peutEcrire = (d, fonction) => peutOperation(d, `${fonction}.modifier`, fonction);
 
+/* Sites dont l'utilisateur possède un contexte COMPLET (droits de base, avant restriction au site courant). */
+async function accesSites(base) {
+  const donnees = await droits.donneesDroits();
+  return (id) => droits.contexteSite(base, donnees, id).contexte?.etat === "COMPLET";
+}
+
 /* Site demande -> site principal (ID natif) dans le perimetre, sinon null (aucune divulgation). */
 async function siteDuPerimetre(ctx, domaineBrut) {
   const domaine = normaliserDomaine(domaineBrut);
@@ -586,11 +592,12 @@ async function menusLire(req, res) {
   try {
     const ctx = await contexteUtilisateur(req);
     if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const base = ctx.droits;
     const info = await siteDuPerimetre(ctx, req.query.domaine);
     const lectureAutorisee = peutOperation(ctx.droits, "menu.voir", "menu") ||
       peutOperation(ctx.droits, "menu.modifier", "menu");
     if (!info || !lectureAutorisee) return refuser(res, 403, "Les menus de ce site ne sont pas disponibles dans votre espace.");
-    const donnees = await require("../shared/multi-menus").lire({ siteId: info.id });
+    const donnees = await require("../shared/multi-menus").lire({ siteId: info.id, siteAccessible: await accesSites(base) });
     repondre(res, 200, { succes: true, donnees: { site: info.titre, ...donnees,
       peutInitialiser: peutOperation(ctx.droits, "menu.creer", "menu") &&
         peutOperation(ctx.droits, "menu.affecter", "menu") }, meta: meta() });
@@ -626,6 +633,7 @@ async function menusApercu(req, res) {
     const action = String(req.body?.action || "").slice(0, 80);
     const params = req.body?.params && typeof req.body.params === "object" && !Array.isArray(req.body.params) ? req.body.params : {};
     if (JSON.stringify(params).length > 12000) return refuser(res, 413, "Saisie trop volumineuse.");
+    const base = ctx.droits;
     const info = await siteDuPerimetre(ctx, domaine);
     const operation = action === "menu.creer" ? "menu.creer"
       : action === "menu.publier" || action === "entree.publier" ? "menu.publier"
@@ -634,7 +642,7 @@ async function menusApercu(req, res) {
       return refuserEcriture(res, ctx, domaine, operation, "Cette opération de menu n'est pas autorisée dans le périmètre du site.");
     }
     const resultat = await require("../shared/multi-menus").preparer({
-      identite: ctx.identite, siteId: info.id, siteNom: info.titre, action, params
+      identite: ctx.identite, siteId: info.id, siteNom: info.titre, action, params, siteAccessible: await accesSites(base)
     });
     repondreResultat(res, resultat);
   } catch (e) {
