@@ -36,6 +36,7 @@ function donneesBase(extra = {}) {
       "OBJ-MODULE-TITRE": [el(1, { TEXTE: "Bonjour", "ORDRE-AFFICHAGE": 1 }, { "OBJ-MODULE-SITE-PUBLIC": lien(7000) }),
         el(2, { TEXTE: "Mobile" }, { "OBJ-MODULE-SITE-PUBLIC": lien(7003) }), el(3, { TEXTE: "AUTRE SITE" }, { "OBJ-MODULE-SITE-PUBLIC": lien(7200) })],
       "OBJ-MODULE-TEXTE": [el(4, { "TEXTE-ENRICHI": '<p onclick="x()">Salut <script>alert(1)</script><a href="javascript:alert(1)">m</a></p>' }, { "OBJ-MODULE-SITE-PUBLIC": lien(7001) })],
+      "OBJ-MODULE-HERO": [],
       "OBJ-MODULE-IMAGE": []
     },
     ...extra
@@ -60,6 +61,31 @@ async function main() {
   assert.equal(aplatir(autre).every((m) => m.contenu.every((x) => x.champs.TEXTE !== "Bonjour")), true);
   assert.equal(B.composerPage(donneesBase(), site2, { pageId: "10" }).mode, "historique", "page d'un autre site refusee");
   assert.equal(B.composerPage(donneesBase(), { id: "99" }).mode, "historique");
+
+  // Pont historique en lecture seule : un module adapté rattaché directement à la page
+  // est projeté dans le rendu, sans créer de composition SharePoint ni dupliquer un module déjà imbriqué.
+  const legacy = donneesBase();
+  legacy.modules.push(el(7004, {}, { "OBJ-PAGES-SITE": lien(10), OBJMODULESITEPUBLICTYPE: lien(3, "HERO") }));
+  legacy.contenus["OBJ-MODULE-HERO"] = [el(14, { "TITRE-PRINCIPAL": "Hero historique" }, { "OBJ-MODULE-SITE-PUBLIC": lien(7004) })];
+  const avecHero = B.composerPage(legacy, site1);
+  assert.equal(avecHero.mode, "builder");
+  const heroes = avecHero.sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
+    .filter((m) => m.type === "HERO");
+  assert.equal(heroes.length, 1);
+  assert.equal(heroes[0].contenu[0].champs.TITREPRINCIPAL, "Hero historique");
+  assert.equal(B.composerPage(legacy, site2).sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
+    .some((m) => m.type === "HERO"), false, "module historique isolé au site de sa page");
+  legacy.modules[5].relations["OBJ-COLONNE-SITE"] = lien(5002);
+  const dejaImbrique = B.composerPage(legacy, site1);
+  assert.equal(dejaImbrique.sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
+    .filter((m) => m.type === "HERO").length, 1, "module déjà composé non dupliqué");
+  legacy.lignes[1].relations["OBJ-ACTIF"] = NON;
+  assert.equal(B.composerPage(legacy, site1).sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
+    .some((m) => m.type === "HERO"), false, "module imbriqué jamais réintroduit si son parent est masqué");
+  legacy.lignes[1].relations["OBJ-ACTIF"] = OUI;
+  legacy.modules[5].relations["OBJ-ACTIF"] = NON;
+  assert.equal(B.composerPage(legacy, site1).sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
+    .some((m) => m.type === "HERO"), false, "module historique inactif exclu");
 
   // Compatibilite ancien mode : composition non validee => historique.
   const d = donneesBase();

@@ -1,7 +1,8 @@
 // Constructeur DSE (En-tetes / Pages / Footer) : interface pilotee par les donnees SharePoint renvoyees par le serveur.
 // Le navigateur ne manipule que des references opaques signees ; chaque action est recontrolee cote serveur.
-import { escapeHtml as e } from "../public/outils.js";
+import { escapeHtml as e, urlSure } from "../public/outils.js";
 import { rendreBuilder, STYLES_BUILDER } from "../builder/rendu.js";
+import { nettoyerHtml } from "../texte/nettoyer.js";
 import { getConstruire, actionConstruire } from "../../services/cockpit.service.js";
 import { rendreEnteteCockpit, rendreAccompagnement } from "./cockpit.js";
 import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU } from "./design.js";
@@ -267,9 +268,31 @@ export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU") {
 export function documentApercu(composition, type = "page") {
   const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: {}, apercu: true, prefixe, typeConteneur });
   const zone = (z, balise, prefixe, t) => z?.sections?.length || z?.noeuds?.length ? `<${balise}>${rendreBuilder({ mode: "builder", sections: z.sections, noeuds: z.noeuds, style: z.style, responsive: z.responsive, _ref: z._ref, theme: composition.theme }, options(prefixe, t))}</${balise}>` : "";
-  const corps = `${zone(composition?.entete, "header", "e", "ENTETE")}${rendreBuilder(composition || {}, options(type === "page" ? "p" : type[0], TYPE_CONTENEUR[type] || "PAGE"))}${zone(composition?.footer, "footer", "f", "FOOTER")}`;
+  const heroApercu = (module) => {
+    const contenu = module?.contenu?.find((x) => x?.champs || x?.media);
+    if (!contenu) return "";
+    const champs = contenu.champs || {};
+    const cle = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const valeur = (...noms) => {
+      const cible = new Set(noms.map(cle));
+      const entree = Object.entries(champs).find(([nom]) => cible.has(cle(nom)));
+      return entree?.[1] ?? "";
+    };
+    const texte = String(valeur("TEXTE") || "");
+    const bouton1 = urlSure(valeur("BOUTON-1-URL"));
+    const bouton2 = urlSure(valeur("BOUTON-2-URL"));
+    const imageUrl = urlSure(valeur("IMAGE-URL"), { lien: false }) ||
+      (contenu.media || []).find((media) => /^\d{1,12}$/.test(String(media?.id || "")))?.id;
+    const image = imageUrl
+      ? `<img src="${e(/^\d+$/.test(imageUrl) ? `/api/v1/media/${imageUrl}` : imageUrl)}" alt="${e(valeur("IMAGE-ALT"))}">`
+      : "";
+    const bouton = (label, href) => label && href ? `<a href="${e(href)}">${e(label)}</a>` : "";
+    return `<section class="dse-apercu-hero">${image}<div><p>${e(valeur("SOUS-TITRE"))}</p><h1>${e(valeur("TITRE-PRINCIPAL"))}</h1><div>${nettoyerHtml(texte)}</div><nav>${bouton(valeur("BOUTON-1-TEXTE"), bouton1)}${bouton(valeur("BOUTON-2-TEXTE"), bouton2)}</nav></div></section>`;
+  };
+  const optionsPage = (prefixe, typeConteneur) => ({ ...options(prefixe, typeConteneur), adapteurs: { HERO: heroApercu } });
+  const corps = `${zone(composition?.entete, "header", "e", "ENTETE")}${rendreBuilder(composition || {}, optionsPage(type === "page" ? "p" : type[0], TYPE_CONTENEUR[type] || "PAGE"))}${zone(composition?.footer, "footer", "f", "FOOTER")}`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>body{margin:0;font-family:system-ui,sans-serif}${STYLES_BUILDER}[data-dse-ref].dse-design-cible{outline:2px dashed #7c3aed;outline-offset:2px}
+    <style>body{margin:0;font-family:system-ui,sans-serif}${STYLES_BUILDER}.dse-apercu-hero{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;padding:clamp(24px,6vw,80px);background:#f4f8fc}.dse-apercu-hero img{width:100%;height:auto;object-fit:cover}.dse-apercu-hero h1{font-size:clamp(2rem,5vw,4rem)}.dse-apercu-hero nav{display:flex;flex-wrap:wrap;gap:12px}.dse-apercu-hero nav a{padding:10px 16px;border-radius:6px;background:#0755a4;color:white;text-decoration:none}@media(max-width:640px){.dse-apercu-hero{grid-template-columns:1fr}}[data-dse-ref].dse-design-cible{outline:2px dashed #7c3aed;outline-offset:2px}
     [data-dse-ref]{min-height:24px}.dse-b-recursif{position:relative}.dse-b-recursif:hover{outline:1px dashed #7c3aed}
     .dse-b-recursif:hover>.dse-b-outils,.dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:relative;z-index:2}
     .dse-builder-glisse .dse-b-depot{display:block;border:1px dashed #7c3aed;padding:5px;font:12px system-ui;color:#4c1d95;background:#f5f3ff}

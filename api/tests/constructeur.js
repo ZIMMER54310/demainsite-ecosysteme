@@ -120,6 +120,18 @@ async function main() {
   const compAutre = B.composerPage({ ...d, pages: [d.pages[0]], entetes: [el(1, "x", { "OBJ-SITE-PUBLIC": lien(9) })] }, { id: "4" });
   assert.ok(!compAutre.entete && compAutre.mode === "historique", "En-tete d'un autre site jamais rendu");
 
+  const brouillonHero = el(7004, "Hero brouillon", { "OBJ-PAGES-SITE": lien(2), OBJMODULESITEPUBLICTYPE: lien(3, "HERO") }, {}, OUI, NON);
+  const dHero = { ...d, modules: [...d.modules, brouillonHero], contenus: { ...d.contenus,
+    "OBJ-MODULE-HERO": [el(14, "Hero brouillon", { "OBJ-MODULE-SITE-PUBLIC": lien(7004) }, { "TITRE-PRINCIPAL": "Aperçu authentifié" }, OUI, NON)] } };
+  const apercuPage = C.apercu(dHero, 4, "page", dHero.pages[0], "ORDINATEUR", perimetre);
+  const moduleHeroApercu = apercuPage.sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
+    .find((m) => m.type === "HERO");
+  assert.equal(moduleHeroApercu.contenu[0].champs.TITREPRINCIPAL, "Aperçu authentifié", "HERO historique visible en aperçu brouillon");
+  assert.ok(moduleHeroApercu._ref && !moduleHeroApercu._id, "référence d'aperçu opaque, aucun ID natif exposé");
+  const publicSansBrouillon = B.composerPage(dHero, { id: "4" });
+  assert.equal(publicSansBrouillon.sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
+    .some((m) => m.type === "HERO"), false, "brouillon jamais projeté vers le public");
+
   // Front : interface constructeur, aucune donnee technique, popup IA et apercu.
   const { rendreConstructeur, documentApercu, ONGLETS, badgeEtat } = await front("cockpit/constructeur.js");
   {
@@ -137,6 +149,15 @@ async function main() {
     for (const action of ["annuler-design", "retablir-design", "copier-style", "coller-style", "apercu-seul", "enregistrer-design"]) assert.ok(editeur.includes(`data-c-action="${action}"`), action);
     assert.ok(editeur.includes('draggable="true"') && editeur.includes('data-c-noeud='));
     assert.ok(documentApercu({ mode: "builder", sections: [] }).includes("Aperçu vide"));
+    const apercuHero = documentApercu({ mode: "builder", sections: [{ type: "STANDARD", lignes: [{ colonnes: [{
+      largeur: 100, modules: [{ type: "HERO", contenu: [{
+        champs: { TITREPRINCIPAL: "Accueil réel", TEXTE: "<p>Contenu <script>alert(1)</script></p>", BOUTON1TEXTE: "Voir", BOUTON1URL: "javascript:alert(1)" },
+        media: [{ id: "123" }]
+      }] }]
+    }] }] }] });
+    assert.ok(apercuHero.includes("<h1>Accueil réel</h1>"));
+    assert.ok(apercuHero.includes("/api/v1/media/123"));
+    assert.ok(!apercuHero.includes("alert(1)") && !apercuHero.includes("javascript:"), "aperçu historique sûr");
     assert.ok(badgeEtat({ brouillon: true }).includes("Brouillon"));
   }
   // Import de medias : nom sur, signature du contenu, refus sans droit (aucun appel Graph), formulaire front.

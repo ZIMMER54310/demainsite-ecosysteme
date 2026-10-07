@@ -14,6 +14,7 @@ const LISTES_CONTENU = {
   BOUTON: "OBJ-MODULE-BOUTON", BOUTONS: "OBJ-MODULE-BOUTON", IMAGE: "OBJ-MODULE-IMAGE", "IMAGE-TEXTE": "OBJ-MODULE-IMAGE",
   GALERIE: "OBJ-MODULE-GALERIE", CARROUSEL: "OBJ-MODULE-CARROUSEL", VIDEO: "OBJ-MODULE-VIDEO", AUDIO: "OBJ-MODULE-AUDIO",
   DOCUMENT: "OBJ-MODULE-DOCUMENT", TELECHARGEMENT: "OBJ-MODULE-DOCUMENT", CTA: "OBJ-MODULE-CTA", CARTE: "OBJ-MODULE-CARTE",
+  HERO: "OBJ-MODULE-HERO",
   "LISTE-CARTES": "OBJ-MODULE-CARTE", FAQ: "OBJ-MODULE-FAQ", ACCORDEON: "OBJ-MODULE-FAQ", FORMULAIRE: "OBJ-MODULE-FORMULAIRE",
   CATALOGUE: "OBJ-MODULE-CATALOGUE", ARTICLES: "OBJ-MODULE-CATALOGUE", PRODUITS: "OBJ-MODULE-CATALOGUE",
   SERVICES: "OBJ-MODULE-CATALOGUE", COLLECTIONS: "OBJ-MODULE-CATALOGUE", FILTRES: "OBJ-MODULE-CATALOGUE",
@@ -30,6 +31,7 @@ const TECHNIQUES = new Set(["ACTIF", "VALIDE", "VEROUILLE", "OBJACTIF", "OBJVALI
   "OBJMODULESITEPUBLIC", "TITLE", "ID", "CONTENTTYPE"]);
 
 const APPAREILS = ["ORDINATEUR", "TABLETTE", "MOBILE"];
+const MODULES_ADAPTES_PAGE = new Set(["HERO"]);
 const POLICES = { SANS: "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif", SERIF: "Georgia,'Times New Roman',serif", MONO: "ui-monospace,Menlo,Consolas,monospace" };
 const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
@@ -425,6 +427,40 @@ function composerConteneurPage(donnees, site, page, { liste, relation }, options
 }
 
 /*
+ * Les anciens modules adaptés peuvent être rattachés directement à une page, sans
+ * hiérarchie Section > Ligne > Colonne. On les projette en mémoire seulement si la
+ * page n'a pas de racine récursive et si le module n'est pas déjà dans ses sections.
+ */
+function composerModulesAdaptesPage(donnees, site, page, sections, options) {
+  const base = options.ctx || contexteComposition(donnees, site);
+  const visible = options.visible || publiable;
+  const ctx = { ...base, visible, referentiels: { ...base.referentiels, mediaVisible: visible } };
+  const dejaComposes = new Set();
+  for (const section of enfants(donnees.sections, page.id, "OBJ-PAGES-SITE")) {
+    for (const ligne of enfants(donnees.lignes, section.id, "OBJ-SECTION-SITE")) {
+      for (const colonne of enfants(donnees.colonnes, ligne.id, "OBJ-LIGNE-SITE")) {
+        for (const module of enfants(donnees.modules, colonne.id, "OBJ-COLONNE-SITE")) dejaComposes.add(module.id);
+      }
+    }
+  }
+  const modules = (donnees.modules || [])
+    .filter((m) => visible(m) &&
+      rel(m, "OBJ-PAGES-SITE")?.id === page.id &&
+      MODULES_ADAPTES_PAGE.has(String(rel(m, "OBJMODULESITEPUBLICTYPE")?.titre || "").trim().toUpperCase()) &&
+      !dejaComposes.has(m.id))
+    .sort(parOrdre)
+    .map((m) => composerModule(m, ctx))
+    .filter((m) => m && (!options.appareil || m.visibilite[options.appareil]));
+  if (!modules.length) return sections;
+
+  return [{
+    type: "STANDARD", ancrage: "", lignes: [{
+      structure: "100", espacement: null, colonnes: [{ largeur: 100, largeurTablette: null, largeurMobile: null, modules }]
+    }]
+  }, ...sections];
+}
+
+/*
  * Retourne { mode: "builder" | "historique", page, sections[], entete?, footer? }.
  * Le mode Builder n'existe que si au moins un module valide est rendu ; sinon le rendu historique reste actif.
  */
@@ -444,8 +480,10 @@ function composerPage(donnees, site, options = {}) {
       sections: [], noeuds: [noeud], entete, footer, theme: themeGlobal(opts.ctx) };
   }
 
-  if (!aDesModules(sections) && !entete && !footer) return { mode: "historique", page: null, sections: [] };
-  return { mode: "builder", page: { id: page.id, ...styleElement(opts.ctx, "PAGE", page) }, sections: aDesModules(sections) ? sections : [], entete, footer,
+  const sectionsComposees = composerModulesAdaptesPage(donnees, site, page, sections, opts);
+
+  if (!aDesModules(sectionsComposees) && !entete && !footer) return { mode: "historique", page: null, sections: [] };
+  return { mode: "builder", page: { id: page.id, ...styleElement(opts.ctx, "PAGE", page) }, sections: aDesModules(sectionsComposees) ? sectionsComposees : [], entete, footer,
     theme: themeGlobal(opts.ctx) };
 }
 
@@ -474,5 +512,5 @@ function listerTypes(donnees) {
 module.exports = { CHOIX, ALIGNS,
   LISTES_CONTENU, LISTES_BUILDER, POLICES, APPAREILS,
   composerPage, composerSections, contexteComposition, composerModule, listerModeles, listerTypes, styleDepuisPreset, responsiveDepuisPreset, trouverPage, publiable, enfants, parOrdre,
-  styleResolu, styleElement, themeGlobal, groupesDesign, typeStyle, chainePresets, presetDuSite, GROUPES, GROUPES_REPLI
+  composerModulesAdaptesPage, styleResolu, styleElement, themeGlobal, groupesDesign, typeStyle, chainePresets, presetDuSite, GROUPES, GROUPES_REPLI
 };

@@ -255,13 +255,14 @@ function apercu(d, siteId, type, el, appareil, perimetre) {
   const site = { id: String(siteId) };
   const ctx = B.contexteComposition(d, site);
   const options = { appareil: B.APPAREILS.includes(String(appareil || "").toUpperCase()) ? String(appareil).toUpperCase() : null, visible: visibleApercu, ctx };
-  const marquer = (t, { _id, ...x }) => ({ ...x, _ref: ref(t, _id) });
-  const sections = (t, e) => B.composerSections(d, site, enfantsDe(d, t, e), options).map((s) => ({ ...marquer("section", s),
+  const marquer = (t, { _id, ...x }) => _id ? { ...x, _ref: ref(t, _id) } : x;
+  const marquerSections = (elements) => elements.map((s) => ({ ...marquer("section", s),
     lignes: s.lignes.map((l) => ({ ...marquer("ligne", l), colonnes: l.colonnes.map((c) => ({ ...marquer("colonne", c),
       modules: c.modules.map((m) => marquer("module", m)) })) })) }));
-  const zone = (t, e) => {
+  const sections = (t, e) => marquerSections(B.composerSections(d, site, enfantsDe(d, t, e), options));
+  const zone = (t, e, sectionsForce = null) => {
     const root = R.trouverRacine(d, siteId, t, e.id);
-    return { sections: root ? [] : sections(t, e),
+    return { sections: root ? [] : sectionsForce || sections(t, e),
       ...(root ? { noeuds: [R.arbre(d, root, { reference: referenceBuilder,
         mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetreBuilder(perimetre, siteId))) })] } : {}),
       ...B.styleElement(ctx, TYPE_CONTENEUR[t], e), _ref: ref(t, e.id) };
@@ -273,7 +274,10 @@ function apercu(d, siteId, type, el, appareil, perimetre) {
     const c = r ? (d[CONTENEURS[t].cle] || []).find((x) => x.id === r.id) : null;
     return c && !inactif(c) ? zone(t, c) : null;
   };
-  return { mode: "builder", ...zone("page", el), theme, entete: lie("entete"), footer: lie("footer") };
+  const root = R.trouverRacine(d, siteId, "page", el.id);
+  const pageSections = root ? null : marquerSections(B.composerModulesAdaptesPage(d, site, el,
+    B.composerSections(d, site, enfantsDe(d, "page", el), options), options));
+  return { mode: "builder", ...zone("page", el, pageSections), theme, entete: lie("entete"), footer: lie("footer") };
 }
 
 /* ======================================================================
