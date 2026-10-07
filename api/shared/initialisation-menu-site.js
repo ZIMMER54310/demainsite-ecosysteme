@@ -20,9 +20,11 @@ const liste = (g, nom) => {
   if (xs.length !== 1) throw new Error(`Liste SharePoint unique requise : ${nom}.`);
   return xs[0];
 };
+// Même règle que multi-menus : premier mot du libellé (« Oui - Actif » → Oui).
 const idEtat = async (g, nom, titre) => {
   const l = liste(g, nom);
-  const xs = (await items(g, l, [])).filter((x) => normaliser(x.fields.Title) === normaliser(titre));
+  const xs = (await items(g, l, [])).filter((x) =>
+    normaliser(String(x.fields.Title || "").trim().split(/[\s-]+/)[0]) === normaliser(titre));
   if (xs.length !== 1) throw new Error(`Référentiel ${nom} : état ${titre} absent ou ambigu.`);
   return String(xs[0].id);
 };
