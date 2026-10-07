@@ -526,8 +526,8 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (!cadre || !f) return;
     const largeur = (APPAREILS_APERCU.find((x) => x.cle === etat.appareil) || APPAREILS_APERCU[0]).largeur;
     const echelle = Math.min(1, (cadre.clientWidth || largeur) / largeur);
-    const hauteur = Math.max(480, Math.min(4000, docApercu()?.documentElement?.scrollHeight || 640));
-    const hauteurViewport = Math.min(hauteur, 900 / echelle);
+    // Fenetre d'apercu a hauteur d'ecran : en-tete en haut, pied de page en bas, defilement interne comme un vrai site.
+    const hauteurViewport = Math.max(360, (window.innerHeight || 800) - 150) / echelle;
     Object.assign(f.style, { width: `${largeur}px`, height: `${hauteurViewport}px`, transform: `scale(${echelle})`, transformOrigin: "top left" });
     cadre.style.height = `${Math.ceil(hauteurViewport * echelle)}px`;
   };
@@ -550,7 +550,9 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       n.closest("details.constructeur-volet")?.setAttribute("open", "");
       n.scrollIntoView({ block: "nearest" });
     }
-    if (selection) doc.querySelector(`[data-dse-ref="${CSS.escape(selection)}"]`)?.classList.add("dse-design-cible");
+    const choisi = selection ? doc.querySelector(`[data-dse-ref="${CSS.escape(selection)}"]`) : null;
+    choisi?.classList.add("dse-design-cible");
+    choisi?.scrollIntoView({ block: "nearest" });
     const form = racine.querySelector("[data-design-form]");
     if (!etat.design?.data || !form) return;
     const el = doc.querySelector(`[data-dse-ref="${CSS.escape(etat.design.ref)}"]`);
