@@ -105,7 +105,7 @@ async function lookupVers(g, listName, cibleNom) {
   const cols=await dse.chargerColonnesListe(g.token,g.siteGraphId,liste.id);
   const matches=cols.filter(c=>c.lookup&&c.lookup.listId.toLowerCase()===cible.id.toLowerCase()&&!c.lookup.allowMultipleValues);
   if(matches.length!==1)throw new Error(`${listName}: relation vers ${cibleNom} indisponible ou ambiguë.`);
-  return {list,column:matches[0]};
+  return {list:liste,column:matches[0]};
 }
 const val = (fields, schemaData, list, name) => {
   const c = col(schemaData, list, name);
@@ -435,4 +435,6 @@ async function revalider(op) {
   return null;
 }
 
-module.exports={lire,publicMenu,preparer,revalider,schema,empreinte,_test:{normaliser,urlSecurisee,ref,ATTENDUS,COLONNES_REQUISES}};
+module.exports={lire,publicMenu,preparer,revalider,schema,empreinte,_test:{
+  normaliser,urlSecurisee,ref,ATTENDUS,COLONNES_REQUISES,lookupVers
+}};

@@ -3,6 +3,7 @@
 const assert = require("node:assert/strict");
 const dse = require("../shared/dse");
 const { DEFINITIONS, planifierChampsObligatoires, verifier } = require("../tools/provision-multi-menus");
+const multiMenus = require("../shared/multi-menus");
 
 const ids = {
   "OBJ-MENU": DEFINITIONS["OBJ-MENU"].id,
@@ -55,7 +56,17 @@ async function main() {
     const invalid = await verifier("test-token", "test-site");
     assert.equal(invalid.conforme, false);
     assert.ok(invalid.erreurs.some((x) => x.includes("OBJ-MENU-ENTREE.OBJMENU")));
-    console.log("Schéma multi-menus : noms internes, Lookups, requis, unicité et index vérifiés.");
+    const graph = { token: "test-token", siteGraphId: "test-site", listes: [
+      { displayName: "OBJ-PAGES-SITE", id: "page-list" },
+      { displayName: "OBJ-ACTIF", id: "active-list" }
+    ] };
+    columns["page-list"] = [
+      { name: "OBJACTIF", lookup: { listId: "active-list", allowMultipleValues: false } }
+    ];
+    const relation = await multiMenus._test.lookupVers(graph, "OBJ-PAGES-SITE", "OBJ-ACTIF");
+    assert.equal(relation.list.id, "page-list");
+    assert.equal(relation.column.lookup.listId, "active-list");
+    console.log("Schéma multi-menus : Lookups, requis, unicité, index et résolution de relation vérifiés.");
   } finally {
     dse.collecter = originalCollecter;
     dse.chargerColonnesListe = originalColonnes;
