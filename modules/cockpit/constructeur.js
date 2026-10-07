@@ -376,6 +376,7 @@ function editeur(d) {
       ${d.builder?.message ? `<p class="alerte-info">${e(d.builder.message)}</p>` : ""}
       ${peutAction(d, type, "builder.initialiser") && !a.generique && !a.sections.length && d.builder?.types?.some((x) => x.racine) ?
         bouton("Initialiser la racine générique", "builder-initialiser", `data-ref="${e(a.ref)}"`) : ""}
+      ${peut && !a.generique ? '<p class="muted constructeur-noeud-detail">Cliquez sur une section, une ligne ou une colonne (ici ou dans l\'aperçu) pour la régler et y ajouter un élément.</p>' : ""}
       <ul class="constructeur-arbre">${a.generique ? arbreGeneriqueHtml(a.generique, peut, true, d) :
         a.sections.map((s) => noeudHtml(d, s, peut, colonnes)).join("") || `<li class="muted">Aucune section : commencez par ajouter une section.</li>`}</ul>
       ${peut && !a.generique && peutAction(d, type, "section.ajouter") ? `<form class="constructeur-ajout" data-c-ajout="section" data-ref="${e(a.ref)}">

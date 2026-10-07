@@ -274,7 +274,9 @@ function apercu(d, siteId, type, el, appareil, perimetre) {
     const page = (d.pages || []).filter((p) => !inactif(p) && rel(p, CONTENEURS[type].relation)?.id === el.id &&
       rels(p, "OBJ-SITE-PUBLIC").some((s) => String(s.id) === String(siteId))).sort(parOrdre)[0];
     const r = page ? rel(page, CONTENEURS[autre].relation) : null;
-    const c = r ? (d[CONTENEURS[autre].cle] || []).find((x) => x.id === r.id) : null;
+    // Sans page liee : premier conteneur complementaire actif du meme site.
+    const c = r ? (d[CONTENEURS[autre].cle] || []).find((x) => x.id === r.id)
+      : (d[CONTENEURS[autre].cle] || []).filter((x) => !inactif(x) && String(rel(x, "OBJ-SITE-PUBLIC")?.id) === String(siteId)).sort(parOrdre)[0];
     return { mode: "builder", ...zone(type, el), theme, contexte: { [autre]: c && !inactif(c) ? zone(autre, c) : null, page: page ? titreDe(page) : "" } };
   }
   if (type !== "page") return { mode: "builder", ...zone(type, el), theme };

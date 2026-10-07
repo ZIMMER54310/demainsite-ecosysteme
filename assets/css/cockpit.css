@@ -310,7 +310,11 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 /* Atelier facon Divi : apercu a gauche, colonne de composition repliable a droite. */
 .constructeur-espace-visuel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 12px; align-items: start; }
 .constructeur-espace-visuel > aside { grid-column: 2; grid-row: 1; max-height: calc(100vh - 90px); overflow: auto; position: sticky; top: 64px; padding: 10px; display: grid; gap: 8px; align-content: start; }
-.constructeur-espace-visuel > .constructeur-design-zone { grid-column: 1; grid-row: 1; }
+.constructeur-espace-visuel > .constructeur-design-zone { grid-column: 1; grid-row: 1; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.constructeur-espace-visuel .constructeur-apercus { min-width: 0; padding: 8px; }
+.constructeur-editeur .constructeur-noeud > .constructeur-ajout { display: none; }
+.constructeur-editeur .constructeur-noeud:has(> .constructeur-noeud-entete.constructeur-selection) > .constructeur-ajout,
+.constructeur-editeur .constructeur-noeud > .constructeur-ajout:focus-within { display: flex; }
 .constructeur-editeur .constructeur-editeur-entete h3 { margin: 2px 0; font-size: 1.05rem; }
 .constructeur-boutons--compacts { gap: 4px; }
 .constructeur-editeur [data-c-panneau]:empty { display: none; }
