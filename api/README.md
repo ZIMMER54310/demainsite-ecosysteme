@@ -73,6 +73,9 @@ pas remplacees par des donnees fictives :
   référence et doublon avant toute écriture. Une relation déjà existante ou
   une structure SharePoint incomplète bloque l'opération. Ce flux ne crée ni
   site ni droit.
+- `GET /api/v1/cockpit/site` exige également l'opération dynamique `site.voir`
+  sur le site résolu, en plus de l'identité et du périmètre. La page site n'est
+  pas autorisée par le seul accès général à la fonction `sites`.
 
 Les boutons de conteneurs et de l'arbre generique consomment les operations
 effectivement autorisees. Publication/desactivation de conteneur, affectation

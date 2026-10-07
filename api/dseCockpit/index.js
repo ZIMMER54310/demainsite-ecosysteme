@@ -415,7 +415,7 @@ async function site(req, res) {
     // Un alias ouvre son site principal ; le controle porte sur l'ID natif du site principal.
     const info = await t.etape("perimetre", () => siteDuPerimetre(ctx, domaine));
     // Meme reponse pour un site inexistant ou hors perimetre : rien n'est divulgue.
-    if (!info || !ctx.droits.fonctions.includes("sites")) {
+    if (!info || !peutOperation(ctx.droits, "site.voir", "sites")) {
       return refuser(res, 403, ctx.droits.contexte?.message || "Ce site n'est pas disponible dans votre espace.");
     }
     // Lectures independantes une fois l'autorisation acquise : executees en parallele.
@@ -1155,5 +1155,5 @@ module.exports = {
   client, synchroVue, synchroSauvegardes, synchroReglage, synchroLancer, synchroApercu, synchroConfirmer,
   moi, monCompte, sites, site, galerieListe, galerieCockpit, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
   contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, referentielsCreationSite, usageSiteApercu, usagesSiteLire, adminTableau, adminUtilisateurs, adminApercu,
-  _test: { origineValide, clientsDuPerimetre }
+  _test: { origineValide, clientsDuPerimetre, peutOperation }
 };

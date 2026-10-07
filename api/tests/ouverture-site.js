@@ -125,9 +125,11 @@ function simuler(site) {
       { url: "/cockpit", libelle: "Cockpit" }, { url: "/cockpit/sites", libelle: "Mes sites" }, { url: "/cockpit/galerie", libelle: "Galerie" }, { url: "/cockpit/compte", libelle: "Mon compte" }] } });
     global.location.hash = "#/cockpit/site/demainsite.fr/construire?onglet=entetes";
     const html = renderSidebar();
-    for (const t of ["Administration générale", "Cockpit général", "Site sélectionné", "DemainSite", "demainsite.fr", "Construire le site", "Galerie", "Mon compte", "Changer de site"]) assert.ok(html.includes(t), `menu sans ${t}`);
+    for (const t of ["Navigation générale", "Cockpit général", "Site sélectionné", "DemainSite", "demainsite.fr", "Construire le site", "Fonctions globales", "Galerie", "Mon compte", "Changer de site"]) assert.ok(html.includes(t), `menu sans ${t}`);
     assert.ok(html.includes('class="cockpit-nav-groupe cockpit-nav-administration"') &&
-      html.includes('class="cockpit-nav-groupe cockpit-nav-site"'), "menu sans groupes visuels distincts");
+      html.includes('class="cockpit-nav-groupe cockpit-nav-site"') &&
+      html.includes('class="cockpit-nav-groupe cockpit-nav-global"'), "menu sans trois accordéons visuellement distincts");
+    assert.match(html, /data-nav-groupe="site"[^>]* open>/, "le contexte site actif n’est pas ouvert");
     assert.ok(/class="nav-link active[^"]*"[^>]*aria-current="page"[^>]*href="#\/cockpit\/site\/demainsite\.fr\/construire\?onglet=entetes"/.test(html), "En-tête non actif");
     assert.ok(html.includes("is-parent-actif"));
   }

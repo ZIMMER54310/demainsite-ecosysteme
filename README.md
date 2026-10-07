@@ -66,10 +66,14 @@ La route actuelle de fichiers reste limitee aux images publiques supportees :
 sons, videos et autres types sont catalogues sans faux lecteur ni image cassee.
 L'import reste realise dans la bibliotheque SharePoint existante.
 
-Le menu distingue visuellement l'administration générale du compte et le travail sur
-le site sélectionné au moyen de fonds configurables par variables CSS. Le parcours
-usage-site présente les rattachements SharePoint autorisés et demande un aperçu avant
-confirmation; il n'ajoute aucun droit et ne crée pas de site ou de boutique.
+Le menu distingue la navigation générale, le site sélectionné et les fonctions globales
+dans trois groupes accordéon exclusifs, ouverts selon la page active. Leurs fonds sont
+configurables par variables CSS. Le parcours usage-site présente les rattachements
+SharePoint autorisés et demande un aperçu avant confirmation; il n'ajoute aucun droit
+et ne crée pas de site ou de boutique. La lecture d'un site exige l'opération dynamique
+`site.voir`; les parcours d'écriture `site.creer`, `site.modifier` et `site.valider`
+restent suspendus tant que le schéma, les Lookups requis et leurs écritures associées
+ne sont pas couverts par un flux sécurisé complet.
 
 - Branche de travail et de production : `ovh/api-native` (pas de fusion vers `main` pour l'instant).
 - API : service systemd `dse-api.service` (`api/server.js`, ecoute **127.0.0.1:3000**).

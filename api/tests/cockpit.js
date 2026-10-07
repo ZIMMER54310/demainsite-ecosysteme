@@ -305,15 +305,22 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   global.location = { hash: "#/cockpit/site/alias.example.test" };
   state.setState({ user: { ...publicUser, fonctions: ["sites", "pages"], porteeGlobale: false } });
   const navigation = sidebar.renderSidebar();
-  assert.ok(navigation.indexOf("Voir le site") < navigation.indexOf('href="#/cockpit"'), "sortie publique avant Cockpit");
+  assert.ok(navigation.includes('data-nav-groupe="navigation"') &&
+    navigation.includes('data-nav-groupe="site"') && navigation.includes('data-nav-groupe="global"'),
+  "les trois accordéons de navigation sont présents");
   state.setState({ selectedSite: { nom: "Site choisi <b>", acces: "alias.example.test", domaine: "principal.example.test", fonctions: ["pages", "seo"] } });
   const navigationLocale = sidebar.renderSidebar();
   assert.ok(navigationLocale.includes("Site sélectionné") && navigationLocale.includes("Vue d&#039;ensemble"));
   assert.ok(navigationLocale.includes('class="cockpit-nav-groupe cockpit-nav-administration"') &&
-    navigationLocale.includes('class="cockpit-nav-groupe cockpit-nav-site"'),
-  "les contextes administration et site ont chacun leur groupe visuel");
-  assert.ok(navigationLocale.indexOf("Administration générale") < navigationLocale.indexOf("Site sélectionné"),
-    "le contexte global précède le site sélectionné");
+    navigationLocale.includes('class="cockpit-nav-groupe cockpit-nav-site"') &&
+    navigationLocale.includes('class="cockpit-nav-groupe cockpit-nav-global"'),
+  "les trois accordéons conservent des fonds visuellement distincts");
+  assert.equal((navigationLocale.match(/ name="cockpit-navigation"[^>]* open>/g) || []).length, 1,
+    "un seul accordéon est ouvert à la fois");
+  assert.ok(navigationLocale.indexOf('data-nav-groupe="navigation"') <
+    navigationLocale.indexOf('data-nav-groupe="site"') &&
+    navigationLocale.indexOf('data-nav-groupe="site"') < navigationLocale.indexOf('data-nav-groupe="global"'),
+  "les groupes conservent l’ordre général, site, global");
   assert.ok(navigationLocale.indexOf("Site choisi") > navigationLocale.indexOf("Site sélectionné"),
     "la carte dynamique du site est dans son groupe contextuel");
   assert.ok(navigationLocale.includes("Gérer ce site") &&
@@ -321,10 +328,21 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   "Gérer ce site appartient au contexte sélectionné");
   const styles = require("node:fs").readFileSync(path.join(__dirname, "../../assets/css/cockpit.css"), "utf8");
   assert.ok(styles.includes("--cockpit-nav-admin-bg") && styles.includes("--cockpit-nav-site-bg") &&
-    styles.includes("background:var(--cockpit-nav-admin-bg)") && styles.includes("background:var(--cockpit-nav-site-bg)"),
-  "deux variables de fond séparées pilotent les zones");
-  assert.ok(styles.includes("@media (max-width: 760px)") && styles.includes(".cockpit-nav-groupe{display:flex"),
+    styles.includes("--cockpit-nav-global-bg") &&
+    styles.includes("background:var(--cockpit-nav-admin-bg)") && styles.includes("background:var(--cockpit-nav-site-bg)") &&
+    styles.includes("background:var(--cockpit-nav-global-bg)"),
+  "trois variables de fond séparées pilotent les zones");
+  assert.ok(styles.includes("@media (max-width: 760px)") && styles.includes(".cockpit-nav-groupe{display:block") &&
+    styles.includes(".cockpit-nav-accordeon:focus-visible") && styles.includes('.cockpit-nav-chevron::before{content:">"') &&
+    styles.includes('.cockpit-nav-groupe[open] .cockpit-nav-chevron::before{content:"v"}'),
     "les groupes de navigation restent adaptés au mobile");
+  global.location = { hash: "#/cockpit/galerie" };
+  state.setState({ selectedSite: null });
+  const navigationGlobale = sidebar.renderSidebar();
+  assert.match(navigationGlobale, /data-nav-groupe="global"[^>]* open>/,
+    "le groupe contenant la page globale active s’ouvre automatiquement");
+  assert.equal((navigationGlobale.match(/ name="cockpit-navigation"[^>]* open>/g) || []).length, 1,
+    "une page globale ne laisse ouvert qu’un seul groupe");
   assert.ok(navigationLocale.includes("/cockpit/site/alias.example.test/construire?onglet=pages"));
   assert.ok(!navigationLocale.includes("<b>"), "nom du site echappe");
   global.location = { hash: "#/cockpit/site/second.example.test" };
@@ -362,7 +380,11 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   const droitsMod = require("../auth/droits");
   const admin = require("../shared/administration");
   const ecriture = require("../shared/ecriture");
-  const { origineValide } = require("../dseCockpit")._test;
+  const { origineValide, peutOperation } = require("../dseCockpit")._test;
+  assert.equal(peutOperation({ autorisations: { actif: true, operations: [{ operation: "site.voir" }] } },
+    "site.voir", "sites"), true);
+  assert.equal(peutOperation({ autorisations: { actif: true, operations: [] } },
+    "site.voir", "sites"), false, "la consultation d’un site exige l’opération dynamique site.voir");
 
   // peutAttribuer : jamais au-dessus de soi
   const dSuper = calculerDroits({ ...base, identite: { fournisseur: "entra", sujet: "s", email: "super@ex.fr" }, utilisateurs: [u("1", "super@ex.fr", "1", { entraObjectId: "s" })] });

@@ -56,7 +56,12 @@ export function rendreGestionContenus(user, current, lien, { domaineSelectionne 
     libelle, "grid", current === "/cockpit/contenus");
 }
 
-const titreGroupe = (texte) => `<p class="cockpit-nav-titre">${escapeHtml(texte)}</p>`;
+function groupeAccordeon({ id, titre, classe, ouvert, contenu }) {
+  return `<details class="cockpit-nav-groupe ${classe}" name="cockpit-navigation" data-nav-groupe="${id}"${ouvert ? " open" : ""}>
+    <summary class="cockpit-nav-accordeon"><span>${escapeHtml(titre)}</span><span class="cockpit-nav-chevron" aria-hidden="true"></span></summary>
+    <div class="cockpit-nav-contenu">${contenu}</div>
+  </details>`;
+}
 
 /*
  * Menu du site selectionne : carte du site (conservee pendant LOADING et ERROR), Vue d'ensemble,
@@ -79,11 +84,11 @@ function rendreSiteSelectionne(vue, user, route, current, lien) {
     }
     return lien(x.url, x.libelle, x.icone, actif === x || (parent === x && !actif));
   };
-  return `<section class="cockpit-nav-groupe cockpit-nav-site" aria-label="Travail sur le site sélectionné">${titreGroupe("Site sélectionné")}
+  return `<div aria-label="Travail sur le site sélectionné">
     <div class="cockpit-site-selection"><a href="#${escapeHtml(`/cockpit/site/${encodeURIComponent(vue.acces || vue.domaine)}`)}" title="${escapeHtml(vue.nom || vue.domaine)}">${icon("globe")}<span><strong>${escapeHtml(vue.nom || vue.domaine || vue.acces)}</strong><small>${escapeHtml(vue.domaine || vue.acces)}</small>${statut}</span></a></div>
     ${items.map(entree).join("")}
     ${rendreGestionContenus(user, current, lien, { domaineSelectionne: vue.acces || vue.domaine })}
-    ${rendreVoirSite(user, current)}${user?.fonctions?.includes("sites") ? lien("/cockpit/sites", "Changer de site", "arrow", current === "/cockpit/sites") : ""}</section>`;
+    ${rendreVoirSite(user, current)}</div>`;
 }
 
 export function renderSidebar() {
@@ -98,15 +103,33 @@ export function renderSidebar() {
   const vue = getState().selectedSite;
   const correspond = selection && vue && selection[1] === encodeURIComponent(vue.acces || vue.domaine);
   const lien = (p, l, i, actif, classe = "", attributs = "") => `<a class="nav-link ${actif ? "active" : ""} ${classe}"${actif ? ' aria-current="page"' : ""}${attributs} href="#${escapeHtml(p)}" title="${escapeHtml(l)}">${icon(i)}<span>${escapeHtml(l)}</span></a>`;
-  const global = (items) => items.map(([p, , l]) => lien(p,
+  const renderItems = (items) => items.map(([p, , l]) => lien(p,
     correspond && p === "/cockpit" ? "Cockpit général" : l,
     iconForRoute(p.split("?")[0]), current === p.split("?")[0])).join("");
-  const navigationGenerale = (avecVoirSite = false, avecGestionSite = true) => `<section class="cockpit-nav-groupe cockpit-nav-administration" aria-label="Administration générale">${titreGroupe("Administration générale")}
-    ${avecVoirSite ? rendreVoirSite(user, current) : ""}
-    ${global(entrees)}${avecGestionSite ? rendreGestionContenus(user, current, lien) : ""}${rendreEspacesClients(user, current, lien)}</section>`;
-  return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">${correspond
-    ? `${navigationGenerale(false, Boolean(user?.porteeGlobale))}
-      ${rendreSiteSelectionne(vue, user, route, current, lien)}`
-    : navigationGenerale(true)}</div>
+  const navigation = entrees.filter(([p]) => ["/cockpit", "/cockpit/sites"].includes(p.split("?")[0]));
+  const fonctionsGlobales = entrees.filter(([p]) =>
+    !["/cockpit", "/cockpit/sites"].includes(p.split("?")[0]) && !p.startsWith("/cockpit/site/"));
+  const siteSelectionne = selection
+    ? correspond ? rendreSiteSelectionne(vue, user, route, current, lien)
+      : `<p class="muted cockpit-nav-site-attente" role="status">${vue?.provisoire ? "Chargement du site…" : "Les fonctions du site apparaîtront après vérification du contexte."}</p>`
+    : `<p class="muted cockpit-nav-site-attente">Sélectionnez un site pour afficher ses fonctions.</p>`;
+  const navigationContenu = navigation.map(([p, , l]) => [p, "",
+    selection && p.split("?")[0] === "/cockpit/sites" ? "Changer de site"
+      : correspond && p === "/cockpit" ? "Cockpit général" : l]);
+  if (selection && user?.fonctions?.includes("sites") &&
+      !navigationContenu.some(([p]) => p.split("?")[0] === "/cockpit/sites")) {
+    navigationContenu.push(["/cockpit/sites", "", "Changer de site"]);
+  }
+  const globalContenu = `${renderItems(fonctionsGlobales)}${!selection && user?.porteeGlobale ? rendreGestionContenus(user, current, lien) : ""}${rendreEspacesClients(user, current, lien)}`;
+  const groupeActif = selection ? "site"
+    : navigation.some(([p]) => p.split("?")[0] === current) ? "navigation" : "global";
+  return `<nav class="sidebar" aria-label="Navigation principale"><div class="nav-list">
+    ${groupeAccordeon({ id: "navigation", titre: "Navigation générale", classe: "cockpit-nav-administration",
+      ouvert: groupeActif === "navigation", contenu: renderItems(navigationContenu) })}
+    ${groupeAccordeon({ id: "site", titre: "Site sélectionné", classe: "cockpit-nav-site",
+      ouvert: groupeActif === "site", contenu: siteSelectionne })}
+    ${groupeAccordeon({ id: "global", titre: "Fonctions globales", classe: "cockpit-nav-global",
+      ouvert: groupeActif === "global", contenu: globalContenu })}
+  </div>
     <div class="cockpit-sidebar-bas"><button type="button" class="nav-link" data-reduire-menu aria-expanded="true">${icon("panel")}<span>Réduire le menu</span></button><small>Espace de gestion</small><small>${escapeHtml(user?.displayName || "")}</small></div></nav>`;
 }
