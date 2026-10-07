@@ -12,7 +12,7 @@ function entreeHtml(entree, data, niveau = 0) {
   const destination = page ? (page.site ? `${page.site} · ${page.titre}` : page.titre) : entree.url;
   return `<li class="dse-menu-entry" data-entry="${e(entree.ref)}" style="--menu-level:${Math.min(niveau, 5)}">
     <div class="dse-menu-entry__row"><div><strong>${e(entree.titre)}</strong><span class="muted">${e(destination || "Destination à compléter")}</span>
-      <small>${entree.visible ? "Visible" : "Masquée"} · ${e(entree.etat)}${entree.nouvelleFenetre ? " · Nouvelle fenêtre" : ""}</small></div>
+      <small>${entree.visible ? "Visible" : "Masquée"} · ${e(entree.etat)}${entree.nouvelleFenetre ? " · Nouvelle fenêtre" : ""}${page && page.publie === false ? ` · <span class="alerte-erreur">Page cible non publiée : absente du site public</span>` : ""}</small></div>
       <div class="dse-menu-actions">
         <button class="btn btn-mini btn-secondary" type="button" data-entry-edit="${e(entree.ref)}">Modifier</button>
         <button class="btn btn-mini btn-secondary" type="button" data-entry-move="${e(entree.ref)}" data-direction="-1" aria-label="Monter ${e(entree.titre)}">Monter</button>
