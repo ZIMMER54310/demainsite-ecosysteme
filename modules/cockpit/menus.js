@@ -147,9 +147,15 @@ export function activerMenus(root, donnees, { domaine, menuRef = "" } = {}) {
     const next = (await getMenus(domaine)).donnees;
     if (openTitle) {
       const target = next.menus.find((x) => x.titre.toLocaleLowerCase("fr") === openTitle.toLocaleLowerCase("fr"));
-      if (target) { location.hash = lienMenu(domaine, target.ref); return; }
+      if (target) { allerA(lienMenu(domaine, target.ref)); return; }
     }
-    location.hash = lienMenu(domaine, menuRef);
+    allerA(lienMenu(domaine, menuRef));
+  };
+  // Même adresse : aucun hashchange natif, la route est relancée pour réafficher le menu à jour.
+  const allerA = (lien) => {
+    const cible = lien.startsWith("#") ? lien : `#${lien}`;
+    if (location.hash === cible) window.dispatchEvent(new HashChangeEvent("hashchange"));
+    else location.hash = cible;
   };
   const confirmer = async (action, params) => {
     const preview = (await apercuMenu(domaine, action, params)).donnees;

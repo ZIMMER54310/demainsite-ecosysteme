@@ -519,6 +519,7 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .dse-menu-form input,.dse-menu-form textarea,.dse-menu-form select { width:100%; }
 .dse-menu-form .dse-menu-check { display:flex; align-items:center; gap:.55rem; }
 .dse-menu-form .dse-menu-check input { width:auto; }
+.dse-menu-form [hidden] { display:none !important; }
 .dse-menu-tree,.dse-menu-tree ol { list-style:none; padding-inline-start:1.1rem; }
 .dse-menu-tree { padding:0; }
 .dse-menu-entry { margin:.55rem 0; }
