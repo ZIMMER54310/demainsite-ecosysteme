@@ -81,7 +81,7 @@ function groupeHtml(groupe, cles, valeurs, herite, design, prefixe = "") {
   return champs ? `<fieldset class="design-groupe design-groupe--${groupe.toLowerCase()}"><legend>${e(GROUPES[groupe] || groupe)}</legend><div class="design-grille">${champs}</div></fieldset>` : "";
 }
 
-export function panneauDesign(design, { ref, contenu = "", onglet = "design", appareil = "TABLETTE" } = {}) {
+export function panneauDesign(design, { ref, contenu = "", onglet = "design", appareil = "TABLETTE", renommable = false } = {}) {
   const g = design.groupes || [];
   const clesDe = (groupe, filtre = () => true) => Object.keys(CHAMPS).filter((c) => CHAMPS[c][0] === groupe && filtre(c));
   const designHtml = g.map((x) => groupeHtml(x, clesDe(x), design.valeurs || {}, design.herite || {}, design)).join("")
@@ -96,7 +96,7 @@ export function panneauDesign(design, { ref, contenu = "", onglet = "design", ap
   const presets = design.options?.presets || [];
   const onglets = [["contenu", "CONTENU"], ["design", "DESIGN"], ["responsive", "RESPONSIVE"], ["avance", "AVANCÉ"]];
   return `<form class="card design-panneau" data-design-form data-ref="${e(ref)}">
-    <header class="design-entete"><div><span class="constructeur-type">${e(design.libelle || "")}</span> <strong>🎨 ${e(design.titre || "")}</strong></div>
+    <header class="design-entete"><div><span class="constructeur-type">${e(design.libelle || "")}</span> <strong>🎨 ${e(design.titre || "")}</strong>${renommable ? ` <button type="button" class="btn btn-mini design-renommer" data-c-action="renommer" data-ref="${e(ref)}" title="Modifier le nom" aria-label="Modifier le nom">✏️</button>` : ""}</div>
       <button type="button" class="btn btn-mini" data-design-fermer aria-label="Fermer le panneau Design">✕</button></header>
     <nav class="design-onglets" role="tablist">${onglets.map(([k, l]) => `<button type="button" role="tab" class="btn btn-mini ${k === onglet ? "btn-primary" : "btn-secondary"}" aria-selected="${k === onglet}" data-design-onglet="${k}">${l}</button>`).join("")}</nav>
     <section data-design-volet="contenu"${onglet === "contenu" ? "" : " hidden"}>${contenu}</section>

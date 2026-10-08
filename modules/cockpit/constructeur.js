@@ -303,7 +303,7 @@ function arbreGeneriqueHtml(n, peut, racine = true, d = {}) {
     <ul>${(n.enfants || []).map((x) => arbreGeneriqueHtml(x, peut, false, d)).join("")}</ul></li>`;
 }
 
-export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU") {
+export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", renommable = false) {
   const controle = (c) => {
     const nom = `name="${e(c.ref)}"`;
     const v = (appareil ? c.surcharges?.[appareil] : c.valeur) ?? "";
@@ -326,7 +326,7 @@ export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU") {
     const herite = appareil && (v === "" || v === null) ? `<small>Valeur générale : ${e(c.valeur ?? "non configurée")}</small>` : "";
     return `<label class="design-champ">${e(c.libelle)}${c.obligatoire ? " *" : ""}${input}${herite}<small>${e(c.aide || t.aide || "")}</small></label>`;
   };
-  return `<form class="card design-panneau" data-builder-valeurs data-appareil="${e(appareil)}" data-ref="${e(n.ref)}"><h3>${e(n.titre)}</h3>
+  return `<form class="card design-panneau" data-builder-valeurs data-appareil="${e(appareil)}" data-ref="${e(n.ref)}"><h3>${e(n.titre)}${renommable && !n.verrouille ? ` <button type="button" class="btn btn-mini design-renommer" data-c-action="renommer" data-ref="${e(n.ref)}" title="Modifier le nom" aria-label="Modifier le nom">✏️</button>` : ""}</h3>
     <label class="design-champ">Valeurs à modifier<select data-builder-appareil>${[["", "Général / par défaut"], ...APPAREILS_APERCU.map((x) => [x.cle, x.libelle])].map(([cle, libelle]) =>
       `<option value="${cle}"${appareil === cle ? " selected" : ""}>${e(libelle)}</option>`).join("")}</select></label>
     <div class="design-onglets" role="tablist" aria-label="Réglages">${["CONTENU", "DESIGN", "AVANCE"].map((c) =>
@@ -794,7 +794,9 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (!zone) return;
     if (etat.design) basculerCote("design", false);
     const generic = etat.design?.ref?.startsWith("builderelement.") ? trouverNoeud(etat.design.ref)?.n : null;
-    zone.innerHTML = generic ? panneauGenerique(generic, (d.medias || []).filter((m) => m.builderAutorise !== false), etat.design.appareilValeurs || "", etat.design.ongletGenerique || "CONTENU") : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), onglet: etat.design.onglet, appareil: etat.design.appareil })
+    zone.innerHTML = generic ? panneauGenerique(generic, (d.medias || []).filter((m) => m.builderAutorise !== false), etat.design.appareilValeurs || "", etat.design.ongletGenerique || "CONTENU",
+      ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre?.type, "builder.renommer")) : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), onglet: etat.design.onglet, appareil: etat.design.appareil,
+      renommable: ["section", "ligne", "colonne", "module"].includes(trouverNoeud(etat.design.ref)?.n?.type) && ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre.type, "element.renommer") })
       : etat.design ? `<p class="card muted">Chargement des réglages…</p>` : "";
     zone.closest(".constructeur-design-zone")?.classList.toggle("constructeur-design-zone--ouverte", Boolean(etat.design));
     if (generic?.verrouille) for (const champ of zone.querySelectorAll("input,select,textarea,button[type=submit]")) champ.disabled = true;

@@ -222,6 +222,8 @@ async function main() {
     const html = design.panneauDesign(d, { ref: "noeud.x" });
     assert.ok(html.includes("data-design-form") && html.includes("CONTENU") && html.includes("DESIGN") && html.includes("RESPONSIVE") && html.includes("AVANCÉ"));
     assert.equal(/OBJ-|Graph|SharePoint|Lookup/.test(html), false, "aucun terme technique dans le panneau");
+    assert.equal(html.includes('data-c-action="renommer"'), false, "stylo seulement si le renommage est permis");
+    assert.ok(design.panneauDesign(d, { ref: "noeud.x", renommable: true }).includes('data-c-action="renommer" data-ref="noeud.x"'), "stylo pour renommer");
     assert.equal(html.includes('name="ombreX"'), false, "un bouton sans groupe OMBRE ne voit pas l'ombre");
     const css = design.cssApercu("dse-b-pm1", d, { couleurFond: "#445566", bordureRayon: 8, survolFond: "#000000", responsive: { MOBILE: { tailleTexte: 14 } } });
     assert.match(css, /\.dse-b-pm1 \.dse-b-bouton\{[^}]*background-color:#445566/);
