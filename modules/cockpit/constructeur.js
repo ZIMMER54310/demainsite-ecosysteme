@@ -260,7 +260,8 @@ function arbreGeneriqueHtml(n, peut, racine = true, d = {}) {
     ${peut && !n.verrouille ? `${n.ajouts?.length && peutAction(d, type, "builder.ajouter") ? bouton("Ajouter dans", "builder-ajouter", `data-ref="${e(n.ref)}"`, "btn btn-mini") : ""}
       ${!racine ? ["monter", "descendre", "deplacer", "dupliquer", "retirer"].filter((a) =>
         peutAction(d, type, `builder.${a === "retirer" ? "desactiver" : ["monter", "descendre"].includes(a) ? "deplacer" : a}`)).map((a) =>
-        bouton({ monter: "↑", descendre: "↓", deplacer: "Déplacer", dupliquer: "Dupliquer", retirer: "Retirer" }[a],
+        a === "retirer" ? bouton("🗑", "builder-retirer", `data-ref="${e(n.ref)}" title="Supprimer « ${e(n.titre)} » (confirmation demandée)" aria-label="Supprimer ${e(n.titre)}"`, "btn btn-mini constructeur-corbeille") :
+        bouton({ monter: "↑", descendre: "↓", deplacer: "Déplacer", dupliquer: "Dupliquer" }[a],
           `builder-${a}`, `data-ref="${e(n.ref)}"`, "btn btn-mini")).join("") : ""}` : ""}</div>
     <ul>${(n.enfants || []).map((x) => arbreGeneriqueHtml(x, peut, false, d)).join("")}</ul></li>`;
 }
@@ -368,7 +369,7 @@ export function documentApercu(composition, type = "page") {
     .dse-b-recursif:hover:not(:has(.dse-b-recursif:hover))>.dse-b-plus,.dse-design-cible>.dse-b-plus{display:flex;opacity:1}.dse-b-plus:hover{background:#2563eb;color:white}
     .dse-b-recursif:hover:not(:has(.dse-b-recursif:hover))>.dse-b-outils,body:not(:has(.dse-b-recursif:hover)) .dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:absolute;top:2px;right:2px;z-index:6;padding:2px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
     .dse-builder-glisse .dse-b-depot{display:block;border:1px dashed #7c3aed;padding:5px;font:12px system-ui;color:#4c1d95;background:#f5f3ff}
-    .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body.dse-apercu-seul .dse-b-plus,body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
+    .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}.dse-b-outils .dse-b-corbeille{color:#b91c1c;border-color:#fca5a5;background:#fef2f2}.dse-b-outils .dse-b-corbeille:hover{background:#dc2626;color:white}body.dse-apercu-seul .dse-b-plus,body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
     body.dse-apercu-seul [data-dse-ref]{outline:none!important;cursor:auto}body.dse-apercu-seul [data-dse-ref]::before{display:none!important}
     </style></head>
     <body>${corps}</body></html>`;
@@ -1083,6 +1084,25 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     rendre();
     dlg.showModal();
   };
+  const confirmerSuppression = (ref) => {
+    const n = trouverNoeud(ref)?.n;
+    if (!n) return;
+    const compter = (x) => (x.enfants || []).reduce((t, y) => t + 1 + compter(y), 0);
+    const nb = compter(n), genre = String(n.rendu || "élément").toLowerCase();
+    const dlg = dialogue();
+    dlg.innerHTML = `<form method="dialog" class="constructeur-ajout-rapide constructeur-suppression">
+      <h3>🗑 Supprimer cet élément ?</h3>
+      <p>Vous allez retirer ${e(genre === "section" ? "la section" : genre === "ligne" ? "la ligne" : genre === "colonne" ? "la colonne" : genre === "module" ? "le module" : "l'élément")} <strong>« ${e(n.titre || "sans nom")} »</strong>${nb ? ` et tout son contenu (${nb} élément${nb > 1 ? "s" : ""} à l'intérieur)` : ""}.</p>
+      <p class="muted">Il disparaît de la page mais reste conservé dans SharePoint (désactivation, aucune donnée effacée).</p>
+      <div class="constructeur-suppression-actions"><button type="button" class="btn btn-secondary" data-c-fermer autofocus>Annuler</button>
+      <button type="submit" class="btn constructeur-btn-danger">🗑 Oui, supprimer</button></div></form>`;
+    dlg.querySelector("[data-c-fermer]").addEventListener("click", () => dlg.close());
+    dlg.querySelector("form").addEventListener("submit", async (ev) => {
+      ev.preventDefault(); dlg.close();
+      await executer("builder.desactiver", { ref });
+    });
+    dlg.showModal();
+  };
   const appliquerColonnes = async (ref, typeCol, largeurs) => {
     const colonnes = () => (trouverNoeud(ref)?.n?.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE");
     for (const col of colonnes().slice(largeurs.length).reverse()) if (!(await executer("builder.desactiver", { ref: col.ref }))) return;
@@ -1296,7 +1316,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       case "builder-initialiser": return ouvrirFormulaire({
         textes: [], listes: [{ cle: "typeRef", libelle: "Type de racine", options: (d.builder?.types || []).filter((t) => t.racine) }]
       }, "Initialiser ce conteneur vide", (v) => executer("builder.initialiser", { ref, ...v }));
-      case "builder-retirer": if (confirm("Retirer logiquement cet élément et son sous-arbre ? Aucune donnée ne sera supprimée.")) return executer("builder.desactiver", { ref }); return;
+      case "builder-retirer": return confirmerSuppression(ref);
       case "ouvrir": if (!confirmerAbandon()) return; etat.conteneur = ref; etat.message = ""; historiqueBuilder = []; positionBuilder = -1; brouillons.clear(); brouillonGenerique = false; await charger().catch((err) => Object.assign(etat, { message: err.message, erreur: true })); empreinteHistorique = d.arbre?.generique?.empreinte || ""; return afficher();
       case "fermer": if (!confirmerAbandon()) return; etat.conteneur = ""; delete d.arbre; delete d.apercu; try { await charger(); } catch (err) { Object.assign(etat, { message: err.message, erreur: true }); } brouillonGenerique = false; brouillons.clear(); return afficher();
       case "ia": return message(MESSAGE_IA);

@@ -177,6 +177,7 @@ async function main() {
   assert.doesNotMatch(regles, /max-width:640px\)\{\.dse-b-r-ligne>\.dse-b-r-colonne/, "mobile reste empile sans surcharge");
   assert.doesNotMatch(regles, /width:25%/, "pas de width brut sur une colonne");
   assert.match(htmlCol, /data-builder-canvas="modifier"/, "bouton Modifier dans la barre");
+  assert.match(htmlCol, /class="dse-b-corbeille" data-builder-canvas="retirer"[^>]*>🗑</, "corbeille sur les elements enfants");
 
   // Securite : texte enrichi et liens.
   const propre = nettoyerHtml('<p>a<img src=x onerror=alert(1)></p><a href="javascript:alert(1)">l</a><a href="https://ok.fr/x">ok</a>');
