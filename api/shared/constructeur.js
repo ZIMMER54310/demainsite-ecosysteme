@@ -15,7 +15,7 @@ const dse = require("./dse");
 const ecriture = require("./ecriture");
 const B = require("./builder");
 const R = require("./builder-recursif");
-const { champ, relations, cleChamp } = require("./catalogue");
+const { champ, relations, cleChamp, vrai } = require("./catalogue");
 
 const SEL = crypto.randomBytes(32);
 const signer = (v) => crypto.createHmac("sha256", SEL).update(String(v)).digest("hex").slice(0, 24);
@@ -118,8 +118,19 @@ function contenuDe(d, module) {
   return { type, liste, element };
 }
 
+// Visibilite par appareil : masque responsive du style propre + (modules) colonnes VISIBLE-ORDINATEUR/TABLETTE/MOBILE.
+function appareilsDe(d, type, el) {
+  const presetId = rel(el, "OBJ-STYLE-PRESET")?.id;
+  const resp = presetId ? B.responsiveDepuisPreset(presetId, d.responsifs, {}) : {};
+  return Object.fromEntries(["ORDINATEUR", "TABLETTE", "MOBILE"].map((a) => {
+    const v = type === "module" ? champ(el, [`VISIBLE-${a}`]) : null;
+    return [a, !resp[a]?.masque && (v === null || v === undefined || v === "" || vrai(v))];
+  }));
+}
+
 function noeud(d, type, el) {
-  const base = { ref: ref(type, el.id), type, titre: titreDe(el) || `${TYPES[type].libelle} sans titre`, ordre: ordreDe(el), etat: etat(el) };
+  const base = { ref: ref(type, el.id), type, titre: titreDe(el) || `${TYPES[type].libelle} sans titre`, ordre: ordreDe(el), etat: etat(el),
+    appareils: appareilsDe(d, type, el) };
   if (type === "ligne") base.structure = rel(el, "OBJ-LIGNE-STRUCTURE")?.titre || "100";
   if (type === "colonne") base.largeur = champ(el, ["LARGEUR"]);
   if (type === "section") base.typeSection = rel(el, "OBJ-SECTION-TYPE")?.titre || "STANDARD";
@@ -1170,18 +1181,23 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
     }
 
     case "element.etat": {
-      const c = cible(["section", "ligne", "colonne", "module"], p.ref);
-      if (c.refus) return c;
+      // Un element (ref) ou plusieurs a la fois (refs, 50 maximum), toutes natures confondues.
+      const refs = Array.isArray(p.refs) ? [...new Set(p.refs.map(String))] : [p.ref];
+      if (!refs.length || refs.length > 50) return { erreur: "Sélection invalide (1 à 50 éléments).", status: 400 };
       const mode = p.etat === "actif" ? "actif" : p.etat === "inactif" ? "inactif" : null;
       if (!mode) return { erreur: "État non autorisé.", status: 400 };
-      const def = NIVEAUX[c.type];
-      const champs = await w.etats(def.liste, mode);
-      await w.maj(def.liste, c.el.id, champs);
+      const cibles = [];
+      for (const x of refs) { const c = cible(["section", "ligne", "colonne", "module"], x); if (c.refus) return c; cibles.push(c); }
       let n = 0;
-      if (c.type === "module") {
-        for (const u of utilisationsDe(d, c.el.id)) { await w.maj("OBJ-MODULE-UTILISATION", u.id, await w.etats("OBJ-MODULE-UTILISATION", mode)); n++; }
+      for (const c of cibles) {
+        const def = NIVEAUX[c.type];
+        await w.maj(def.liste, c.el.id, await w.etats(def.liste, mode));
+        if (c.type === "module") {
+          for (const u of utilisationsDe(d, c.el.id)) { await w.maj("OBJ-MODULE-UTILISATION", u.id, await w.etats("OBJ-MODULE-UTILISATION", mode)); n++; }
+        }
       }
-      return res(`${def.libelle} ${mode === "actif" ? "validé et activé" : "désactivé (aucune suppression)"}${c.type === "module" ? ` — ${n} utilisation(s) synchronisée(s)` : ""}.`);
+      const quoi = cibles.length > 1 ? `${cibles.length} éléments` : NIVEAUX[cibles[0].type].libelle;
+      return res(`${quoi} ${mode === "actif" ? `validé${cibles.length > 1 ? "s" : ""} et activé${cibles.length > 1 ? "s" : ""}` : `désactivé${cibles.length > 1 ? "s" : ""} (aucune suppression)`}${n ? ` — ${n} utilisation(s) synchronisée(s)` : ""}.`);
     }
 
     case "contenu.formulaire":
@@ -1354,11 +1370,22 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
         if (r) champsPreset[r[0]] = r[1];
       }
       const champsResp = {};
-      for (const a of APPAREILS_SURCHARGE) {
+      const champsModule = {};
+      // ORDINATEUR n'accepte que le masquage (le style de base reste celui de l'ordinateur).
+      for (const a of ["ORDINATEUR", ...APPAREILS_SURCHARGE]) {
         if (!resp[a] || typeof resp[a] !== "object") continue;
         champsResp[a] = {};
         for (const [cle, brut] of Object.entries(resp[a])) {
+          if (a === "ORDINATEUR" && cle !== "masque") continue;
           if (!RESPONSIVE.includes(cle) || (cle !== "masque" && !groupes.has(DESIGN[cle][0]))) continue;
+          if (cle === "masque" && c.type === "module") {
+            const nVis = await w.simple(TYPES[c.type].liste, `VISIBLE-${a}`);
+            if (nVis) {
+              const col = (await w.cols(TYPES[c.type].liste)).find((x) => x.name === nVis);
+              const visible = !(brut === true || /^(OUI|TRUE|1)$/i.test(String(brut)));
+              champsModule[nVis] = col?.boolean ? visible : visible ? "OUI" : "NON";
+            }
+          }
           const r = await convertir("OBJ-STYLE-RESPONSIVE", DESIGN_RESPONSIVE, cle, brut, `${a.toLowerCase()} · ${cle}`);
           if (r) champsResp[a][r[0]] = r[1];
         }
@@ -1392,6 +1419,7 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
         variante = Boolean(preset);
       }
 
+      if (Object.keys(champsModule).length) await w.maj(def.liste, c.el.id, champsModule);
       let surcharges = 0;
       for (const [a, champs] of Object.entries(champsResp)) {
         const existant = (d.responsifs || []).find((r) => rel(r, "OBJ-STYLE-PRESET")?.id === presetId && !inactif(r) &&

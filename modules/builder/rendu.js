@@ -204,7 +204,8 @@ export const STYLES_BUILDER = `
 .dse-b-contenu{max-width:1200px;margin:0 auto}.dse-b-section--pleine-largeur>.dse-b-contenu{max-width:none}
 .dse-b-ligne{display:flex;flex-wrap:wrap;gap:var(--dse-b-espace,24px)}
 .dse-b-colonne{flex:0 0 calc(var(--dse-b-l)*1% - var(--dse-b-espace,24px));min-width:0;max-width:100%}
-@media(max-width:1024px){.dse-b-colonne{flex-basis:calc(var(--dse-b-lt)*1% - var(--dse-b-espace,24px))}.dse-b-cache-tablette{display:none}}
+@media(max-width:1024px){.dse-b-colonne{flex-basis:calc(var(--dse-b-lt)*1% - var(--dse-b-espace,24px))}}
+@media(min-width:641px) and (max-width:1024px){.dse-b-cache-tablette{display:none}}
 @media(max-width:640px){.dse-b-colonne{flex-basis:calc(var(--dse-b-lm)*1%)}.dse-b-cache-mobile{display:none}}
 @media(min-width:1025px){.dse-b-cache-ordinateur{display:none}}
 .dse-b-module img,.dse-b-module video{max-width:100%;height:auto}

@@ -354,6 +354,15 @@ async function main() {
       await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.creer",
         params: { type: "footer", titre: "Pied vide", structureBase: false } });
       assert.equal(writes.length, 1, "structure de base désactivable");
+      const lot = (refs, etatCible = "inactif") => C.executer({ d: copies, perimetre, siteId: "4", action: "element.etat", params: { refs, etat: etatCible } });
+      stores.delete("OBJ-COLONNE-SITE/5000");
+      stores.delete("OBJ-MODULE-SITE-PUBLIC/7002");
+      const groupe = await lot([C.ref("colonne", 5000), C.ref("module", 7002)]);
+      assert.match(groupe.message, /2 éléments désactivés/, "désactivation groupée, natures mélangées");
+      assert.equal(stores.get("OBJ-COLONNE-SITE/5000").OBJACTIFLookupId, "3");
+      assert.equal(stores.get("OBJ-MODULE-SITE-PUBLIC/7002").OBJACTIFLookupId, "3");
+      assert.ok((await lot([C.ref("colonne", 5000), C.ref("module", 99999)])).refus, "élément inconnu : tout le lot est refusé");
+      assert.equal((await lot(Array.from({ length: 51 }, (_, i) => C.ref("module", i)))).status, 400, "lot plafonné à 50");
     } finally {
       ecriture.contexteGraph = originalGraph;
       ecriture.lireItemFrais = originalLecture;

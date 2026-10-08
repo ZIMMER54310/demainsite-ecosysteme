@@ -261,16 +261,30 @@ function actionsNoeud(n, peut, colonnes, d) {
     ${action("element.etat") ? !n.etat.publiable
       ? action("conteneur.publier") ? bouton(n.etat.inactif || n.etat.brouillon ? "Activer" : "✅ Valider et activer", "activer", `${r}${a("activer")}`, "btn btn-mini") +
         (n.etat.brouillon && !n.etat.inactif ? corbeille : "") : ""
-      : corbeille : ""}
+      : bouton("⏸", "desactiver-direct", `${r} title="Désactiver « ${e(n.titre)} » (invisible pour les visiteurs, rien n'est supprimé)" aria-label="Désactiver ${e(n.titre)}"`, "btn btn-mini") + corbeille : ""}
   </span>`;
 }
 
+const APPAREILS_VUE = [["ORDINATEUR", "🖥", "ordinateur"], ["TABLETTE", "▭", "tablette"], ["MOBILE", "📱", "mobile"]];
+function appareilsHtml(d, n, peut) {
+  if (!n.appareils) return "";
+  const modifiable = peut && peutAction(d, d.arbre.type, "design.enregistrer");
+  return `<span class="constructeur-appareils" role="group" aria-label="Visibilité par appareil">${APPAREILS_VUE.map(([a, icone, nom]) => {
+    const visible = n.appareils[a] !== false;
+    const titre = `${visible ? "Visible" : "Masqué"} sur ${nom}${modifiable ? ` — cliquer pour ${visible ? "masquer" : "afficher"}` : ""}`;
+    return modifiable
+      ? `<button type="button" class="constructeur-appareil${visible ? "" : " constructeur-appareil--masque"}" data-c-action="basculer-appareil" data-ref="${e(n.ref)}" data-appareil="${a}" data-visible="${visible}" title="${titre}" aria-label="${titre}" aria-pressed="${visible}">${icone}</button>`
+      : `<span class="constructeur-appareil${visible ? "" : " constructeur-appareil--masque"}" title="${titre}">${icone}</span>`;
+  }).join("")}</span>`;
+}
+
 function noeudHtml(d, n, peut, colonnes) {
-  const entete = `<div class="constructeur-noeud-entete"${peut && peutAction(d, d.arbre.type, "element.deplacer") ? ' draggable="true"' : ""} data-c-noeud="${e(n.ref)}" data-c-type="${e(n.type)}">${n.type !== "module" ? REPLIER : ""}<span class="constructeur-type constructeur-type--${e(n.type)}">${LIBELLES[n.type]}</span>
+  const lot = peut && peutAction(d, d.arbre.type, "element.etat");
+  const entete = `<div class="constructeur-noeud-entete"${peut && peutAction(d, d.arbre.type, "element.deplacer") ? ' draggable="true"' : ""} data-c-noeud="${e(n.ref)}" data-c-type="${e(n.type)}">${lot ? `<input type="checkbox" class="constructeur-selection" data-c-selection="${e(n.ref)}" aria-label="Sélectionner ${e(n.titre)}" title="Sélectionner pour une action groupée">` : ""}${n.type !== "module" ? REPLIER : ""}<span class="constructeur-type constructeur-type--${e(n.type)}">${LIBELLES[n.type]}</span>
     <strong>${e(n.titre)}</strong>${n.typeModule ? ` <span class="badge">${e(n.typeModule)}</span>` : ""}
     ${n.structure && n.type === "ligne" ? ` <span class="muted">${e(n.structure)}</span>` : ""}
     ${n.type === "colonne" && n.largeur ? ` <span class="muted">${e(n.largeur)} %</span>` : ""}
-    ${badgeEtat(n.etat)}
+    ${badgeEtat(n.etat)}${appareilsHtml(d, n, peut)}
     ${n.type === "module" ? ` <span class="muted constructeur-noeud-detail">${n.utilisations} utilisation(s)${n.formulaire ? (n.contenuRenseigne ? " · contenu renseigné" : " · contenu à renseigner") : ""}${n.modele ? ` · modèle ${e(n.modele)}` : ""}</span>` : ""}
     ${actionsNoeud(n, peut, colonnes, d)}</div>`;
   if (n.type === "module") return `<li class="constructeur-noeud constructeur-noeud--module">${entete}</li>`;
@@ -492,6 +506,14 @@ function editeur(d) {
       ${peutAction(d, type, "builder.initialiser") && !a.generique && !a.sections.length && d.builder?.types?.some((x) => x.racine) ?
         bouton("Initialiser la racine générique", "builder-initialiser", `data-ref="${e(a.ref)}"`) : ""}
       ${peut && !a.generique ? '<p class="muted constructeur-noeud-detail">Cliquez sur une section, une ligne ou une colonne (ici ou dans l\'aperçu) pour la régler et y ajouter un élément.</p>' : ""}
+      ${peut && !a.generique && peutAction(d, type, "element.etat") ? `<div class="constructeur-lot" data-c-lot hidden>
+        <strong data-c-lot-nombre>0 sélectionné</strong>
+        ${bouton("✅ Activer", "lot-etat", 'data-etat="actif" title="Valider et activer toute la sélection"', "btn btn-mini")}
+        ${bouton("⏸ Désactiver", "lot-etat", 'data-etat="inactif" title="Désactiver toute la sélection (rien n\'est supprimé)"', "btn btn-mini")}
+        ${peutAction(d, type, "design.enregistrer") ? `<span class="constructeur-lot-appareils">${APPAREILS_VUE.map(([a, icone, nom]) =>
+          `<span class="constructeur-lot-appareil" title="${nom}">${icone} ${bouton("Afficher", "lot-appareil", `data-appareil="${a}" data-visible="true" title="Afficher la sélection sur ${nom}"`, "btn btn-mini")}${bouton("Masquer", "lot-appareil", `data-appareil="${a}" data-visible="false" title="Masquer la sélection sur ${nom}"`, "btn btn-mini")}</span>`).join("")}</span>` : ""}
+        ${bouton("✖ Tout désélectionner", "lot-vider", "", "btn btn-mini btn-secondary")}
+      </div>` : ""}
       <ul class="constructeur-arbre">${a.generique ? arbreGeneriqueHtml(a.generique, peut, true, d) :
         a.sections.map((s) => noeudHtml(d, s, peut, colonnes)).join("") || `<li class="muted">Aucune section : commencez par ajouter une section.</li>`}</ul>
       ${peut && !a.generique && peutAction(d, type, "section.ajouter") ? `<form class="constructeur-ajout" data-c-ajout="section" data-ref="${e(a.ref)}">
@@ -573,6 +595,26 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   let enCours = false;
   let glisse = null;
   const replies = new Set();
+  const selection = new Set();
+  const majLot = () => {
+    const barre = racine.querySelector("[data-c-lot]");
+    for (const ref of [...selection]) if (!racine.querySelector(`[data-c-selection="${CSS.escape(ref)}"]`)) selection.delete(ref);
+    for (const c of racine.querySelectorAll("[data-c-selection]")) c.checked = selection.has(c.dataset.cSelection);
+    if (!barre) return;
+    barre.hidden = !selection.size;
+    barre.querySelector("[data-c-lot-nombre]").textContent = `${selection.size} sélectionné${selection.size > 1 ? "s" : ""}`;
+  };
+  const basculerAppareils = async (refs, appareil, visible) => {
+    let ok = 0;
+    for (const ref of refs) {
+      const n = trouverNoeud(ref)?.n;
+      if (n?.appareils && n.appareils[appareil] === visible) continue;
+      if (!(await executer("design.enregistrer", { ref, valeurs: { responsive: { [appareil]: { masque: !visible } } } }))) break;
+      ok++;
+    }
+    const nom = { ORDINATEUR: "ordinateur", TABLETTE: "tablette", MOBILE: "mobile" }[appareil];
+    if (ok || !refs.length) avis(`✔ ${ok} élément(s) ${visible ? "affiché(s)" : "masqué(s)"} sur ${nom}.`);
+  };
   const volets = new Map();
   racine.addEventListener("toggle", (ev) => {
     if (ev.target.dataset?.cVolet) volets.set(ev.target.dataset.cVolet, ev.target.open);
@@ -957,6 +999,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   };
   const afficher = () => {
     racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil, cotesReplies: etat.cotesReplies, zonesMasquees: etat.zonesMasquees, vueApercu: etat.vueApercu }, etat);
+    majLot();
     for (const ref of replies) racine.querySelector(`[data-c-noeud="${CSS.escape(ref)}"]`)?.closest(".constructeur-noeud")?.classList.add("constructeur-noeud--replie");
     for (const v of racine.querySelectorAll("details[data-c-volet]")) if (volets.has(v.dataset.cVolet)) v.open = volets.get(v.dataset.cVolet);
     filtrerCartes();
@@ -1660,6 +1703,16 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       case "dupliquer-element": return executer("element.dupliquer", { ref });
       case "activer": return executer("element.etat", { ref, etat: "actif" });
       case "desactiver-element": return confirmerSuppression(ref);
+      case "desactiver-direct": return executer("element.etat", { ref, etat: "inactif" });
+      case "basculer-appareil": return basculerAppareils([ref], cible.dataset.appareil, cible.dataset.visible !== "true");
+      case "lot-etat": {
+        if (!selection.size) return;
+        const ok = await executer("element.etat", { refs: [...selection], etat: cible.dataset.etat });
+        if (ok) { selection.clear(); majLot(); }
+        return;
+      }
+      case "lot-appareil": return basculerAppareils([...selection], cible.dataset.appareil, cible.dataset.visible === "true");
+      case "lot-vider": selection.clear(); return majLot();
       case "logo": if (confirm("Utiliser ce média comme logo du site ? L'ancien média reste dans la bibliothèque.")) return executer("logo.choisir", { media: cible.dataset.media }); return;
       case "affecter": {
         const pages = d.pages || [];
@@ -1781,6 +1834,10 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   });
   racine.addEventListener("change", (ev) => {
     const s = ev.target;
+    if (s.matches?.("[data-c-selection]")) {
+      s.checked ? selection.add(s.dataset.cSelection) : selection.delete(s.dataset.cSelection);
+      return majLot();
+    }
     if (s.matches?.("[data-c-filtre-etat]")) { etat.filtreEtat = s.value; return filtrerCartes(); }
     if (s.matches?.("[data-c-voir]")) {
       const z = s.dataset.cVoir;
