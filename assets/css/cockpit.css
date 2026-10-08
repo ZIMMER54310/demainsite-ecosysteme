@@ -307,10 +307,32 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .constructeur--plein-ecran { position: fixed; inset: 0; z-index: 1000; overflow: auto; background: var(--bg, #f5f6fa); padding: 12px; }
 .constructeur--plein-ecran > .cockpit-site-titre { display: none; }
 .constructeur-barre-visuelle { position: sticky; top: -12px; z-index: 2; padding: 12px; background: var(--surface, #fff); border-bottom: 1px solid var(--line, #dde); display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-/* Atelier facon Divi : apercu a gauche, colonne de composition repliable a droite. */
-.constructeur-espace-visuel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 12px; align-items: start; }
-.constructeur-espace-visuel > aside { grid-column: 2; grid-row: 1; max-height: calc(100vh - 90px); overflow: auto; position: sticky; top: 64px; padding: 10px; display: grid; gap: 8px; align-content: start; }
-.constructeur-espace-visuel > .constructeur-design-zone { grid-column: 1; grid-row: 1; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+/* Atelier : Design a gauche, apercu au centre, Structure a droite ; chaque cote se replie en bandeau. */
+.constructeur-espace-visuel { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(280px, 360px); gap: 12px; align-items: start; }
+.constructeur-espace-visuel > aside { grid-row: 1; max-height: calc(100vh - 90px); overflow: auto; position: sticky; top: 64px; padding: 10px; display: grid; gap: 8px; align-content: start; }
+.constructeur-espace-visuel > .constructeur-cote--design { grid-column: 1; }
+.constructeur-espace-visuel > .constructeur-cote--structure { grid-column: 3; }
+.constructeur-espace-visuel > .constructeur-design-zone { grid-column: 2; grid-row: 1; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.constructeur-espace--design-replie { grid-template-columns: 44px minmax(0, 1fr) minmax(280px, 360px); }
+.constructeur-espace--structure-replie { grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) 44px; }
+.constructeur-espace--design-replie.constructeur-espace--structure-replie { grid-template-columns: 44px minmax(0, 1fr) 44px; }
+.constructeur-cote-entete { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-bottom: 6px; border-bottom: 2px solid var(--line, #dde); }
+.constructeur-cote--structure .constructeur-cote-entete { flex-direction: row-reverse; }
+.constructeur-cote-titre { font-size: .95rem; }
+.constructeur-cote-bascule { width: 30px; height: 30px; flex: none; border: 1px solid var(--line, #d0d7e2); border-radius: 8px; background: #eef4ff; color: #3b5bdb; font-size: 1.1rem; font-weight: 800; line-height: 1; cursor: pointer; }
+.constructeur-cote-bascule:hover { background: #dbe6ff; }
+.constructeur-cote-corps { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.constructeur-cote--design [data-c-panneau]:not(:empty) ~ .constructeur-cote-vide { display: none; }
+.constructeur-espace--design-replie > .constructeur-cote--design,
+.constructeur-espace--structure-replie > .constructeur-cote--structure { padding: 6px 4px; overflow: hidden; cursor: default; }
+.constructeur-espace--design-replie > .constructeur-cote--design .constructeur-cote-corps,
+.constructeur-espace--structure-replie > .constructeur-cote--structure .constructeur-cote-corps { display: none; }
+.constructeur-espace--design-replie > .constructeur-cote--design .constructeur-cote-entete,
+.constructeur-espace--structure-replie > .constructeur-cote--structure .constructeur-cote-entete { flex-direction: column; border: 0; padding: 0; }
+.constructeur-espace--design-replie > .constructeur-cote--design .constructeur-cote-titre,
+.constructeur-espace--structure-replie > .constructeur-cote--structure .constructeur-cote-titre { writing-mode: vertical-rl; white-space: nowrap; margin-top: 8px; }
+.constructeur-espace--design-replie > .constructeur-cote--design .constructeur-cote-bascule,
+.constructeur-espace--structure-replie > .constructeur-cote--structure .constructeur-cote-bascule { transform: rotate(180deg); }
 .constructeur-espace-visuel .constructeur-apercus { min-width: 0; padding: 8px; }
 .constructeur-editeur .constructeur-noeud > .constructeur-ajout { display: none; }
 .constructeur-editeur .constructeur-noeud:has(> .constructeur-noeud-entete.constructeur-selection) > .constructeur-ajout,
@@ -353,10 +375,16 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .constructeur-noeud-entete[draggable="true"] { cursor: grab; }
 .constructeur--apercu-seul .constructeur-espace-visuel { grid-template-columns: 1fr; }
 .constructeur--apercu-seul .constructeur-espace-visuel > aside { display: none; }
+.constructeur--apercu-seul .constructeur-espace-visuel > .constructeur-design-zone { grid-column: 1; }
+@media (max-width: 1200px) and (min-width: 901px) {
+  .constructeur-espace-visuel { grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(240px, 290px); }
+}
 @media (max-width: 900px) {
-  .constructeur-espace-visuel { grid-template-columns: 1fr; }
+  .constructeur-espace-visuel, .constructeur-espace-visuel[class*="-replie"] { grid-template-columns: 1fr; }
   .constructeur-espace-visuel > aside, .constructeur-espace-visuel > .constructeur-design-zone { grid-column: 1; grid-row: auto; }
   .constructeur-espace-visuel > aside { position: static; max-height: none; }
+  .constructeur-espace-visuel > aside .constructeur-cote-entete { flex-direction: row !important; }
+  .constructeur-espace-visuel > aside .constructeur-cote-titre { writing-mode: horizontal-tb !important; margin: 0 !important; }
 }
 .constructeur-apercu-cadre { overflow: hidden; border: 1px solid var(--line, #dde); border-radius: 8px; background: #f6f7f9; min-height: 300px; }
 .constructeur-apercu-cadre .constructeur-apercu { border: 0; border-radius: 0; display: block; }

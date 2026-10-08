@@ -30,6 +30,10 @@ export function badgeEtat(etat = {}) {
 const cleEtat = (etat = {}) => etat.inactif ? "desactive" : etat.publiable ? "actif" : "brouillon";
 const CLE_VUE = "dse.constructeur.vue";
 const vueMemorisee = () => { try { return localStorage.getItem(CLE_VUE) === "liste" ? "liste" : "cartes"; } catch { return "cartes"; } };
+const CLE_COTES = "dse.constructeur.cotes-replies";
+const cotesMemorises = () => { try { const v = JSON.parse(localStorage.getItem(CLE_COTES) || "{}"); return { design: v.design === true, structure: v.structure === true }; } catch { return { design: false, structure: false }; } };
+const enteteCote = (cote, titre) => `<div class="constructeur-cote-entete"><strong class="constructeur-cote-titre">${titre}</strong>
+  <button type="button" class="constructeur-cote-bascule" data-c-action="replier-cote" data-cote="${cote}" title="Réduire / développer ${titre}" aria-label="Réduire / développer ${titre}"><span aria-hidden="true">${cote === "design" ? "«" : "»"}</span></button></div>`;
 function barreVue(etat) {
   const vue = etat.vue || "cartes";
   const filtre = etat.filtreEtat || "";
@@ -395,13 +399,10 @@ function editeur(d) {
       <button type="button" class="btn btn-mini" data-c-action="apercu-seul">Aperçu</button>
       ${peutAction(d, type, a.generique ? "builder.enregistrer" : "design.enregistrer") ? '<button type="button" class="btn btn-primary" data-c-action="enregistrer-design">Enregistrer</button>' : ""}
       ${bouton("← Fermer", "fermer")}</div></header>
-    <div class="constructeur-espace-visuel">
-  <div class="constructeur-design-zone">
-    <div class="card constructeur-apercus">
-      <div class="constructeur-apercu-cadre" data-apercu-cadre><iframe class="constructeur-apercu" title="Aperçu" sandbox="allow-same-origin" data-apercu></iframe></div>
-    </div>
-  </div>
-  <aside class="card constructeur-editeur" aria-label="Composition">
+    <div class="constructeur-espace-visuel${d.cotesReplies?.design ? " constructeur-espace--design-replie" : ""}${d.cotesReplies?.structure ? " constructeur-espace--structure-replie" : ""}" data-c-espace>
+  <aside class="card constructeur-editeur constructeur-cote constructeur-cote--design" aria-label="Design">
+    ${enteteCote("design", "🎨 Design")}
+    <div class="constructeur-cote-corps">
     <header class="constructeur-editeur-entete">
       <div><span class="constructeur-type">${LIBELLES[type]}</span><h3>${e(a.titre)}</h3>${a.realisation ? realisation(a.realisation) : badgeEtat(a.etat)}</div>
       <div class="constructeur-boutons constructeur-boutons--compacts">
@@ -411,6 +412,17 @@ function editeur(d) {
         ${peutAction(d, type, "conteneur.publier") && publicationRequise ? bouton("✅ Valider et activer", "publier", `data-ref="${e(a.ref)}"`, "btn btn-mini btn-primary") : ""}</div>
     </header>
     <div data-c-panneau></div>
+    <p class="muted constructeur-cote-vide">Cliquez sur un élément de l'aperçu ou de la structure pour afficher ses réglages ici.</p>
+    </div>
+  </aside>
+  <div class="constructeur-design-zone">
+    <div class="card constructeur-apercus">
+      <div class="constructeur-apercu-cadre" data-apercu-cadre><iframe class="constructeur-apercu" title="Aperçu" sandbox="allow-same-origin" data-apercu></iframe></div>
+    </div>
+  </div>
+  <aside class="card constructeur-editeur constructeur-cote constructeur-cote--structure" aria-label="Structure">
+    ${enteteCote("structure", "🧱 Structure")}
+    <div class="constructeur-cote-corps">
     <details class="constructeur-volet" data-c-volet="structure" open><summary>Structure <span class="muted">· ${a.generique ? "éléments" : `${a.sections.length} section(s)`}</span></summary>
       ${a.generique ? '<div data-builder-palette aria-label="Éléments autorisés"></div>' : ""}
       ${d.builder?.message ? `<p class="alerte-info">${e(d.builder.message)}</p>` : ""}
@@ -433,6 +445,7 @@ function editeur(d) {
       <p class="muted">Les nouveaux éléments sont créés en brouillon : visibles dans l'aperçu, publiés uniquement après « Valider et activer ».</p>
       <p class="muted">Glissez un élément de l'arbre ou du Canvas sur sa destination. Les retraits sont logiques, jamais destructifs.</p>
     </details>
+    </div>
   </aside>
 </div>`;
 }
@@ -482,7 +495,7 @@ export function formulaireHtml(f, titre) {
 /* ---------------- Activation (evenements) ---------------- */
 
 export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
-  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "ORDINATEUR", design: null, vue: vueMemorisee(), recherche: "", filtreEtat: "" };
+  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "ORDINATEUR", design: null, vue: vueMemorisee(), cotesReplies: cotesMemorises(), recherche: "", filtreEtat: "" };
   let d = donnees;
   let copieStyle = null;
   let historique = [];
@@ -660,9 +673,17 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (n?.type === "module" && n.formulaire) return `<p>Textes, liens et médias du module.</p>${bouton("✏️ Modifier le contenu", "contenu", `data-ref="${e(ref)}"`)}`;
     return `<p class="muted">Cet élément organise les éléments qu'il contient ; utilisez l'arbre de construction pour ajouter, déplacer ou dupliquer.</p>`;
   };
+  const basculerCote = (cote, replie = !etat.cotesReplies[cote]) => {
+    if (!["design", "structure"].includes(cote) || etat.cotesReplies[cote] === replie) return;
+    etat.cotesReplies[cote] = replie;
+    racine.querySelector("[data-c-espace]")?.classList.toggle(`constructeur-espace--${cote}-replie`, replie);
+    try { localStorage.setItem(CLE_COTES, JSON.stringify(etat.cotesReplies)); } catch { /* choix limité à la session */ }
+    dimensionner();
+  };
   const afficherPanneau = () => {
     const zone = racine.querySelector("[data-c-panneau]");
     if (!zone) return;
+    if (etat.design) basculerCote("design", false);
     const generic = etat.design?.ref?.startsWith("builderelement.") ? trouverNoeud(etat.design.ref)?.n : null;
     zone.innerHTML = generic ? panneauGenerique(generic, (d.medias || []).filter((m) => m.builderAutorise !== false), etat.design.appareilValeurs || "", etat.design.ongletGenerique || "CONTENU") : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), onglet: etat.design.onglet, appareil: etat.design.appareil })
       : etat.design ? `<p class="card muted">Chargement des réglages…</p>` : "";
@@ -735,7 +756,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (vide) vide.hidden = !cartes.length || visibles > 0;
   };
   const afficher = () => {
-    racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil }, etat);
+    racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil, cotesReplies: etat.cotesReplies }, etat);
     for (const ref of replies) racine.querySelector(`[data-c-noeud="${CSS.escape(ref)}"]`)?.closest(".constructeur-noeud")?.classList.add("constructeur-noeud--replie");
     for (const v of racine.querySelectorAll("details[data-c-volet]")) if (volets.has(v.dataset.cVolet)) v.open = volets.get(v.dataset.cVolet);
     filtrerCartes();
@@ -1146,6 +1167,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         return;
       }
       case "apercu-seul": etat.apercuSeul = !etat.apercuSeul; racine.querySelector("[data-constructeur]")?.classList.toggle("constructeur--apercu-seul", etat.apercuSeul); docApercu()?.body.classList.toggle("dse-apercu-seul", etat.apercuSeul); dimensionner(); return;
+      case "replier-cote": return basculerCote(cible.dataset.cote);
       case "builder-medias": return ouvrirFormulaire({ textes: [], listes: [{ cle: "media", libelle: "Médias SharePoint autorisés", options: d.medias || [] }] }, "Médias du site", () => {});
       case "builder-rapide": {
         const r = raccourcis(trouverNoeud(ref)?.n)[Number(cible.dataset.rapide)];
