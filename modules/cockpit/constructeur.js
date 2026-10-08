@@ -280,7 +280,7 @@ function appareilsHtml(d, n, peut) {
 
 function noeudHtml(d, n, peut, colonnes) {
   const lot = peut && peutAction(d, d.arbre.type, "element.etat");
-  const entete = `<div class="constructeur-noeud-entete"${peut && peutAction(d, d.arbre.type, "element.deplacer") ? ' draggable="true"' : ""} data-c-noeud="${e(n.ref)}" data-c-type="${e(n.type)}">${lot ? `<input type="checkbox" class="constructeur-selection" data-c-selection="${e(n.ref)}" aria-label="Sélectionner ${e(n.titre)}" title="Sélectionner pour une action groupée">` : ""}${n.type !== "module" ? REPLIER : ""}<span class="constructeur-type constructeur-type--${e(n.type)}">${LIBELLES[n.type]}</span>
+  const entete = `<div class="constructeur-noeud-entete"${peut && peutAction(d, d.arbre.type, "element.deplacer") ? ' draggable="true"' : ""} data-c-noeud="${e(n.ref)}" data-c-type="${e(n.type)}">${lot ? `<input type="checkbox" class="constructeur-coche" data-c-selection="${e(n.ref)}" aria-label="Sélectionner ${e(n.titre)}" title="Sélectionner pour une action groupée">` : ""}${n.type !== "module" ? REPLIER : ""}<span class="constructeur-type constructeur-type--${e(n.type)}">${LIBELLES[n.type]}</span>
     <strong>${e(n.titre)}</strong>${n.typeModule ? ` <span class="badge">${e(n.typeModule)}</span>` : ""}
     ${n.structure && n.type === "ligne" ? ` <span class="muted">${e(n.structure)}</span>` : ""}
     ${n.type === "colonne" && n.largeur ? ` <span class="muted">${e(n.largeur)} %</span>` : ""}

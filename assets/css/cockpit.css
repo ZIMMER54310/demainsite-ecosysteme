@@ -739,7 +739,7 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 @keyframes constructeur-avis{from{opacity:0;transform:translate(-50%,8px)}}
 
 /* Constructeur : selection groupee et visibilite par appareil */
-.constructeur-selection { margin: 0 .25rem 0 0; cursor: pointer; flex: none; }
+.constructeur-coche { margin: 0 .25rem 0 0; cursor: pointer; flex: none; }
 .constructeur-appareils { display: inline-flex; gap: 2px; margin-left: .25rem; }
 .constructeur-appareil { border: 1px solid var(--bordure, #d0d7de); background: #fff; border-radius: 4px; font-size: .75rem; line-height: 1; padding: 2px 4px; cursor: pointer; }
 span.constructeur-appareil { cursor: default; }
