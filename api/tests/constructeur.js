@@ -299,6 +299,16 @@ async function main() {
       assert.equal((await C.executer({ d: copies, perimetre, siteId: "4", action: "element.renommer",
         params: { ref: C.ref("section", 100), titre: " " } })).status, 400, "nom obligatoire");
       assert.equal(C.actionDroit("element.renommer"), "element.deplacer", "droit « modifier » existant");
+      copies.colonnes.push(el(5002, "C3", { "OBJ-LIGNE-SITE": lien(1000) }));
+      copies.modules.push(el(7002, "Voisin", { "OBJ-COLONNE-SITE": lien(5002), OBJMODULESITEPUBLICTYPE: lien(2, "TEXTE") }, { "ORDRE-AFFICHAGE": 10 }));
+      const glisser = (params) => C.executer({ d: copies, perimetre, siteId: "4", action: "element.deplacer",
+        params: { ref: C.ref("module", 7000), parent: C.ref("colonne", 5002), ...params } });
+      assert.ok((await glisser({ apres: C.ref("module", 9999) })).refus, "repère inconnu refusé");
+      const glisse = await glisser({ apres: C.ref("module", 7002) });
+      assert.match(glisse.message, /Module déplacé dans « C3 »/);
+      assert.equal(stores.get("OBJ-MODULE-SITE-PUBLIC/7000").OBJCOLONNESITELookupId, "5002", "module glissé dans une autre colonne");
+      assert.equal(stores.get("OBJ-MODULE-SITE-PUBLIC/7000").ORDREAFFICHAGE, 20, "déposé après le voisin");
+      assert.equal(stores.get("OBJ-MODULE-SITE-PUBLIC/7002").ORDREAFFICHAGE, 10);
       writes.length = 0;
       await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.creer",
         params: { type: "footer", titre: "Pied vide", structureBase: false } });

@@ -1035,8 +1035,10 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
         const et = typeDef(c.type.toUpperCase());
         if (pt && et && !R.regleDe(d, pt.id, et.id)) return { refus: "Imbrication interdite par SharePoint." };
         const freres = enfantsDe(d, dest.type, dest.el).filter((x) => x.id !== c.el.id);
-        const position = p.avant ? freres.findIndex((x) => ref(c.type, x.id) === p.avant) : freres.length;
-        if (position < 0) return { refus: "Position de destination inconnue." };
+        const repere = p.avant || p.apres;
+        const indexRepere = repere ? freres.findIndex((x) => ref(c.type, x.id) === repere) : freres.length;
+        if (indexRepere < 0) return { refus: "Position de destination inconnue." };
+        const position = indexRepere + (repere && !p.avant ? 1 : 0);
         const nParent = await w.lookup(def.liste, c.type === "section" ? CONTENEURS[dest.type].relation : def.parent);
         if (!nParent) return { refus: "Relation au parent indisponible." };
         freres.splice(position, 0, c.el);
@@ -1046,7 +1048,7 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
           if (c.type === "module") await synchroniserUtilisations(w, d, el.id, {
             "OBJ-COLONNE-SITE": String(dest.el.id), "ORDRE-AFFICHAGE": (i + 1) * 10 });
         }
-        return res("Élément déplacé ; ordre et utilisations actualisés.");
+        return res(`${def.libelle} déplacé${c.type === "module" ? "" : "e"} dans « ${titreDe(dest.el)} ».`);
       }
       if (c.type === "module" && p.colonne) {
         const dest = cible(["colonne"], p.colonne);

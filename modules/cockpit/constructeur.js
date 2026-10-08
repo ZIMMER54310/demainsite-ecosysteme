@@ -403,6 +403,7 @@ export function documentApercu(composition, type = "page") {
     .dse-b-recursif:hover:not(:has(.dse-b-recursif:hover))>.dse-b-plus,.dse-design-cible>.dse-b-plus{display:flex;opacity:1}.dse-b-plus:hover{background:#2563eb;color:white}
     .dse-b-recursif:hover:not(:has(.dse-b-recursif:hover))>.dse-b-outils,body:not(:has(.dse-b-recursif:hover)) .dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:absolute;top:2px;right:2px;z-index:6;padding:2px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
     .dse-builder-glisse .dse-b-depot{display:block;border:1px dashed #7c3aed;padding:5px;font:12px system-ui;color:#4c1d95;background:#f5f3ff}
+    .dse-depot-dans{outline:3px dashed #16a34a!important;outline-offset:-3px;background-color:rgba(22,163,74,.08)!important}.dse-depot-avant{box-shadow:inset 0 4px 0 #16a34a!important}.dse-depot-apres{box-shadow:inset 0 -4px 0 #16a34a!important}.dse-depot-avant.dse-depot-x{box-shadow:inset 4px 0 0 #16a34a!important}.dse-depot-apres.dse-depot-x{box-shadow:inset -4px 0 0 #16a34a!important}.dse-b-poignee{cursor:grab;padding:0 5px;font-size:14px;color:#4c1d95;border:1px solid #ddd6fe;border-radius:3px;background:#f5f3ff}.dse-builder-glisse [draggable=true]{cursor:grabbing}
     .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body:not(.dse-apercu-seul) [data-dse-ref].dse-survol>.dse-b-outils-ancien,body:not(.dse-apercu-seul):not(:has([data-dse-ref]:hover)) .dse-design-cible>.dse-b-outils-ancien{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:absolute;top:2px;right:2px;z-index:6;padding:2px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.25)}.dse-b-outils .dse-b-corbeille{color:#b91c1c;border-color:#fca5a5;background:#fef2f2}.dse-b-outils .dse-b-corbeille:hover{background:#dc2626;color:white}body.dse-apercu-seul .dse-b-plus,body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
     body.dse-vue-structure{background:#f8fafc!important}body.dse-vue-structure .dse-site-public-main{background:#f8fafc!important}
     body.dse-vue-structure .dse-apercu-contexte{min-height:30px;padding-top:30px}body.dse-vue-structure .dse-apercu-contexte>*{display:none!important}
@@ -719,7 +720,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       });
       for (const el of doc?.querySelectorAll("[data-dse-ref]") || []) {
         const node = trouverNoeud(el.dataset.dseRef);
-        el.draggable = Boolean(node?.parent && !node.n.verrouille && peutAction(d, d.arbre.type, "builder.deplacer"));
+        el.draggable = Boolean(node?.parent && !node.n.verrouille && peutAction(d, d.arbre.type, node.n.rendu ? "builder.deplacer" : "element.deplacer"));
         const rendu = String(node?.n?.rendu || "").toUpperCase();
         const sorte = rendu ? ({ "EN-TETE": "entete", ARTICLES: "module" }[rendu] || rendu.toLowerCase()) : node?.n?.type || el.dataset.dseRef.split(".")[0];
         el.dataset.dseType = sorte;
@@ -743,6 +744,11 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
           if (boutons.length) {
             const outils = doc.createElement("div");
             outils.className = "dse-b-outils dse-b-outils-ancien";
+            if (el.draggable) {
+              const poignee = doc.createElement("span");
+              Object.assign(poignee, { className: "dse-b-poignee", textContent: "✥", title: `Glisser pour déplacer ${n.titre || "cet élément"}` });
+              outils.append(poignee);
+            }
             for (const [texte, commande, titre] of boutons) {
               const b = doc.createElement("button");
               Object.assign(b, { type: "button", textContent: texte, title: titre });
@@ -1619,14 +1625,40 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     ev.dataTransfer.effectAllowed = "move";
     docApercu()?.body.classList.add("dse-builder-glisse");
   }
+  const MARQUES_DEPOT = ["dse-depot-actif", "dse-depot-avant", "dse-depot-apres", "dse-depot-dans", "dse-depot-x"];
+  const effacerMarques = () => {
+    for (const doc of [docApercu(), racine]) for (const x of doc?.querySelectorAll(MARQUES_DEPOT.map((c) => `.${c}`).join(",")) || []) x.classList.remove(...MARQUES_DEPOT);
+  };
   function terminerGlisse() {
     glisse = null;
     docApercu()?.body.classList.remove("dse-builder-glisse");
-    for (const x of docApercu()?.querySelectorAll(".dse-depot-actif") || []) x.classList.remove("dse-depot-actif");
+    effacerMarques();
   }
+  // Ancien format : section > ligne > colonne > module. On remonte depuis l'élément survolé jusqu'à
+  // un frère du même type (avant / après selon la souris) ou un parent du bon type (dedans).
+  const PARENT_ANCIEN = { section: "racine", ligne: "section", colonne: "ligne", module: "colonne" };
+  function destinationAncienne(ev, cible) {
+    const type = glisse.n.type, apercu = cible.ownerDocument !== document;
+    for (let x = trouverNoeud(cible.dataset.cNoeud || cible.dataset.dseRef); x; x = x.parent ? trouverNoeud(x.parent.ref) : null) {
+      if (x.n.ref === glisse.n.ref) return null;
+      const parentOk = PARENT_ANCIEN[type] === "racine" ? x.n === d.arbre : x.n.type === PARENT_ANCIEN[type];
+      if (parentOk) return { parent: x.n, dest: x, position: "dans", element: elementDe(cible, x.n.ref) };
+      if (x.n.type === type && x.parent) {
+        const element = elementDe(cible, x.n.ref);
+        const r = element?.getBoundingClientRect();
+        const horizontal = apercu && type === "colonne";
+        const apres = r ? (horizontal ? ev.clientX > r.left + r.width / 2 : ev.clientY > r.top + r.height / 2) : false;
+        return { parent: x.parent, dest: x, position: apres ? "apres" : "avant", element, horizontal };
+      }
+    }
+    return null;
+  }
+  const elementDe = (cible, reference) => cible.ownerDocument.querySelector(
+    `[data-dse-ref="${CSS.escape(reference)}"],[data-c-noeud="${CSS.escape(reference)}"]`);
   function destinationDepot(ev) {
     const zone = ev.target.closest?.("[data-builder-depot]");
     const cible = zone || ev.target.closest?.("[data-c-noeud],[data-dse-ref]");
+    if (glisse && glisse.n.type !== "builder" && PARENT_ANCIEN[glisse.n.type]) return cible ? destinationAncienne(ev, cible) : null;
     const dest = trouverNoeud(cible?.dataset.ref || cible?.dataset.cNoeud || cible?.dataset.dseRef);
     if (!glisse || !dest || glisse.n.ref === dest.n.ref || dest.n.verrouille) return null;
     const position = zone?.dataset.builderDepot || (dest.n.typeRef === glisse.n.typeRef ? "avant" : "dans");
@@ -1638,11 +1670,12 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     return { zone, parent, dest, position };
   }
   function autoriserDepot(ev) {
-    for (const x of docApercu()?.querySelectorAll(".dse-depot-actif") || []) x.classList.remove("dse-depot-actif");
+    effacerMarques();
     const dest = destinationDepot(ev);
     if (!dest || enCours) return;
     ev.preventDefault();
     dest.zone?.classList.add("dse-depot-actif");
+    dest.element?.classList.add(`dse-depot-${dest.position}`, ...(dest.horizontal ? ["dse-depot-x"] : []));
     if (ev.dataTransfer) ev.dataTransfer.dropEffect = "move";
   }
   function deposer(ev) {

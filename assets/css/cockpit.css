@@ -361,6 +361,10 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .constructeur-editeur .constructeur-noeud { margin: 3px 0; }
 .constructeur-editeur .constructeur-noeud-entete { gap: 4px; padding: 4px 6px; font-size: .88rem; cursor: pointer; }
 .constructeur-editeur .constructeur-noeud-entete:hover { background: rgba(124, 58, 237, .06); }
+.constructeur-noeud-entete[draggable="true"] { cursor: grab; }
+.constructeur-noeud-entete.dse-depot-dans { outline: 2px dashed #16a34a; background: rgba(22,163,74,.1); }
+.constructeur-noeud-entete.dse-depot-avant { box-shadow: inset 0 3px 0 #16a34a; }
+.constructeur-noeud-entete.dse-depot-apres { box-shadow: inset 0 -3px 0 #16a34a; }
 .constructeur-editeur .constructeur-noeud-entete .constructeur-outils { display: none; flex-basis: 100%; margin-left: 0; }
 .constructeur-editeur .constructeur-noeud-entete:hover .constructeur-outils,
 .constructeur-editeur .constructeur-noeud-entete:focus-within .constructeur-outils,
