@@ -447,6 +447,8 @@ async function formulaireContenu(w, nomListe, perimetre, d) {
   // Aide sous chaque champ : description de la colonne SharePoint.
   const aideDe = (nom) => String(cols.find((c) => c.name === nom)?.description || "").trim();
   const textes = ecriture.champsModifiables(cols).filter((c) => !/^ORDRE/i.test(c.nom)).map((c) => ({ ...c, aide: aideDe(c.nom) }));
+  // Colonne Title + colonne TITRE affichee : la premiere devient le nom de repere pour eviter deux champs « Titre ».
+  if (textes.filter((c) => c.libelle === "Titre").length > 1) for (const c of textes) if (c.nom === "Title") c.libelle = "Nom de repère";
   const libre = (c) => !c.readOnly && !c.hidden && !String(c.name).startsWith("_");
   // Texte riche : saisi en texte simple puis converti en HTML minimal sur (paragraphes).
   for (const c of cols) {

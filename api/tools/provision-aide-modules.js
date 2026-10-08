@@ -113,7 +113,8 @@ async function semer(token, siteId, appliquer) {
     if (!id) { bilan.colonnesAbsentes.push(liste); continue; }
     const cols = await colonnesAvecDescription(token, siteId, id);
     for (const [nom, description] of Object.entries({ ...COMMUN, ...textes })) {
-      const c = cols.find((x) => !x.readOnly && cle(x.displayName) === cle(nom));
+      // Nom exact d'abord : « Titre » (colonne Title) et « TITRE » coexistent dans certaines listes.
+      const c = cols.find((x) => !x.readOnly && x.displayName === nom) || cols.find((x) => !x.readOnly && cle(x.displayName) === cle(nom));
       if (!c) { if (!COMMUN[nom]) bilan.colonnesAbsentes.push(`${liste}/${nom}`); continue; }
       if (!vide(c.description)) continue;
       console.log(`ACTION ${liste} colonne « ${c.displayName} » description`);
