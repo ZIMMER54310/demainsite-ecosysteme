@@ -124,7 +124,7 @@ async function main() {
   const moduleEnBrouillon = arbreAvecBrouillons.sections.flatMap((s) => s.enfants.flatMap((l) =>
     l.enfants.flatMap((c) => c.enfants))).find((m) => m.titre === "Module en brouillon");
   assert.ok(moduleEnBrouillon, "le module brouillon est présent dans l'arbre");
-  assert.ok(htmlConstructeur.includes(`data-c-action="desactiver-element" data-ref="${moduleEnBrouillon.ref}" title="Désactiver sans supprimer"`),
+  assert.ok(htmlConstructeur.includes(`data-c-action="desactiver-element" data-ref="${moduleEnBrouillon.ref}" title="Supprimer « `),
     "un élément en brouillon peut être désactivé sans suppression");
 
   // Apercu : brouillons inclus, desactives exclus.

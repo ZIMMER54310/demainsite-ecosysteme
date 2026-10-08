@@ -72,6 +72,8 @@ async function main() {
   assert.doesNotMatch(partieEntete, /data-dse-ref|data-builder-canvas/, "en-tête non modifiable depuis la page");
   assert.match(avecContexte, /dse-apercu-repere dse-apercu-contexte--footer/, "pied de page absent signalé");
   assert.match(avecContexte, /dse-masquer-entete/, "case à cocher pour masquer l'en-tête");
+  const enteteVide = documentApercu({ mode: "builder", noeuds: [], contexte: { entete: { titre: "Accueil", origine: "lie", sections: [{ lignes: [{ colonnes: [{ modules: [{ type: "TEXTE", contenu: [] }] }] }] }] }, footer: null } }, "page");
+  assert.match(enteteVide, /🔒 En-tête « Accueil » · associé[\s\S]*aucun contenu renseigné/, "en-tête associé mais vide : signalé comme associé, pas comme absent");
   assert.match(panneauGenerique(noeud, []), /data-builder-onglet="DESIGN"/);
   assert.match(panneauGenerique(noeud, []), /data-builder-cote=/);
   assert.match(panneauGenerique(noeud, []), /type="color"/);

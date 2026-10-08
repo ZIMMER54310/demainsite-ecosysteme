@@ -207,6 +207,7 @@ function actionsNoeud(n, peut, colonnes, d) {
   if (!peut) return "";
   const action = (a) => peutAction(d, d.arbre.type, a);
   const r = `data-ref="${e(n.ref)}"`;
+  const corbeille = bouton("🗑", "desactiver-element", `${r} title="Supprimer « ${e(n.titre)} » (confirmation demandée, rien n'est effacé)" aria-label="Supprimer ${e(n.titre)}"`, "btn btn-mini constructeur-corbeille");
   return `<span class="constructeur-outils">
     ${action("element.deplacer") ? bouton("▲", "monter", `${r} title="Monter" aria-label="Monter"`, "btn btn-mini") +
       bouton("▼", "descendre", `${r} title="Descendre" aria-label="Descendre"`, "btn btn-mini") : ""}
@@ -216,8 +217,8 @@ function actionsNoeud(n, peut, colonnes, d) {
     ${action("element.dupliquer") ? bouton("⧉", "dupliquer-element", `${r} title="Dupliquer / créer une variante" aria-label="Dupliquer"`, "btn btn-mini") : ""}
     ${action("element.etat") ? !n.etat.publiable
       ? action("conteneur.publier") ? bouton(n.etat.inactif || n.etat.brouillon ? "Activer" : "✅ Valider et activer", "activer", r, "btn btn-mini") +
-        (n.etat.brouillon && !n.etat.inactif ? bouton("Désactiver", "desactiver-element", `${r} title="Désactiver sans supprimer"`, "btn btn-mini") : "") : ""
-      : bouton("Désactiver", "desactiver-element", r, "btn btn-mini") : ""}
+        (n.etat.brouillon && !n.etat.inactif ? corbeille : "") : ""
+      : corbeille : ""}
   </span>`;
 }
 
@@ -342,6 +343,7 @@ export function documentApercu(composition, type = "page") {
       responsive: z.responsive, theme: composition.theme }, optionsLecture(prefixe, t)) : "";
     const source = z?.origine !== "site" ? "associé" : type === "page" ? "exemple du site, non associé à cette page" : "celui du site";
     if (html) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise}>${html}</${balise}></div>`;
+    if (z) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise} class="dse-apercu-repere">${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} : aucun contenu renseigné pour l'instant (à compléter dans son propre onglet)</${balise}></div>`;
     const absent = type === "page" ? `aucun ${libelle.toLowerCase()} associé à cette page (le site garde l'affichage historique)` : `aucun ${libelle.toLowerCase()} actif sur ce site`;
     return `<${balise} class="dse-apercu-repere dse-apercu-contexte--${cle}">${e(libelle)} : ${e(absent)}</${balise}>`;
   };
@@ -369,7 +371,7 @@ export function documentApercu(composition, type = "page") {
     .dse-b-recursif:hover:not(:has(.dse-b-recursif:hover))>.dse-b-plus,.dse-design-cible>.dse-b-plus{display:flex;opacity:1}.dse-b-plus:hover{background:#2563eb;color:white}
     .dse-b-recursif:hover:not(:has(.dse-b-recursif:hover))>.dse-b-outils,body:not(:has(.dse-b-recursif:hover)) .dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:absolute;top:2px;right:2px;z-index:6;padding:2px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
     .dse-builder-glisse .dse-b-depot{display:block;border:1px dashed #7c3aed;padding:5px;font:12px system-ui;color:#4c1d95;background:#f5f3ff}
-    .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}.dse-b-outils .dse-b-corbeille{color:#b91c1c;border-color:#fca5a5;background:#fef2f2}.dse-b-outils .dse-b-corbeille:hover{background:#dc2626;color:white}body.dse-apercu-seul .dse-b-plus,body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
+    .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body:not(.dse-apercu-seul) [data-dse-ref].dse-survol>.dse-b-outils-ancien,body:not(.dse-apercu-seul):not(:has([data-dse-ref]:hover)) .dse-design-cible>.dse-b-outils-ancien{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:absolute;top:2px;right:2px;z-index:6;padding:2px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.25)}.dse-b-outils .dse-b-corbeille{color:#b91c1c;border-color:#fca5a5;background:#fef2f2}.dse-b-outils .dse-b-corbeille:hover{background:#dc2626;color:white}body.dse-apercu-seul .dse-b-plus,body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
     body.dse-apercu-seul [data-dse-ref]{outline:none!important;cursor:auto}body.dse-apercu-seul [data-dse-ref]::before{display:none!important}
     </style></head>
     <body>${corps}</body></html>`;
@@ -650,6 +652,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
           if (String(cible?.rendu || "").toUpperCase() === "LIGNE") return formulaireColonnes(commande.dataset.ref);
           return ouvrirDesign(commande.dataset.ref);
         }
+        if (commande && !enCours && commande.dataset.builderCanvas === "supprimer-ancien") return executer("element.etat", { ref: commande.dataset.ref, etat: "inactif" });
         if (commande && !enCours) return racine.querySelector(`[data-c-action="builder-${CSS.escape(commande.dataset.builderCanvas)}"][data-ref="${CSS.escape(commande.dataset.ref)}"]`)?.click();
         if (cibleRef && d.arbre && ecrit(d, FONCTION[d.arbre.type])) ouvrirDesign(cibleRef.dataset.dseRef);
       });
@@ -663,6 +666,19 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         const detail = rendu === "LIGNE" ? ` · ${(node.n.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE").length || "0"} col.`
           : rendu === "COLONNE" && freres.length > 1 ? ` ${freres.indexOf(node.n) + 1}/${freres.length}` : "";
         el.dataset.dseLibelle = `${rendu || LIBELLES[sorte] || "Élément"}${detail}${node?.n?.titre ? ` · ${node.n.titre}` : ""}`;
+        // Ancien format (section/ligne/colonne/module) : pas de barre generee par le rendu, on ajoute la corbeille ici.
+        if (!rendu && node?.n && LIBELLES[node.n.type] && !node.n.etat?.inactif && !el.querySelector(":scope>.dse-b-outils")
+          && ecrit(d, FONCTION[d.arbre.type]) && peutAction(d, d.arbre.type, "element.etat")) {
+          const outils = doc.createElement("div");
+          outils.className = "dse-b-outils dse-b-outils-ancien";
+          const corbeille = doc.createElement("button");
+          Object.assign(corbeille, { type: "button", className: "dse-b-corbeille", textContent: "🗑", title: `Supprimer ${node.n.titre || "cet élément"} (confirmation demandée)` });
+          corbeille.dataset.builderCanvas = "supprimer-ancien";
+          corbeille.dataset.ref = el.dataset.dseRef;
+          corbeille.setAttribute("aria-label", corbeille.title);
+          outils.append(corbeille);
+          el.prepend(outils);
+        }
       }
       let survol = null;
       doc?.addEventListener("mouseover", (ev) => {
@@ -1334,7 +1350,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       case "descendre": return executer("element.deplacer", { ref, sens: "bas" });
       case "dupliquer-element": return executer("element.dupliquer", { ref });
       case "activer": return executer("element.etat", { ref, etat: "actif" });
-      case "desactiver-element": if (confirm("Désactiver cet élément ? Aucune donnée ne sera supprimée.")) return executer("element.etat", { ref, etat: "inactif" }); return;
+      case "desactiver-element": return executer("element.etat", { ref, etat: "inactif" });
       case "logo": if (confirm("Utiliser ce média comme logo du site ? L'ancien média reste dans la bibliothèque.")) return executer("logo.choisir", { media: cible.dataset.media }); return;
       case "affecter": {
         const pages = d.pages || [];
