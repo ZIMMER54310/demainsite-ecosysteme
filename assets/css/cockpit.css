@@ -712,3 +712,10 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .c-aide-bloc{background:#eef5ff;border-left:3px solid #2f6fdd;border-radius:6px;padding:.5rem .7rem;margin:.4rem 0 .8rem;font-size:.9rem}
 .c-ia{margin:.1rem 0 .3rem}
 .c-ia-reponse{display:block;background:#f6f0ff;border-radius:6px;padding:.35rem .6rem;margin-bottom:.3rem;font-size:.82rem}
+
+/* Bulle Pasc ARA IA au survol des icones d'action (textes SharePoint OBJ-AIDE-ACTION) */
+.c-bulle-ia{position:fixed;z-index:10000;max-width:320px;padding:.55rem .75rem;background:#1e1b4b;color:#f5f3ff;border-radius:10px;box-shadow:0 10px 30px rgba(15,23,42,.3);font-size:.82rem;line-height:1.4;pointer-events:none}
+.c-bulle-ia strong{display:block;color:#c4b5fd;margin-bottom:.2rem}
+.c-bulle-ia p{margin:0}
+.c-bulle-ia[hidden]{display:none}
+.constructeur-colonnes-btn{font-weight:700;color:#4c1d95;border-color:#c4b5fd}

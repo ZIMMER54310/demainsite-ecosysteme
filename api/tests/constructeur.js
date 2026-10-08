@@ -329,6 +329,22 @@ async function main() {
       assert.equal(stores.get("OBJ-MODULE-SITE-PUBLIC/7000").OBJCOLONNESITELookupId, "5002", "module glissé dans une autre colonne");
       assert.equal(stores.get("OBJ-MODULE-SITE-PUBLIC/7000").ORDREAFFICHAGE, 20, "déposé après le voisin");
       assert.equal(stores.get("OBJ-MODULE-SITE-PUBLIC/7002").ORDREAFFICHAGE, 10);
+      const decouper = (reference, largeurs) => C.executer({ d: copies, perimetre, siteId: "4", action: "ligne.colonnes", params: { ref: reference, largeurs } });
+      assert.equal((await decouper(C.ref("ligne", 1000), [50, 40])).status, 400, "total différent de 100 % refusé");
+      assert.equal((await decouper(C.ref("ligne", 1000), [10, 10, 10, 10, 10, 10, 40])).status, 400, "7 colonnes refusées");
+      writes.length = 0;
+      const trois = await decouper(C.ref("colonne", 5000), [25, 50, 25]);
+      assert.match(trois.message, /3 colonne\(s\).*1 colonne\(s\) ajoutée/, "depuis une colonne : sa ligne est découpée");
+      assert.equal(stores.get("OBJ-COLONNE-SITE/5000").LARGEUR, 25);
+      assert.equal(stores.get("OBJ-COLONNE-SITE/5002").LARGEUR, 50);
+      assert.equal(writes.length, 1);
+      assert.equal(writes[0].champs.LARGEUR, 25);
+      assert.equal(writes[0].champs.OBJLIGNESITELookupId, "1000");
+      const une = await decouper(C.ref("ligne", 1000), [100]);
+      assert.match(une.message, /1 colonne\(s\) désactivée\(s\), 1 module\(s\) déplacé/);
+      assert.equal(stores.get("OBJ-MODULE-SITE-PUBLIC/7002").OBJCOLONNESITELookupId, "5000", "modules regroupés, rien d'effacé");
+      assert.equal(stores.get("OBJ-COLONNE-SITE/5002").OBJACTIFLookupId, "3", "colonne en trop désactivée");
+      assert.equal(C.actionDroit("ligne.colonnes"), "ligne.ajouter");
       writes.length = 0;
       await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.creer",
         params: { type: "footer", titre: "Pied vide", structureBase: false } });

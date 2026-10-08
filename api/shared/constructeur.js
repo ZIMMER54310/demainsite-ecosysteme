@@ -223,6 +223,9 @@ function vue(d, perimetre) {
       entete: rel(p, "OBJ-ENTETE-SITE") ? enteteDe(rel(p, "OBJ-ENTETE-SITE").id) : null,
       footer: rel(p, "OBJ-FOOTER-SITE") ? footerDe(rel(p, "OBJ-FOOTER-SITE").id) : null
     })),
+    // Bulles Pasc ARA IA au survol des icones d'action (OBJ-AIDE-ACTION : Title = code de l'action).
+    aidesActions: Object.fromEntries((d.aidesActions || []).filter(B.publiable).sort(parOrdre)
+      .map((a) => [titreDe(a).toLowerCase(), { icone: texte(a, "ICONE"), libelle: texte(a, "LIBELLE"), aide: texte(a, "AIDE") }])),
     // Catalogue visuel : libelle, icone, ordre et categorie viennent de SharePoint (OBJ-MODULE-CATEGORIE).
     categoriesModules: (d.categoriesModules || []).filter(B.publiable).sort(parOrdre)
       .map((c) => ({ cle: `categorie.${signer(`categorie:${c.id}`)}`, titre: titreDe(c), icone: texte(c, "ICONE"), description: texte(c, "NOTE-COURTE") })),
@@ -748,7 +751,7 @@ const OPERATIONS_ARTICLE = {
   publier: ["builder.publier", "builder.reactiver", "builder.desactiver", "conteneur.publier", "element.etat"]
 };
 // Le renommage reutilise les droits « modifier » existants (aucune operation SharePoint supplementaire).
-const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer" };
+const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer", "ligne.colonnes": "ligne.ajouter" };
 const actionDroit = (action) => ACTION_DROIT[action] || action;
 const operationArticle = (action) => {
   action = actionDroit(action);
@@ -992,6 +995,66 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
           extra: nLarg && largeurs[i] ? { [nLarg]: largeurs[i] } : {} });
       }
       return res(`Ligne ajoutée avec ${nombre} colonne(s), en brouillon.`, { ref: ref("ligne", id) });
+    }
+
+    // Decoupage d'une ligne : nombre et largeurs (%) des colonnes. Rien n'est efface :
+    // les colonnes en trop sont desactivees et leurs modules rejoignent la derniere colonne conservee.
+    case "ligne.colonnes": {
+      let l = cible(["ligne", "colonne"], p.ref);
+      if (l.refus) return l;
+      if (l.type === "colonne") {
+        const pere = parent(d, "colonne", l.el);
+        if (!pere?.el) return { erreur: "Ligne introuvable pour cette colonne.", status: 400 };
+        l = cible(["ligne"], ref("ligne", pere.el.id));
+        if (l.refus) return l;
+      }
+      const largeurs = Array.isArray(p.largeurs) ? p.largeurs.map((x) => Math.round(Number(x))) : [];
+      if (largeurs.length < 1 || largeurs.length > 6 || largeurs.some((x) => !Number.isFinite(x) || x < 1 || x > 100))
+        return { erreur: "Indiquez de 1 à 6 colonnes, chacune entre 1 et 100 %.", status: 400 };
+      const total = largeurs.reduce((a, b) => a + b, 0);
+      if (Math.abs(total - 100) > 1) return { erreur: `Le total des largeurs doit faire 100 % (actuellement ${total} %).`, status: 400 };
+      const nLarg = await w.simple("OBJ-COLONNE-SITE", "LARGEUR");
+      if (!nLarg) return { refus: "Colonne LARGEUR indisponible sur OBJ-COLONNE-SITE." };
+      const actuelles = enfantsDe(d, "ligne", l.el).filter((x) => !inactif(x));
+      const titreLigne = titreDe(l.el) || "Ligne";
+      const gardees = [];
+      for (const [i, x] of largeurs.entries()) {
+        const col = actuelles[i];
+        if (col) {
+          if (Number(champ(col, ["LARGEUR"])) !== x) await w.maj("OBJ-COLONNE-SITE", col.id, { [nLarg]: x });
+          gardees.push(col.id);
+        } else {
+          gardees.push(await creerNiveau(w, "colonne", "ligne", l.el.id, { titre: `${titreLigne} · colonne ${i + 1}`,
+            ordre: (actuelles.length ? ordreDe(actuelles[actuelles.length - 1]) : 0) + (i - actuelles.length + 1) * 10, extra: { [nLarg]: x } }));
+        }
+      }
+      let deplaces = 0;
+      const surplus = actuelles.slice(largeurs.length);
+      if (surplus.length) {
+        const dest = gardees[gardees.length - 1];
+        const destEl = actuelles[largeurs.length - 1];
+        const nCol = await w.lookup("OBJ-MODULE-SITE-PUBLIC", "OBJ-COLONNE-SITE");
+        const nOrdre = await w.simple("OBJ-MODULE-SITE-PUBLIC", "ORDRE-AFFICHAGE");
+        let ordre = await prochainOrdre(destEl ? enfantsDe(d, "colonne", destEl) : []);
+        for (const col of surplus) {
+          for (const m of enfantsDe(d, "colonne", col)) {
+            if (!nCol) break;
+            await w.maj("OBJ-MODULE-SITE-PUBLIC", m.id, { [nCol]: String(dest), ...(nOrdre ? { [nOrdre]: ordre } : {}) });
+            await synchroniserUtilisations(w, d, m.id, { "OBJ-COLONNE-SITE": String(dest), "ORDRE-AFFICHAGE": ordre });
+            ordre += 10; deplaces++;
+          }
+          await w.maj("OBJ-COLONNE-SITE", col.id, await w.etats("OBJ-COLONNE-SITE", "inactif"));
+        }
+      }
+      // Disposition SharePoint correspondante (si elle existe) pour garder l'arbre coherent.
+      const grille = largeurs.join("-");
+      const st = (d.structures || []).filter(B.publiable).find((s) => String(champ(s, ["DEFINITIONGRILLE"]) || titreDe(s)) === grille);
+      const nStruct = st ? await w.lookup("OBJ-LIGNE-SITE", "OBJ-LIGNE-STRUCTURE") : null;
+      if (nStruct && rel(l.el, "OBJ-LIGNE-STRUCTURE")?.id !== st.id) await w.maj("OBJ-LIGNE-SITE", l.el.id, { [nStruct]: String(st.id) });
+      const ajoutees = Math.max(0, largeurs.length - actuelles.length);
+      return res(`Ligne découpée en ${largeurs.length} colonne(s) (${largeurs.join(" / ")} %)`
+        + `${ajoutees ? ` — ${ajoutees} colonne(s) ajoutée(s) en brouillon` : ""}`
+        + `${surplus.length ? ` — ${surplus.length} colonne(s) désactivée(s), ${deplaces} module(s) déplacé(s)` : ""}.`, { ref: ref("ligne", l.el.id) });
     }
 
     case "module.ajouter": {

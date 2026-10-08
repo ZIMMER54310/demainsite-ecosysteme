@@ -7,7 +7,7 @@ const B = require("./builder");
 
 const TOUT = { pages: "OBJ-PAGES-SITE", sections: "OBJ-SECTION-SITE", lignes: "OBJ-LIGNE-SITE", colonnes: "OBJ-COLONNE-SITE",
   modules: "OBJ-MODULE-SITE-PUBLIC", types: "OBJ-MODULE-SITE-PUBLIC-TYPE", modeles: "OBJ-MODELE-BUILDER",
-  categoriesModules: "OBJ-MODULE-CATEGORIE",
+  categoriesModules: "OBJ-MODULE-CATEGORIE", aidesActions: "OBJ-AIDE-ACTION",
   presets: "OBJ-STYLE-PRESET", responsifs: "OBJ-STYLE-RESPONSIVE", medias: "OBJ-MEDIA", couleurs: "OBJ-COULEUR", polices: "OBJ-POLICE",
   // Constructeur : conteneurs, utilisations, instances, logos et referentiels de structure.
   entetes: "OBJ-ENTETE-SITE", footers: "OBJ-FOOTER-SITE", utilisations: "OBJ-MODULE-UTILISATION", instances: "OBJ-MODELE-INSTANCE",

@@ -82,6 +82,11 @@ const realisation = (r) => r?.titre ? `<span class="badge constructeur-badge"${/
 
 const bouton = (libelle, action, attrs = "", classe = "btn btn-secondary") =>
   `<button type="button" class="${classe}" data-c-action="${e(action)}" ${attrs}>${libelle}</button>`;
+// Aides Pasc ARA IA des icones d'action : textes lus dans SharePoint (OBJ-AIDE-ACTION), affiches au survol.
+const aideAttr = (d, code) => d?.aidesActions?.[code]?.aide ? ` data-c-aide="${e(code)}"` : "";
+const aideIa = (d, code) => d?.aidesActions?.[code]?.aide
+  ? `<p class="c-aide-bloc">🤖 <strong>Pasc ARA IA</strong> — ${e(d.aidesActions[code].aide)}</p>` : "";
+const AIDE_CANVAS = { "ajouter-ancien": "ajouter", "contenu-ancien": "contenu", "dupliquer-ancien": "dupliquer", "supprimer-ancien": "supprimer", retirer: "supprimer" };
 const FONCTION = { entete: "entete", footer: "footer", page: "pages", article: "articles" };
 // Article : memes correspondances que le serveur (operations Articles existantes), le serveur recontrole chaque action.
 const OPERATIONS_ARTICLE = {
@@ -95,7 +100,7 @@ export const operationArticle = (action) => {
   return suffixe ? `articles.${suffixe}` : null;
 };
 // Le renommage reutilise les droits « modifier » existants (meme correspondance que le serveur).
-const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer" };
+const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer", "ligne.colonnes": "ligne.ajouter" };
 const operationDe = (type, action) => {
   action = ACTION_DROIT[action] || action;
   return type === "article" ? operationArticle(action) : `constructeur.${type}.${action}`;
@@ -241,17 +246,19 @@ function actionsNoeud(n, peut, colonnes, d) {
   if (!peut) return "";
   const action = (a) => peutAction(d, d.arbre.type, a);
   const r = `data-ref="${e(n.ref)}"`;
-  const corbeille = bouton("🗑", "desactiver-element", `${r} title="Supprimer « ${e(n.titre)} » (confirmation demandée, rien n'est effacé)" aria-label="Supprimer ${e(n.titre)}"`, "btn btn-mini constructeur-corbeille");
+  const a = (code) => aideAttr(d, code);
+  const corbeille = bouton("🗑", "desactiver-element", `${r}${a("supprimer")} title="Supprimer « ${e(n.titre)} » (confirmation demandée, rien n'est effacé)" aria-label="Supprimer ${e(n.titre)}"`, "btn btn-mini constructeur-corbeille");
   return `<span class="constructeur-outils">
-    ${action("element.deplacer") ? bouton("▲", "monter", `${r} title="Monter" aria-label="Monter"`, "btn btn-mini") +
-      bouton("▼", "descendre", `${r} title="Descendre" aria-label="Descendre"`, "btn btn-mini") : ""}
+    ${action("element.deplacer") ? bouton("▲", "monter", `${r}${a("deplacer")} title="Monter" aria-label="Monter"`, "btn btn-mini") +
+      bouton("▼", "descendre", `${r}${a("deplacer")} title="Descendre" aria-label="Descendre"`, "btn btn-mini") : ""}
+    ${["ligne", "colonne"].includes(n.type) && action("ligne.colonnes") ? bouton("▥", "colonnes", `${r}${a("colonnes")} title="Colonnes : découper la ligne et régler les largeurs" aria-label="Colonnes de la ligne"`, "btn btn-mini constructeur-colonnes-btn") : ""}
     ${action("element.deplacer") && n.type === "module" && colonnes.length > 1 ? `<select data-c-deplacer="${e(n.ref)}" aria-label="Déplacer vers une colonne"><option value="">Déplacer vers…</option>${colonnes.map((c) => `<option value="${e(c.ref)}">${e(c.titre)}</option>`).join("")}</select>` : ""}
-    ${action("element.renommer") ? bouton("🏷", "renommer", `${r} title="Renommer « ${e(n.titre)} »" aria-label="Renommer ${e(n.titre)}"`, "btn btn-mini") : ""}
-    ${action("contenu.enregistrer") && n.type === "module" && n.formulaire ? bouton("✏️ Contenu", "contenu", r, "btn btn-mini") : ""}
-    ${action("design.enregistrer") ? bouton("🎨", "design", `${r} title="Design" aria-label="Design"`, "btn btn-mini") : ""}
-    ${action("element.dupliquer") ? bouton("⧉", "dupliquer-element", `${r} title="Dupliquer / créer une variante" aria-label="Dupliquer"`, "btn btn-mini") : ""}
+    ${action("element.renommer") ? bouton("🏷", "renommer", `${r}${a("renommer")} title="Renommer « ${e(n.titre)} »" aria-label="Renommer ${e(n.titre)}"`, "btn btn-mini") : ""}
+    ${action("contenu.enregistrer") && n.type === "module" && n.formulaire ? bouton("✏️ Contenu", "contenu", `${r}${a("contenu")}`, "btn btn-mini") : ""}
+    ${action("design.enregistrer") ? bouton("🎨", "design", `${r}${a("design")} title="Design" aria-label="Design"`, "btn btn-mini") : ""}
+    ${action("element.dupliquer") ? bouton("⧉", "dupliquer-element", `${r}${a("dupliquer")} title="Dupliquer / créer une variante" aria-label="Dupliquer"`, "btn btn-mini") : ""}
     ${action("element.etat") ? !n.etat.publiable
-      ? action("conteneur.publier") ? bouton(n.etat.inactif || n.etat.brouillon ? "Activer" : "✅ Valider et activer", "activer", r, "btn btn-mini") +
+      ? action("conteneur.publier") ? bouton(n.etat.inactif || n.etat.brouillon ? "Activer" : "✅ Valider et activer", "activer", `${r}${a("activer")}`, "btn btn-mini") +
         (n.etat.brouillon && !n.etat.inactif ? corbeille : "") : ""
       : corbeille : ""}
   </span>`;
@@ -299,7 +306,7 @@ function arbreGeneriqueHtml(n, peut, racine = true, d = {}) {
     <ul>${(n.enfants || []).map((x) => arbreGeneriqueHtml(x, peut, false, d)).join("")}</ul></li>`;
 }
 
-export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", renommable = false) {
+export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", renommable = false, colonnes = "") {
   const controle = (c) => {
     const nom = `name="${e(c.ref)}"`;
     const v = (appareil ? c.surcharges?.[appareil] : c.valeur) ?? "";
@@ -322,7 +329,7 @@ export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", r
     const herite = appareil && (v === "" || v === null) ? `<small>Valeur générale : ${e(c.valeur ?? "non configurée")}</small>` : "";
     return `<label class="design-champ">${e(c.libelle)}${c.obligatoire ? " *" : ""}${input}${herite}<small>${e(c.aide || t.aide || "")}</small></label>`;
   };
-  return `<form class="card design-panneau" data-builder-valeurs data-appareil="${e(appareil)}" data-ref="${e(n.ref)}"><h3>${e(n.titre)}${renommable && !n.verrouille ? ` <button type="button" class="btn btn-mini design-renommer" data-c-action="renommer" data-ref="${e(n.ref)}" title="Modifier le nom" aria-label="Modifier le nom">✏️</button>` : ""}</h3>
+  return `<form class="card design-panneau" data-builder-valeurs data-appareil="${e(appareil)}" data-ref="${e(n.ref)}"><h3>${e(n.titre)}${renommable && !n.verrouille ? ` <button type="button" class="btn btn-mini design-renommer" data-c-action="renommer" data-ref="${e(n.ref)}" title="Modifier le nom" aria-label="Modifier le nom">✏️</button>` : ""}${colonnes && !n.verrouille ? ` <button type="button" class="btn btn-mini constructeur-colonnes-btn" data-c-action="colonnes" data-ref="${e(n.ref)}"${colonnes} title="Colonnes : nombre et largeurs en %" aria-label="Colonnes de la ligne">▥ Colonnes</button>` : ""}</h3>
     <label class="design-champ">Valeurs à modifier<select data-builder-appareil>${[["", "Général / par défaut"], ...APPAREILS_APERCU.map((x) => [x.cle, x.libelle])].map(([cle, libelle]) =>
       `<option value="${cle}"${appareil === cle ? " selected" : ""}>${e(libelle)}</option>`).join("")}</select></label>
     <div class="design-onglets" role="tablist" aria-label="Réglages">${["CONTENU", "DESIGN", "AVANCE"].map((c) =>
@@ -561,6 +568,31 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   const replies = new Set();
   const volets = new Map();
   racine.addEventListener("toggle", (ev) => { if (ev.target.dataset?.cVolet) volets.set(ev.target.dataset.cVolet, ev.target.open); }, true);
+  // Bulle Pasc ARA IA (survol / focus d'une icone d'action) : texte SharePoint OBJ-AIDE-ACTION.
+  const bulleIa = (() => {
+    let el = null, minuteur = null;
+    return {
+      montrer(cible, decalage = { x: 0, y: 0 }) {
+        const code = cible.dataset.cAide, a = d.aidesActions?.[code];
+        if (!a?.aide) return;
+        if (cible.title) { cible.setAttribute("aria-description", cible.title); cible.removeAttribute("title"); }
+        clearTimeout(minuteur);
+        minuteur = setTimeout(() => {
+          if (!cible.isConnected) return;
+          el ??= Object.assign(document.createElement("div"), { className: "c-bulle-ia", role: "tooltip" });
+          el.innerHTML = `<strong>🤖 Pasc ARA IA · ${e(a.icone || "")} ${e(a.libelle || code)}</strong><p>${e(a.aide)}</p>`;
+          if (!el.isConnected) document.body.append(el);
+          el.hidden = false;
+          const r = cible.getBoundingClientRect(), l = el.offsetWidth, h = el.offsetHeight;
+          let top = decalage.y + r.bottom + 8;
+          if (top + h > window.innerHeight - 8) top = decalage.y + r.top - h - 8;
+          el.style.top = `${Math.max(8, top)}px`;
+          el.style.left = `${Math.max(8, Math.min(window.innerWidth - l - 8, decalage.x + r.left + r.width / 2 - l / 2))}px`;
+        }, 350);
+      },
+      cacher() { clearTimeout(minuteur); if (el) el.hidden = true; }
+    };
+  })();
   const trouverNoeud = (reference) => {
     const chercher = (n, parent = null) => n?.ref === reference ? { n, parent } :
       (n?.enfants || n?.sections || []).map((x) => chercher(x, n)).find(Boolean);
@@ -708,6 +740,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
           return ouvrirDesign(commande.dataset.ref);
         }
         if (commande && !enCours && commande.dataset.builderCanvas === "renommer") return renommer(commande.dataset.ref);
+        if (commande && !enCours && commande.dataset.builderCanvas === "colonnes") return formulaireColonnes(commande.dataset.ref);
         if (commande && !enCours && commande.dataset.builderCanvas === "supprimer-ancien") return confirmerSuppression(commande.dataset.ref);
         if (commande && !enCours && commande.dataset.builderCanvas === "ajouter-ancien") return ajoutAncien(commande.dataset.ref);
         if (commande && !enCours && ["contenu-ancien", "dupliquer-ancien"].includes(commande.dataset.builderCanvas)) {
@@ -734,6 +767,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
           const boutons = [
             (n.type === "section" && peut("ligne.ajouter") && d.structures?.length || n.type === "colonne" && peut("module.ajouter") && d.typesModules?.length)
               && ["＋ Ajouter", "ajouter-ancien", n.type === "section" ? "Ajouter une ligne dans cette section" : "Ajouter un module dans cette colonne"],
+            ["ligne", "colonne"].includes(n.type) && peut("ligne.colonnes") && ["▥ Colonnes", "colonnes", "Découper la ligne en colonnes et régler les largeurs"],
             n.type === "module" && n.formulaire && peut("contenu.enregistrer") ? ["✏️ Modifier", "contenu-ancien", "Modifier le contenu de ce module"]
               : peut("design.enregistrer") && ["✏️ Modifier", "modifier", "Ouvrir les réglages de cet élément"],
             peut("element.renommer") && ["🏷 Nom", "renommer", `Renommer ${n.titre || "cet élément"}`],
@@ -761,6 +795,14 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
           }
         }
       }
+      // Bulles Pasc ARA IA sur toutes les icones d'action du canevas (generees ici ou par le rendu).
+      for (const b of doc?.querySelectorAll("[data-builder-canvas], .dse-b-poignee") || []) {
+        const code = b.classList.contains("dse-b-poignee") ? "deplacer" : AIDE_CANVAS[b.dataset.builderCanvas] || b.dataset.builderCanvas;
+        if (d.aidesActions?.[code]?.aide) b.dataset.cAide = code;
+      }
+      const cadre = () => { const r = f.getBoundingClientRect(); return { x: r.left, y: r.top }; };
+      doc?.addEventListener("mouseover", (ev) => { const b = ev.target.closest?.("[data-c-aide]"); if (b) bulleIa.montrer(b, cadre()); });
+      doc?.addEventListener("mouseout", (ev) => { if (ev.target.closest?.("[data-c-aide]")) bulleIa.cacher(); });
       let survol = null;
       doc?.addEventListener("mouseover", (ev) => {
         const el = ev.target.closest?.("[data-dse-ref]");
@@ -801,8 +843,12 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (etat.design) basculerCote("design", false);
     const generic = etat.design?.ref?.startsWith("builderelement.") ? trouverNoeud(etat.design.ref)?.n : null;
     zone.innerHTML = generic ? panneauGenerique(generic, (d.medias || []).filter((m) => m.builderAutorise !== false), etat.design.appareilValeurs || "", etat.design.ongletGenerique || "CONTENU",
-      ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre?.type, "builder.renommer")) : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), aideDesign: typeDe(trouverNoeud(etat.design.ref)?.n)?.aideDesign || "", onglet: etat.design.onglet, appareil: etat.design.appareil,
-      renommable: ["section", "ligne", "colonne", "module"].includes(trouverNoeud(etat.design.ref)?.n?.type) && ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre.type, "element.renommer") })
+      ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre?.type, "builder.renommer"),
+      String(generic.rendu || "").toUpperCase() === "LIGNE" && Boolean(colonnesDirectes(generic.typeRef)) && ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre?.type, "builder.ajouter")
+        ? aideAttr(d, "colonnes") || " " : "") : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), aideDesign: typeDe(trouverNoeud(etat.design.ref)?.n)?.aideDesign || "", onglet: etat.design.onglet, appareil: etat.design.appareil,
+      renommable: ["section", "ligne", "colonne", "module"].includes(trouverNoeud(etat.design.ref)?.n?.type) && ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre.type, "element.renommer"),
+      colonnes: ["ligne", "colonne"].includes(trouverNoeud(etat.design.ref)?.n?.type) && ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre.type, "ligne.colonnes"),
+      aideColonnes: aideAttr(d, "colonnes") })
       : etat.design ? `<p class="card muted">Chargement des réglages…</p>` : "";
     zone.closest(".constructeur-design-zone")?.classList.toggle("constructeur-design-zone--ouverte", Boolean(etat.design));
     if (generic?.verrouille) for (const champ of zone.querySelectorAll("input,select,textarea,button[type=submit]")) champ.disabled = true;
@@ -1139,31 +1185,43 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     ["3/4 + 1/4", [75, 25]], ["1/4 + 1/2 + 1/4", [25, 50, 25]], ["1/2 + 1/4 + 1/4", [50, 25, 25]]
   ];
   const egales = (nb) => Array.from({ length: nb }, (_, i) => i < nb - 1 ? Math.round(10000 / nb) / 100 : Math.round((100 - Math.round(10000 / nb) / 100 * (nb - 1)) * 100) / 100);
-  const formulaireColonnes = (ref) => {
-    const ligne = trouverNoeud(ref)?.n;
-    const typeCol = ligne && colonnesDirectes(ligne.typeRef);
-    if (!ligne || ligne.verrouille || !typeCol) return ouvrirDesign(ref);
+  // Ancien format : une colonne ouvre le decoupage de sa ligne (largeurs entieres, action « ligne.colonnes »).
+  const formulaireColonnes = (refDemande) => {
+    const trouve = trouverNoeud(refDemande);
+    let ref = refDemande, ligne = trouve?.n;
+    const ancien = Boolean(ligne && !ligne.rendu && ["ligne", "colonne"].includes(ligne.type));
+    if (ancien && ligne.type === "colonne") { ligne = trouve.parent; ref = ligne?.ref; }
+    const typeCol = !ancien && ligne && colonnesDirectes(ligne.typeRef);
+    if (!ligne || ligne.verrouille || (!ancien && !typeCol)) return ouvrirDesign(refDemande);
+    if (ancien && !peutAction(d, d.arbre?.type, "ligne.colonnes")) return message("Modification des colonnes non autorisée pour votre profil.");
     if (brouillons.size) return message("Enregistrez d'abord les réglages en cours avant de modifier les colonnes.");
-    const existantes = (ligne.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE");
+    const existantes = ancien ? (ligne.enfants || []).filter((x) => x.type === "colonne" && !x.etat?.inactif)
+      : (ligne.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE");
     const largeurDe = (col) => {
+      if (ancien) return Number(col.largeur) > 0 ? Number(col.largeur) : null;
       const v = String(col.champs?.find((c) => c.categorie === "DESIGN" && codeChamp(c.cle) === "LARGEUR")?.valeur || "");
       return /^\d+(\.\d+)?%$/.test(v) ? Number.parseFloat(v) : null;
     };
-    const lues = existantes.map(largeurDe);
+    const grille = ancien && /^\d+(-\d+)*$/.test(String(ligne.structure || "")) ? String(ligne.structure).split("-").map(Number) : null;
+    const lues = existantes.map(largeurDe).map((x, i) => x ?? (grille?.length === existantes.length ? grille[i] : null));
     let largeurs = existantes.length && lues.every((x) => x != null) ? lues : egales(Math.max(existantes.length, 1));
-    const peutAjouter = peutAction(d, d.arbre?.type, "builder.ajouter"), peutRetirer = peutAction(d, d.arbre?.type, "builder.desactiver");
+    const peutAjouter = peutAction(d, d.arbre?.type, ancien ? "ligne.colonnes" : "builder.ajouter"),
+      peutRetirer = peutAction(d, d.arbre?.type, ancien ? "ligne.colonnes" : "builder.desactiver");
+    // Ancien format : largeurs entieres dont la somme fait exactement 100.
+    const entieres = (l) => { const r = l.map((x) => Math.max(1, Math.round(x))); r[r.length - 1] += 100 - r.reduce((a, b) => a + b, 0); return r; };
     const dlg = dialogue();
     const rendre = () => {
       const total = Math.round(largeurs.reduce((a, b) => a + b, 0) * 100) / 100;
       dlg.innerHTML = `<form method="dialog" class="constructeur-ajout-rapide constructeur-colonnes">
-        <h3>✏️ Modifier la ligne « ${e(ligne.titre || "Ligne")} »</h3>
+        <h3>▥ Colonnes de la ligne « ${e(ligne.titre || "Ligne")} »</h3>
+        ${aideIa(d, "colonnes")}
         <label>Nombre de colonnes <select name="nombre">${[1, 2, 3, 4, 5, 6].map((nb) => `<option value="${nb}"${nb === largeurs.length ? " selected" : ""}
           ${(nb > existantes.length && !peutAjouter) || (nb < existantes.length && !peutRetirer) ? " disabled" : ""}>${nb}</option>`).join("")}</select></label>
         <p class="muted"><small>Modèles rapides</small></p>
         <div class="constructeur-colonnes-modeles">${PRESETS_COLONNES.map(([nom, l], i) => !l || l.length <= 6 ? `<button type="button" class="btn btn-mini" data-modele="${i}">${e(nom)}</button>` : "").join("")}</div>
         <div class="constructeur-colonnes-apercu">${largeurs.map((l, i) => `<span style="flex:${l} ${l} 0%">${i + 1}<small>${l}%</small></span>`).join("")}</div>
         <div class="constructeur-colonnes-champs">${largeurs.map((l, i) => `<label>Colonne ${i + 1}${existantes[i] ? "" : " <small>(nouvelle)</small>"}
-          <span><input type="number" name="l${i}" min="1" max="100" step="0.01" value="${l}" required> %</span></label>`).join("")}</div>
+          <span><input type="number" name="l${i}" min="1" max="100" step="${ancien ? 1 : 0.01}" value="${l}" required> %</span></label>`).join("")}</div>
         <p class="constructeur-colonnes-total${Math.abs(total - 100) > 0.1 ? " erreur" : ""}">Total : <strong>${total} %</strong>${Math.abs(total - 100) > 0.1 ? " — doit faire 100 %" : " ✓"}</p>
         <p class="muted"><small>Sur mobile, les colonnes restent empilées les unes sous les autres.</small></p>
         <div class="constructeur-boutons"><button type="submit" class="btn btn-primary">Appliquer</button>
@@ -1183,6 +1241,11 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         ev.preventDefault();
         if (Math.abs(largeurs.reduce((a, b) => a + b, 0) - 100) > 0.1) return;
         const enTrop = existantes.slice(largeurs.length);
+        if (ancien) {
+          if (enTrop.some((c) => c.enfants?.length) && !confirm(`Retirer ${enTrop.length > 1 ? "les dernières colonnes" : "la dernière colonne"} ? Leurs modules seront déplacés dans la colonne ${largeurs.length}. Aucune donnée ne sera supprimée.`)) return;
+          dlg.close();
+          return executer("ligne.colonnes", { ref, largeurs: entieres(largeurs) });
+        }
         if (enTrop.some((c) => c.enfants?.length) && !confirm(`Retirer ${enTrop.length > 1 ? "les dernières colonnes et leur contenu" : "la dernière colonne et son contenu"} ? Aucune donnée ne sera supprimée.`)) return;
         dlg.close();
         await appliquerColonnes(ref, typeCol, [...largeurs]);
@@ -1505,6 +1568,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       }, "Initialiser ce conteneur vide", (v) => executer("builder.initialiser", { ref, ...v }));
       case "builder-retirer": return confirmerSuppression(ref);
       case "renommer": return renommer(ref);
+      case "colonnes": return formulaireColonnes(ref);
       case "ajouter-ancien": return ajoutAncien(ref);
       case "ouvrir": if (!confirmerAbandon()) return; etat.conteneur = ref; etat.message = ""; historiqueBuilder = []; positionBuilder = -1; brouillons.clear(); brouillonGenerique = false; await charger().catch((err) => Object.assign(etat, { message: err.message, erreur: true })); empreinteHistorique = d.arbre?.generique?.empreinte || ""; return afficher();
       case "fermer": if (!confirmerAbandon()) return; etat.conteneur = ""; delete d.arbre; delete d.apercu; try { await charger(); } catch (err) { Object.assign(etat, { message: err.message, erreur: true }); } brouillonGenerique = false; brouillons.clear(); return afficher();
@@ -1755,6 +1819,11 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     return executer(source.n.type === "builder" ? "builder.deplacer" : "element.deplacer",
       { ref: source.n.ref, parent: depot.parent.ref, ...(depot.position !== "dans" ? { [depot.position]: depot.dest.n.ref } : {}) });
   }
+  racine.addEventListener("mouseover", (ev) => { const b = ev.target.closest?.("[data-c-aide]"); if (b) bulleIa.montrer(b); });
+  racine.addEventListener("focusin", (ev) => { const b = ev.target.closest?.("[data-c-aide]"); if (b) bulleIa.montrer(b); });
+  racine.addEventListener("mouseout", (ev) => { if (ev.target.closest?.("[data-c-aide]")) bulleIa.cacher(); });
+  racine.addEventListener("focusout", () => bulleIa.cacher());
+  racine.addEventListener("click", () => bulleIa.cacher(), true);
   racine.addEventListener("dragstart", demarrerGlisse);
   racine.addEventListener("dragover", autoriserDepot);
   racine.addEventListener("drop", deposer);
