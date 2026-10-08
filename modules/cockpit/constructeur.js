@@ -351,10 +351,10 @@ export function documentApercu(composition, type = "page") {
     const html = z?.sections?.length || z?.noeuds?.length ? rendreBuilder({ mode: "builder", sections: z.sections, noeuds: z.noeuds, style: z.style,
       responsive: z.responsive, theme: composition.theme }, optionsLecture(prefixe, t)) : "";
     const source = z?.origine !== "site" ? "associé" : type === "page" ? "exemple du site, non associé à cette page" : "celui du site";
-    if (html) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise} class="dse-b-${cle}">${html}</${balise}></div>`;
-    // Comme le site public : sans contenu construit, le visiteur voit l'affichage historique du site.
+    // Comme le site public : sans element associe et rempli, le visiteur voit l'affichage historique du site.
     const historique = rendusSite?.[cle];
-    if (historique && type === "page") return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z?.titre ? ` « ${e(z.titre)} » vide :` : ""} affichage historique du site, comme le voit le visiteur · lecture seule">${historique}</div>`;
+    if (historique && type === "page" && (!html || z?.origine === "site")) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z?.titre && z.origine !== "site" ? ` « ${e(z.titre)} » vide :` : " non associé :"} affichage historique du site, comme le voit le visiteur · lecture seule">${historique}</div>`;
+    if (html) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise} class="dse-b-${cle}">${html}</${balise}></div>`;
     if (z) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise} class="dse-apercu-repere">${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} : aucun contenu renseigné pour l'instant (à compléter dans son propre onglet)</${balise}></div>`;
     const absent = type === "page" ? `aucun ${libelle.toLowerCase()} associé à cette page (le site garde l'affichage historique)` : `aucun ${libelle.toLowerCase()} actif sur ce site`;
     return `<${balise} class="dse-apercu-repere dse-apercu-contexte--${cle}">${e(libelle)} : ${e(absent)}</${balise}>`;
