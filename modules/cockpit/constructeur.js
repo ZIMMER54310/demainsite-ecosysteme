@@ -527,17 +527,20 @@ export function rendreConstructeur(moi, d, etat = {}) {
 
 /* ---------------- Formulaires dynamiques (contenu / proprietes) ---------------- */
 
-export function formulaireHtml(f, titre) {
-  const textes = (f.textes || []).map((c) => `<label>${e(c.libelle)}${c.obligatoire ? " *" : ""}
+export function formulaireHtml(f, titre, { valider = "Enregistrer", passer = "", ia = false } = {}) {
+  const aide = (t) => t ? `<small class="c-aide">${e(t)}</small>` : "";
+  const textes = (f.textes || []).map((c) => `<label>${e(c.libelle)}${c.obligatoire ? " *" : ""}${aide(c.aide)}
+    ${ia && c.multiligne ? `<button type="button" class="btn btn-mini c-ia" data-c-ia="${e(c.cle)}" title="Demander de l'aide à Pasc ARA IA">✨ Aide Pasc ARA IA</button><small class="c-ia-reponse" data-c-ia-reponse="${e(c.cle)}" hidden></small>` : ""}
     ${c.multiligne ? `<textarea name="${e(c.cle)}" rows="4"${c.max ? ` maxlength="${c.max}"` : ""}>${e(c.valeur)}</textarea>`
       : `<input name="${e(c.cle)}" value="${e(c.valeur)}"${c.max ? ` maxlength="${c.max}"` : ""}${c.obligatoire ? " required" : ""}>`}</label>`).join("");
-  const listes = (f.listes || []).map((l) => `<label>${e(l.libelle)}${l.obligatoire ? " *" : ""}
+  const listes = (f.listes || []).map((l) => `<label>${e(l.libelle)}${l.obligatoire ? " *" : ""}${aide(l.aide)}
     <select name="${e(l.cle)}"><option value="">— Aucun —</option>${l.options.map((o) => `<option value="${e(o.ref)}"${o.ref === l.valeur ? " selected" : ""}>${e(o.titre)}</option>`).join("")}</select>
     ${l.options.some((o) => o.url) ? `<span class="constructeur-medias constructeur-medias--mini">${l.options.filter((o) => o.url).map((o) => `<img src="${e(o.url)}" alt="${e(o.titre)}" title="${e(o.titre)}" loading="lazy">`).join("")}</span>` : ""}
   </label>`).join("");
-  return `<form method="dialog" data-c-formulaire><h3>${e(titre)}</h3>${textes}${listes || ""}
+  return `<form method="dialog" data-c-formulaire><h3>${e(titre)}</h3>${f.aide ? `<p class="c-aide-bloc">💡 ${e(f.aide)}</p>` : ""}${textes}${listes || ""}
     ${textes || listes ? "" : `<p class="muted">Aucun champ modifiable.</p>`}
-    <div class="constructeur-boutons"><button class="btn btn-primary" value="ok" type="submit">Enregistrer</button>
+    <div class="constructeur-boutons"><button class="btn btn-primary" value="ok" type="submit">${e(valider)}</button>
+    ${passer ? `<button class="btn btn-secondary" type="button" data-c-passer>${e(passer)}</button>` : ""}
     <button class="btn btn-secondary" value="annuler" type="button" data-c-fermer>Annuler</button></div></form>`;
 }
 
@@ -777,11 +780,12 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     });
     f.srcdoc = documentApercu(d.apercu, d.arbre?.type);
   };
+  const typeDe = (n) => n?.typeModule ? (d.typesModules || []).find((t) => t.code === String(n.typeModule).toUpperCase()) : null;
   const contenuDesign = (ref) => {
     const trouver = (n) => n.ref === ref ? n : (n.enfants || n.sections || []).map(trouver).find(Boolean);
     const n = d.arbre ? trouver(d.arbre) : null;
     if (d.arbre?.ref === ref) return `<p>Titre, adresse et informations de ${e(d.arbre.titre)}.</p>${bouton("✏️ Modifier les informations", "proprietes", `data-ref="${e(ref)}"`)}`;
-    if (n?.type === "module" && n.formulaire) return `<p>Textes, liens et médias du module.</p>${bouton("✏️ Modifier le contenu", "contenu", `data-ref="${e(ref)}"`)}`;
+    if (n?.type === "module" && n.formulaire) return `${typeDe(n)?.aide ? `<p class="c-aide-bloc">💡 ${e(typeDe(n).aide)}</p>` : "<p>Textes, liens et médias du module.</p>"}${bouton("✏️ Modifier le contenu", "contenu", `data-ref="${e(ref)}"`)}`;
     return `<p class="muted">Cet élément organise les éléments qu'il contient ; utilisez l'arbre de construction pour ajouter, déplacer ou dupliquer.</p>`;
   };
   const basculerCote = (cote, replie = !etat.cotesReplies[cote]) => {
@@ -797,7 +801,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (etat.design) basculerCote("design", false);
     const generic = etat.design?.ref?.startsWith("builderelement.") ? trouverNoeud(etat.design.ref)?.n : null;
     zone.innerHTML = generic ? panneauGenerique(generic, (d.medias || []).filter((m) => m.builderAutorise !== false), etat.design.appareilValeurs || "", etat.design.ongletGenerique || "CONTENU",
-      ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre?.type, "builder.renommer")) : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), onglet: etat.design.onglet, appareil: etat.design.appareil,
+      ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre?.type, "builder.renommer")) : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), aideDesign: typeDe(trouverNoeud(etat.design.ref)?.n)?.aideDesign || "", onglet: etat.design.onglet, appareil: etat.design.appareil,
       renommable: ["section", "ligne", "colonne", "module"].includes(trouverNoeud(etat.design.ref)?.n?.type) && ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre.type, "element.renommer") })
       : etat.design ? `<p class="card muted">Chargement des réglages…</p>` : "";
     zone.closest(".constructeur-design-zone")?.classList.toggle("constructeur-design-zone--ouverte", Boolean(etat.design));
@@ -891,6 +895,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const zone = racine.querySelector("[data-c-message]");
     if (zone) zone.innerHTML = `<p class="muted">Enregistrement dans SharePoint…</p>`;
     for (const b of racine.querySelectorAll("button")) b.disabled = true;
+    let r;
     try {
       const confirmation = { cle: crypto.randomUUID() };
       if (["conteneur.publier", "conteneur.desactiver", "page.affecter", "element.etat"].includes(action)) {
@@ -899,7 +904,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         confirmation.jeton = await confirmerApercuConstruction(apercu);
         if (!confirmation.jeton) { enCours = false; afficher(); return false; }
       }
-      const r = await actionConstruire(domaine, action, params, confirmation);
+      r = await actionConstruire(domaine, action, params, confirmation);
       if (!r?.donnees || r.donnees.refus || r.donnees.erreur) throw new Error(r?.donnees?.refus || r?.donnees?.erreur || "Réponse d'enregistrement invalide.");
       Object.assign(etat, { message: r?.donnees?.message || "Action enregistrée.", erreur: false });
       if ((action === "conteneur.dupliquer" && etat.conteneur || action === "conteneur.creer") && r.donnees.nouveau?.ref) {
@@ -933,13 +938,19 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     enCours = false;
     afficher();
     if (etat.design && !etat.design.data) await ouvrirDesign(etat.design.ref, etat.design.onglet);
-    return true;
+    return r.donnees;
   };
   const dialogue = () => racine.querySelector("[data-c-dialogue]");
-  const ouvrirFormulaire = (f, titre, surValider) => {
+  const ouvrirFormulaire = (f, titre, surValider, options = {}) => {
     const dlg = dialogue();
-    dlg.innerHTML = formulaireHtml(f, titre);
+    dlg.innerHTML = formulaireHtml(f, titre, options);
     dlg.querySelector("[data-c-fermer]")?.addEventListener("click", () => dlg.close());
+    dlg.querySelector("[data-c-passer]")?.addEventListener("click", () => { dlg.close(); options.surPasser?.(); });
+    for (const b of dlg.querySelectorAll("[data-c-ia]")) b.addEventListener("click", () => {
+      const zone = dlg.querySelector(`[data-c-ia-reponse="${CSS.escape(b.dataset.cIa)}"]`);
+      zone.textContent = `🤖 Pasc ARA IA : ${MESSAGE_IA}`;
+      zone.hidden = false;
+    });
     dlg.querySelector("form").addEventListener("submit", (ev) => {
       ev.preventDefault();
       const valeurs = Object.fromEntries(new FormData(ev.target).entries());
@@ -1259,11 +1270,25 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       ouvrirFormulaire({
         textes: [{ cle: "titre", libelle: "Nom du module", valeur: t.libelle, max: 255, obligatoire: true }],
         listes: d.modeles?.disponibles?.length ? [{ cle: "modele", libelle: "Modèle (facultatif)", options: d.modeles.disponibles }] : []
-      }, `${t.icone || "🧩"} ${t.libelle} — dans « ${n.titre || "la colonne"} »`,
-      (v) => executer("module.ajouter", { ref, typeModule: t.code, ...Object.fromEntries(Object.entries(v).filter(([, x]) => x)) }));
+      }, `Étape 1/3 — ${t.icone || "🧩"} ${t.libelle} — dans « ${n.titre || "la colonne"} »`,
+      async (v) => {
+        const r = await executer("module.ajouter", { ref, typeModule: t.code, ...Object.fromEntries(Object.entries(v).filter(([, x]) => x)) });
+        if (r?.nouveau?.ref) await guiderModule(r.nouveau.ref, t);
+      });
     });
     dlg.showModal();
     dlg.querySelector(".c-modules-recherche").focus();
+  };
+  // Parcours guidé après l'ajout : 1) contenu aidé (aides SharePoint, Pasc ARA IA)  2) design du module.
+  const guiderModule = async (ref, t) => {
+    const versDesign = () => ouvrirDesign(ref, "design");
+    if (!t.formulaire) return versDesign();
+    let f;
+    try { f = (await actionConstruire(domaine, "contenu.formulaire", { ref }))?.donnees?.formulaire; } catch { f = null; }
+    if (!f) return versDesign();
+    ouvrirFormulaire({ ...f, aide: t.aide || t.description || "" }, `Étape 2/3 — ${t.icone || "🧩"} Contenu du module ${t.libelle}`,
+      async (valeurs) => { if (await executer("contenu.enregistrer", { ref, valeurs })) await versDesign(); },
+      { valider: "Enregistrer et passer au design ➜", passer: "Passer cette étape", surPasser: versDesign, ia: true });
   };
   const appliquerColonnes = async (ref, typeCol, largeurs) => {
     const colonnes = () => (trouverNoeud(ref)?.n?.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE");
@@ -1515,8 +1540,10 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
           const r = await actionConstruire(domaine, action === "contenu" ? "contenu.formulaire" : "conteneur.modifier", { ref });
           const f = r?.donnees?.formulaire;
           if (!f) return message("Formulaire indisponible.");
-          return ouvrirFormulaire(f, action === "contenu" ? `Contenu du module ${r.donnees.type || ""}` : "Modifier les informations",
-            (valeurs) => executer(action === "contenu" ? "contenu.enregistrer" : "conteneur.modifier", { ref, valeurs }));
+          const t = action === "contenu" ? (d.typesModules || []).find((x) => x.code === String(r.donnees.type || "").toUpperCase()) : null;
+          return ouvrirFormulaire(t ? { ...f, aide: t.aide || t.description || "" } : f,
+            action === "contenu" ? `${t?.icone || ""} Contenu du module ${t?.libelle || r.donnees.type || ""}`.trim() : "Modifier les informations",
+            (valeurs) => executer(action === "contenu" ? "contenu.enregistrer" : "conteneur.modifier", { ref, valeurs }), { ia: action === "contenu" });
         } catch (err) { return message(err.message || "Formulaire indisponible."); }
       }
       default:

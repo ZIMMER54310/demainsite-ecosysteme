@@ -706,3 +706,9 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .c-module-icone { font-size: 1.9rem; line-height: 1; }
 .c-module-nom { font-size: .85rem; font-weight: 600; color: #1f2937; }
 .c-modules [hidden] { display: none !important; }
+
+/* Aide guidée des modules (textes SharePoint) et Pasc ARA IA */
+.c-aide{display:block;font-weight:400;font-size:.82rem;color:var(--muted,#5b6472);margin:.15rem 0 .3rem}
+.c-aide-bloc{background:#eef5ff;border-left:3px solid #2f6fdd;border-radius:6px;padding:.5rem .7rem;margin:.4rem 0 .8rem;font-size:.9rem}
+.c-ia{margin:.1rem 0 .3rem}
+.c-ia-reponse{display:block;background:#f6f0ff;border-radius:6px;padding:.35rem .6rem;margin-bottom:.3rem;font-size:.82rem}

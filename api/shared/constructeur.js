@@ -232,7 +232,8 @@ function vue(d, perimetre) {
       const categorie = cat && (d.categoriesModules || []).some((c) => String(c.id) === String(cat.id) && B.publiable(c))
         ? `categorie.${signer(`categorie:${cat.id}`)}` : null;
       return { code, libelle: texte(t, "LIBELLE") || code, icone: texte(t, "ICONE"), categorie,
-        formulaire: Boolean(B.LISTES_CONTENU[code]), description: texte(t, "NOTE-COURTE") };
+        formulaire: Boolean(B.LISTES_CONTENU[code]), description: texte(t, "NOTE-COURTE"),
+        aide: texte(t, "AIDE-CONTENU"), aideDesign: texte(t, "AIDE-DESIGN") };
     }).filter((t) => t.code),
     structures: (d.structures || []).filter(B.publiable).sort(parOrdre)
       .map((s) => ({ ref: `structure.${signer(`structure:${s.id}`)}`, titre: titreDe(s), colonnes: Number(champ(s, ["NOMBRECOLONNES"])) || 1 })),
@@ -336,7 +337,7 @@ class Ecrivain {
     const l = this.liste(nom);
     if (!this.colonnes.has(l.id)) {
       this.colonnes.set(l.id, await dse.collecter(this.g.token, `/sites/${this.g.siteGraphId}/lists/${l.id}/columns` +
-        "?$select=id,name,displayName,hidden,readOnly,required,lookup,boolean,text,number,dateTime,calculated,columnGroup,choice"));
+        "?$select=id,name,displayName,description,hidden,readOnly,required,lookup,boolean,text,number,dateTime,calculated,columnGroup,choice"));
     }
     return this.colonnes.get(l.id);
   }
@@ -443,20 +444,22 @@ class Ecrivain {
 /* Formulaire dynamique d'un contenu de module : colonnes texte + Lookups simples (medias filtres par portee). */
 async function formulaireContenu(w, nomListe, perimetre, d) {
   const cols = await w.cols(nomListe);
-  const textes = ecriture.champsModifiables(cols).filter((c) => !/^ORDRE/i.test(c.nom));
+  // Aide sous chaque champ : description de la colonne SharePoint.
+  const aideDe = (nom) => String(cols.find((c) => c.name === nom)?.description || "").trim();
+  const textes = ecriture.champsModifiables(cols).filter((c) => !/^ORDRE/i.test(c.nom)).map((c) => ({ ...c, aide: aideDe(c.nom) }));
   const libre = (c) => !c.readOnly && !c.hidden && !String(c.name).startsWith("_");
   // Texte riche : saisi en texte simple puis converti en HTML minimal sur (paragraphes).
   for (const c of cols) {
     if (!libre(c) || c.text?.textType !== "richText") continue;
     textes.push({ cle: ecriture.cleChamp(c.name), nom: c.name, libelle: ecriture.libelleChamp(c), obligatoire: !!c.required,
-      multiligne: true, max: 8000, type: "riche" });
+      multiligne: true, max: 8000, type: "riche", aide: aideDe(c.name) });
   }
   // Colonnes Lien SharePoint (Graph n'expose aucune facette de type) : reconnues par leur nom affiche *URL.
   for (const c of cols) {
     if (!libre(c) || c.lookup || c.text || c.number || c.boolean || c.dateTime || c.calculated || c.choice) continue;
     if (!/URL$/i.test(String(c.displayName || ""))) continue;
     textes.push({ cle: ecriture.cleChamp(c.name), nom: c.name, libelle: ecriture.libelleChamp(c).replace(/ url$/i, " (lien)"),
-      obligatoire: !!c.required, multiligne: false, max: 255, type: "lien" });
+      obligatoire: !!c.required, multiligne: false, max: 255, type: "lien", aide: aideDe(c.name) });
   }
   const exclus = new Set([...ETATS, "OBJ-MODULE-SITE-PUBLIC"].map(cleChamp));
   const listes = [];
@@ -472,7 +475,7 @@ async function formulaireContenu(w, nomListe, perimetre, d) {
       options = items.map((i) => ({ id: String(i.id), titre: String(i.fields?.Title || "") })).filter((o) => o.titre);
     }
     listes.push({ cle: `l${signer(`champ:${c.name}`).slice(0, 10)}`, nom: `${c.name}LookupId`, libelle: String(c.displayName || "").replace(/^OBJ[-_ ]?/i, "").replace(/[-_]+/g, " "),
-      obligatoire: Boolean(c.required), options });
+      obligatoire: Boolean(c.required), aide: aideDe(c.name), options });
   }
   return { textes, listes };
 }
@@ -487,9 +490,9 @@ function adresseLibre(titre, prises) {
 
 function formulairePublic(form, valeurs = {}) {
   return {
-    textes: form.textes.map((c) => ({ cle: c.cle, libelle: c.libelle, obligatoire: c.obligatoire, multiligne: c.multiligne, max: c.max,
+    textes: form.textes.map((c) => ({ cle: c.cle, libelle: c.libelle, aide: c.aide || "", obligatoire: c.obligatoire, multiligne: c.multiligne, max: c.max,
       valeur: c.type === "lien" ? String(valeurs[c.nom]?.Url ?? "") : c.type === "riche" ? ecriture.htmlVersTexte(valeurs[c.nom]) : String(valeurs[c.nom] ?? "") })),
-    listes: form.listes.map((l) => ({ cle: l.cle, libelle: l.libelle, obligatoire: l.obligatoire,
+    listes: form.listes.map((l) => ({ cle: l.cle, libelle: l.libelle, aide: l.aide || "", obligatoire: l.obligatoire,
       options: l.options.map((o) => ({ ref: signer(`opt:${l.nom}:${o.id}`), titre: o.titre, url: o.media ? `/api/v1/media/${encodeURIComponent(o.id)}` : null })),
       valeur: valeurs[l.nom] ? signer(`opt:${l.nom}:${valeurs[l.nom]}`) : "" }))
   };

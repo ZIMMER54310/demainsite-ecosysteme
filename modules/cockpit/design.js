@@ -81,7 +81,7 @@ function groupeHtml(groupe, cles, valeurs, herite, design, prefixe = "") {
   return champs ? `<fieldset class="design-groupe design-groupe--${groupe.toLowerCase()}"><legend>${e(GROUPES[groupe] || groupe)}</legend><div class="design-grille">${champs}</div></fieldset>` : "";
 }
 
-export function panneauDesign(design, { ref, contenu = "", onglet = "design", appareil = "TABLETTE", renommable = false } = {}) {
+export function panneauDesign(design, { ref, contenu = "", onglet = "design", appareil = "TABLETTE", renommable = false, aideDesign = "" } = {}) {
   const g = design.groupes || [];
   const clesDe = (groupe, filtre = () => true) => Object.keys(CHAMPS).filter((c) => CHAMPS[c][0] === groupe && filtre(c));
   const designHtml = g.map((x) => groupeHtml(x, clesDe(x), design.valeurs || {}, design.herite || {}, design)).join("")
@@ -100,7 +100,7 @@ export function panneauDesign(design, { ref, contenu = "", onglet = "design", ap
       <button type="button" class="btn btn-mini" data-design-fermer aria-label="Fermer le panneau Design">✕</button></header>
     <nav class="design-onglets" role="tablist">${onglets.map(([k, l]) => `<button type="button" role="tab" class="btn btn-mini ${k === onglet ? "btn-primary" : "btn-secondary"}" aria-selected="${k === onglet}" data-design-onglet="${k}">${l}</button>`).join("")}</nav>
     <section data-design-volet="contenu"${onglet === "contenu" ? "" : " hidden"}>${contenu}</section>
-    <section data-design-volet="design"${onglet === "design" ? "" : " hidden"}>${designHtml}</section>
+    <section data-design-volet="design"${onglet === "design" ? "" : " hidden"}>${aideDesign ? `<p class="c-aide-bloc">💡 ${e(aideDesign)}</p>` : ""}${designHtml}</section>
     <section data-design-volet="responsive"${onglet === "responsive" ? "" : " hidden"}>
       <p class="muted">Une valeur saisie ici remplace la valeur ordinateur uniquement sur l'appareil choisi. Laissez vide pour conserver la valeur générale.</p>
       <div class="constructeur-boutons">${["TABLETTE", "MOBILE"].map((a) => `<button type="button" class="btn btn-mini ${a === appareil ? "btn-primary" : "btn-secondary"}" data-design-choix-appareil="${a}">${a === "TABLETTE" ? "📱 Tablette" : "📱 Mobile"}</button>`).join("")}</div>

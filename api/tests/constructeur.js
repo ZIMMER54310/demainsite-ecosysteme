@@ -55,15 +55,24 @@ async function main() {
   {
     const dc = donnees();
     dc.categoriesModules = [el(1, "Texte", {}, { ICONE: "📝", "ORDRE-AFFICHAGE": 2 }), el(2, "Média", {}, { ICONE: "🖼️", "ORDRE-AFFICHAGE": 1 }), el(3, "Off", {}, {}, NON, OUI)];
-    dc.types = [el(1, "TITRE", { "OBJ-MODULE-CATEGORIE": lien(1, "Texte") }, { LIBELLE: "Titre", ICONE: "🔤" }), el(2, "TEXTE", { "OBJ-MODULE-CATEGORIE": lien(3, "Off") })];
+    dc.types = [el(1, "TITRE", { "OBJ-MODULE-CATEGORIE": lien(1, "Texte") }, { LIBELLE: "Titre", ICONE: "🔤", "AIDE-CONTENU": "Un titre court.", "AIDE-DESIGN": "Réglez la police." }), el(2, "TEXTE", { "OBJ-MODULE-CATEGORIE": lien(3, "Off") })];
     const vc = C.vue(dc, perimetre);
     assert.deepEqual(vc.categoriesModules.map((c) => c.titre), ["Média", "Texte"], "categories SharePoint publiees, triees par ORDRE-AFFICHAGE");
     const [titre, texte] = vc.typesModules;
     assert.equal(titre.libelle, "Titre"); assert.equal(titre.icone, "🔤");
     assert.equal(titre.categorie, vc.categoriesModules[1].cle, "type rattache a sa categorie");
+    assert.equal(titre.aide, "Un titre court.", "aide au contenu lue dans SharePoint");
+    assert.equal(titre.aideDesign, "Réglez la police.", "aide au design lue dans SharePoint");
+    assert.equal(texte.aide, "", "aide vide sans valeur SharePoint");
     assert.equal(texte.libelle, "TEXTE", "libelle par defaut = code"); assert.equal(texte.categorie, null, "categorie inactive => Autres");
   }
   const uiConstructeur = await front("cockpit/constructeur.js");
+  {
+    const h = uiConstructeur.formulaireHtml({ aide: "Aide type", textes: [{ cle: "c1", libelle: "Contenu", aide: "Aide champ", multiligne: true, valeur: "" }], listes: [] },
+      "Étape", { valider: "Suivant", passer: "Passer", ia: true });
+    for (const x of ["Aide type", "Aide champ", "data-c-ia=\"c1\"", "data-c-passer", ">Suivant<"]) assert.ok(h.includes(x), `formulaire guide : ${x}`);
+    assert.ok(!uiConstructeur.formulaireHtml({ textes: [{ cle: "c1", libelle: "X", multiligne: true }] }, "T").includes("data-c-ia"), "pas d'IA par defaut");
+  }
   const mediasUI = await front("cockpit/medias.js");
   const mediasHtml = mediasUI.rendreMedias({ ...v, droits: { "logo-medias": { ecriture: true } },
     medias: [
