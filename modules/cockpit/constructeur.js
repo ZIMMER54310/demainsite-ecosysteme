@@ -120,7 +120,7 @@ function ongletPages(d) {
     .map((x) => `<option value="${e(x.ref)}"${actuel?.ref === x.ref ? " selected" : ""}>${e(x.titre)}</option>`).join("")}`;
   const creer = peutAction(d, "page", "conteneur.creer") ? `<form class="card constructeur-creer" data-c-creer="page">
     <label>Créer une page <input name="titre" required maxlength="255"></label>
-    <label>Adresse <input name="url" required placeholder="/ma-page/" pattern="/[A-Za-z0-9/_-]*"></label>
+    <p class="muted">L’adresse est créée automatiquement à partir du nom (modifiable ensuite via « ✏️ Modifier »).</p>
     <button class="btn btn-primary">Créer en brouillon</button></form>` : "";
   return `${creer}<div class="constructeur-grille">${d.pages.map((p) => `<article class="card constructeur-carte">
     <header><h3>${e(p.titre)}</h3>${p.realisation ? realisation(p.realisation) : badgeEtat(p.etat)}</header>

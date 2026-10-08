@@ -574,3 +574,5 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
   .dse-menu-entry__row { align-items:flex-start; }
   .dse-menu-actions { width:100%; }
 }
+.app-footer { margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line, #dbe2ea); text-align:center; }
+.app-footer__auteur { color:var(--text, #172033); font-weight:600; }

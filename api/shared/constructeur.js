@@ -469,6 +469,14 @@ async function formulaireContenu(w, nomListe, perimetre, d) {
   return { textes, listes };
 }
 
+function adresseLibre(titre, prises) {
+  const base = String(titre).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "page";
+  let url = `/${base}/`;
+  for (let i = 2; prises.has(url); i++) url = `/${base}-${i}/`;
+  return url;
+}
+
 function formulairePublic(form, valeurs = {}) {
   return {
     textes: form.textes.map((c) => ({ cle: c.cle, libelle: c.libelle, obligatoire: c.obligatoire, multiligne: c.multiligne, max: c.max,
@@ -735,8 +743,9 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       if (!nSite) return { refus: "Relation au site indisponible." };
       const champs = { Title: titre, [nSite]: String(siteId), ...(await w.etats(def.liste, "brouillon")) };
       if (type === "page") {
-        const url = String(p.url || "").trim();
-        if (!/^\/[A-Za-z0-9/_-]*$/.test(url) || (d.pages || []).some((x) => rels(x, "OBJ-SITE-PUBLIC").some((s) => s.id === String(siteId)) && texte(x, "URL") === url)) {
+        const prises = new Set((d.pages || []).filter((x) => rels(x, "OBJ-SITE-PUBLIC").some((s) => s.id === String(siteId))).map((x) => texte(x, "URL")));
+        const url = String(p.url || "").trim() || adresseLibre(titre, prises);
+        if (!/^\/[A-Za-z0-9/_-]*$/.test(url) || prises.has(url)) {
           return { erreur: "Adresse de page invalide ou déjà utilisée sur ce site.", status: 400 };
         }
         const nUrl = await w.simple(def.liste, "URL");
@@ -753,10 +762,20 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const c = cible(["entete", "footer", "page"], p.ref);
       if (c.refus) return c;
       const def = CONTENEURS[c.type];
-      const form = { textes: ecriture.champsModifiables(await w.cols(def.liste)).filter((x) => !/^URL$/i.test(x.nom)), listes: [] };
+      const form = { textes: ecriture.champsModifiables(await w.cols(def.liste)).filter((x) => c.type === "page" || !/^URL$/i.test(x.nom)), listes: [] };
       if (!p.valeurs) return { formulaire: formulairePublic(form, c.el._fields) };
       const { erreurs, propres } = validerFormulaire(form, p.valeurs);
       if (erreurs.length) return { erreur: erreurs.join(" "), status: 400 };
+      const colUrl = c.type === "page" && form.textes.find((x) => /^URL$/i.test(x.nom));
+      if (colUrl && Object.hasOwn(propres, colUrl.nom)) {
+        const url = String(propres[colUrl.nom] || "").trim();
+        const siteSource = siteDuConteneur(c.racine);
+        if (!/^\/[A-Za-z0-9/_-]*$/.test(url) || (d.pages || []).some((x) => String(x.id) !== String(c.el.id) &&
+          rels(x, "OBJ-SITE-PUBLIC").some((s) => s.id === siteSource) && texte(x, "URL") === url)) {
+          return { erreur: "Adresse de page invalide (format /ma-page/) ou déjà utilisée sur ce site.", status: 400 };
+        }
+        propres[colUrl.nom] = url;
+      }
       await w.maj(def.liste, c.el.id, propres);
       return res(`${def.libelle} enregistré.`, { champs: Object.keys(propres).length });
     }
