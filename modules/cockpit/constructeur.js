@@ -768,6 +768,35 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       if (general && caches.length) el.dataset.cMasque = `Masqué sur ${caches.map((c) => c.replace("dse-b-cache-", "")).join(", ")}`;
       else delete el.dataset.cMasque;
     }
+    // Meme regle que la colonne Structure : tout element invisible pour les visiteurs est grise et etiquete.
+    const infos = d.arbre && !d.arbre.generique ? visibilites(d.arbre.sections, etat.appareil) : new Map();
+    for (const el of doc.querySelectorAll("[data-dse-ref]")) {
+      el.querySelector(":scope>.dse-c-hp")?.remove();
+      el.classList.remove("dse-c-hors-public");
+      const info = infos.get(el.dataset.dseRef);
+      const base = el.dataset.cLibBase ?? (el.dataset.cLibBase = el.dataset.dseLibelle || "");
+      el.dataset.dseLibelle = base;
+      if (!info || info.visible) continue;
+      const herite = info.raison.startsWith("Caché :");
+      if (!/· (Brouillon|Non validé|Désactivé)$/.test(base)) el.dataset.dseLibelle = `${base} · ${herite ? "Caché (parent)" : info.raison.split(" :")[0]}`;
+      if (herite && el.parentElement?.closest(".dse-c-hors-public")) continue;
+      el.classList.add("dse-c-hors-public");
+      const hp = doc.createElement("span");
+      hp.className = "dse-c-hp";
+      hp.title = `${info.raison}. Les visiteurs ne voient pas cet élément.`;
+      hp.innerHTML = `<b>🚫 ${e(info.raison)}</b>`;
+      el.append(hp);
+    }
+    if (!doc.getElementById("dse-c-hors-public")) {
+      const s = doc.createElement("style");
+      s.id = "dse-c-hors-public";
+      s.textContent = `.dse-c-hors-public{position:relative}
+.dse-c-hp{position:absolute;inset:0;z-index:3;pointer-events:none;background:repeating-linear-gradient(135deg,#64748b26 0 8px,#94a3b814 8px 16px);outline:2px dashed #64748b;outline-offset:-2px}
+.dse-c-hp>b{position:absolute;top:4px;right:4px;max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#475569;color:#fff;font:600 11px/18px system-ui,sans-serif;padding:1px 8px;border-radius:999px;pointer-events:auto;cursor:help}
+.dse-c-hors-public>.dse-b-statut{display:none}
+body.dse-apercu-seul .dse-c-hp{display:none}`;
+      doc.head.append(s);
+    }
     if (!doc.getElementById("dse-c-vue-appareil")) {
       const s = doc.createElement("style");
       s.id = "dse-c-vue-appareil";
@@ -915,6 +944,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         const statut = et?.inactif ? "desactive" : et?.brouillon ? "brouillon" : et?.publiable === false ? "nonvalide" : "";
         const libStatut = { desactive: "Désactivé", brouillon: "Brouillon", nonvalide: "Non validé" }[statut];
         el.dataset.dseLibelle = `${rendu || LIBELLES[sorte] || "Élément"}${detail}${node?.n?.titre ? ` · ${node.n.titre}` : ""}${libStatut ? ` · ${libStatut}` : ""}`;
+        el.dataset.cLibBase = el.dataset.dseLibelle;
         // Statut visible en permanence dans le canevas (jamais dans la vue visiteur).
         if (statut) {
           el.dataset.dseStatut = statut === "nonvalide" ? "brouillon" : statut;
