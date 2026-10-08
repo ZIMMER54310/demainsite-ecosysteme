@@ -642,6 +642,16 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .constructeur-assistant-etapes li { flex: 1; padding: .3rem .5rem; border-bottom: 3px solid #d7dde5; color: #7a8594; }
 .constructeur-assistant-etapes li.fait { border-color: #8fb3e0; color: #3f5a7a; }
 .constructeur-assistant-etapes li.actif { border-color: #1f6feb; color: #1f2a37; font-weight: 600; }
+.constructeur-colonnes { min-width: min(560px, 92vw); }
+.constructeur-colonnes-modeles { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .8rem; }
+.constructeur-colonnes-apercu { display: flex; gap: 6px; margin: .4rem 0 .9rem; }
+.constructeur-colonnes-apercu span { min-width: 0; padding: .55rem .3rem; border: 2px dashed #16a34a; background: #f0fdf4; color: #166534; border-radius: 6px; text-align: center; font-weight: 700; }
+.constructeur-colonnes-apercu small { display: block; font-weight: 400; }
+.constructeur-colonnes-champs { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: .6rem; }
+.constructeur-colonnes-champs span { display: flex; align-items: center; gap: .3rem; }
+.constructeur-colonnes-champs input { width: 100%; }
+.constructeur-colonnes-total { margin: .8rem 0 .3rem; color: #166534; }
+.constructeur-colonnes-total.erreur { color: #b91c1c; }
 .constructeur-assistant-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin: .5rem 0 1rem; }
 .constructeur-assistant-carte { display: flex; flex-direction: column; align-items: center; gap: .25rem; padding: .8rem .5rem; border: 1px solid #d7dde5; border-radius: .6rem; background: #fff; cursor: pointer; text-align: center; font: inherit; }
 .constructeur-assistant-carte:hover, .constructeur-assistant-carte:focus-visible { border-color: #1f6feb; background: #f2f7ff; outline: none; }

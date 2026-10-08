@@ -169,6 +169,14 @@ async function main() {
   const html3 = rendu.rendreNoeud(ligne3, {});
   assert.match(html3, /dse-b-r-ligne/); assert.equal((html3.match(/dse-b-r-colonne/g) || []).length, 3, "colonnes typees");
   assert.match(rendu.STYLES_BUILDER, /\.dse-b-r-ligne\{display:flex/, "colonnes cote a cote");
+  ligne3.enfants[0].champs.push({ cle: "LARGEUR", categorie: "DESIGN", nature: "TEXTE", valeur: "25%" });
+  const cssCol = [];
+  const htmlCol = rendu.rendreNoeud(ligne3, { css: cssCol, apercu: true });
+  const regles = cssCol.join("\n");
+  assert.match(regles, /min-width:1025px\)\{\.dse-b-r-ligne>\.dse-b-r-colonne\.[\w-]+\{flex:25 25 0%\}/, "largeur colonne en % => poids flex");
+  assert.doesNotMatch(regles, /max-width:640px\)\{\.dse-b-r-ligne>\.dse-b-r-colonne/, "mobile reste empile sans surcharge");
+  assert.doesNotMatch(regles, /width:25%/, "pas de width brut sur une colonne");
+  assert.match(htmlCol, /data-builder-canvas="modifier"/, "bouton Modifier dans la barre");
 
   // Securite : texte enrichi et liens.
   const propre = nettoyerHtml('<p>a<img src=x onerror=alert(1)></p><a href="javascript:alert(1)">l</a><a href="https://ok.fr/x">ok</a>');

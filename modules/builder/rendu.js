@@ -132,7 +132,19 @@ export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
   const h = habiller({ _ref: noeud.ref }, type, "m", ctx);
   const mediasQueries = { ORDINATEUR: "(min-width:1025px)", TABLETTE: "(min-width:641px) and (max-width:1024px)", MOBILE: "(max-width:640px)" };
   for (const { appareil } of contenus) {
-    const declarations = declarationsGeneriques(definitions, appareil, ctx.apiBase);
+    let declarations = declarationsGeneriques(definitions, appareil, ctx.apiBase);
+    if (type === "COLONNE") {
+      // Largeur d'une colonne dans sa ligne : poids proportionnel en %, exact malgre l'ecart entre colonnes.
+      const champ = definitions.find((c) => c.categorie === "DESIGN" && codeChamp(c.cle) === "LARGEUR");
+      const explicite = champ?.surcharges?.[appareil];
+      const v = String(explicite ?? champ?.valeur ?? "");
+      declarations = declarations.filter((x) => !x.startsWith("width:"));
+      const pourcent = /^(\d+(?:\.\d+)?)%$/.exec(v);
+      const regle = pourcent && Number(pourcent[1]) > 0 && Number(pourcent[1]) <= 100
+        ? (appareil === "MOBILE" ? (explicite != null && explicite !== "" ? `flex:1 1 calc(${pourcent[1]}% - var(--dse-b-espace,24px))` : "") : `flex:${pourcent[1]} ${pourcent[1]} 0%`)
+        : /^\d+(?:\.\d+)?(px|rem|em)$/.test(v) && appareil !== "MOBILE" ? `flex:0 0 ${v}` : "";
+      if (regle) ctx.css?.push(`@media ${mediasQueries[appareil]}{.dse-b-r-ligne>.dse-b-r-colonne.${h.identifiant}{${regle}}}`);
+    }
     if (avancePour(appareil).VISIBILITE === false) declarations.push("display:none");
     if (declarations.length) ctx.css?.push(`@media ${mediasQueries[appareil]}{.${h.identifiant}{${declarations.join(";")}}}`);
     const boutonCss = declarations.filter((x) => /^(color|background-|border|font-|text-align)/.test(x));
@@ -144,6 +156,7 @@ export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
   const tag = { SECTION: "section", "EN-TETE": "header", ENTETE: "header", FOOTER: "footer" }[type] || "div";
   const barre = ctx.apercu ? `<div class="dse-b-outils" data-dse-outils="${escapeHtml(noeud.ref)}">
     ${(noeud.ajouts || []).length || profondeur ? `<button type="button" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}" title="Ajouter une section, une ligne, une colonne ou un module">＋ Ajouter</button>` : ""}
+    <button type="button" data-builder-canvas="modifier" data-ref="${escapeHtml(noeud.ref)}" title="${type === "LIGNE" ? "Colonnes : nombre et largeurs en %" : "Ouvrir les réglages de cet élément"}">✏️ Modifier</button>
     ${profondeur ? `<button type="button" data-builder-canvas="dupliquer" data-ref="${escapeHtml(noeud.ref)}">Dupliquer</button>
     <button type="button" data-builder-canvas="retirer" data-ref="${escapeHtml(noeud.ref)}">Retirer</button>` : ""}</div>` : "";
   const variants = contenus.filter((x) => x.module).map((x) => `<div class="dse-b-appareil dse-b-appareil--${x.appareil.toLowerCase()}">${x.module}</div>`).join("");

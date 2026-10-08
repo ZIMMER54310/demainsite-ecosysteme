@@ -634,6 +634,12 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         const cibleRef = ev.target.closest?.("[data-dse-ref]");
         ev.preventDefault();
         if (commande && !enCours && commande.dataset.builderCanvas === "ajouter") return menuAjout(commande.dataset.ref);
+        if (commande && !enCours && commande.dataset.builderCanvas === "modifier") {
+          if (!d.arbre || !ecrit(d, FONCTION[d.arbre.type])) return message("Modification non autorisée.");
+          const cible = trouverNoeud(commande.dataset.ref)?.n;
+          if (String(cible?.rendu || "").toUpperCase() === "LIGNE") return formulaireColonnes(commande.dataset.ref);
+          return ouvrirDesign(commande.dataset.ref);
+        }
         if (commande && !enCours) return racine.querySelector(`[data-c-action="builder-${CSS.escape(commande.dataset.builderCanvas)}"][data-ref="${CSS.escape(commande.dataset.ref)}"]`)?.click();
         if (cibleRef && d.arbre && ecrit(d, FONCTION[d.arbre.type])) ouvrirDesign(cibleRef.dataset.dseRef);
       });
@@ -1008,6 +1014,80 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     };
     rendre();
     dlg.showModal();
+  };
+  // Formulaire « Modifier » d'une ligne : nombre de colonnes et largeur de chacune en %.
+  const PRESETS_COLONNES = [
+    ["Égales", null], ["1/3 + 2/3", [33.33, 66.67]], ["2/3 + 1/3", [66.67, 33.33]], ["1/4 + 3/4", [25, 75]],
+    ["3/4 + 1/4", [75, 25]], ["1/4 + 1/2 + 1/4", [25, 50, 25]], ["1/2 + 1/4 + 1/4", [50, 25, 25]]
+  ];
+  const egales = (nb) => Array.from({ length: nb }, (_, i) => i < nb - 1 ? Math.round(10000 / nb) / 100 : Math.round((100 - Math.round(10000 / nb) / 100 * (nb - 1)) * 100) / 100);
+  const formulaireColonnes = (ref) => {
+    const ligne = trouverNoeud(ref)?.n;
+    const typeCol = ligne && colonnesDirectes(ligne.typeRef);
+    if (!ligne || ligne.verrouille || !typeCol) return ouvrirDesign(ref);
+    if (brouillons.size) return message("Enregistrez d'abord les réglages en cours avant de modifier les colonnes.");
+    const existantes = (ligne.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE");
+    const largeurDe = (col) => {
+      const v = String(col.champs?.find((c) => c.categorie === "DESIGN" && codeChamp(c.cle) === "LARGEUR")?.valeur || "");
+      return /^\d+(\.\d+)?%$/.test(v) ? Number.parseFloat(v) : null;
+    };
+    const lues = existantes.map(largeurDe);
+    let largeurs = existantes.length && lues.every((x) => x != null) ? lues : egales(Math.max(existantes.length, 1));
+    const peutAjouter = peutAction(d, d.arbre?.type, "builder.ajouter"), peutRetirer = peutAction(d, d.arbre?.type, "builder.desactiver");
+    const dlg = dialogue();
+    const rendre = () => {
+      const total = Math.round(largeurs.reduce((a, b) => a + b, 0) * 100) / 100;
+      dlg.innerHTML = `<form method="dialog" class="constructeur-ajout-rapide constructeur-colonnes">
+        <h3>✏️ Modifier la ligne « ${e(ligne.titre || "Ligne")} »</h3>
+        <label>Nombre de colonnes <select name="nombre">${[1, 2, 3, 4, 5, 6].map((nb) => `<option value="${nb}"${nb === largeurs.length ? " selected" : ""}
+          ${(nb > existantes.length && !peutAjouter) || (nb < existantes.length && !peutRetirer) ? " disabled" : ""}>${nb}</option>`).join("")}</select></label>
+        <p class="muted"><small>Modèles rapides</small></p>
+        <div class="constructeur-colonnes-modeles">${PRESETS_COLONNES.map(([nom, l], i) => !l || l.length <= 6 ? `<button type="button" class="btn btn-mini" data-modele="${i}">${e(nom)}</button>` : "").join("")}</div>
+        <div class="constructeur-colonnes-apercu">${largeurs.map((l, i) => `<span style="flex:${l} ${l} 0%">${i + 1}<small>${l}%</small></span>`).join("")}</div>
+        <div class="constructeur-colonnes-champs">${largeurs.map((l, i) => `<label>Colonne ${i + 1}${existantes[i] ? "" : " <small>(nouvelle)</small>"}
+          <span><input type="number" name="l${i}" min="1" max="100" step="0.01" value="${l}" required> %</span></label>`).join("")}</div>
+        <p class="constructeur-colonnes-total${Math.abs(total - 100) > 0.1 ? " erreur" : ""}">Total : <strong>${total} %</strong>${Math.abs(total - 100) > 0.1 ? " — doit faire 100 %" : " ✓"}</p>
+        <p class="muted"><small>Sur mobile, les colonnes restent empilées les unes sous les autres.</small></p>
+        <div class="constructeur-boutons"><button type="submit" class="btn btn-primary">Appliquer</button>
+          <button class="btn btn-secondary" type="button" data-c-fermer>Annuler</button></div></form>`;
+      dlg.querySelector("[data-c-fermer]").addEventListener("click", () => dlg.close());
+      dlg.querySelector("select[name=nombre]").addEventListener("change", (ev) => { largeurs = egales(Number(ev.target.value)); rendre(); });
+      for (const b of dlg.querySelectorAll("[data-modele]")) b.addEventListener("click", () => {
+        const l = PRESETS_COLONNES[Number(b.dataset.modele)][1];
+        if (l && ((l.length > existantes.length && !peutAjouter) || (l.length < existantes.length && !peutRetirer))) return;
+        largeurs = l ? [...l] : egales(largeurs.length); rendre();
+      });
+      for (const input of dlg.querySelectorAll("input[type=number]")) input.addEventListener("change", () => {
+        largeurs[Number(input.name.slice(1))] = Math.max(1, Math.min(100, Number(input.value) || 1)); rendre();
+        dlg.querySelector(`input[name=${input.name}]`)?.focus();
+      });
+      dlg.querySelector("form").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        if (Math.abs(largeurs.reduce((a, b) => a + b, 0) - 100) > 0.1) return;
+        const enTrop = existantes.slice(largeurs.length);
+        if (enTrop.some((c) => c.enfants?.length) && !confirm(`Retirer ${enTrop.length > 1 ? "les dernières colonnes et leur contenu" : "la dernière colonne et son contenu"} ? Aucune donnée ne sera supprimée.`)) return;
+        dlg.close();
+        await appliquerColonnes(ref, typeCol, [...largeurs]);
+      });
+    };
+    rendre();
+    dlg.showModal();
+  };
+  const appliquerColonnes = async (ref, typeCol, largeurs) => {
+    const colonnes = () => (trouverNoeud(ref)?.n?.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE");
+    for (const col of colonnes().slice(largeurs.length).reverse()) if (!(await executer("builder.desactiver", { ref: col.ref }))) return;
+    for (let i = colonnes().length; i < largeurs.length; i++) {
+      if (!(await executer("builder.ajouter", { ref, typeRef: typeCol.ref, titre: `Colonne ${i + 1}` }))) return;
+    }
+    const liste = colonnes();
+    for (const [i, col] of liste.entries()) {
+      const champ = col.champs?.find((c) => c.categorie === "DESIGN" && codeChamp(c.cle) === "LARGEUR");
+      if (!champ) return message("Le réglage « Largeur » des colonnes n'est pas configuré dans SharePoint.");
+      const v = `${largeurs[i]}%`;
+      if (champ.valeur !== v) { champ.valeur = v; marquerBrouillon(col.ref, ""); }
+    }
+    etat.design = { ref };
+    if (brouillons.size) await enregistrerBrouillons(); else afficher();
   };
   const changerHistorique = async (retablir) => {
     const position = retablir ? positionBuilder + 1 : positionBuilder;
