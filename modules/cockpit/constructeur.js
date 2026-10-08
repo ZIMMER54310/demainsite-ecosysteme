@@ -94,7 +94,12 @@ export const operationArticle = (action) => {
   const suffixe = Object.keys(OPERATIONS_ARTICLE).find((k) => OPERATIONS_ARTICLE[k].includes(action));
   return suffixe ? `articles.${suffixe}` : null;
 };
-const operationDe = (type, action) => type === "article" ? operationArticle(action) : `constructeur.${type}.${action}`;
+// Le renommage reutilise les droits « modifier » existants (meme correspondance que le serveur).
+const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer" };
+const operationDe = (type, action) => {
+  action = ACTION_DROIT[action] || action;
+  return type === "article" ? operationArticle(action) : `constructeur.${type}.${action}`;
+};
 export const peutAction = (d, type, action) => {
   const operation = operationDe(type, action);
   if (!operation || d.operationsInterdites?.includes(operation)) return false;
@@ -241,6 +246,7 @@ function actionsNoeud(n, peut, colonnes, d) {
     ${action("element.deplacer") ? bouton("▲", "monter", `${r} title="Monter" aria-label="Monter"`, "btn btn-mini") +
       bouton("▼", "descendre", `${r} title="Descendre" aria-label="Descendre"`, "btn btn-mini") : ""}
     ${action("element.deplacer") && n.type === "module" && colonnes.length > 1 ? `<select data-c-deplacer="${e(n.ref)}" aria-label="Déplacer vers une colonne"><option value="">Déplacer vers…</option>${colonnes.map((c) => `<option value="${e(c.ref)}">${e(c.titre)}</option>`).join("")}</select>` : ""}
+    ${action("element.renommer") ? bouton("🏷", "renommer", `${r} title="Renommer « ${e(n.titre)} »" aria-label="Renommer ${e(n.titre)}"`, "btn btn-mini") : ""}
     ${action("contenu.enregistrer") && n.type === "module" && n.formulaire ? bouton("✏️ Contenu", "contenu", r, "btn btn-mini") : ""}
     ${action("design.enregistrer") ? bouton("🎨", "design", `${r} title="Design" aria-label="Design"`, "btn btn-mini") : ""}
     ${action("element.dupliquer") ? bouton("⧉", "dupliquer-element", `${r} title="Dupliquer / créer une variante" aria-label="Dupliquer"`, "btn btn-mini") : ""}
@@ -287,7 +293,8 @@ function arbreGeneriqueHtml(n, peut, racine = true, d = {}) {
   return `<li class="constructeur-noeud"><div class="constructeur-noeud-entete" data-c-noeud="${e(n.ref)}" data-c-type="builder"${peut && !n.verrouille && peutAction(d, type, "builder.deplacer") ? ' draggable="true"' : ""}>
     ${(n.enfants || []).length ? REPLIER : ""}<button type="button" class="btn btn-mini" data-c-action="design" data-ref="${e(n.ref)}">${e(n.titre)}</button>
     <span class="badge">${e(n.rendu)}</span>${realisation(n.realisation)}${n.verrouille ? "🔒" : ""}
-    ${peut && !n.verrouille ? `${n.ajouts?.length && peutAction(d, type, "builder.ajouter") ? bouton("Ajouter dans", "builder-ajouter", `data-ref="${e(n.ref)}"`, "btn btn-mini") : ""}
+    ${peut && !n.verrouille ? `${peutAction(d, type, "builder.renommer") ? bouton("🏷", "renommer", `data-ref="${e(n.ref)}" title="Renommer « ${e(n.titre)} »" aria-label="Renommer ${e(n.titre)}"`, "btn btn-mini") : ""}
+      ${n.ajouts?.length && peutAction(d, type, "builder.ajouter") ? bouton("Ajouter dans", "builder-ajouter", `data-ref="${e(n.ref)}"`, "btn btn-mini") : ""}
       ${!racine ? ["monter", "descendre", "deplacer", "dupliquer", "retirer"].filter((a) =>
         peutAction(d, type, `builder.${a === "retirer" ? "desactiver" : ["monter", "descendre"].includes(a) ? "deplacer" : a}`)).map((a) =>
         a === "retirer" ? bouton("🗑", "builder-retirer", `data-ref="${e(n.ref)}" title="Supprimer « ${e(n.titre)} » (confirmation demandée)" aria-label="Supprimer ${e(n.titre)}"`, "btn btn-mini constructeur-corbeille") :
@@ -526,7 +533,7 @@ export function rendreConstructeur(moi, d, etat = {}) {
 export function formulaireHtml(f, titre) {
   const textes = (f.textes || []).map((c) => `<label>${e(c.libelle)}${c.obligatoire ? " *" : ""}
     ${c.multiligne ? `<textarea name="${e(c.cle)}" rows="4"${c.max ? ` maxlength="${c.max}"` : ""}>${e(c.valeur)}</textarea>`
-      : `<input name="${e(c.cle)}" value="${e(c.valeur)}"${c.max ? ` maxlength="${c.max}"` : ""}>`}</label>`).join("");
+      : `<input name="${e(c.cle)}" value="${e(c.valeur)}"${c.max ? ` maxlength="${c.max}"` : ""}${c.obligatoire ? " required" : ""}>`}</label>`).join("");
   const listes = (f.listes || []).map((l) => `<label>${e(l.libelle)}${l.obligatoire ? " *" : ""}
     <select name="${e(l.cle)}"><option value="">— Aucun —</option>${l.options.map((o) => `<option value="${e(o.ref)}"${o.ref === l.valeur ? " selected" : ""}>${e(o.titre)}</option>`).join("")}</select>
     ${l.options.some((o) => o.url) ? `<span class="constructeur-medias constructeur-medias--mini">${l.options.filter((o) => o.url).map((o) => `<img src="${e(o.url)}" alt="${e(o.titre)}" title="${e(o.titre)}" loading="lazy">`).join("")}</span>` : ""}
@@ -700,6 +707,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
           if (String(cible?.rendu || "").toUpperCase() === "LIGNE") return formulaireColonnes(commande.dataset.ref);
           return ouvrirDesign(commande.dataset.ref);
         }
+        if (commande && !enCours && commande.dataset.builderCanvas === "renommer") return renommer(commande.dataset.ref);
         if (commande && !enCours && commande.dataset.builderCanvas === "supprimer-ancien") return confirmerSuppression(commande.dataset.ref);
         if (commande && !enCours && commande.dataset.builderCanvas === "ajouter-ancien") return ajoutAncien(commande.dataset.ref);
         if (commande && !enCours && ["contenu-ancien", "dupliquer-ancien"].includes(commande.dataset.builderCanvas)) {
@@ -728,6 +736,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
               && ["＋ Ajouter", "ajouter-ancien", n.type === "section" ? "Ajouter une ligne dans cette section" : "Ajouter un module dans cette colonne"],
             n.type === "module" && n.formulaire && peut("contenu.enregistrer") ? ["✏️ Modifier", "contenu-ancien", "Modifier le contenu de ce module"]
               : peut("design.enregistrer") && ["✏️ Modifier", "modifier", "Ouvrir les réglages de cet élément"],
+            peut("element.renommer") && ["🏷 Nom", "renommer", `Renommer ${n.titre || "cet élément"}`],
             node.parent && peut("element.dupliquer") && ["Dupliquer", "dupliquer-ancien", "Dupliquer cet élément"],
             node.parent && peut("element.etat") && ["🗑", "supprimer-ancien", `Supprimer ${n.titre || "cet élément"} (confirmation demandée)`],
           ].filter(Boolean);
@@ -1186,6 +1195,17 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     });
     dlg.showModal();
   };
+  const renommer = (ref) => {
+    const n = trouverNoeud(ref)?.n;
+    if (!n) return;
+    const ancien = !n.rendu && Boolean(LIBELLES[n.type]);
+    const genre = ancien ? LIBELLES[n.type] : String(n.rendu || "élément").toLowerCase();
+    ouvrirFormulaire({ textes: [{ cle: "titre", libelle: "Nom", valeur: n.titre || "", max: 255, obligatoire: true }], listes: [] },
+      `Renommer : ${genre} « ${n.titre || "sans nom"} »`, (v) => {
+        const titre = String(v.titre || "").trim();
+        if (titre && titre !== n.titre) executer(ancien ? "element.renommer" : "builder.renommer", { ref, titre });
+      });
+  };
   // Ancien format : section -> ajout d'une ligne (disposition), colonne -> ajout d'un module.
   const ajoutAncien = (ref) => {
     const n = trouverNoeud(ref)?.n;
@@ -1411,6 +1431,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         textes: [], listes: [{ cle: "typeRef", libelle: "Type de racine", options: (d.builder?.types || []).filter((t) => t.racine) }]
       }, "Initialiser ce conteneur vide", (v) => executer("builder.initialiser", { ref, ...v }));
       case "builder-retirer": return confirmerSuppression(ref);
+      case "renommer": return renommer(ref);
       case "ouvrir": if (!confirmerAbandon()) return; etat.conteneur = ref; etat.message = ""; historiqueBuilder = []; positionBuilder = -1; brouillons.clear(); brouillonGenerique = false; await charger().catch((err) => Object.assign(etat, { message: err.message, erreur: true })); empreinteHistorique = d.arbre?.generique?.empreinte || ""; return afficher();
       case "fermer": if (!confirmerAbandon()) return; etat.conteneur = ""; delete d.arbre; delete d.apercu; try { await charger(); } catch (err) { Object.assign(etat, { message: err.message, erreur: true }); } brouillonGenerique = false; brouillons.clear(); return afficher();
       case "ia": return message(MESSAGE_IA);

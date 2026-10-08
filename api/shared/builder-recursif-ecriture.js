@@ -317,6 +317,12 @@ async function executer({ d, w, p, action, siteId, reference, autoriser, mediaAu
     await maj(LISTE, c.el.id, { [await nSimple(LISTE, "ACTIF")]: false });
     return message("Élément retiré logiquement ; aucune donnée supprimée.");
   }
+  if (action === "builder.renommer") {
+    const titre = String(p.titre || "").trim().slice(0, 255);
+    if (!titre) return { refus: "Le nom est obligatoire." };
+    await maj(LISTE, c.el.id, { Title: titre });
+    return message("Nom modifié et relu.", c.el.id);
+  }
   if (action === "builder.enregistrer") {
     const appareil = p.appareil ?? "";
     if (appareil !== "" && !R.APPAREILS.includes(appareil)) return { refus: "Appareil Builder invalide." };

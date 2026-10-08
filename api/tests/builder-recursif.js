@@ -132,6 +132,9 @@ async function main() {
     assert.equal(R.f(nouveau, "PROFONDEUR"), 2);
     assert.equal(R.arbre(d, root, { public: true }).enfants[0].enfants.length, 0, "brouillon absent du public");
     const cible = { ref: creation.nouveau.ref };
+    assert.ok((await executer("builder.renommer", { ...cible, titre: "   " })).refus, "nom vide refusé");
+    await executer("builder.renommer", { ...cible, titre: "  Mon bloc  " });
+    assert.equal(R.titre(nouveau), "Mon bloc", "renommage relu");
     const avant = mutations;
     assert.ok((await executer("builder.enregistrer", { ...cible, valeurs: { "champ.32": [] } })).refus);
     assert.ok((await executer("builder.enregistrer", { ...cible, valeurs: { "champ.31": "x".repeat(256) } })).refus);

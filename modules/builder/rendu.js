@@ -157,6 +157,7 @@ export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
   const barre = ctx.apercu ? `<div class="dse-b-outils" data-dse-outils="${escapeHtml(noeud.ref)}">
     ${(noeud.ajouts || []).length || profondeur ? `<button type="button" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}" title="Ajouter une section, une ligne, une colonne ou un module">＋ Ajouter</button>` : ""}
     <button type="button" data-builder-canvas="modifier" data-ref="${escapeHtml(noeud.ref)}" title="${type === "LIGNE" ? "Colonnes : nombre et largeurs en %" : "Ouvrir les réglages de cet élément"}">✏️ Modifier</button>
+    <button type="button" data-builder-canvas="renommer" data-ref="${escapeHtml(noeud.ref)}" title="Renommer ${escapeHtml(noeud.titre || "cet élément")}">🏷 Nom</button>
     ${profondeur ? `<button type="button" data-builder-canvas="dupliquer" data-ref="${escapeHtml(noeud.ref)}">Dupliquer</button>
     <button type="button" class="dse-b-corbeille" data-builder-canvas="retirer" data-ref="${escapeHtml(noeud.ref)}" title="Supprimer ${escapeHtml(noeud.titre || "cet élément")} (confirmation demandée)" aria-label="Supprimer ${escapeHtml(noeud.titre || "cet élément")}">🗑</button>` : ""}</div>` : "";
   const variants = contenus.filter((x) => x.module).map((x) => `<div class="dse-b-appareil dse-b-appareil--${x.appareil.toLowerCase()}">${x.module}</div>`).join("");

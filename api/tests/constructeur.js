@@ -290,6 +290,13 @@ async function main() {
       assert.equal(parListe("OBJ-COLONNE-SITE").length, 3);
       assert.deepEqual(parListe("OBJ-MODULE-SITE-PUBLIC").map((x) => x.champs.Title), ["Titre", "Texte"], "types absents (HERO, CTA) ignorés");
       assert.equal(parListe("OBJ-MODULE-UTILISATION").length, 2);
+      const renommage = await C.executer({ d: copies, perimetre, siteId: "4", action: "element.renommer",
+        params: { ref: C.ref("section", 100), titre: "  Bandeau principal " } });
+      assert.match(renommage.message, /Section renommé/);
+      assert.equal(stores.get("OBJ-SECTION-SITE/100").Title, "Bandeau principal");
+      assert.equal((await C.executer({ d: copies, perimetre, siteId: "4", action: "element.renommer",
+        params: { ref: C.ref("section", 100), titre: " " } })).status, 400, "nom obligatoire");
+      assert.equal(C.actionDroit("element.renommer"), "element.deplacer", "droit « modifier » existant");
       writes.length = 0;
       await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.creer",
         params: { type: "footer", titre: "Pied vide", structureBase: false } });

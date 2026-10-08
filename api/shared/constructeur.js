@@ -735,7 +735,11 @@ const OPERATIONS_ARTICLE = {
     "design.enregistrer", "contenu.formulaire", "contenu.enregistrer"],
   publier: ["builder.publier", "builder.reactiver", "builder.desactiver", "conteneur.publier", "element.etat"]
 };
+// Le renommage reutilise les droits « modifier » existants (aucune operation SharePoint supplementaire).
+const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer" };
+const actionDroit = (action) => ACTION_DROIT[action] || action;
 const operationArticle = (action) => {
+  action = actionDroit(action);
   const suffixe = Object.keys(OPERATIONS_ARTICLE).find((k) => OPERATIONS_ARTICLE[k].includes(action));
   return suffixe ? `articles.${suffixe}` : null;
 };
@@ -1069,6 +1073,15 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       return res(`${def.libelle} déplacé${p.sens === "haut" ? " vers le haut" : " vers le bas"}.`);
     }
 
+    case "element.renommer": {
+      const c = cible(["section", "ligne", "colonne", "module"], p.ref);
+      if (c.refus) return c;
+      const titre = String(p.titre || "").trim().slice(0, 255);
+      if (!titre) return { erreur: "Le nom est obligatoire.", status: 400 };
+      await w.maj(NIVEAUX[c.type].liste, c.el.id, { Title: titre });
+      return res(`${NIVEAUX[c.type].libelle} renommé${c.type === "ligne" || c.type === "colonne" ? "e" : ""}.`);
+    }
+
     case "element.dupliquer": {
       const c = cible(["section", "ligne", "colonne", "module"], p.ref);
       if (c.refus) return c;
@@ -1325,5 +1338,5 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
   }
 }
 
-module.exports = { plat, DESIGN, policesDe, siteDe, CONTENEURS, NIVEAUX, vue, arbre, apercu, racine, resoudre, executer, ref, referenceBuilder, mediaAutorise, modeleDisponible, visibleApercu, inactif, brouillon, Ecrivain, signer,
+module.exports = { actionDroit, plat, DESIGN, policesDe, siteDe, CONTENEURS, NIVEAUX, vue, arbre, apercu, racine, resoudre, executer, ref, referenceBuilder, mediaAutorise, modeleDisponible, visibleApercu, inactif, brouillon, Ecrivain, signer,
   siteDuConteneur, relationArticleBuilder, operationArticle, MESSAGE_RELATION_ARTICLE };

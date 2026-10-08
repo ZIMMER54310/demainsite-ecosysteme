@@ -1200,7 +1200,7 @@ async function construireAction(req, res) {
           return Boolean(operation) && peutOperation(ctx.droits, operation, fonction) &&
             (action !== "element.etat" || params.etat !== "actif" || peutOperation(ctx.droits, "articles.publier", fonction));
         }
-        return racines.some((type) => peutOperation(ctx.droits, `constructeur.${type}.${action}`, fonction) &&
+        return racines.some((type) => peutOperation(ctx.droits, `constructeur.${type}.${C.actionDroit(action)}`, fonction) &&
           (action !== "element.etat" || params.etat !== "actif" ||
             peutOperation(ctx.droits, `constructeur.${type}.conteneur.publier`, fonction)));
       };
