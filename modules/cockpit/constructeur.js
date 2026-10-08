@@ -101,7 +101,8 @@ export const operationArticle = (action) => {
   return suffixe ? `articles.${suffixe}` : null;
 };
 // Le renommage reutilise les droits « modifier » existants (meme correspondance que le serveur).
-const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer", "ligne.colonnes": "ligne.ajouter" };
+const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer", "ligne.colonnes": "ligne.ajouter",
+  "element.supprimer": "element.etat" };
 const operationDe = (type, action) => {
   action = ACTION_DROIT[action] || action;
   return type === "article" ? operationArticle(action) : `constructeur.${type}.${action}`;
@@ -248,7 +249,7 @@ function actionsNoeud(n, peut, colonnes, d) {
   const action = (a) => peutAction(d, d.arbre.type, a);
   const r = `data-ref="${e(n.ref)}"`;
   const a = (code) => aideAttr(d, code);
-  const corbeille = bouton("🗑", "desactiver-element", `${r}${a("supprimer")} title="Supprimer « ${e(n.titre)} » (confirmation demandée, rien n'est effacé)" aria-label="Supprimer ${e(n.titre)}"`, "btn btn-mini constructeur-corbeille");
+  const corbeille = bouton("🗑", "desactiver-element", `${r}${a("supprimer")} title="Supprimer « ${e(n.titre)} » : désactiver (récupérable) ou supprimer définitivement, au choix après confirmation" aria-label="Supprimer ${e(n.titre)}"`, "btn btn-mini constructeur-corbeille");
   return `<span class="constructeur-outils">
     ${action("element.deplacer") ? bouton("▲", "monter", `${r}${a("deplacer")} title="Monter" aria-label="Monter"`, "btn btn-mini") +
       bouton("▼", "descendre", `${r}${a("deplacer")} title="Descendre" aria-label="Descendre"`, "btn btn-mini") : ""}
@@ -260,7 +261,7 @@ function actionsNoeud(n, peut, colonnes, d) {
     ${action("element.dupliquer") ? bouton("⧉", "dupliquer-element", `${r}${a("dupliquer")} title="Dupliquer / créer une variante" aria-label="Dupliquer"`, "btn btn-mini") : ""}
     ${action("element.etat") ? !n.etat.publiable
       ? action("conteneur.publier") ? bouton(n.etat.inactif || n.etat.brouillon ? "Activer" : "✅ Valider et activer", "activer", `${r}${a("activer")}`, "btn btn-mini") +
-        (n.etat.brouillon && !n.etat.inactif ? corbeille : "") : ""
+        corbeille : corbeille
       : bouton("⏸", "desactiver-direct", `${r}${a("desactiver")} title="Désactiver « ${e(n.titre)} » (invisible pour les visiteurs, rien n'est supprimé)" aria-label="Désactiver ${e(n.titre)}"`, "btn btn-mini") + corbeille : ""}
   </span>`;
 }
@@ -482,6 +483,19 @@ export function historiqueStructure(avant, apres, racine) {
     retablir: { action: "builder.restaurer", params: { ref: racine, elements: retablir } } } : null;
 }
 
+// Elements desactives : absents de l'apercu, ils restent accessibles ici (activer ou supprimer) depuis la colonne centrale.
+function bandeauDesactives(d, sections, peut) {
+  const liste = [];
+  const parcourir = (noeuds) => { for (const n of noeuds || []) n.etat?.inactif ? liste.push(n) : parcourir(n.enfants); };
+  parcourir(sections);
+  if (!liste.length) return "";
+  const droit = peut && peutAction(d, d.arbre.type, "element.etat");
+  return `<details class="constructeur-desactives"${aideAttr(d, "supprimer")}><summary>⏸ ${liste.length} élément${liste.length > 1 ? "s" : ""} désactivé${liste.length > 1 ? "s" : ""} (invisible${liste.length > 1 ? "s" : ""} ici et pour les visiteurs) — cliquez pour ${droit ? "les réactiver ou les supprimer" : "les voir"}</summary>
+    <ul>${liste.map((n) => `<li><span class="constructeur-type">${e(LIBELLES[n.type] || n.type)}</span> <strong>${e(n.titre)}</strong>${droit && !n.verrouille ? `
+      ${peutAction(d, d.arbre.type, "conteneur.publier") ? bouton("Activer", "activer", `data-ref="${e(n.ref)}"${aideAttr(d, "activer")}`, "btn btn-mini") : ""}
+      ${bouton("🗑 Supprimer", "desactiver-element", `data-ref="${e(n.ref)}"${aideAttr(d, "supprimer")} title="Supprimer définitivement (confirmation demandée)"`, "btn btn-mini constructeur-corbeille")}` : n.verrouille ? " 🔒" : ""}</li>`).join("")}</ul></details>`;
+}
+
 function editeur(d) {
   const a = d.arbre;
   const type = a.type;
@@ -522,6 +536,7 @@ function editeur(d) {
   </aside>
   <div class="constructeur-design-zone">
     <div class="card constructeur-apercus">
+      ${a.generique ? "" : bandeauDesactives(d, a.sections, peut)}
       <div class="constructeur-apercu-cadre" data-apercu-cadre><iframe class="constructeur-apercu" title="Aperçu" sandbox="allow-same-origin" data-apercu></iframe></div>
     </div>
   </div>
@@ -994,7 +1009,8 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (!n?.etat) return "";
     const activable = !n.rendu && LIBELLES[n.type] && !n.etat.publiable && !n.verrouille && ecrit(d, FONCTION[d.arbre?.type])
       && peutAction(d, d.arbre?.type, "element.etat") && peutAction(d, d.arbre?.type, "conteneur.publier");
-    return `<span class="design-statut">${badgeEtat(n.etat)}${activable ? ` <button type="button" class="btn btn-mini btn-primary" data-c-action="activer" data-ref="${e(n.ref)}"${aideAttr(d, "activer")} title="Rendre visible aux visiteurs">✅ Activer</button>` : ""}</span>${visibilitePanneau(n)}`;
+    const supprimable = !n.rendu && LIBELLES[n.type] && !n.verrouille && ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre?.type, "element.etat");
+    return `<span class="design-statut">${badgeEtat(n.etat)}${activable ? ` <button type="button" class="btn btn-mini btn-primary" data-c-action="activer" data-ref="${e(n.ref)}"${aideAttr(d, "activer")} title="Rendre visible aux visiteurs">✅ Activer</button>` : ""}${supprimable ? ` <button type="button" class="btn btn-mini constructeur-corbeille" data-c-action="desactiver-element" data-ref="${e(n.ref)}"${aideAttr(d, "supprimer")} title="Désactiver ou supprimer définitivement (confirmation demandée)">🗑 Supprimer</button>` : ""}</span>${visibilitePanneau(n)}`;
   };
   // Bloc « Qui voit cet élément ? » : meme donnees et memes actions que les icones de la structure.
   const visibilitePanneau = (n) => {
@@ -1475,16 +1491,37 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (!n) return;
     const compter = (x) => (x.enfants || []).reduce((t, y) => t + 1 + compter(y), 0);
     const nb = compter(n), genre = String(n.rendu || n.type || "élément").toLowerCase(), ancien = !n.rendu && Boolean(LIBELLES[n.type]);
+    const definitif = ancien && peutAction(d, d.arbre.type, "element.supprimer");
+    const quoi = genre === "section" ? "la section" : genre === "ligne" ? "la ligne" : genre === "colonne" ? "la colonne" : genre === "module" ? "le module" : "l'élément";
+    const dejaInactif = Boolean(n.etat?.inactif);
     const dlg = dialogue();
     dlg.innerHTML = `<form method="dialog" class="constructeur-ajout-rapide constructeur-suppression">
-      <h3>🗑 Supprimer cet élément ?</h3>
-      <p>Vous allez retirer ${e(genre === "section" ? "la section" : genre === "ligne" ? "la ligne" : genre === "colonne" ? "la colonne" : genre === "module" ? "le module" : "l'élément")} <strong>« ${e(n.titre || "sans nom")} »</strong>${nb ? ` et tout son contenu (${nb} élément${nb > 1 ? "s" : ""} à l'intérieur)` : ""}.</p>
-      <p class="muted">Il disparaît de la page mais reste conservé dans SharePoint (désactivation, aucune donnée effacée).</p>
+      <h3>🗑 Supprimer ${e(quoi)} « ${e(n.titre || "sans nom")} » ?</h3>
+      <p>${nb ? `Il contient <strong>${nb} élément${nb > 1 ? "s" : ""}</strong> (lignes, colonnes, modules…) qui suivront le même sort.` : "Il ne contient aucun autre élément."}</p>
+      ${definitif ? `<fieldset class="constructeur-suppression-choix"><legend>Que voulez-vous faire ?</legend>
+        <label><input type="radio" name="mode" value="desactiver" ${dejaInactif ? "disabled" : "checked"}> <strong>⏸ Désactiver</strong> — il disparaît du site mais reste récupérable (bouton « Activer »).${dejaInactif ? " <em>Déjà désactivé.</em>" : ""}</label>
+        <label><input type="radio" name="mode" value="definitif" ${dejaInactif ? "checked" : ""}> <strong>🗑 Supprimer définitivement</strong> — effacé de SharePoint avec tout son contenu. Utile pour une erreur ou un doublon.</label>
+      </fieldset>
+      <label class="constructeur-suppression-ok" ${dejaInactif ? "" : "hidden"}><input type="checkbox" name="ok"> Je confirme la suppression définitive de « ${e(n.titre || "sans nom")} »${nb ? ` et de ses ${nb} élément${nb > 1 ? "s" : ""}` : ""}.</label>`
+        : `<p class="muted">Il disparaît de la page mais reste conservé dans SharePoint (désactivation, aucune donnée effacée).</p>`}
       <div class="constructeur-suppression-actions"><button type="button" class="btn btn-secondary" data-c-fermer autofocus>Annuler</button>
       <button type="submit" class="btn constructeur-btn-danger">🗑 Oui, supprimer</button></div></form>`;
+    const form = dlg.querySelector("form");
+    const majChoix = () => {
+      const def = form.mode?.value === "definitif";
+      const ok = form.querySelector(".constructeur-suppression-ok");
+      if (ok) ok.hidden = !def;
+      form.querySelector("[type=submit]").disabled = def && !form.ok?.checked;
+      form.querySelector("[type=submit]").textContent = def ? "🗑 Supprimer définitivement" : "⏸ Oui, désactiver";
+    };
+    if (definitif) { form.addEventListener("change", majChoix); majChoix(); }
     dlg.querySelector("[data-c-fermer]").addEventListener("click", () => dlg.close());
-    dlg.querySelector("form").addEventListener("submit", async (ev) => {
-      ev.preventDefault(); dlg.close();
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const def = definitif && form.mode.value === "definitif";
+      if (def && !form.ok.checked) return;
+      dlg.close();
+      if (def) return executer("element.supprimer", { ref, confirmation: "SUPPRIMER" });
       await executer(ancien ? "element.etat" : "builder.desactiver", ancien ? { ref, etat: "inactif" } : { ref });
     });
     dlg.showModal();

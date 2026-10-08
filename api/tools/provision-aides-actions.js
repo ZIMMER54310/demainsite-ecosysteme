@@ -19,7 +19,7 @@ const AIDES = [
   ["renommer", "🏷", "Renommer", "Change le nom de repère de l'élément dans le constructeur. Ce nom n'est pas affiché aux visiteurs."],
   ["design", "🎨", "Design", "Règle l'apparence : couleurs, marges, alignement, bordures… La prévisualisation se met à jour en direct."],
   ["dupliquer", "⧉", "Dupliquer", "Crée une copie de l'élément et de tout son contenu juste après lui, en brouillon. Pratique pour créer une variante."],
-  ["supprimer", "🗑", "Supprimer", "Retire l'élément de la page après confirmation. Il reste conservé dans SharePoint (désactivation) et peut être réactivé."],
+  ["supprimer", "🗑", "Supprimer", "Deux choix après confirmation : « Désactiver » cache l'élément aux visiteurs et reste récupérable (bouton « Activer ») ; « Supprimer définitivement » l'efface de SharePoint avec tout ce qu'il contient (lignes, colonnes, modules, contenus) — idéal pour une erreur ou un doublon. Les éléments désactivés n'apparaissent pas dans l'aperçu : retrouvez-les dans le bandeau « éléments désactivés » au-dessus de l'aperçu ou dans la Structure."],
   ["deplacer", "✥", "Déplacer", "Glissez-déposez pour changer l'élément de place, ou utilisez les flèches pour le monter ou le descendre."],
   ["contenu", "✏️", "Contenu", "Ouvre le formulaire guidé du module pour saisir ou corriger son contenu, avec l'aide de Pasc ARA IA."],
   ["activer", "✅", "Valider et activer", "Rend l'élément visible des visiteurs une fois le contenu vérifié."],

@@ -324,6 +324,23 @@ async function main() {
       assert.equal((await C.executer({ d: copies, perimetre, siteId: "4", action: "element.renommer",
         params: { ref: C.ref("section", 100), titre: " " } })).status, 400, "nom obligatoire");
       assert.equal(C.actionDroit("element.renommer"), "element.deplacer", "droit « modifier » existant");
+      // Suppression definitive : confirmation exigee, enfants/utilisations avant le parent, sauvegarde JSON prealable.
+      const dossierSup = require("node:fs").mkdtempSync(require("node:path").join(require("node:os").tmpdir(), "dse-sup-"));
+      process.env.DSE_DOSSIER_SUPPRESSIONS = dossierSup;
+      const effaces = [];
+      proto.supprimer = async (liste, id) => { effaces.push(`${liste}/${id}`); };
+      assert.equal((await C.executer({ d: copies, perimetre, siteId: "4", action: "element.supprimer",
+        params: { ref: C.ref("ligne", 1000) } })).status, 400, "confirmation obligatoire");
+      assert.equal(effaces.length, 0);
+      const sup = await C.executer({ d: copies, perimetre, siteId: "4", action: "element.supprimer",
+        params: { ref: C.ref("ligne", 1000), confirmation: "SUPPRIMER" } });
+      assert.match(sup.message, /supprimée définitivement/);
+      assert.equal(effaces.at(-1), "OBJ-LIGNE-SITE/1000", "parent supprimé en dernier");
+      assert.ok(effaces.indexOf("OBJ-MODULE-SITE-PUBLIC/7000") < effaces.indexOf("OBJ-COLONNE-SITE/5000"), "module avant sa colonne");
+      assert.equal(require("node:fs").readdirSync(dossierSup).length, 1, "sauvegarde avant suppression");
+      assert.equal(C.actionDroit("element.supprimer"), "element.etat", "droit ADMINISTRER existant");
+      delete process.env.DSE_DOSSIER_SUPPRESSIONS;
+      require("node:fs").rmSync(dossierSup, { recursive: true });
       copies.colonnes.push(el(5002, "C3", { "OBJ-LIGNE-SITE": lien(1000) }));
       copies.modules.push(el(7002, "Voisin", { "OBJ-COLONNE-SITE": lien(5002), OBJMODULESITEPUBLICTYPE: lien(2, "TEXTE") }, { "ORDRE-AFFICHAGE": 10 }));
       const glisser = (params) => C.executer({ d: copies, perimetre, siteId: "4", action: "element.deplacer",

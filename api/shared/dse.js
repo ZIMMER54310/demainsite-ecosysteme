@@ -209,9 +209,9 @@ function viderCacheGraph() {
  * Reservee a la couche d'ecriture du cockpit (shared/ecriture.js).
  */
 async function graphEcriture(token, methode, chemin, corps, etag = null) {
-  if (!["PATCH", "POST"].includes(methode)) throw creerErreur("DSE-ECRITURE-METHODE", 500, "Méthode d'écriture refusée");
+  if (!["PATCH", "POST", "DELETE"].includes(methode)) throw creerErreur("DSE-ECRITURE-METHODE", 500, "Méthode d'écriture refusée");
   const url = new URL(`https://graph.microsoft.com/v1.0${chemin}`);
-  const donnees = JSON.stringify(corps || {});
+  const donnees = methode === "DELETE" ? "" : JSON.stringify(corps || {});
   const options = {
     method: methode,
     headers: {

@@ -668,6 +668,13 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .constructeur-corbeille { color: #b91c1c; border-color: #fca5a5; background: #fef2f2; }
 .constructeur-corbeille:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
 .constructeur-suppression { max-width: min(480px, 92vw); }
+.constructeur-suppression-choix { border: 1px solid #e5e7eb; border-radius: 8px; padding: .5rem .75rem; display: grid; gap: .5rem; }
+.constructeur-suppression-choix label, .constructeur-suppression-ok { display: block; line-height: 1.4; }
+.constructeur-suppression-ok { margin-top: .75rem; color: #b91c1c; font-weight: 600; }
+.constructeur-desactives { margin: 0 0 .5rem; padding: .4rem .75rem; border: 1px dashed #9ca3af; border-radius: 8px; background: repeating-linear-gradient(45deg, #f9fafb, #f9fafb 8px, #f3f4f6 8px, #f3f4f6 16px); font-size: .9rem; }
+.constructeur-desactives summary { cursor: pointer; font-weight: 600; color: #374151; }
+.constructeur-desactives ul { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .35rem; }
+.constructeur-desactives li { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
 .constructeur-suppression-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
 .constructeur-btn-danger { background: #dc2626; color: #fff; border-color: #dc2626; }
 .constructeur-btn-danger:hover { background: #b91c1c; }

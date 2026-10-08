@@ -121,6 +121,28 @@ function contenuDe(d, module) {
 const contenusItems = (d, liste, moduleId) => liste
   ? (d.contenus?.[liste] || []).filter((x) => rel(x, "OBJ-MODULE-SITE-PUBLIC")?.id === moduleId) : [];
 
+/* Elements a supprimer, les plus profonds d'abord (contenus et utilisations avant leur module, enfants avant parent). */
+function arbreASupprimer(d, type, el) {
+  const sortie = [];
+  for (const enfant of enfantsDe(d, type, el)) sortie.push(...arbreASupprimer(d, NIVEAUX[type].enfant, enfant));
+  if (type === "module") {
+    for (const liste of Object.keys(d.contenus || {})) for (const x of contenusItems(d, liste, el.id)) sortie.push({ liste, id: x.id, el: x });
+    for (const u of utilisationsDe(d, el.id)) sortie.push({ liste: "OBJ-MODULE-UTILISATION", id: u.id, el: u });
+  }
+  sortie.push({ liste: NIVEAUX[type].liste, id: el.id, el });
+  return sortie;
+}
+
+function sauvegarderSuppression(siteId, c, items) {
+  const fs = require("node:fs"), path = require("node:path");
+  const dossier = process.env.DSE_DOSSIER_SUPPRESSIONS || path.join(__dirname, "..", ".sauvegardes", "suppressions");
+  fs.mkdirSync(dossier, { recursive: true, mode: 0o700 });
+  const fichier = path.join(dossier, `${new Date().toISOString().replace(/[:.]/g, "-")}-${c.type}-${c.el.id}.json`);
+  fs.writeFileSync(fichier, JSON.stringify({ siteId: String(siteId), type: c.type, id: c.el.id, titre: titreDe(c.el),
+    items: items.map((x) => ({ liste: x.liste, id: x.id, champs: x.el._fields || {} })) }, null, 1), { mode: 0o600, flag: "wx" });
+  return fichier;
+}
+
 // Visibilite par appareil : masque responsive du style propre + (modules) colonnes VISIBLE-ORDINATEUR/TABLETTE/MOBILE.
 function appareilsDe(d, type, el) {
   const presetId = rel(el, "OBJ-STYLE-PRESET")?.id;
@@ -440,6 +462,16 @@ class Ecrivain {
       throw new Error("La modification est enregistrée mais sa relecture diffère. Vérifiez avant de recommencer.");
     }
     if (this.attendus.has(cle)) this.attendus.set(cle, relu.etag);
+  }
+
+  /* Suppression definitive d'un element (jamais en apercu ni sur confirmation preparee). */
+  async supprimer(nom, id) {
+    if (this.apercu || this.attendus.size) throw Object.assign(new Error("Cette suppression ne peut pas être préparée dans cet aperçu."), { refus: true });
+    const l = this.liste(nom);
+    const version = await this.version(l.id, id, ["Title"]);
+    await dse.graphEcriture(this.g.token, "DELETE", `/sites/${this.g.siteGraphId}/lists/${l.id}/items/${encodeURIComponent(id)}`, null, version.etag);
+    this.modifications.push({ listeId: l.id, itemId: String(id), titre: version.fields.Title, etag: version.etag,
+      avant: { Title: version.fields.Title }, apres: { SUPPRIME: true } });
   }
 
   /* Champs copiables d'un element (duplication) : valeurs simples et Lookups simples, hors etats et parent. */
@@ -769,8 +801,9 @@ const OPERATIONS_ARTICLE = {
     "design.enregistrer", "contenu.formulaire", "contenu.enregistrer"],
   publier: ["builder.publier", "builder.reactiver", "builder.desactiver", "conteneur.publier", "element.etat"]
 };
-// Le renommage reutilise les droits « modifier » existants (aucune operation SharePoint supplementaire).
-const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer", "ligne.colonnes": "ligne.ajouter" };
+// Le renommage reutilise les droits « modifier » existants ; la suppression definitive exige le droit ADMINISTRER (element.etat).
+const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer", "ligne.colonnes": "ligne.ajouter",
+  "element.supprimer": "element.etat" };
 const actionDroit = (action) => ACTION_DROIT[action] || action;
 const operationArticle = (action) => {
   action = actionDroit(action);
@@ -1185,6 +1218,18 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const ordre = await prochainOrdre(enfantsDe(d, pere.type, pere.el));
       const id = await copierArbre(w, d, c.type, c.el, pere.type, pere.el.id, ordre, " (variante)");
       return res(`${NIVEAUX[c.type].libelle} dupliqué en brouillon ; l'original est inchangé.`, { ref: ref(c.type, id) });
+    }
+
+    case "element.supprimer": {
+      // Suppression definitive : element + descendants + contenus + utilisations, sauvegarde JSON prealable.
+      const c = cible(["section", "ligne", "colonne", "module"], p.ref);
+      if (c.refus) return c;
+      if (p.confirmation !== "SUPPRIMER") return { erreur: "Confirmation de suppression manquante.", status: 400 };
+      const items = arbreASupprimer(d, c.type, c.el);
+      sauvegarderSuppression(siteId, c, items);
+      for (const x of items) await w.supprimer(x.liste, x.id);
+      const autres = items.length - 1;
+      return res(`${NIVEAUX[c.type].libelle} « ${titreDe(c.el)} » supprimé${c.type === "module" ? "" : "e"} définitivement${autres ? ` avec ${autres} élément(s) contenu(s)` : ""}.`);
     }
 
     case "element.etat": {
