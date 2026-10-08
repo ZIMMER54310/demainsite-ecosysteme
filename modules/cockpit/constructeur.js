@@ -700,7 +700,12 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
           if (String(cible?.rendu || "").toUpperCase() === "LIGNE") return formulaireColonnes(commande.dataset.ref);
           return ouvrirDesign(commande.dataset.ref);
         }
-        if (commande && !enCours && commande.dataset.builderCanvas === "supprimer-ancien") return executer("element.etat", { ref: commande.dataset.ref, etat: "inactif" });
+        if (commande && !enCours && commande.dataset.builderCanvas === "supprimer-ancien") return confirmerSuppression(commande.dataset.ref);
+        if (commande && !enCours && commande.dataset.builderCanvas === "ajouter-ancien") return ajoutAncien(commande.dataset.ref);
+        if (commande && !enCours && ["contenu-ancien", "dupliquer-ancien"].includes(commande.dataset.builderCanvas)) {
+          const action = { "contenu-ancien": "contenu", "dupliquer-ancien": "dupliquer-element" }[commande.dataset.builderCanvas];
+          return racine.querySelector(`[data-c-action="${action}"][data-ref="${CSS.escape(commande.dataset.ref)}"]`)?.click();
+        }
         if (commande && !enCours) return racine.querySelector(`[data-c-action="builder-${CSS.escape(commande.dataset.builderCanvas)}"][data-ref="${CSS.escape(commande.dataset.ref)}"]`)?.click();
         if (cibleRef && d.arbre && ecrit(d, FONCTION[d.arbre.type])) ouvrirDesign(cibleRef.dataset.dseRef);
       });
@@ -714,18 +719,32 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         const detail = rendu === "LIGNE" ? ` · ${(node.n.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE").length || "0"} col.`
           : rendu === "COLONNE" && freres.length > 1 ? ` ${freres.indexOf(node.n) + 1}/${freres.length}` : "";
         el.dataset.dseLibelle = `${rendu || LIBELLES[sorte] || "Élément"}${detail}${node?.n?.titre ? ` · ${node.n.titre}` : ""}`;
-        // Ancien format (section/ligne/colonne/module) : pas de barre generee par le rendu, on ajoute la corbeille ici.
+        // Ancien format (section/ligne/colonne/module) : pas de barre generee par le rendu, on la construit ici.
         if (!rendu && node?.n && LIBELLES[node.n.type] && !node.n.etat?.inactif && !el.querySelector(":scope>.dse-b-outils")
-          && ecrit(d, FONCTION[d.arbre.type]) && peutAction(d, d.arbre.type, "element.etat")) {
-          const outils = doc.createElement("div");
-          outils.className = "dse-b-outils dse-b-outils-ancien";
-          const corbeille = doc.createElement("button");
-          Object.assign(corbeille, { type: "button", className: "dse-b-corbeille", textContent: "🗑", title: `Supprimer ${node.n.titre || "cet élément"} (confirmation demandée)` });
-          corbeille.dataset.builderCanvas = "supprimer-ancien";
-          corbeille.dataset.ref = el.dataset.dseRef;
-          corbeille.setAttribute("aria-label", corbeille.title);
-          outils.append(corbeille);
-          el.prepend(outils);
+          && ecrit(d, FONCTION[d.arbre.type])) {
+          const n = node.n, peut = (a) => peutAction(d, d.arbre.type, a);
+          const boutons = [
+            (n.type === "section" && peut("ligne.ajouter") && d.structures?.length || n.type === "colonne" && peut("module.ajouter") && d.typesModules?.length)
+              && ["＋ Ajouter", "ajouter-ancien", n.type === "section" ? "Ajouter une ligne dans cette section" : "Ajouter un module dans cette colonne"],
+            n.type === "module" && n.formulaire && peut("contenu.enregistrer") ? ["✏️ Modifier", "contenu-ancien", "Modifier le contenu de ce module"]
+              : peut("design.enregistrer") && ["✏️ Modifier", "modifier", "Ouvrir les réglages de cet élément"],
+            node.parent && peut("element.dupliquer") && ["Dupliquer", "dupliquer-ancien", "Dupliquer cet élément"],
+            node.parent && peut("element.etat") && ["🗑", "supprimer-ancien", `Supprimer ${n.titre || "cet élément"} (confirmation demandée)`],
+          ].filter(Boolean);
+          if (boutons.length) {
+            const outils = doc.createElement("div");
+            outils.className = "dse-b-outils dse-b-outils-ancien";
+            for (const [texte, commande, titre] of boutons) {
+              const b = doc.createElement("button");
+              Object.assign(b, { type: "button", textContent: texte, title: titre });
+              if (commande === "supprimer-ancien") b.className = "dse-b-corbeille";
+              b.dataset.builderCanvas = commande;
+              b.dataset.ref = el.dataset.dseRef;
+              b.setAttribute("aria-label", titre);
+              outils.append(b);
+            }
+            el.prepend(outils);
+          }
         }
       }
       let survol = null;
@@ -1152,7 +1171,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const n = trouverNoeud(ref)?.n;
     if (!n) return;
     const compter = (x) => (x.enfants || []).reduce((t, y) => t + 1 + compter(y), 0);
-    const nb = compter(n), genre = String(n.rendu || "élément").toLowerCase();
+    const nb = compter(n), genre = String(n.rendu || n.type || "élément").toLowerCase(), ancien = !n.rendu && Boolean(LIBELLES[n.type]);
     const dlg = dialogue();
     dlg.innerHTML = `<form method="dialog" class="constructeur-ajout-rapide constructeur-suppression">
       <h3>🗑 Supprimer cet élément ?</h3>
@@ -1163,9 +1182,20 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     dlg.querySelector("[data-c-fermer]").addEventListener("click", () => dlg.close());
     dlg.querySelector("form").addEventListener("submit", async (ev) => {
       ev.preventDefault(); dlg.close();
-      await executer("builder.desactiver", { ref });
+      await executer(ancien ? "element.etat" : "builder.desactiver", ancien ? { ref, etat: "inactif" } : { ref });
     });
     dlg.showModal();
+  };
+  // Ancien format : section -> ajout d'une ligne (disposition), colonne -> ajout d'un module.
+  const ajoutAncien = (ref) => {
+    const n = trouverNoeud(ref)?.n;
+    if (n?.type === "section") return ouvrirFormulaire({ textes: [], listes: [{ cle: "structure", libelle: "Disposition des colonnes", obligatoire: true, options: d.structures || [] }] },
+      `Ajouter une ligne dans « ${n.titre || "la section"} »`, (v) => v.structure && executer("ligne.ajouter", { ref, structure: v.structure }));
+    if (n?.type === "colonne") return ouvrirFormulaire({
+      textes: [{ cle: "titre", libelle: "Nom (facultatif)", valeur: "", max: 255 }],
+      listes: [{ cle: "typeModule", libelle: "Type de module", obligatoire: true, options: (d.typesModules || []).map((t) => ({ ref: t.code, titre: t.code })) },
+        ...(d.modeles?.disponibles?.length ? [{ cle: "modele", libelle: "Modèle (facultatif)", options: d.modeles.disponibles }] : [])]
+    }, `Ajouter un module dans « ${n.titre || "la colonne"} »`, (v) => v.typeModule && executer("module.ajouter", { ref, ...Object.fromEntries(Object.entries(v).filter(([, x]) => x)) }));
   };
   const appliquerColonnes = async (ref, typeCol, largeurs) => {
     const colonnes = () => (trouverNoeud(ref)?.n?.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE");
@@ -1398,7 +1428,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       case "descendre": return executer("element.deplacer", { ref, sens: "bas" });
       case "dupliquer-element": return executer("element.dupliquer", { ref });
       case "activer": return executer("element.etat", { ref, etat: "actif" });
-      case "desactiver-element": return executer("element.etat", { ref, etat: "inactif" });
+      case "desactiver-element": return confirmerSuppression(ref);
       case "logo": if (confirm("Utiliser ce média comme logo du site ? L'ancien média reste dans la bibliothèque.")) return executer("logo.choisir", { media: cible.dataset.media }); return;
       case "affecter": {
         const pages = d.pages || [];
