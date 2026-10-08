@@ -348,6 +348,11 @@ export function documentApercu(composition, type = "page") {
     [data-dse-ref].dse-survol::before,[data-dse-ref].dse-design-cible::before{content:attr(data-dse-libelle);position:absolute;top:0;left:0;z-index:5;padding:2px 8px;font:600 11px/18px system-ui;color:#fff;background:var(--dse-c,#7c3aed);border-radius:0 0 6px 0;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
     [data-dse-ref].dse-design-cible{outline:3px solid var(--dse-c,#7c3aed);outline-offset:-3px}
     [data-dse-type=section]{--dse-c:#2b87da}[data-dse-type=ligne]{--dse-c:#29c4a9}[data-dse-type=colonne]{--dse-c:#8f42ec}[data-dse-type=module],[data-dse-type=builder]{--dse-c:#4c5866}[data-dse-type=entete],[data-dse-type=footer],[data-dse-type=page],[data-dse-type=article]{--dse-c:#e09900}
+    body:not(.dse-apercu-seul) :is(.dse-b-r-section,.dse-b-r-ligne,.dse-b-r-colonne)[data-dse-ref]:not(.dse-survol):not(.dse-design-cible){outline:1px dashed var(--dse-c);outline-offset:-1px}
+    body:not(.dse-apercu-seul) .dse-b-r-section[data-dse-ref]{background:#2b87da08;padding:24px 10px 10px!important;margin:6px 0}
+    body:not(.dse-apercu-seul) .dse-b-r-ligne[data-dse-ref]{background:#29c4a90a;padding:24px 8px 8px!important;margin:4px 0;gap:10px}
+    body:not(.dse-apercu-seul) .dse-b-r-colonne[data-dse-ref]{background:#8f42ec0a;padding:24px 6px 6px!important}
+    body:not(.dse-apercu-seul) :is(.dse-b-r-section,.dse-b-r-ligne,.dse-b-r-colonne)[data-dse-ref]:not(.dse-survol):not(.dse-design-cible)::before{content:attr(data-dse-libelle);position:absolute;top:0;left:0;z-index:4;max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;padding:1px 7px;font:600 10px/16px system-ui;color:#fff;background:var(--dse-c);opacity:.8;border-radius:0 0 6px 0;pointer-events:none;white-space:nowrap}
     .dse-b-plus{display:flex;align-items:center;justify-content:center;width:28px;height:28px;margin:6px auto;border-radius:50%;border:1px dashed #2563eb;background:#eff6ff;color:#2563eb;font:600 18px system-ui;cursor:pointer;opacity:.55}
     .dse-b-recursif:not(.dse-design-cible):has(.dse-b-recursif .dse-b-plus)>.dse-b-plus{display:none}
     .dse-b-recursif:hover:not(:has(.dse-b-recursif:hover))>.dse-b-plus,.dse-design-cible>.dse-b-plus{display:flex;opacity:1}.dse-b-plus:hover{background:#2563eb;color:white}
@@ -619,9 +624,13 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       for (const el of doc?.querySelectorAll("[data-dse-ref]") || []) {
         const node = trouverNoeud(el.dataset.dseRef);
         el.draggable = Boolean(node?.parent && !node.n.verrouille && peutAction(d, d.arbre.type, "builder.deplacer"));
-        const sorte = node?.n?.rendu ? "builder" : node?.n?.type || el.dataset.dseRef.split(".")[0];
+        const rendu = String(node?.n?.rendu || "").toUpperCase();
+        const sorte = rendu ? ({ "EN-TETE": "entete", ARTICLES: "module" }[rendu] || rendu.toLowerCase()) : node?.n?.type || el.dataset.dseRef.split(".")[0];
         el.dataset.dseType = sorte;
-        el.dataset.dseLibelle = `${node?.n?.rendu || LIBELLES[sorte] || "Élément"}${node?.n?.titre ? ` · ${node.n.titre}` : ""}`;
+        const freres = (node?.parent?.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === rendu);
+        const detail = rendu === "LIGNE" ? ` · ${(node.n.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE").length || "0"} col.`
+          : rendu === "COLONNE" && freres.length > 1 ? ` ${freres.indexOf(node.n) + 1}/${freres.length}` : "";
+        el.dataset.dseLibelle = `${rendu || LIBELLES[sorte] || "Élément"}${detail}${node?.n?.titre ? ` · ${node.n.titre}` : ""}`;
       }
       let survol = null;
       doc?.addEventListener("mouseover", (ev) => {

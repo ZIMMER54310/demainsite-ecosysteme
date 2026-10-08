@@ -148,7 +148,7 @@ export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
     <button type="button" data-builder-canvas="retirer" data-ref="${escapeHtml(noeud.ref)}">Retirer</button>` : ""}</div>` : "";
   const variants = contenus.filter((x) => x.module).map((x) => `<div class="dse-b-appareil dse-b-appareil--${x.appareil.toLowerCase()}">${x.module}</div>`).join("");
   const depot = (position) => ctx.apercu ? `<div class="dse-b-depot" data-builder-depot="${position}" data-ref="${escapeHtml(noeud.ref)}">${{ avant: "Déposer avant", apres: "Déposer après", dans: "Déposer ici" }[position]}</div>` : "";
-  return `${depot("avant")}${h.enLigne}<${tag}${id} class="dse-b-module dse-b-recursif ${h.identifiant}${classe}"${h.ref}>${barre}${variants}${enfants}${vide && ctx.apercu ? `<span class="dse-b-vide">${escapeHtml(noeud.titre || "Élément vide")}</span>` : ""}${ctx.apercu && noeud.conteneur && (noeud.ajouts || []).length ? `<button type="button" class="dse-b-plus" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}" title="Ajouter dans ${escapeHtml(noeud.titre || "cet élément")}" aria-label="Ajouter dans ${escapeHtml(noeud.titre || "cet élément")}">＋</button>` : ""}${noeud.conteneur ? depot("dans") : ""}</${tag}>${depot("apres")}`;
+  return `${depot("avant")}${h.enLigne}<${tag}${id} class="dse-b-module dse-b-recursif dse-b-r-${type.toLowerCase().replace(/[^a-z-]/g, "")} ${h.identifiant}${classe}"${h.ref}>${barre}${variants}${enfants}${vide && ctx.apercu ? `<span class="dse-b-vide">${escapeHtml(noeud.titre || "Élément vide")}</span>` : ""}${ctx.apercu && noeud.conteneur && (noeud.ajouts || []).length ? `<button type="button" class="dse-b-plus" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}" title="Ajouter dans ${escapeHtml(noeud.titre || "cet élément")}" aria-label="Ajouter dans ${escapeHtml(noeud.titre || "cet élément")}">＋</button>` : ""}${noeud.conteneur ? depot("dans") : ""}</${tag}>${depot("apres")}`;
 }
 
 /*
@@ -183,6 +183,8 @@ export const STYLES_BUILDER = `
 .dse-b-appareil--tablette,.dse-b-appareil--mobile{display:none}
 .dse-b-appareil--ordinateur{display:contents}.dse-b-recursif .dse-b-titre{font-size:inherit;font-weight:inherit;color:inherit}.dse-b-recursif .dse-b-texte{color:inherit}
 .dse-b-outils,.dse-b-depot,.dse-b-plus{display:none}
+.dse-b-r-ligne{display:flex;flex-wrap:wrap;gap:var(--dse-b-espace,24px)}.dse-b-r-ligne>.dse-b-r-colonne{flex:1 1 0;min-width:0}.dse-b-r-ligne>:not(.dse-b-r-colonne):not(.dse-b-depot){flex:0 0 100%}
+@media(max-width:640px){.dse-b-r-ligne>.dse-b-r-colonne{flex-basis:100%}}
 @media(min-width:641px) and (max-width:1024px){.dse-b-appareil--ordinateur{display:none}.dse-b-appareil--tablette{display:contents}}
 @media(max-width:640px){.dse-b-appareil--ordinateur{display:none}.dse-b-appareil--mobile{display:contents}}
 .dse-b-contenu{max-width:1200px;margin:0 auto}.dse-b-section--pleine-largeur>.dse-b-contenu{max-width:none}

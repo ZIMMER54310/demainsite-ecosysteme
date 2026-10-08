@@ -164,6 +164,11 @@ async function main() {
   const blog = { ref: "builderelement.blog1", rendu: "ARTICLES", titre: "Derniers articles", champs: [], enfants: [] };
   assert.match(rendu.rendreNoeud(blog, {}), /data-dse-catalogue-builder="articles"/, "noeud generique ARTICLES => catalogue articles");
   assert.match(rendu.rendreNoeud(blog, { apercu: true }), /liste affichée automatiquement/);
+  const ligne3 = { ref: "builderelement.lig1", rendu: "LIGNE", conteneur: true, champs: [], enfants: [1, 2, 3].map((i) =>
+    ({ ref: `builderelement.col${i}`, rendu: "COLONNE", conteneur: true, champs: [], enfants: [{ ref: `builderelement.mod${i}`, rendu: "MODULE", champs: [{ cle: "TITRE", categorie: "CONTENU", nature: "TEXTE", valeur: "T" }] }] })) };
+  const html3 = rendu.rendreNoeud(ligne3, {});
+  assert.match(html3, /dse-b-r-ligne/); assert.equal((html3.match(/dse-b-r-colonne/g) || []).length, 3, "colonnes typees");
+  assert.match(rendu.STYLES_BUILDER, /\.dse-b-r-ligne\{display:flex/, "colonnes cote a cote");
 
   // Securite : texte enrichi et liens.
   const propre = nettoyerHtml('<p>a<img src=x onerror=alert(1)></p><a href="javascript:alert(1)">l</a><a href="https://ok.fr/x">ok</a>');
