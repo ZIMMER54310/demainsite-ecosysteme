@@ -181,7 +181,7 @@ async function main() {
         media: [{ id: "123" }]
       }] }]
     }] }] }] });
-    assert.ok(apercuHero.includes("<h1>Accueil réel</h1>"));
+    assert.ok(/<h1 class="dse-hero-title">\s*Accueil réel\s*<\/h1>/.test(apercuHero), "HERO identique au site public");
     assert.ok(apercuHero.includes("/api/v1/media/123"));
     assert.ok(!apercuHero.includes("alert(1)") && !apercuHero.includes("javascript:"), "aperçu historique sûr");
     assert.ok(badgeEtat({ brouillon: true }).includes("Brouillon"));

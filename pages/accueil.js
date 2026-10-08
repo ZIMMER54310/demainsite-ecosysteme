@@ -47,6 +47,10 @@ function texteSharePoint(value) {
     return "";
   }
 
+  if (!globalThis.document) {
+    return String(value).replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  }
+
   const decode =
     decoderEntitesHtml(value);
 
@@ -252,7 +256,7 @@ function imageHero(contenu) {
  * Une image inaccessible (ex. lien SharePoint non public)
  * est retirée proprement au lieu d'afficher une image cassée.
  */
-document.addEventListener(
+globalThis.document?.addEventListener?.(
   "error",
   (event) => {
     const cible = event.target;
@@ -694,3 +698,19 @@ export async function accueilPage(domaine) {
     return pageSituation();
   }
 }
+/* =========================================================
+   RENDUS PUBLICS REUTILISES PAR L'APERCU DU COCKPIT
+   (memes fonctions que le site visiteur : aucun ecart d'affichage)
+   ========================================================= */
+
+export function rendusPublics(siteComplet, siteId = null) {
+  const page = trouverPageRacine(siteComplet, siteComplet?.site?.relations?.["PAGE-PUBLIQUE"]?.id ?? null, siteId);
+  const nomSite = String(siteComplet?.site?.nom ?? "").trim();
+  const footer = (page && trouverFooter(page)) || trouverFooter({ modules: siteComplet?.communs?.modules ?? [] });
+  return {
+    entete: enteteSharePoint({ nomSite, ...donneesEntete(siteComplet), pageUrl: String(page?.configuration?.URL ?? "/"), nettoyerTexte: texteSharePoint }),
+    footer: rendreFooter(footer, { nomSite, nettoyerTexte: texteSharePoint }),
+  };
+}
+
+export const rendreHeroPublic = (contenu) => rendreHero({ contenu });

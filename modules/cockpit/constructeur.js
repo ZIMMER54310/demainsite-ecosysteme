@@ -9,6 +9,23 @@ import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU } from "./desig
 import { codeChamp, controleChamp, erreurValeur } from "../builder/proprietes.js";
 import { confirmerApercuConstruction } from "./confirmation.js";
 import { getState } from "../../js/state.js";
+import { rendusPublics, rendreHeroPublic } from "../../pages/accueil.js";
+import { getSiteByDomain } from "../../services/domaine.service.js";
+import { getSiteFull } from "../../services/site.service.js";
+
+// Rendus du site visiteur (en-tete et pied de page historiques) pour un apercu identique au site public.
+let rendusSite = null;
+async function chargerRendusSite(domaine) {
+  try {
+    const r = await getSiteByDomain(domaine);
+    const site = r?.donnees ?? r;
+    const id = site?.id ?? site?.siteId;
+    if (!id) return null;
+    const c = await getSiteFull(id);
+    const complet = c?.donnees ?? c;
+    return complet ? { domaine, ...rendusPublics(complet, id) } : null;
+  } catch { return null; }
+}
 
 export const ONGLETS = Object.freeze([
   { cle: "entetes", libelle: "En-têtes" },
@@ -309,27 +326,19 @@ export function documentApercu(composition, type = "page") {
   const adapteursAuto = { HEADER: automatique("🔗 Logo et menu du site · affichés automatiquement"),
     FOOTER: automatique("🔗 Mentions et copyright du site · affichés automatiquement") };
   const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: adapteursAuto, apercu: true, prefixe, typeConteneur });
+  // Meme rendu HERO que le site public (pages/accueil.js), alimente par le contenu du module edite.
   const heroApercu = (module) => {
     const contenu = module?.contenu?.find((x) => x?.champs || x?.media);
     if (!contenu) return "";
     const champs = contenu.champs || {};
     const cle = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const valeur = (...noms) => {
-      const cible = new Set(noms.map(cle));
-      const entree = Object.entries(champs).find(([nom]) => cible.has(cle(nom)));
-      return entree?.[1] ?? "";
-    };
-    const texte = String(valeur("TEXTE") || "");
-    const bouton1 = urlSure(valeur("BOUTON-1-URL"));
-    const bouton2 = urlSure(valeur("BOUTON-2-URL"));
-    // Même priorité que le site public : le média OBJ-MEDIA d'abord, IMAGE-URL seulement en repli.
-    const imageUrl = (contenu.media || []).find((media) => /^\d{1,12}$/.test(String(media?.id || "")))?.id ||
-      urlSure(valeur("IMAGE-URL"), { lien: false });
-    const image = imageUrl
-      ? `<img src="${e(/^\d+$/.test(imageUrl) ? `/api/v1/media/${imageUrl}` : imageUrl)}" alt="${e(valeur("IMAGE-ALT"))}">`
-      : "";
-    const bouton = (label, href) => label && href ? `<a href="${e(href)}">${e(label)}</a>` : "";
-    return `<section class="dse-apercu-hero">${image}<div><p>${e(valeur("SOUS-TITRE"))}</p><h1>${e(valeur("TITRE-PRINCIPAL"))}</h1><div>${nettoyerHtml(texte)}</div><nav>${bouton(valeur("BOUTON-1-TEXTE"), bouton1)}${bouton(valeur("BOUTON-2-TEXTE"), bouton2)}</nav></div></section>`;
+    const configuration = {};
+    for (const nom of ["TITRE-PRINCIPAL", "SOUS-TITRE", "TEXTE", "IMAGE-URL", "IMAGE-ALT", "BOUTON-1-TEXTE", "BOUTON-1-URL", "BOUTON-2-TEXTE", "BOUTON-2-URL"]) {
+      const entree = Object.entries(champs).find(([n]) => cle(n) === cle(nom));
+      if (entree) configuration[nom] = nom === "TEXTE" ? nettoyerHtml(String(entree[1] || "")) : entree[1];
+    }
+    const media = (contenu.media || []).filter((m) => /^\d{1,12}$/.test(String(m?.id || "")));
+    return rendreHeroPublic({ configuration, media, relations: { "OBJ-MEDIA": media.map((m) => ({ id: String(m.id) })) } });
   };
   const optionsPage = (prefixe, typeConteneur) => ({ ...options(prefixe, typeConteneur), adapteurs: { ...adapteursAuto, HERO: heroApercu } });
   const principal = rendreBuilder(composition || {}, optionsPage(type === "page" ? "p" : type[0], TYPE_CONTENEUR[type] || "PAGE"));
@@ -342,7 +351,10 @@ export function documentApercu(composition, type = "page") {
     const html = z?.sections?.length || z?.noeuds?.length ? rendreBuilder({ mode: "builder", sections: z.sections, noeuds: z.noeuds, style: z.style,
       responsive: z.responsive, theme: composition.theme }, optionsLecture(prefixe, t)) : "";
     const source = z?.origine !== "site" ? "associé" : type === "page" ? "exemple du site, non associé à cette page" : "celui du site";
-    if (html) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise}>${html}</${balise}></div>`;
+    if (html) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise} class="dse-b-${cle}">${html}</${balise}></div>`;
+    // Comme le site public : sans contenu construit, le visiteur voit l'affichage historique du site.
+    const historique = rendusSite?.[cle];
+    if (historique && type === "page") return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z?.titre ? ` « ${e(z.titre)} » vide :` : ""} affichage historique du site, comme le voit le visiteur · lecture seule">${historique}</div>`;
     if (z) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise} class="dse-apercu-repere">${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} : aucun contenu renseigné pour l'instant (à compléter dans son propre onglet)</${balise}></div>`;
     const absent = type === "page" ? `aucun ${libelle.toLowerCase()} associé à cette page (le site garde l'affichage historique)` : `aucun ${libelle.toLowerCase()} actif sur ce site`;
     return `<${balise} class="dse-apercu-repere dse-apercu-contexte--${cle}">${e(libelle)} : ${e(absent)}</${balise}>`;
@@ -350,9 +362,10 @@ export function documentApercu(composition, type = "page") {
   const pageRepere = `<div class="dse-apercu-repere dse-apercu-repere--page">Contenu des pages${contexte.page ? ` · exemple : ${e(contexte.page)}` : ""}</div>`;
   const haut = type === "entete" ? `<header class="dse-apercu-edite">${principal || vide}</header>` : zoneContexte(contexte.entete, "entete", "header", "e", "ENTETE", "En-tête");
   const bas = type === "footer" ? `<footer class="dse-apercu-edite">${principal || vide}</footer>` : zoneContexte(contexte.footer, "footer", "footer", "f", "FOOTER", "Pied de page");
-  const corps = `${haut}<main class="dse-apercu-principal">${["entete", "footer"].includes(type) ? pageRepere : principal || vide}</main>${bas}`;
+  const corps = `<div class="dse-site-public">${haut}<main class="dse-apercu-principal dse-site-public-main">${["entete", "footer"].includes(type) ? pageRepere : principal || vide}</main>${bas}</div>`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>body{margin:0;font-family:system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column}.dse-apercu-principal{flex:1 0 auto}${STYLES_BUILDER}.dse-apercu-hero{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;padding:clamp(24px,6vw,80px);background:#f4f8fc}.dse-apercu-hero img{width:100%;height:auto;object-fit:cover}.dse-apercu-hero h1{font-size:clamp(2rem,5vw,4rem)}.dse-apercu-hero nav{display:flex;flex-wrap:wrap;gap:12px}.dse-apercu-hero nav a{padding:10px 16px;border-radius:6px;background:#0755a4;color:white;text-decoration:none}@media(max-width:640px){.dse-apercu-hero{grid-template-columns:1fr}}
+    ${["app", "components", "responsive", "public"].map((f) => `<link rel="stylesheet" href="/assets/css/${f}.css">`).join("")}
+    <style>body{margin:0}.dse-site-public{min-height:100vh;display:flex;flex-direction:column}body.dse-public main.dse-apercu-principal{flex:1 0 auto;min-height:0!important}${STYLES_BUILDER}
     .dse-apercu-vide{padding:24px;color:#667}.dse-apercu-contexte{position:relative;pointer-events:none;user-select:none;padding-top:22px;background:#e2e8f0}body.dse-apercu-seul .dse-apercu-contexte{padding-top:0;background:none}.dse-apercu-contexte::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(135deg,#64748b0d 0 10px,#64748b1a 10px 20px);outline:2px dashed #94a3b8;outline-offset:-2px}.dse-apercu-contexte::before{content:attr(data-libelle);position:absolute;top:0;right:0;z-index:7;padding:2px 10px;font:600 11px/18px system-ui;color:#fff;background:#475569;border-radius:0 0 0 6px}body.dse-masquer-entete .dse-apercu-contexte--entete,body.dse-masquer-footer .dse-apercu-contexte--footer{display:none}body.dse-apercu-seul .dse-apercu-contexte::after,body.dse-apercu-seul .dse-apercu-contexte::before{display:none}
     .dse-apercu-repere{display:flex;align-items:center;justify-content:center;min-height:56px;margin:8px;border:2px dashed #cbd5e1;border-radius:8px;color:#64748b;font:13px system-ui;background:#f8fafc}.dse-apercu-repere--page{min-height:260px}
     .dse-b-vide{display:flex;align-items:center;justify-content:center;min-height:56px;padding:8px;border:1px dashed #94a3b8;border-radius:6px;background:repeating-linear-gradient(45deg,#f8fafc,#f8fafc 8px,#f1f5f9 8px,#f1f5f9 16px);color:#475569;font:13px system-ui}
@@ -374,7 +387,7 @@ export function documentApercu(composition, type = "page") {
     .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body:not(.dse-apercu-seul) [data-dse-ref].dse-survol>.dse-b-outils-ancien,body:not(.dse-apercu-seul):not(:has([data-dse-ref]:hover)) .dse-design-cible>.dse-b-outils-ancien{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:absolute;top:2px;right:2px;z-index:6;padding:2px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.25)}.dse-b-outils .dse-b-corbeille{color:#b91c1c;border-color:#fca5a5;background:#fef2f2}.dse-b-outils .dse-b-corbeille:hover{background:#dc2626;color:white}body.dse-apercu-seul .dse-b-plus,body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
     body.dse-apercu-seul [data-dse-ref]{outline:none!important;cursor:auto}body.dse-apercu-seul [data-dse-ref]::before{display:none!important}
     </style></head>
-    <body>${corps}</body></html>`;
+    <body class="dse-public">${corps}</body></html>`;
 }
 
 export function historiqueStructure(avant, apres, racine) {
@@ -1555,6 +1568,11 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
 
   // Changement d'onglet depuis le menu : sur place si aucun travail en cours, sinon navigation complete.
   racine.dseDomaine = domaine;
+  if (rendusSite?.domaine !== domaine) chargerRendusSite(domaine).then((r) => {
+    rendusSite = r;
+    const f = iframe();
+    if (r && f && d.apercu) f.srcdoc = documentApercu(d.apercu, d.arbre?.type);
+  });
   racine.dseChangerOnglet = (onglet) => {
     if (d.arbre || enCours || brouillons.size || brouillonGenerique) return false;
     etat.onglet = ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes";

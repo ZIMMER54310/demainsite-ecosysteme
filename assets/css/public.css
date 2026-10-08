@@ -14,10 +14,11 @@ body.dse-public {
    AUCUNE INTERFACE D'ADMINISTRATION EN PUBLIC
    ========================================================= */
 
-body.dse-public header,
-body.dse-public aside,
-body.dse-public nav,
-body.dse-public footer,
+/* Le contenu du site (menu de l'en-tete, en-tete/pied construits) n'est jamais masque. */
+body.dse-public header:not(.dse-site-public *),
+body.dse-public aside:not(.dse-site-public *),
+body.dse-public nav:not(.dse-site-public *),
+body.dse-public footer:not(.dse-site-public *),
 body.dse-public .sidebar,
 body.dse-public .app-sidebar,
 body.dse-public .breadcrumb,
