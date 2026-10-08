@@ -594,3 +594,7 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
   .constructeur-vue-zone--liste .constructeur-carte > * { grid-column:1 !important; grid-row:auto !important; }
   .constructeur-vue-zone--liste .constructeur-carte > .constructeur-boutons { justify-content:flex-start; }
 }
+
+/* Constructeur : case « structure de base » des formulaires de création */
+.constructeur-structure-base { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; font-weight: normal; }
+.constructeur-structure-base input { width: auto; margin: 0; }

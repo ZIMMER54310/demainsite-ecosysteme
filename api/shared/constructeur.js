@@ -544,6 +544,62 @@ async function creerUtilisation(w, moduleId, colonneId, ordre, titre, mode = "br
   return w.creer(L, champs);
 }
 
+// Structure de base creee d'office (en brouillon) a la creation d'un conteneur : section -> lignes (grille) -> modules.
+const STRUCTURES_BASE = {
+  entete: [{ titre: "En-tête", typeSection: "HEADER", lignes: [{ grille: "100", modules: [["HEADER", "Logo et menu"]] }] }],
+  footer: [{ titre: "Pied de page", typeSection: "FOOTER", lignes: [
+    { grille: "33-33-33", modules: [["TEXTE", "À propos"], ["TEXTE", "Liens utiles"], ["TEXTE", "Contact"]] },
+    { grille: "100", modules: [["FOOTER", "Mentions et copyright"]] }] }],
+  page: [
+    { titre: "Bandeau (Hero)", typeSection: "PLEINE-LARGEUR", lignes: [{ grille: "100", modules: [["HERO", "Hero"]] }] },
+    { titre: "Contenu", typeSection: "STANDARD", lignes: [{ grille: "100", modules: [["TITRE", "Titre"], ["TEXTE", "Texte"]], memeColonne: true }] },
+    { titre: "Appel à l'action", typeSection: "STANDARD", lignes: [{ grille: "100", modules: [["CTA", "Appel à l'action"]] }] }]
+};
+
+async function creerStructureBase(w, d, type, conteneurId) {
+  const modele = STRUCTURES_BASE[type];
+  if (!modele) return 0;
+  const code = (x) => String(champ(x, ["CODE"]) || titreDe(x) || "").toUpperCase();
+  const typesSection = (d.typesSection || []).filter(B.publiable);
+  const structures = (d.structures || []).filter(B.publiable);
+  const typesModule = (d.types || []).filter(B.publiable);
+  const nTypeSection = typesSection.length ? await w.lookup("OBJ-SECTION-SITE", "OBJ-SECTION-TYPE") : null;
+  const nStruct = await w.lookup("OBJ-LIGNE-SITE", "OBJ-LIGNE-STRUCTURE");
+  const nLarg = await w.simple("OBJ-COLONNE-SITE", "LARGEUR");
+  const nTypeModule = await w.lookup("OBJ-MODULE-SITE-PUBLIC", "OBJ-MODULE-SITE-PUBLIC-TYPE");
+  const nPage = type === "page" ? await w.lookup("OBJ-MODULE-SITE-PUBLIC", "OBJ-PAGES-SITE") : null;
+  let n = 0;
+  for (const [iS, s] of modele.entries()) {
+    const ts = typesSection.find((x) => code(x) === s.typeSection);
+    const idS = await creerNiveau(w, "section", type, conteneurId, { titre: s.titre, ordre: (iS + 1) * 10,
+      extra: nTypeSection && ts ? { [nTypeSection]: String(ts.id) } : {} });
+    n++;
+    for (const [iL, l] of s.lignes.entries()) {
+      const st = structures.find((x) => code(x) === l.grille);
+      const titreL = `${s.titre} · ${l.grille}`;
+      const idL = await creerNiveau(w, "ligne", "section", idS, { titre: titreL, ordre: (iL + 1) * 10,
+        extra: nStruct && st ? { [nStruct]: String(st.id) } : {} });
+      const largeurs = l.grille.split("-").map(Number);
+      const colonnes = [];
+      for (const [iC, largeur] of largeurs.entries()) {
+        colonnes.push(await creerNiveau(w, "colonne", "ligne", idL, { titre: `${titreL} · colonne ${iC + 1}`, ordre: (iC + 1) * 10,
+          extra: nLarg ? { [nLarg]: largeur } : {} }));
+      }
+      for (const [iM, [typeModule, titreM]] of l.modules.entries()) {
+        const tm = typesModule.find((t) => titreDe(t).toUpperCase() === typeModule);
+        if (!tm || !nTypeModule) continue;
+        const colonne = l.memeColonne ? colonnes[0] : colonnes[iM % colonnes.length];
+        const ordre = l.memeColonne ? (iM + 1) * 10 : 10;
+        const extra = { [nTypeModule]: String(tm.id), ...(nPage ? { [nPage]: String(conteneurId) } : {}) };
+        const idM = await creerNiveau(w, "module", "colonne", colonne, { titre: titreM, ordre, extra });
+        await creerUtilisation(w, idM, colonne, ordre, titreM);
+        n++;
+      }
+    }
+  }
+  return n;
+}
+
 async function synchroniserUtilisations(w, d, moduleId, champsModule) {
   const L = "OBJ-MODULE-UTILISATION";
   const utils = utilisationsDe(d, moduleId);
@@ -755,7 +811,13 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const nNote = await w.simple(def.liste, "NOTE-COURTE");
       if (nNote && p.noteCourte) champs[nNote] = String(p.noteCourte).slice(0, 255);
       const id = await w.creer(def.liste, champs);
-      return res(`${def.libelle} créé en brouillon.`, { ref: ref(type, id), titre });
+      if (p.structureBase === false) return res(`${def.libelle} créé en brouillon.`, { ref: ref(type, id), titre });
+      try {
+        const n = await creerStructureBase(w, d, type, id);
+        return res(`${def.libelle} créé en brouillon avec sa structure de base (${n} élément(s)).`, { ref: ref(type, id), titre });
+      } catch (e) {
+        return res(`${def.libelle} créé en brouillon, structure de base incomplète : ${e.message}`, { ref: ref(type, id), titre });
+      }
     }
 
     case "conteneur.modifier": {

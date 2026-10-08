@@ -93,11 +93,20 @@ function carteConteneur(d, type, c) {
   </article>`;
 }
 
+const STRUCTURE_BASE = {
+  entete: "section En-tête avec logo et menu",
+  footer: "3 colonnes (À propos, Liens utiles, Contact) + mentions et copyright",
+  page: "Hero, Contenu (titre + texte) et Appel à l'action"
+};
+const caseStructureBase = (type) => `<label class="constructeur-structure-base"><input type="checkbox" name="structureBase" checked>
+  Démarrer avec la structure de base <span class="muted">(${STRUCTURE_BASE[type]})</span></label>`;
+
 function ongletConteneurs(d, type) {
   const liste = type === "entete" ? d.entetes : d.footers;
   const peut = peutAction(d, type, "conteneur.creer");
   return `${peut ? `<form class="card constructeur-creer" data-c-creer="${type}">
       <label>Créer un ${LIBELLES[type]} <input name="titre" required maxlength="255" placeholder="Nom"></label>
+      ${caseStructureBase(type)}
       <button class="btn btn-primary" type="submit">➕ Créer</button>
     </form>` : ""}
     ${liste.length ? `<div class="constructeur-grille">${liste.map((c) => carteConteneur(d, type, c)).join("")}</div>`
@@ -137,6 +146,7 @@ function ongletPages(d) {
   const creer = peutAction(d, "page", "conteneur.creer") ? `<form class="card constructeur-creer" data-c-creer="page">
     <label>Créer une page <input name="titre" required maxlength="255"></label>
     <p class="muted">L’adresse est créée automatiquement à partir du nom (modifiable ensuite via « ✏️ Modifier »).</p>
+    ${caseStructureBase("page")}
     <button class="btn btn-primary">Créer en brouillon</button></form>` : "";
   return `${creer}<div class="constructeur-grille">${d.pages.map((p) => `<article class="card constructeur-carte" data-etat="${cleEtat(p.etat)}" data-nom="${e(`${p.titre || ""} ${p.url || ""}`.toLowerCase())}">
     <header><h3>${e(p.titre)}</h3>${p.realisation ? realisation(p.realisation) : badgeEtat(p.etat)}</header>
@@ -287,7 +297,10 @@ export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU") {
 }
 
 export function documentApercu(composition, type = "page") {
-  const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: {}, apercu: true, prefixe, typeConteneur });
+  const automatique = (texte) => () => `<span class="dse-b-vide">${texte}</span>`;
+  const adapteursAuto = { HEADER: automatique("🔗 Logo et menu du site · affichés automatiquement"),
+    FOOTER: automatique("🔗 Mentions et copyright du site · affichés automatiquement") };
+  const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: adapteursAuto, apercu: true, prefixe, typeConteneur });
   const zone = (z, balise, prefixe, t) => z?.sections?.length || z?.noeuds?.length ? `<${balise}>${rendreBuilder({ mode: "builder", sections: z.sections, noeuds: z.noeuds, style: z.style, responsive: z.responsive, _ref: z._ref, theme: composition.theme }, options(prefixe, t))}</${balise}>` : "";
   const heroApercu = (module) => {
     const contenu = module?.contenu?.find((x) => x?.champs || x?.media);
@@ -311,7 +324,7 @@ export function documentApercu(composition, type = "page") {
     const bouton = (label, href) => label && href ? `<a href="${e(href)}">${e(label)}</a>` : "";
     return `<section class="dse-apercu-hero">${image}<div><p>${e(valeur("SOUS-TITRE"))}</p><h1>${e(valeur("TITRE-PRINCIPAL"))}</h1><div>${nettoyerHtml(texte)}</div><nav>${bouton(valeur("BOUTON-1-TEXTE"), bouton1)}${bouton(valeur("BOUTON-2-TEXTE"), bouton2)}</nav></div></section>`;
   };
-  const optionsPage = (prefixe, typeConteneur) => ({ ...options(prefixe, typeConteneur), adapteurs: { HERO: heroApercu } });
+  const optionsPage = (prefixe, typeConteneur) => ({ ...options(prefixe, typeConteneur), adapteurs: { ...adapteursAuto, HERO: heroApercu } });
   const principal = rendreBuilder(composition || {}, optionsPage(type === "page" ? "p" : type[0], TYPE_CONTENEUR[type] || "PAGE"));
   const vide = `<p class="dse-apercu-vide">Aperçu vide : ajoutez une section depuis la colonne Structure.</p>`;
   const contexte = composition?.contexte || {};
@@ -1132,7 +1145,8 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     }
     if (f.matches("[data-c-creer]")) {
       ev.preventDefault();
-      return executer("conteneur.creer", { type: f.dataset.cCreer, titre: f.titre.value.trim(), url: f.querySelector('[name="url"]')?.value.trim() });
+      return executer("conteneur.creer", { type: f.dataset.cCreer, titre: f.titre.value.trim(), url: f.querySelector('[name="url"]')?.value.trim(),
+        structureBase: f.querySelector('[name="structureBase"]')?.checked !== false });
     }
     if (f.matches("[data-c-ajout]")) {
       ev.preventDefault();

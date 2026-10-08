@@ -276,6 +276,22 @@ async function main() {
         "ELEMENT-RACINE": lien(501), "ELEMENT-PARENT": lien(501)
       }, { ACTIF: true }));
       assert.equal(C.vue(copies, perimetre).pages.find((p) => p.ref === C.ref("page", 2)).sections, 1);
+      writes.length = 0;
+      const creation = await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.creer",
+        params: { type: "page", titre: "Contact" } });
+      assert.match(creation.message, /structure de base/);
+      const parListe = (l) => writes.filter((x) => x.liste === l);
+      assert.equal(writes[0].champs.URL, "/contact/");
+      assert.deepEqual(parListe("OBJ-SECTION-SITE").map((x) => x.champs.Title), ["Bandeau (Hero)", "Contenu", "Appel à l'action"]);
+      assert.ok(parListe("OBJ-SECTION-SITE").every((x) => x.champs.OBJPAGESSITELookupId === writes[0].id));
+      assert.equal(parListe("OBJ-LIGNE-SITE").length, 3);
+      assert.equal(parListe("OBJ-COLONNE-SITE").length, 3);
+      assert.deepEqual(parListe("OBJ-MODULE-SITE-PUBLIC").map((x) => x.champs.Title), ["Titre", "Texte"], "types absents (HERO, CTA) ignorés");
+      assert.equal(parListe("OBJ-MODULE-UTILISATION").length, 2);
+      writes.length = 0;
+      await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.creer",
+        params: { type: "footer", titre: "Pied vide", structureBase: false } });
+      assert.equal(writes.length, 1, "structure de base désactivable");
     } finally {
       ecriture.contexteGraph = originalGraph;
       ecriture.lireItemFrais = originalLecture;

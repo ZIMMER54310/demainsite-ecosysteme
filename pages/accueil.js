@@ -482,7 +482,9 @@ function rendreSitePublic({
   // En-tete / Footer construits (Constructeur DSE) : prioritaires s'ils sont affectes a la page, actifs et valides.
   const zone = (z, classe) => {
     const html = z?.sections?.length ? rendreBuilder({ mode: "builder", sections: z.sections, style: z.style, responsive: z.responsive, theme: composition?.theme },
-      { apiBase: CONFIG.API_BASE_URL, adapteurs: {}, prefixe: classe === "entete" ? "e" : "f", typeConteneur: classe === "entete" ? "ENTETE" : "FOOTER" }) : "";
+      { apiBase: CONFIG.API_BASE_URL,
+        adapteurs: classe === "entete" ? { HEADER: enteteHistorique } : { FOOTER: () => footerHistorique },
+        prefixe: classe === "entete" ? "e" : "f", typeConteneur: classe === "entete" ? "ENTETE" : "FOOTER" }) : "";
     return html ? `<${classe === "entete" ? "header" : "footer"} class="dse-b-${classe}"><style>${STYLES_BUILDER}</style>${html}</${classe === "entete" ? "header" : "footer"}>` : "";
   };
   const enteteConstruit = zone(composition?.entete, "entete");
