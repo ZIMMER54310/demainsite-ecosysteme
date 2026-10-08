@@ -349,8 +349,9 @@ export function documentApercu(composition, type = "page") {
     [data-dse-ref].dse-design-cible{outline:3px solid var(--dse-c,#7c3aed);outline-offset:-3px}
     [data-dse-type=section]{--dse-c:#2b87da}[data-dse-type=ligne]{--dse-c:#29c4a9}[data-dse-type=colonne]{--dse-c:#8f42ec}[data-dse-type=module],[data-dse-type=builder]{--dse-c:#4c5866}[data-dse-type=entete],[data-dse-type=footer],[data-dse-type=page],[data-dse-type=article]{--dse-c:#e09900}
     .dse-b-plus{display:flex;align-items:center;justify-content:center;width:28px;height:28px;margin:6px auto;border-radius:50%;border:1px dashed #2563eb;background:#eff6ff;color:#2563eb;font:600 18px system-ui;cursor:pointer;opacity:.55}
-    .dse-b-recursif:hover>.dse-b-plus,.dse-design-cible>.dse-b-plus{opacity:1}.dse-b-plus:hover{background:#2563eb;color:white}
-    .dse-b-recursif:hover>.dse-b-outils,.dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:relative;z-index:6}
+    .dse-b-recursif:not(.dse-design-cible):has(.dse-b-recursif .dse-b-plus)>.dse-b-plus{display:none}
+    .dse-b-recursif:hover:not(:has(.dse-b-recursif:hover))>.dse-b-plus,.dse-design-cible>.dse-b-plus{display:flex;opacity:1}.dse-b-plus:hover{background:#2563eb;color:white}
+    .dse-b-recursif:hover:not(:has(.dse-b-recursif:hover))>.dse-b-outils,body:not(:has(.dse-b-recursif:hover)) .dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:absolute;top:2px;right:2px;z-index:6;padding:2px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
     .dse-builder-glisse .dse-b-depot{display:block;border:1px dashed #7c3aed;padding:5px;font:12px system-ui;color:#4c1d95;background:#f5f3ff}
     .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body.dse-apercu-seul .dse-b-plus,body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
     body.dse-apercu-seul [data-dse-ref]{outline:none!important;cursor:auto}body.dse-apercu-seul [data-dse-ref]::before{display:none!important}
