@@ -197,7 +197,9 @@ function vue(d, perimetre) {
       configure: Boolean((d.builderTypes || []).some(R.actif) && (d.builderRegles || []).some(R.actif)),
       types: (d.builderTypes || []).filter(R.actif).map((t) => ({
         ref: ref("buildertype", t.id), titre: R.titre(t), conteneur: R.f(t, "EST-CONTENEUR") === true,
-        racine: R.f(t, "EST-RACINE") === true
+        racine: R.f(t, "EST-RACINE") === true, rendu: String(R.f(t, "CLE-RENDU") || "").toUpperCase(),
+        enfants: (d.builderTypes || []).filter((x) => R.actif(x) && (() => { try { return R.regleDe(d, t.id, x.id); } catch { return false; } })())
+          .map((x) => ref("buildertype", x.id))
       })),
       articles: relationArticleBuilder(d),
       messageArticles: relationArticleBuilder(d) ? null : MESSAGE_RELATION_ARTICLE,

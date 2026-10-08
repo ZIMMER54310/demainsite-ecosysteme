@@ -348,9 +348,11 @@ export function documentApercu(composition, type = "page") {
     [data-dse-ref].dse-survol::before,[data-dse-ref].dse-design-cible::before{content:attr(data-dse-libelle);position:absolute;top:0;left:0;z-index:5;padding:2px 8px;font:600 11px/18px system-ui;color:#fff;background:var(--dse-c,#7c3aed);border-radius:0 0 6px 0;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
     [data-dse-ref].dse-design-cible{outline:3px solid var(--dse-c,#7c3aed);outline-offset:-3px}
     [data-dse-type=section]{--dse-c:#2b87da}[data-dse-type=ligne]{--dse-c:#29c4a9}[data-dse-type=colonne]{--dse-c:#8f42ec}[data-dse-type=module],[data-dse-type=builder]{--dse-c:#4c5866}[data-dse-type=entete],[data-dse-type=footer],[data-dse-type=page],[data-dse-type=article]{--dse-c:#e09900}
+    .dse-b-plus{display:flex;align-items:center;justify-content:center;width:28px;height:28px;margin:6px auto;border-radius:50%;border:1px dashed #2563eb;background:#eff6ff;color:#2563eb;font:600 18px system-ui;cursor:pointer;opacity:.55}
+    .dse-b-recursif:hover>.dse-b-plus,.dse-design-cible>.dse-b-plus{opacity:1}.dse-b-plus:hover{background:#2563eb;color:white}
     .dse-b-recursif:hover>.dse-b-outils,.dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:relative;z-index:6}
     .dse-builder-glisse .dse-b-depot{display:block;border:1px dashed #7c3aed;padding:5px;font:12px system-ui;color:#4c1d95;background:#f5f3ff}
-    .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
+    .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body.dse-apercu-seul .dse-b-plus,body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
     body.dse-apercu-seul [data-dse-ref]{outline:none!important;cursor:auto}body.dse-apercu-seul [data-dse-ref]::before{display:none!important}
     </style></head>
     <body>${corps}</body></html>`;
@@ -609,6 +611,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         const commande = ev.target.closest?.("[data-builder-canvas]");
         const cibleRef = ev.target.closest?.("[data-dse-ref]");
         ev.preventDefault();
+        if (commande && !enCours && commande.dataset.builderCanvas === "ajouter") return menuAjout(commande.dataset.ref);
         if (commande && !enCours) return racine.querySelector(`[data-c-action="builder-${CSS.escape(commande.dataset.builderCanvas)}"][data-ref="${CSS.escape(commande.dataset.ref)}"]`)?.click();
         if (cibleRef && d.arbre && ecrit(d, FONCTION[d.arbre.type])) ouvrirDesign(cibleRef.dataset.dseRef);
       });
@@ -656,8 +659,10 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const selection = generic || d.arbre?.generique;
     if (palette && selection) palette.innerHTML = `<p class="muted">Ajouter dans : ${e(selection.titre)}</p>${
       ecrit(d, FONCTION[d.arbre.type]) && !selection.verrouille && selection.ajouts?.length ?
+        (raccourcis(selection).length ? raccourcis(selection).map((r, i) => bouton(e(r.libelle), "builder-rapide",
+          `data-ref="${e(selection.ref)}" data-rapide="${i}"`, "btn btn-mini")).join("") :
         selection.ajouts.map((t) => bouton(`＋ ${e(t.titre)}`, "builder-ajout-direct",
-          `data-ref="${e(selection.ref)}" data-type-ref="${e(t.ref)}"`, "btn btn-mini")).join("") :
+          `data-ref="${e(selection.ref)}" data-type-ref="${e(t.ref)}"`, "btn btn-mini")).join("")) :
         '<p class="muted">Aucun ajout autorisé pour cette sélection.</p>'}`;
     apercuDesign();
   };
@@ -799,6 +804,70 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   const message = (texte) => {
     const dlg = dialogue();
     dlg.innerHTML = `<form method="dialog"><p>${e(texte)}</p><div class="constructeur-boutons"><button class="btn btn-primary" value="ok">Fermer</button></div></form>`;
+    dlg.showModal();
+  };
+  // Ajout rapide : chemin le plus court de types (regles SharePoint) jusqu'a la ligne, la colonne ou le module voulu.
+  const cheminVers = (typeRef, rendu) => {
+    const types = new Map((d.builder?.types || []).map((t) => [t.ref, t]));
+    const file = [[typeRef, []]], vus = new Set([typeRef]);
+    while (file.length) {
+      const [courant, chemin] = file.shift();
+      for (const enfant of types.get(courant)?.enfants || []) {
+        if (vus.has(enfant) || !types.has(enfant)) continue;
+        const suite = [...chemin, types.get(enfant)];
+        if (types.get(enfant).rendu === rendu) return suite;
+        vus.add(enfant);
+        file.push([enfant, suite]);
+      }
+    }
+    return null;
+  };
+  const MODULES_RAPIDES = [["📝", "Texte"], ["🔠", "Titre"], ["🖼️", "Image"], ["📰", "Image + texte"], ["🔘", "Bouton"], ["🎬", "Vidéo"]];
+  const raccourcis = (n) => {
+    if (!n?.typeRef || n.verrouille || !peutAction(d, d.arbre?.type, "builder.ajouter")) return [];
+    const liste = [];
+    const ligne = n.rendu === "LIGNE" ? null : cheminVers(n.typeRef, "LIGNE");
+    const colonneDansLigne = cheminVers((ligne || [])[ligne?.length - 1]?.ref, "COLONNE");
+    if (ligne && colonneDansLigne?.length === 1) {
+      for (const nb of [1, 2, 3]) liste.push({ groupe: "Lignes", libelle: `▭ Ligne ${nb} colonne${nb > 1 ? "s" : ""}`,
+        etapes: [...ligne.map((t, i) => ({ type: t, titre: i === ligne.length - 1 ? `Ligne ${nb} col.` : t.titre }))],
+        colonnes: { type: colonneDansLigne[0], nombre: nb } });
+    } else if (ligne) liste.push({ groupe: "Lignes", libelle: "▭ Ligne", etapes: ligne.map((t) => ({ type: t, titre: t.titre })) });
+    if (n.rendu === "LIGNE") {
+      const col = cheminVers(n.typeRef, "COLONNE");
+      if (col) liste.push({ groupe: "Lignes", libelle: "▯ Colonne", etapes: col.map((t) => ({ type: t, titre: t.titre })) });
+    }
+    const module = cheminVers(n.typeRef, "MODULE");
+    if (module) for (const [icone, nom] of MODULES_RAPIDES) liste.push({ groupe: "Modules", libelle: `${icone} ${nom}`,
+      etapes: module.map((t, i) => ({ type: t, titre: i === module.length - 1 ? nom : t.titre })) });
+    const prevus = new Set(liste.flatMap((r) => r.etapes.map((x) => x.type.ref)));
+    for (const a of n.ajouts || []) if (!prevus.has(a.ref)) liste.push({ groupe: "Autres", libelle: `＋ ${a.titre}`, etapes: [{ type: { ref: a.ref }, titre: a.titre }] });
+    return liste;
+  };
+  const ajoutRapide = async (ref, r) => {
+    let parent = ref;
+    for (const etape of r.etapes) {
+      if (!(await executer("builder.ajouter", { ref: parent, typeRef: etape.type.ref, titre: etape.titre }))) return;
+      parent = etat.design?.ref;
+    }
+    const ligne = parent;
+    for (let i = 0; r.colonnes && i < r.colonnes.nombre; i++) {
+      if (!(await executer("builder.ajouter", { ref: ligne, typeRef: r.colonnes.type.ref, titre: `Colonne ${i + 1}` }))) return;
+    }
+    if (r.colonnes) { etat.design = { ref: ligne }; afficher(); await ouvrirDesign(ligne); }
+  };
+  const menuAjout = (ref) => {
+    const n = trouverNoeud(ref)?.n;
+    const liste = raccourcis(n);
+    if (!liste.length) return message("Aucun ajout autorisé ici.");
+    const dlg = dialogue();
+    const groupes = [...new Set(liste.map((r) => r.groupe))];
+    dlg.innerHTML = `<form method="dialog" class="constructeur-ajout-rapide"><h3>Ajouter dans « ${e(n.titre)} »</h3>
+      ${groupes.map((g) => `<p class="muted">${e(g)}</p><div class="constructeur-boutons">${liste.map((r, i) => r.groupe === g ?
+        `<button type="button" class="btn btn-secondary" data-rapide="${i}">${e(r.libelle)}</button>` : "").join("")}</div>`).join("")}
+      <div class="constructeur-boutons"><button class="btn btn-secondary" type="button" data-c-fermer>Annuler</button></div></form>`;
+    dlg.querySelector("[data-c-fermer]").addEventListener("click", () => dlg.close());
+    for (const b of dlg.querySelectorAll("[data-rapide]")) b.addEventListener("click", () => { dlg.close(); ajoutRapide(ref, liste[Number(b.dataset.rapide)]); });
     dlg.showModal();
   };
   const changerHistorique = async (retablir) => {
@@ -960,8 +1029,13 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       }
       case "apercu-seul": etat.apercuSeul = !etat.apercuSeul; racine.querySelector("[data-constructeur]")?.classList.toggle("constructeur--apercu-seul", etat.apercuSeul); docApercu()?.body.classList.toggle("dse-apercu-seul", etat.apercuSeul); dimensionner(); return;
       case "builder-medias": return ouvrirFormulaire({ textes: [], listes: [{ cle: "media", libelle: "Médias SharePoint autorisés", options: d.medias || [] }] }, "Médias du site", () => {});
+      case "builder-rapide": {
+        const r = raccourcis(trouverNoeud(ref)?.n)[Number(cible.dataset.rapide)];
+        return r ? ajoutRapide(ref, r) : undefined;
+      }
       case "builder-ajout-direct": return executer("builder.ajouter", { ref, typeRef: cible.dataset.typeRef });
       case "builder-ajouter": {
+        if (raccourcis(trouverNoeud(ref)?.n).length) return menuAjout(ref);
         const options = trouverNoeud(ref)?.n?.ajouts || [];
         if (!options.length) return message("Aucun type d'enfant actif n'est configuré dans SharePoint.");
         return ouvrirFormulaire({ textes: [], listes: [{ cle: "typeRef", libelle: "Type d'élément", options }] },

@@ -598,3 +598,7 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 /* Constructeur : case « structure de base » des formulaires de création */
 .constructeur-structure-base { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; font-weight: normal; }
 .constructeur-structure-base input { width: auto; margin: 0; }
+
+/* Constructeur : menu d'ajout rapide (ligne, colonne, module) */
+.constructeur-ajout-rapide { min-width: min(30rem, 90vw); }
+.constructeur-ajout-rapide > p.muted { margin: .8rem 0 .3rem; font-weight: 600; text-transform: uppercase; font-size: .75rem; }

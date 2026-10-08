@@ -141,12 +141,12 @@ export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
   const classe = avance.CLASSECSS ? ` ${escapeHtml(avance.CLASSECSS)}` : "";
   const tag = { SECTION: "section", "EN-TETE": "header", ENTETE: "header", FOOTER: "footer" }[type] || "div";
   const barre = ctx.apercu ? `<div class="dse-b-outils" data-dse-outils="${escapeHtml(noeud.ref)}">
-    ${(noeud.ajouts || []).length ? `<button type="button" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}">Ajouter</button>` : ""}
+    ${(noeud.ajouts || []).length ? `<button type="button" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}" title="Ajouter une ligne, une colonne ou un module">＋ Ajouter</button>` : ""}
     ${profondeur ? `<button type="button" data-builder-canvas="dupliquer" data-ref="${escapeHtml(noeud.ref)}">Dupliquer</button>
     <button type="button" data-builder-canvas="retirer" data-ref="${escapeHtml(noeud.ref)}">Retirer</button>` : ""}</div>` : "";
   const variants = contenus.filter((x) => x.module).map((x) => `<div class="dse-b-appareil dse-b-appareil--${x.appareil.toLowerCase()}">${x.module}</div>`).join("");
   const depot = (position) => ctx.apercu ? `<div class="dse-b-depot" data-builder-depot="${position}" data-ref="${escapeHtml(noeud.ref)}">${{ avant: "Déposer avant", apres: "Déposer après", dans: "Déposer ici" }[position]}</div>` : "";
-  return `${depot("avant")}${h.enLigne}<${tag}${id} class="dse-b-module dse-b-recursif ${h.identifiant}${classe}"${h.ref}>${barre}${variants}${enfants}${vide && ctx.apercu ? `<span class="dse-b-vide">${escapeHtml(noeud.titre || "Élément vide")}</span>` : ""}${noeud.conteneur ? depot("dans") : ""}</${tag}>${depot("apres")}`;
+  return `${depot("avant")}${h.enLigne}<${tag}${id} class="dse-b-module dse-b-recursif ${h.identifiant}${classe}"${h.ref}>${barre}${variants}${enfants}${vide && ctx.apercu ? `<span class="dse-b-vide">${escapeHtml(noeud.titre || "Élément vide")}</span>` : ""}${ctx.apercu && noeud.conteneur && (noeud.ajouts || []).length ? `<button type="button" class="dse-b-plus" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}" title="Ajouter dans ${escapeHtml(noeud.titre || "cet élément")}" aria-label="Ajouter dans ${escapeHtml(noeud.titre || "cet élément")}">＋</button>` : ""}${noeud.conteneur ? depot("dans") : ""}</${tag}>${depot("apres")}`;
 }
 
 /*
@@ -180,7 +180,7 @@ export const STYLES_BUILDER = `
 .dse-builder{display:block}.dse-b-section{padding:clamp(24px,5vw,64px) 16px}.dse-b-section--pleine-largeur{padding-left:0;padding-right:0}
 .dse-b-appareil--tablette,.dse-b-appareil--mobile{display:none}
 .dse-b-appareil--ordinateur{display:contents}.dse-b-recursif .dse-b-titre{font-size:inherit;font-weight:inherit;color:inherit}.dse-b-recursif .dse-b-texte{color:inherit}
-.dse-b-outils,.dse-b-depot{display:none}
+.dse-b-outils,.dse-b-depot,.dse-b-plus{display:none}
 @media(min-width:641px) and (max-width:1024px){.dse-b-appareil--ordinateur{display:none}.dse-b-appareil--tablette{display:contents}}
 @media(max-width:640px){.dse-b-appareil--ordinateur{display:none}.dse-b-appareil--mobile{display:contents}}
 .dse-b-contenu{max-width:1200px;margin:0 auto}.dse-b-section--pleine-largeur>.dse-b-contenu{max-width:none}
