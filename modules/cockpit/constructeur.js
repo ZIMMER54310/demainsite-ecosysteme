@@ -31,6 +31,8 @@ const cleEtat = (etat = {}) => etat.inactif ? "desactive" : etat.publiable ? "ac
 const CLE_VUE = "dse.constructeur.vue";
 const vueMemorisee = () => { try { return localStorage.getItem(CLE_VUE) === "liste" ? "liste" : "cartes"; } catch { return "cartes"; } };
 const CLE_COTES = "dse.constructeur.cotes-replies";
+const CLE_ZONES = "dse.constructeur.zones-masquees";
+const zonesMemorisees = () => { try { const v = JSON.parse(localStorage.getItem(CLE_ZONES) || "{}"); return { entete: v.entete === true, footer: v.footer === true }; } catch { return { entete: false, footer: false }; } };
 const cotesMemorises = () => { try { const v = JSON.parse(localStorage.getItem(CLE_COTES) || "{}"); return { design: v.design === true, structure: v.structure === true }; } catch { return { design: false, structure: false }; } };
 const enteteCote = (cote, titre) => `<div class="constructeur-cote-entete"><strong class="constructeur-cote-titre">${titre}</strong>
   <button type="button" class="constructeur-cote-bascule" data-c-action="replier-cote" data-cote="${cote}" title="Réduire / développer ${titre}" aria-label="Réduire / développer ${titre}"><span aria-hidden="true">${cote === "design" ? "«" : "»"}</span></button></div>`;
@@ -305,7 +307,6 @@ export function documentApercu(composition, type = "page") {
   const adapteursAuto = { HEADER: automatique("🔗 Logo et menu du site · affichés automatiquement"),
     FOOTER: automatique("🔗 Mentions et copyright du site · affichés automatiquement") };
   const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: adapteursAuto, apercu: true, prefixe, typeConteneur });
-  const zone = (z, balise, prefixe, t) => z?.sections?.length || z?.noeuds?.length ? `<${balise}>${rendreBuilder({ mode: "builder", sections: z.sections, noeuds: z.noeuds, style: z.style, responsive: z.responsive, _ref: z._ref, theme: composition.theme }, options(prefixe, t))}</${balise}>` : "";
   const heroApercu = (module) => {
     const contenu = module?.contenu?.find((x) => x?.champs || x?.media);
     if (!contenu) return "";
@@ -332,19 +333,24 @@ export function documentApercu(composition, type = "page") {
   const principal = rendreBuilder(composition || {}, optionsPage(type === "page" ? "p" : type[0], TYPE_CONTENEUR[type] || "PAGE"));
   const vide = `<p class="dse-apercu-vide">Aperçu vide : ajoutez une section depuis la colonne Structure.</p>`;
   const contexte = composition?.contexte || {};
-  // Squelette constant : en-tete en haut, contenu au centre, pied de page en bas, quel que soit le conteneur edite.
-  const zoneContexte = (z, balise, prefixe, t, libelle) => z?.sections?.length || z?.noeuds?.length
-    ? `<div class="dse-apercu-contexte" title="${e(libelle)} (lecture seule)">${zone(z, balise, prefixe, t)}</div>`
-    : `<${balise} class="dse-apercu-repere">${e(libelle)} : non associé à une page de ce site</${balise}>`;
+  // Squelette constant : en-tete en haut, contenu au centre, pied de page en bas, quel que soit l'element edite.
+  // Les zones de contexte sont rendues comme sur le site public (sans repere ni outil) et ne sont jamais modifiables ici.
+  const optionsLecture = (prefixe, t) => ({ ...optionsPage(prefixe, t), apercu: false });
+  const zoneContexte = (z, cle, balise, prefixe, t, libelle) => {
+    const html = z?.sections?.length || z?.noeuds?.length ? rendreBuilder({ mode: "builder", sections: z.sections, noeuds: z.noeuds, style: z.style,
+      responsive: z.responsive, theme: composition.theme }, optionsLecture(prefixe, t)) : "";
+    const source = z?.origine !== "site" ? "associé" : type === "page" ? "exemple du site, non associé à cette page" : "celui du site";
+    if (html) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise}>${html}</${balise}></div>`;
+    const absent = type === "page" ? `aucun ${libelle.toLowerCase()} associé à cette page (le site garde l'affichage historique)` : `aucun ${libelle.toLowerCase()} actif sur ce site`;
+    return `<${balise} class="dse-apercu-repere dse-apercu-contexte--${cle}">${e(libelle)} : ${e(absent)}</${balise}>`;
+  };
   const pageRepere = `<div class="dse-apercu-repere dse-apercu-repere--page">Contenu des pages${contexte.page ? ` · exemple : ${e(contexte.page)}` : ""}</div>`;
-  const corps = type === "entete"
-    ? `<header class="dse-apercu-edite">${principal || vide}</header><main class="dse-apercu-principal">${pageRepere}</main>${zoneContexte(contexte.footer, "footer", "f", "FOOTER", "Pied de page")}`
-    : type === "footer"
-      ? `${zoneContexte(contexte.entete, "header", "e", "ENTETE", "En-tête")}<main class="dse-apercu-principal">${pageRepere}</main><footer class="dse-apercu-edite">${principal || vide}</footer>`
-      : `${zone(composition?.entete, "header", "e", "ENTETE")}<main class="dse-apercu-principal">${principal || vide}</main>${zone(composition?.footer, "footer", "f", "FOOTER")}`;
+  const haut = type === "entete" ? `<header class="dse-apercu-edite">${principal || vide}</header>` : zoneContexte(contexte.entete, "entete", "header", "e", "ENTETE", "En-tête");
+  const bas = type === "footer" ? `<footer class="dse-apercu-edite">${principal || vide}</footer>` : zoneContexte(contexte.footer, "footer", "footer", "f", "FOOTER", "Pied de page");
+  const corps = `${haut}<main class="dse-apercu-principal">${["entete", "footer"].includes(type) ? pageRepere : principal || vide}</main>${bas}`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <style>body{margin:0;font-family:system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column}.dse-apercu-principal{flex:1 0 auto}${STYLES_BUILDER}.dse-apercu-hero{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;padding:clamp(24px,6vw,80px);background:#f4f8fc}.dse-apercu-hero img{width:100%;height:auto;object-fit:cover}.dse-apercu-hero h1{font-size:clamp(2rem,5vw,4rem)}.dse-apercu-hero nav{display:flex;flex-wrap:wrap;gap:12px}.dse-apercu-hero nav a{padding:10px 16px;border-radius:6px;background:#0755a4;color:white;text-decoration:none}@media(max-width:640px){.dse-apercu-hero{grid-template-columns:1fr}}
-    .dse-apercu-vide{padding:24px;color:#667}.dse-apercu-contexte{opacity:.55;pointer-events:none;filter:grayscale(.3)}.dse-apercu-contexte .dse-b-vide{display:none}
+    .dse-apercu-vide{padding:24px;color:#667}.dse-apercu-contexte{position:relative;pointer-events:none;user-select:none;padding-top:22px;background:#e2e8f0}body.dse-apercu-seul .dse-apercu-contexte{padding-top:0;background:none}.dse-apercu-contexte::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(135deg,#64748b0d 0 10px,#64748b1a 10px 20px);outline:2px dashed #94a3b8;outline-offset:-2px}.dse-apercu-contexte::before{content:attr(data-libelle);position:absolute;top:0;right:0;z-index:7;padding:2px 10px;font:600 11px/18px system-ui;color:#fff;background:#475569;border-radius:0 0 0 6px}body.dse-masquer-entete .dse-apercu-contexte--entete,body.dse-masquer-footer .dse-apercu-contexte--footer{display:none}body.dse-apercu-seul .dse-apercu-contexte::after,body.dse-apercu-seul .dse-apercu-contexte::before{display:none}
     .dse-apercu-repere{display:flex;align-items:center;justify-content:center;min-height:56px;margin:8px;border:2px dashed #cbd5e1;border-radius:8px;color:#64748b;font:13px system-ui;background:#f8fafc}.dse-apercu-repere--page{min-height:260px}
     .dse-b-vide{display:flex;align-items:center;justify-content:center;min-height:56px;padding:8px;border:1px dashed #94a3b8;border-radius:6px;background:repeating-linear-gradient(45deg,#f8fafc,#f8fafc 8px,#f1f5f9 8px,#f1f5f9 16px);color:#475569;font:13px system-ui}
     [data-dse-ref]{min-height:24px;position:relative;cursor:pointer}.dse-b-recursif{position:relative}
@@ -389,6 +395,9 @@ function editeur(d) {
   const publicationRequise = !a.etat.publiable || a.generique || contientBrouillon(a.sections);
   return `<header class="constructeur-barre-visuelle"><strong>${e(d.site?.titre || "")} · ${e(a.titre)}</strong>
     <div class="constructeur-boutons constructeur-outils-barre"><span class="constructeur-appareils" role="group" aria-label="Affichage sur l'appareil"><span class="constructeur-groupe-titre">Affichage</span>${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "ORDINATEUR") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}" aria-pressed="${x.cle === (d.appareil || "ORDINATEUR")}">${x.libelle}</button>`).join("")}</span>
+      <span class="constructeur-separateur" aria-hidden="true"></span>
+      <span class="constructeur-groupe constructeur-voir" role="group" aria-label="Zones affichées en lecture seule"><span class="constructeur-groupe-titre">Voir</span>
+        ${[["entete", "En-tête"], ["footer", "Pied de page"]].filter(([z]) => z !== type).map(([z, libelle]) => `<label title="${e(libelle)} affiché en lecture seule (modifiable dans son propre onglet)"><input type="checkbox" data-c-voir="${z}"${d.zonesMasquees?.[z] ? "" : " checked"}> ${libelle}</label>`).join("")}</span>
       <span class="constructeur-separateur" aria-hidden="true"></span>
       <span class="constructeur-groupe" role="group" aria-label="Historique"><button type="button" class="btn btn-mini" data-c-action="annuler-design">↶ Annuler</button>
       <button type="button" class="btn btn-mini" data-c-action="retablir-design">↷ Rétablir</button></span>
@@ -495,7 +504,7 @@ export function formulaireHtml(f, titre) {
 /* ---------------- Activation (evenements) ---------------- */
 
 export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
-  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "ORDINATEUR", design: null, vue: vueMemorisee(), cotesReplies: cotesMemorises(), recherche: "", filtreEtat: "" };
+  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "ORDINATEUR", design: null, vue: vueMemorisee(), cotesReplies: cotesMemorises(), zonesMasquees: zonesMemorisees(), recherche: "", filtreEtat: "" };
   let d = donnees;
   let copieStyle = null;
   let historique = [];
@@ -669,6 +678,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       doc?.addEventListener("dragend", terminerGlisse);
       doc?.addEventListener("load", dimensionner, true);
       doc?.body.classList.toggle("dse-apercu-seul", Boolean(etat.apercuSeul));
+      for (const z of ["entete", "footer"]) doc?.body.classList.toggle(`dse-masquer-${z}`, Boolean(etat.zonesMasquees[z]));
     });
     f.srcdoc = documentApercu(d.apercu, d.arbre?.type);
   };
@@ -762,7 +772,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (vide) vide.hidden = !cartes.length || visibles > 0;
   };
   const afficher = () => {
-    racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil, cotesReplies: etat.cotesReplies }, etat);
+    racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil, cotesReplies: etat.cotesReplies, zonesMasquees: etat.zonesMasquees }, etat);
     for (const ref of replies) racine.querySelector(`[data-c-noeud="${CSS.escape(ref)}"]`)?.closest(".constructeur-noeud")?.classList.add("constructeur-noeud--replie");
     for (const v of racine.querySelectorAll("details[data-c-volet]")) if (volets.has(v.dataset.cVolet)) v.open = volets.get(v.dataset.cVolet);
     filtrerCartes();
@@ -1420,6 +1430,13 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   racine.addEventListener("change", (ev) => {
     const s = ev.target;
     if (s.matches?.("[data-c-filtre-etat]")) { etat.filtreEtat = s.value; return filtrerCartes(); }
+    if (s.matches?.("[data-c-voir]")) {
+      const z = s.dataset.cVoir;
+      etat.zonesMasquees[z] = !s.checked;
+      try { localStorage.setItem(CLE_ZONES, JSON.stringify(etat.zonesMasquees)); } catch { /* choix limité à la session */ }
+      docApercu()?.body.classList.toggle(`dse-masquer-${z}`, !s.checked);
+      return dimensionner();
+    }
     if (s.closest?.("[data-design-form]")) return apercuDesign();
     if (s.matches("[data-c-affecter]")) return executer("page.affecter", { page: s.dataset.page, type: s.dataset.cAffecter, ref: s.value });
     if (s.matches("[data-c-deplacer]") && s.value) return executer("element.deplacer", { ref: s.dataset.cDeplacer, colonne: s.value });

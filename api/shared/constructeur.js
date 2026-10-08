@@ -270,30 +270,29 @@ function apercu(d, siteId, type, el, appareil, perimetre) {
       ...B.styleElement(ctx, TYPE_CONTENEUR[t], e), _ref: ref(t, e.id) };
   };
   const theme = B.themeGlobal(ctx);
+  // Contexte en lecture seule : en-tete et pied de page affiches autour de l'element edite (jamais modifiables ici).
+  const duSite = (x) => rels(x, "OBJ-SITE-PUBLIC").some((s) => String(s.id) === String(siteId));
+  const pagesSite = (d.pages || []).filter((p) => !inactif(p) && duSite(p)).sort(parOrdre);
+  const actifDe = (t, r) => r ? (d[CONTENEURS[t].cle] || []).find((x) => String(x.id) === String(r.id) && !inactif(x)) : null;
+  const parDefaut = (t) => pagesSite.map((p) => actifDe(t, rel(p, CONTENEURS[t].relation))).find(Boolean)
+    || (d[CONTENEURS[t].cle] || []).filter((x) => !inactif(x) && duSite(x)).sort(parOrdre)[0];
+  const lecture = (t, c, origine) => c ? { ...zone(t, c), titre: titreDe(c), origine } : null;
   if (type === "entete" || type === "footer") {
-    // Contexte de lecture : la zone complementaire (footer ou en-tete) d'une page du site utilisant ce conteneur.
     const autre = type === "entete" ? "footer" : "entete";
-    const duSite = (x) => rels(x, "OBJ-SITE-PUBLIC").some((s) => String(s.id) === String(siteId));
-    const pagesSite = (d.pages || []).filter((p) => !inactif(p) && duSite(p)).sort(parOrdre);
-    const liste = d[CONTENEURS[autre].cle] || [];
-    const actif = (r) => r ? liste.find((x) => String(x.id) === String(r.id) && !inactif(x)) : null;
     const page = pagesSite.find((p) => String(rel(p, CONTENEURS[type].relation)?.id) === String(el.id));
-    // Sans page liee : conteneur complementaire d'une page du site, sinon premier conteneur actif du site.
-    const c = (page && actif(rel(page, CONTENEURS[autre].relation)))
-      || pagesSite.map((p) => actif(rel(p, CONTENEURS[autre].relation))).find(Boolean)
-      || liste.filter((x) => !inactif(x) && duSite(x)).sort(parOrdre)[0];
-    return { mode: "builder", ...zone(type, el), theme, contexte: { [autre]: c ? zone(autre, c) : null, page: page ? titreDe(page) : "" } };
+    const lie = page && actifDe(autre, rel(page, CONTENEURS[autre].relation));
+    return { mode: "builder", ...zone(type, el), theme, contexte: { [autre]: lecture(autre, lie || parDefaut(autre), lie ? "lie" : "site"), page: page ? titreDe(page) : "" } };
   }
-  if (type !== "page") return { mode: "builder", ...zone(type, el), theme };
-  const lie = (t) => {
-    const r = rel(el, CONTENEURS[t].relation);
-    const c = r ? (d[CONTENEURS[t].cle] || []).find((x) => x.id === r.id) : null;
-    return c && !inactif(c) ? zone(t, c) : null;
-  };
+  if (type !== "page") {
+    // Article (ou autre conteneur) : en-tete et pied de page habituels du site, a titre d'exemple.
+    return { mode: "builder", ...zone(type, el), theme,
+      contexte: { entete: lecture("entete", parDefaut("entete"), "site"), footer: lecture("footer", parDefaut("footer"), "site") } };
+  }
   const root = R.trouverRacine(d, siteId, "page", el.id);
   const pageSections = root ? null : marquerSections(B.composerModulesAdaptesPage(d, site, el,
     B.composerSections(d, site, enfantsDe(d, "page", el), options), options));
-  return { mode: "builder", ...zone("page", el, pageSections), theme, entete: lie("entete"), footer: lie("footer") };
+  const lie = (t) => { const c = actifDe(t, rel(el, CONTENEURS[t].relation)); return c ? lecture(t, c, "lie") : lecture(t, parDefaut(t), "site"); };
+  return { mode: "builder", ...zone("page", el, pageSections), theme, contexte: { entete: lie("entete"), footer: lie("footer") } };
 }
 
 /* ======================================================================

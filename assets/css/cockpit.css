@@ -343,6 +343,10 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .constructeur-appareils { display: inline-flex; align-items: center; gap: 4px; padding: 4px 6px; border: 2px solid #c7d7fe; border-radius: 12px; background: #eef4ff; }
 .constructeur-groupe-titre { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #3b5bdb; padding: 0 6px 0 4px; }
 .constructeur-groupe { display: inline-flex; align-items: center; gap: 4px; }
+.constructeur-voir { padding: 3px 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; }
+.constructeur-voir .constructeur-groupe-titre { color: #475569; }
+.constructeur-voir label { display: inline-flex; align-items: center; gap: 4px; margin: 0 4px; font-size: .82rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.constructeur-voir input { margin: 0; accent-color: #3b5bdb; }
 .constructeur-separateur { align-self: stretch; width: 2px; min-height: 28px; margin: 0 6px; border-radius: 2px; background: var(--line, #d0d7e2); }
 @media (max-width: 760px) { .constructeur-separateur { display: none; } }
 .constructeur-editeur [data-c-panneau]:empty { display: none; }

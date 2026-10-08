@@ -65,6 +65,13 @@ async function main() {
   const apercu = documentApercu({ mode: "builder", noeuds: [{ ref: "builderelement.page", rendu: "PAGE", enfants: [noeud] }] });
   assert.match(apercu, /data-builder-canvas/);
   assert.match(apercu, /loading="eager"/);
+  const entete = { titre: "Haut", origine: "lie", noeuds: [{ ref: "builderelement.ent", rendu: "EN-TETE", enfants: [{ ...noeud, ref: "builderelement.ent-mod" }] }] };
+  const avecContexte = documentApercu({ mode: "builder", noeuds: [{ ref: "builderelement.page", rendu: "PAGE", enfants: [noeud] }], contexte: { entete, footer: null } }, "article");
+  const partieEntete = avecContexte.slice(avecContexte.indexOf('class="dse-apercu-contexte dse-apercu-contexte--entete"'), avecContexte.indexOf("<main"));
+  assert.match(partieEntete, /lecture seule/, "en-tête affiché en lecture seule");
+  assert.doesNotMatch(partieEntete, /data-dse-ref|data-builder-canvas/, "en-tête non modifiable depuis la page");
+  assert.match(avecContexte, /dse-apercu-repere dse-apercu-contexte--footer/, "pied de page absent signalé");
+  assert.match(avecContexte, /dse-masquer-entete/, "case à cocher pour masquer l'en-tête");
   assert.match(panneauGenerique(noeud, []), /data-builder-onglet="DESIGN"/);
   assert.match(panneauGenerique(noeud, []), /data-builder-cote=/);
   assert.match(panneauGenerique(noeud, []), /type="color"/);
