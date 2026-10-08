@@ -845,29 +845,130 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     return liste;
   };
   const ajoutRapide = async (ref, r) => {
-    let parent = ref;
-    for (const etape of r.etapes) {
-      if (!(await executer("builder.ajouter", { ref: parent, typeRef: etape.type.ref, titre: etape.titre }))) return;
+    let parent = r.parentRef || ref;
+    const crees = [];
+    for (const [i, etape] of r.etapes.entries()) {
+      const params = { ref: parent, typeRef: etape.type.ref, titre: etape.titre };
+      if (i === 0 && r.apres) params.apres = r.apres;
+      if (!(await executer("builder.ajouter", params))) return;
       parent = etat.design?.ref;
+      crees.push(parent);
     }
     const ligne = parent;
     for (let i = 0; r.colonnes && i < r.colonnes.nombre; i++) {
       if (!(await executer("builder.ajouter", { ref: ligne, typeRef: r.colonnes.type.ref, titre: `Colonne ${i + 1}` }))) return;
     }
-    if (r.colonnes) { etat.design = { ref: ligne }; afficher(); await ouvrirDesign(ligne); }
+    const ouvrir = r.ouvrirPremier ? crees[0] : r.colonnes ? ligne : null;
+    if (ouvrir) { etat.design = { ref: ouvrir }; afficher(); await ouvrirDesign(ouvrir); }
+  };
+  // Assistant d'ajout : cherche ou placer l'element (dans le noeud, sinon juste apres lui chez le premier ancetre qui l'accepte).
+  const cibleAjout = (ref, rendu) => {
+    let courant = trouverNoeud(ref), apres = null;
+    while (courant?.n) {
+      const n = courant.n;
+      const chemin = n.typeRef && !n.verrouille ? cheminVers(n.typeRef, rendu) : null;
+      if (chemin) return { parent: n, chemin, apres };
+      apres = n.ref;
+      courant = courant.parent ? trouverNoeud(courant.parent.ref) : null;
+    }
+    return null;
+  };
+  const colonnesDirectes = (typeRef) => { const c = cheminVers(typeRef, "COLONNE"); return c?.length === 1 ? c[0] : null; };
+  const BRANCHES = [
+    { cle: "SECTION", icone: "🧱", libelle: "Section", aide: "Un grand bloc horizontal de la page" },
+    { cle: "LIGNE", icone: "▭", libelle: "Ligne", aide: "Une rangée découpée en colonnes" },
+    { cle: "COLONNE", icone: "▯", libelle: "Colonne", aide: "Une colonne de plus dans la ligne" },
+    { cle: "MODULE", icone: "🧩", libelle: "Module", aide: "Texte, image, bouton, vidéo…" }
+  ];
+  const MODULES_ASSISTANT = [...MODULES_RAPIDES, ["➕", "Module vide"]];
+  const optionsBranche = (branche, cible) => {
+    const dernier = cible.chemin[cible.chemin.length - 1];
+    if (branche === "SECTION") {
+      const ligne = cheminVers(dernier.ref, "LIGNE");
+      const col = ligne && colonnesDirectes(ligne[ligne.length - 1].ref);
+      return [{ icone: "▢", libelle: "Section vide", titre: "Section", nb: 0 },
+        ...(col ? [1, 2, 3].map((nb) => ({ icone: "▥", libelle: `Avec une ligne de ${nb} colonne${nb > 1 ? "s" : ""}`, titre: "Section", nb, ligne, col })) : [])];
+    }
+    if (branche === "LIGNE") {
+      const col = colonnesDirectes(dernier.ref);
+      return col ? [1, 2, 3, 4].map((nb) => ({ icone: "▥", libelle: `${nb} colonne${nb > 1 ? "s" : ""}`, titre: `Ligne ${nb} col.`, nb, col }))
+        : [{ icone: "▭", libelle: "Ligne simple", titre: "Ligne", nb: 0 }];
+    }
+    if (branche === "MODULE") return MODULES_ASSISTANT.map(([icone, nom]) => ({ icone, libelle: nom, titre: nom === "Module vide" ? dernier.titre : nom }));
+    return [];
+  };
+  const planAssistant = (branche, cible, option, titre) => {
+    const etapes = cible.chemin.map((t, i) => ({ type: t, titre: i === cible.chemin.length - 1 ? titre : t.titre }));
+    const plan = { parentRef: cible.parent.ref, apres: cible.apres, etapes };
+    if (branche === "SECTION") {
+      plan.ouvrirPremier = true;
+      if (option?.nb) { plan.etapes.push(...option.ligne.map((t, i) => ({ type: t, titre: i === option.ligne.length - 1 ? `Ligne ${option.nb} col.` : t.titre }))); plan.colonnes = { type: option.col, nombre: option.nb }; }
+    }
+    if (branche === "LIGNE" && option?.nb) plan.colonnes = { type: option.col, nombre: option.nb };
+    return plan;
   };
   const menuAjout = (ref) => {
     const n = trouverNoeud(ref)?.n;
-    const liste = raccourcis(n);
-    if (!liste.length) return message("Aucun ajout autorisé ici.");
+    if (!n || !peutAction(d, d.arbre?.type, "builder.ajouter")) return message("Aucun ajout autorisé ici.");
+    const branches = BRANCHES.map((b) => ({ ...b, cible: cibleAjout(ref, b.cle) }))
+      .filter((b) => b.cible && (b.cle !== "COLONNE" || b.cible.chemin.length === 1));
+    const prevus = new Set(branches.flatMap((b) => b.cible.parent.ref === ref ? [b.cible.chemin[0].ref] : []));
+    const autres = n.verrouille ? [] : (n.ajouts || []).filter((a) => !prevus.has(a.ref));
+    if (!branches.length && !autres.length) return message("Aucun ajout autorisé ici.");
     const dlg = dialogue();
-    const groupes = [...new Set(liste.map((r) => r.groupe))];
-    dlg.innerHTML = `<form method="dialog" class="constructeur-ajout-rapide"><h3>Ajouter dans « ${e(n.titre)} »</h3>
-      ${groupes.map((g) => `<p class="muted">${e(g)}</p><div class="constructeur-boutons">${liste.map((r, i) => r.groupe === g ?
-        `<button type="button" class="btn btn-secondary" data-rapide="${i}">${e(r.libelle)}</button>` : "").join("")}</div>`).join("")}
-      <div class="constructeur-boutons"><button class="btn btn-secondary" type="button" data-c-fermer>Annuler</button></div></form>`;
-    dlg.querySelector("[data-c-fermer]").addEventListener("click", () => dlg.close());
-    for (const b of dlg.querySelectorAll("[data-rapide]")) b.addEventListener("click", () => { dlg.close(); ajoutRapide(ref, liste[Number(b.dataset.rapide)]); });
+    const s = { etape: 1, branche: null, option: null, titre: "" };
+    const ou = (c) => c.apres ? `après « ${e(trouverNoeud(c.apres)?.n?.titre || "")} » dans « ${e(c.parent.titre)} »` : `dans « ${e(c.parent.titre)} »`;
+    const carte = (attr, icone, libelle, aide = "", actif = false) => `<button type="button" class="constructeur-assistant-carte${actif ? " actif" : ""}" ${attr}>
+      <span class="constructeur-assistant-icone">${icone}</span><strong>${e(libelle)}</strong>${aide ? `<small>${e(aide)}</small>` : ""}</button>`;
+    const etapes = () => `<ol class="constructeur-assistant-etapes">${["Quoi ?", "Lequel ?", "Confirmer"].map((x, i) =>
+      `<li class="${i + 1 === s.etape ? "actif" : i + 1 < s.etape ? "fait" : ""}">${i + 1}. ${x}</li>`).join("")}</ol>`;
+    const rendre = () => {
+      const b = branches.find((x) => x.cle === s.branche);
+      let corps = "", pied = "";
+      if (s.etape === 1) {
+        corps = `<p class="muted">Que voulez-vous ajouter ?</p><div class="constructeur-assistant-grille">
+          ${branches.map((x) => carte(`data-branche="${x.cle}"`, x.icone, x.libelle, x.aide)).join("")}
+          ${autres.length ? carte(`data-branche="AUTRE"`, "⋯", "Autre élément", "Types configurés dans SharePoint") : ""}</div>`;
+      } else if (s.etape === 2) {
+        const opts = s.branche === "AUTRE" ? autres.map((a) => ({ icone: "＋", libelle: a.titre })) : optionsBranche(s.branche, b.cible);
+        corps = `<p class="muted">${s.branche === "MODULE" ? "Quel module ?" : s.branche === "AUTRE" ? "Quel élément ?" : "Quelle disposition ?"}
+          ${b ? `<br><small>Sera ajouté ${ou(b.cible)}</small>` : ""}</p>
+          <div class="constructeur-assistant-grille">${opts.map((o, i) => carte(`data-option="${i}"`, o.icone, o.libelle)).join("")}</div>`;
+        pied = `<button type="button" class="btn btn-secondary" data-assistant-retour>← Retour</button>`;
+      } else {
+        const resume = s.branche === "AUTRE" ? s.option.libelle : `${b.libelle}${s.option ? ` · ${s.option.libelle}` : ""}`;
+        corps = `<p><strong>${e(resume)}</strong><br><small class="muted">${s.branche === "AUTRE" ? `dans « ${e(n.titre)} »` : ou(b.cible)}</small></p>
+          <label>Nom (visible seulement dans le constructeur)<input name="titre" value="${e(s.titre)}" maxlength="255" required></label>
+          ${s.branche === "MODULE" ? `<p class="muted"><small>Le contenu (texte, image, lien…) se remplit ensuite dans l'onglet Contenu.</small></p>` : ""}`;
+        pied = `<button type="button" class="btn btn-secondary" data-assistant-retour>← Retour</button>
+          <button type="submit" class="btn btn-primary" data-assistant-valider>Ajouter</button>`;
+      }
+      dlg.innerHTML = `<form method="dialog" class="constructeur-ajout-rapide constructeur-assistant"><h3>＋ Ajouter</h3>${etapes()}${corps}
+        <div class="constructeur-boutons">${pied}<button class="btn btn-secondary" type="button" data-c-fermer>Annuler</button></div></form>`;
+      dlg.querySelector("[data-c-fermer]").addEventListener("click", () => dlg.close());
+      dlg.querySelector("[data-assistant-retour]")?.addEventListener("click", () => {
+        s.etape = s.etape === 3 && (s.branche === "COLONNE") ? 1 : s.etape - 1; rendre();
+      });
+      for (const x of dlg.querySelectorAll("[data-branche]")) x.addEventListener("click", () => {
+        s.branche = x.dataset.branche; s.option = null;
+        if (s.branche === "COLONNE") { s.titre = "Colonne"; s.etape = 3; } else s.etape = 2;
+        rendre();
+      });
+      for (const x of dlg.querySelectorAll("[data-option]")) x.addEventListener("click", () => {
+        const opts = s.branche === "AUTRE" ? autres.map((a) => ({ libelle: a.titre, titre: a.titre, ref: a.ref })) : optionsBranche(s.branche, b.cible);
+        s.option = opts[Number(x.dataset.option)]; s.titre = s.option.titre; s.etape = 3; rendre();
+        dlg.querySelector("input[name=titre]")?.select();
+      });
+      dlg.querySelector("form").addEventListener("submit", (ev) => {
+        if (s.etape !== 3) return;
+        ev.preventDefault();
+        const titre = dlg.querySelector("input[name=titre]").value.trim() || s.titre;
+        dlg.close();
+        if (s.branche === "AUTRE") return ajoutRapide(ref, { etapes: [{ type: { ref: s.option.ref }, titre }] });
+        return ajoutRapide(ref, planAssistant(s.branche, b.cible, s.option, titre));
+      });
+    };
+    rendre();
     dlg.showModal();
   };
   const changerHistorique = async (retablir) => {

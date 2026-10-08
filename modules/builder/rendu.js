@@ -141,7 +141,7 @@ export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
   const classe = avance.CLASSECSS ? ` ${escapeHtml(avance.CLASSECSS)}` : "";
   const tag = { SECTION: "section", "EN-TETE": "header", ENTETE: "header", FOOTER: "footer" }[type] || "div";
   const barre = ctx.apercu ? `<div class="dse-b-outils" data-dse-outils="${escapeHtml(noeud.ref)}">
-    ${(noeud.ajouts || []).length ? `<button type="button" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}" title="Ajouter une ligne, une colonne ou un module">＋ Ajouter</button>` : ""}
+    ${(noeud.ajouts || []).length || profondeur ? `<button type="button" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}" title="Ajouter une section, une ligne, une colonne ou un module">＋ Ajouter</button>` : ""}
     ${profondeur ? `<button type="button" data-builder-canvas="dupliquer" data-ref="${escapeHtml(noeud.ref)}">Dupliquer</button>
     <button type="button" data-builder-canvas="retirer" data-ref="${escapeHtml(noeud.ref)}">Retirer</button>` : ""}</div>` : "";
   const variants = contenus.filter((x) => x.module).map((x) => `<div class="dse-b-appareil dse-b-appareil--${x.appareil.toLowerCase()}">${x.module}</div>`).join("");
