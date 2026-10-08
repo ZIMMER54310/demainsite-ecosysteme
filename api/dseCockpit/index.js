@@ -1028,6 +1028,8 @@ async function construireLire(req, res) {
       const zc = (x) => (x ? { ...z(x), titre: String(x.titre || ""), origine: x.origine === "lie" ? "lie" : "site" } : null);
       donnees.apercu = { mode: apercu.mode, ...z(apercu), theme: apercu.theme || {}, entete: z(apercu.entete), footer: z(apercu.footer),
         ...(apercu.contexte ? { contexte: { entete: zc(apercu.contexte.entete), footer: zc(apercu.contexte.footer), page: apercu.contexte.page || "" } } : {}) };
+      const visiteur = C.apercu(d, p.info.id, r.type, r.el, req.query.appareil, p, { visiteur: true });
+      donnees.apercuVisiteur = { ...donnees.apercu, ...z(visiteur) };
     }
     experienceCockpit.decorerConstruction(donnees, experience.realisations);
     res.set("Cache-Control", "no-store");

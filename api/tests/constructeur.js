@@ -174,6 +174,11 @@ async function main() {
     .find((m) => m.type === "HERO");
   assert.equal(moduleHeroApercu.contenu[0].champs.TITREPRINCIPAL, "Aperçu authentifié", "HERO historique visible en aperçu brouillon");
   assert.ok(moduleHeroApercu._ref && !moduleHeroApercu._id, "référence d'aperçu opaque, aucun ID natif exposé");
+  const apercuVisiteur = C.apercu(dHero, 4, "page", dHero.pages[0], "ORDINATEUR", perimetre, { visiteur: true });
+  assert.equal(apercuVisiteur.sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
+    .some((m) => m.type === "HERO"), false, "rendu visiteur du constructeur : brouillon masqué comme sur le site public");
+  const apFooterVisiteur = C.apercu(d, "4", "footer", d.footers[0], null, null, { visiteur: true });
+  assert.equal(apFooterVisiteur.sections.length, 0, "rendu visiteur : section en brouillon masquée");
   const publicSansBrouillon = B.composerPage(dHero, { id: "4" });
   assert.equal(publicSansBrouillon.sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
     .some((m) => m.type === "HERO"), false, "brouillon jamais projeté vers le public");

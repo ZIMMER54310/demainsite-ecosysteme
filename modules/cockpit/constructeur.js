@@ -49,7 +49,7 @@ const CLE_VUE = "dse.constructeur.vue";
 const vueMemorisee = () => { try { return localStorage.getItem(CLE_VUE) === "liste" ? "liste" : "cartes"; } catch { return "cartes"; } };
 const CLE_COTES = "dse.constructeur.cotes-replies";
 const CLE_ZONES = "dse.constructeur.zones-masquees";
-const zonesMemorisees = () => { try { const v = JSON.parse(localStorage.getItem(CLE_ZONES) || "{}"); return { entete: v.entete === true, footer: v.footer === true }; } catch { return { entete: false, footer: false }; } };
+const zonesMemorisees = () => { try { const v = JSON.parse(localStorage.getItem(CLE_ZONES) || "{}"); return { entete: v.entete === true, footer: v.footer === true, brouillons: v.brouillons === true }; } catch { return { entete: false, footer: false, brouillons: false }; } };
 const CLE_VUE_APERCU = "dse.constructeur.vue-apercu";
 export const VUES_APERCU = Object.freeze([
   { cle: "composition", icone: "🧩", libelle: "Composition", aide: "Rendu réel avec les repères section / ligne / colonne et les outils" },
@@ -451,7 +451,8 @@ function editeur(d) {
     <div class="constructeur-boutons constructeur-outils-barre"><span class="constructeur-appareils" role="group" aria-label="Affichage sur l'appareil"><span class="constructeur-groupe-titre">Affichage</span>${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "ORDINATEUR") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}" aria-pressed="${x.cle === (d.appareil || "ORDINATEUR")}">${x.libelle}</button>`).join("")}</span>
       <span class="constructeur-separateur" aria-hidden="true"></span>
       <span class="constructeur-groupe constructeur-voir" role="group" aria-label="Zones affichées en lecture seule"><span class="constructeur-groupe-titre">Voir</span>
-        ${[["entete", "En-tête"], ["footer", "Pied de page"]].filter(([z]) => z !== type).map(([z, libelle]) => `<label title="${e(libelle)} affiché en lecture seule (modifiable dans son propre onglet)"><input type="checkbox" data-c-voir="${z}"${d.zonesMasquees?.[z] ? "" : " checked"}> ${libelle}</label>`).join("")}</span>
+        ${[["entete", "En-tête"], ["footer", "Pied de page"]].filter(([z]) => z !== type).map(([z, libelle]) => `<label title="${e(libelle)} affiché en lecture seule (modifiable dans son propre onglet)"><input type="checkbox" data-c-voir="${z}"${d.zonesMasquees?.[z] ? "" : " checked"}> ${libelle}</label>`).join("")}
+        ${d.apercuVisiteur ? `<label title="Décoché : la composition montre exactement ce que voit le visiteur (brouillons, désactivés et contenus non validés masqués)"><input type="checkbox" data-c-voir="brouillons"${d.zonesMasquees?.brouillons ? "" : " checked"}> Brouillons</label>` : ""}</span>
       <span class="constructeur-separateur" aria-hidden="true"></span>
       <span class="constructeur-groupe" role="group" aria-label="Historique"><button type="button" class="btn btn-mini" data-c-action="annuler-design">↶ Annuler</button>
       <button type="button" class="btn btn-mini" data-c-action="retablir-design">↷ Rétablir</button></span>
@@ -716,6 +717,9 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     doc.head.appendChild(style);
     dimensionner();
   };
+  // Rendu visiteur (ou brouillons masques) : meme regle que le site public, calculee par l'API.
+  const apercuCourant = () => (etat.vueApercu === "rendu" || etat.zonesMasquees.brouillons) && d.apercuVisiteur ? d.apercuVisiteur : d.apercu;
+  const rechargerApercu = () => { const f = iframe(); if (f && d.apercu) f.srcdoc = documentApercu(apercuCourant(), d.arbre?.type); };
   const appliquerVueApercu = () => {
     const doc = docApercu();
     racine.querySelector("[data-constructeur]")?.classList.toggle("constructeur--apercu-seul", etat.vueApercu === "rendu");
@@ -724,7 +728,9 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   };
   const changerVueApercu = (vue) => {
     if (!VUES_APERCU.some((x) => x.cle === vue)) return;
+    const source = apercuCourant();
     etat.vueApercu = vue;
+    if (apercuCourant() !== source) rechargerApercu();
     try { localStorage.setItem(CLE_VUE_APERCU, vue); } catch { /* choix limité à la session */ }
     const menu = racine.querySelector("[data-c-vue-menu]");
     if (menu) menu.outerHTML = menuVueApercu(vue);
@@ -843,7 +849,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       appliquerVueApercu();
       for (const z of ["entete", "footer"]) doc?.body.classList.toggle(`dse-masquer-${z}`, Boolean(etat.zonesMasquees[z]));
     });
-    f.srcdoc = documentApercu(d.apercu, d.arbre?.type);
+    f.srcdoc = documentApercu(apercuCourant(), d.arbre?.type);
   };
   const typeDe = (n) => n?.typeModule ? (d.typesModules || []).find((t) => t.code === String(n.typeModule).toUpperCase()) : null;
   const contenuDesign = (ref) => {
@@ -900,7 +906,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         brouillonGenerique = false;
         brouillons.clear();
         const f = iframe();
-        if (f) f.srcdoc = documentApercu(d.apercu, d.arbre.type);
+        if (f) f.srcdoc = documentApercu(apercuCourant(), d.arbre.type);
       }
     }
     if (ref.startsWith("builderelement.")) {
@@ -1771,6 +1777,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       const z = s.dataset.cVoir;
       etat.zonesMasquees[z] = !s.checked;
       try { localStorage.setItem(CLE_ZONES, JSON.stringify(etat.zonesMasquees)); } catch { /* choix limité à la session */ }
+      if (z === "brouillons") return rechargerApercu();
       docApercu()?.body.classList.toggle(`dse-masquer-${z}`, !s.checked);
       return dimensionner();
     }
@@ -1891,7 +1898,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   if (rendusSite?.domaine !== domaine) chargerRendusSite(domaine).then((r) => {
     rendusSite = r;
     const f = iframe();
-    if (r && f && d.apercu) f.srcdoc = documentApercu(d.apercu, d.arbre?.type);
+    if (r && f && d.apercu) f.srcdoc = documentApercu(apercuCourant(), d.arbre?.type);
   });
   racine.dseChangerOnglet = (onglet) => {
     if (d.arbre || enCours || brouillons.size || brouillonGenerique) return false;

@@ -264,10 +264,11 @@ function vue(d, perimetre) {
 /* Apercu (ordinateur / tablette / mobile) : meme moteur que le public, brouillons inclus, elements desactives exclus.
  * Chaque element recoit sa reference signee (_ref) pour le reperage du panneau Design ; aucun ID natif n'est expose. */
 const TYPE_CONTENEUR = { entete: "ENTETE", footer: "FOOTER", page: "PAGE", article: "PAGE" };
-function apercu(d, siteId, type, el, appareil, perimetre) {
+function apercu(d, siteId, type, el, appareil, perimetre, { visiteur = false } = {}) {
   const site = { id: String(siteId) };
   const ctx = B.contexteComposition(d, site);
-  const options = { appareil: B.APPAREILS.includes(String(appareil || "").toUpperCase()) ? String(appareil).toUpperCase() : null, visible: visibleApercu, ctx };
+  // visiteur : meme regle que le site public (actif + valide), sinon brouillons inclus.
+  const options = { appareil: B.APPAREILS.includes(String(appareil || "").toUpperCase()) ? String(appareil).toUpperCase() : null, visible: visiteur ? B.publiable : visibleApercu, ctx };
   const marquer = (t, { _id, ...x }) => _id ? { ...x, _ref: ref(t, _id) } : x;
   const marquerSections = (elements) => elements.map((s) => ({ ...marquer("section", s),
     lignes: s.lignes.map((l) => ({ ...marquer("ligne", l), colonnes: l.colonnes.map((c) => ({ ...marquer("colonne", c),
