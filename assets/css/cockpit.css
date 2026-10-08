@@ -576,3 +576,21 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 }
 .app-footer { margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line, #dbe2ea); text-align:center; }
 .app-footer__auteur { color:var(--text, #172033); font-weight:600; }
+.constructeur-vue { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 12px; }
+.constructeur-vue input[type="search"] { flex:1 1 240px; min-height:38px; padding:0 12px; border:1px solid var(--line, #dbe2ea); border-radius:9px; font:inherit; }
+.constructeur-vue select { min-height:38px; padding:0 10px; border:1px solid var(--line, #dbe2ea); border-radius:9px; font:inherit; background:#fff; }
+.constructeur-vue__choix { display:flex; gap:4px; margin-inline-start:auto; }
+.constructeur-carte[hidden] { display:none !important; }
+.constructeur-vue-zone--liste .constructeur-grille { grid-template-columns:1fr; gap:8px; }
+.constructeur-vue-zone--liste .constructeur-carte { display:grid; grid-template-columns:minmax(200px, 1.2fr) minmax(160px, 1fr) auto; align-items:center; gap:4px 16px; padding:10px 16px; }
+.constructeur-vue-zone--liste .constructeur-carte > header { grid-column:1; justify-content:flex-start; }
+.constructeur-vue-zone--liste .constructeur-carte > header h3 { margin:0; font-size:1rem; }
+.constructeur-vue-zone--liste .constructeur-carte > p, .constructeur-vue-zone--liste .constructeur-carte > label { grid-column:2; margin:0; font-size:.9rem; }
+.constructeur-vue-zone--liste .constructeur-carte > .constructeur-boutons { grid-column:3; grid-row:1 / span 4; margin:0; justify-content:flex-end; }
+.constructeur-vue-zone--liste .constructeur-carte > .constructeur-boutons .btn { min-height:34px; padding:0 10px; font-size:.85rem; }
+.constructeur-vue-zone--liste .constructeur-utilisations { grid-column:1 / -1; }
+@media (max-width: 900px) {
+  .constructeur-vue-zone--liste .constructeur-carte { grid-template-columns:1fr; }
+  .constructeur-vue-zone--liste .constructeur-carte > * { grid-column:1 !important; grid-row:auto !important; }
+  .constructeur-vue-zone--liste .constructeur-carte > .constructeur-boutons { justify-content:flex-start; }
+}

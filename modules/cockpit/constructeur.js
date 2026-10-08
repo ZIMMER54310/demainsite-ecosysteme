@@ -27,6 +27,21 @@ export function badgeEtat(etat = {}) {
   if (etat.publiable) return `<span class="badge constructeur-badge constructeur-badge--actif">Actif et validé</span>`;
   return `<span class="badge constructeur-badge">${e(etat.actif || "")} · ${e(etat.valide || "")}</span>`;
 }
+const cleEtat = (etat = {}) => etat.inactif ? "desactive" : etat.publiable ? "actif" : "brouillon";
+const CLE_VUE = "dse.constructeur.vue";
+const vueMemorisee = () => { try { return localStorage.getItem(CLE_VUE) === "liste" ? "liste" : "cartes"; } catch { return "cartes"; } };
+function barreVue(etat) {
+  const vue = etat.vue || "cartes";
+  const filtre = etat.filtreEtat || "";
+  const opt = (v, l) => `<option value="${v}"${filtre === v ? " selected" : ""}>${l}</option>`;
+  return `<div class="constructeur-vue" role="toolbar" aria-label="Affichage">
+    <input type="search" data-c-recherche placeholder="🔎 Rechercher par nom…" value="${e(etat.recherche || "")}" aria-label="Rechercher par nom">
+    <select data-c-filtre-etat aria-label="Filtrer par état">${opt("", "Tous les états")}${opt("actif", "Actifs et validés")}${opt("brouillon", "Brouillons")}${opt("desactive", "Désactivés")}</select>
+    <div class="constructeur-vue__choix">
+      <button type="button" class="btn ${vue === "cartes" ? "btn-primary" : "btn-secondary"}" data-c-vue="cartes" aria-pressed="${vue === "cartes"}">▦ Cartes</button>
+      <button type="button" class="btn ${vue === "liste" ? "btn-primary" : "btn-secondary"}" data-c-vue="liste" aria-pressed="${vue === "liste"}">☰ Liste</button>
+    </div></div>`;
+}
 const realisation = (r) => r?.titre ? `<span class="badge constructeur-badge"${/^#[0-9a-f]{6}$/i.test(r.couleur || "")
   ? ` style="color:${e(r.couleur)}"` : ""}>${e(r.titre)}</span>` : "";
 
@@ -59,7 +74,7 @@ const ecrit = (d, fonction) => {
 function carteConteneur(d, type, c) {
   const peut = ecrit(d, FONCTION[type]);
   const pages = c.pages.length ? c.pages.map((p) => e(p.titre)).join(", ") : "Aucune page";
-  return `<article class="card constructeur-carte" data-ref="${e(c.ref)}">
+  return `<article class="card constructeur-carte" data-ref="${e(c.ref)}" data-etat="${cleEtat(c.etat)}" data-nom="${e(String(c.titre || "").toLowerCase())}">
     <header><h3>${e(c.titre)}</h3>${c.realisation ? realisation(c.realisation) : badgeEtat(c.etat)}</header>
     ${c.noteCourte ? `<p class="muted">${e(c.noteCourte)}</p>` : ""}
     <p class="muted">${c.sections} section(s) · Utilisé par : ${pages}</p>
@@ -123,7 +138,7 @@ function ongletPages(d) {
     <label>Créer une page <input name="titre" required maxlength="255"></label>
     <p class="muted">L’adresse est créée automatiquement à partir du nom (modifiable ensuite via « ✏️ Modifier »).</p>
     <button class="btn btn-primary">Créer en brouillon</button></form>` : "";
-  return `${creer}<div class="constructeur-grille">${d.pages.map((p) => `<article class="card constructeur-carte">
+  return `${creer}<div class="constructeur-grille">${d.pages.map((p) => `<article class="card constructeur-carte" data-etat="${cleEtat(p.etat)}" data-nom="${e(`${p.titre || ""} ${p.url || ""}`.toLowerCase())}">
     <header><h3>${e(p.titre)}</h3>${p.realisation ? realisation(p.realisation) : badgeEtat(p.etat)}</header>
     <p class="muted">${e(p.url)} · ${p.sections} section(s)</p>
     <label>En-tête ${peutAction(d, "page", "page.affecter") && peutAction(d, "entete", "page.affecter") ? `<select data-c-affecter="entete" data-page="${e(p.ref)}">${options(d.entetes, p.entete)}</select>` : `<strong>${e(p.entete?.titre || "Aucun")}</strong>`}</label>
@@ -417,7 +432,9 @@ export function rendreConstructeur(moi, d, etat = {}) {
     ${d.arbre ? "" : `<nav class="constructeur-onglets" role="tablist">${ONGLETS.map((o) =>
       `<button type="button" role="tab" class="btn ${o.cle === onglet ? "btn-primary" : "btn-secondary"}" aria-selected="${o.cle === onglet}" data-c-onglet="${o.cle}">${o.libelle}</button>${o.cle === "footers" && accesMenu ? `<a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(etat.domaine || "")}/menu">Menu</a>` : ""}`).join("")}</nav>`}
     <div class="constructeur-message" role="status" aria-live="polite" data-c-message>${etat.message ? `<p class="${etat.erreur ? "alerte-erreur" : "alerte-succes"}">${e(etat.message)}</p>` : ""}</div>
-    ${corps}
+    ${!d.arbre && ["entetes", "footers", "pages"].includes(onglet) ? barreVue(etat) : ""}
+    <div class="constructeur-vue-zone${etat.vue === "liste" ? " constructeur-vue-zone--liste" : ""}">${corps}</div>
+    <p class="muted" data-c-aucun-resultat hidden>Aucun élément ne correspond à la recherche.</p>
     <dialog class="cockpit-statut-dialogue constructeur-dialogue" data-c-dialogue></dialog>
   </section>`;
 }
@@ -441,7 +458,7 @@ export function formulaireHtml(f, titre) {
 /* ---------------- Activation (evenements) ---------------- */
 
 export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
-  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "ORDINATEUR", design: null };
+  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "ORDINATEUR", design: null, vue: vueMemorisee(), recherche: "", filtreEtat: "" };
   let d = donnees;
   let copieStyle = null;
   let historique = [];
@@ -674,10 +691,23 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     d = r?.donnees || d;
     if (etat.conteneur && !d.arbre) etat.conteneur = "";
   };
+  const filtrerCartes = () => {
+    const q = (etat.recherche || "").trim().toLowerCase();
+    const cartes = [...racine.querySelectorAll(".constructeur-vue-zone .constructeur-carte")];
+    let visibles = 0;
+    for (const c of cartes) {
+      const ok = (!q || (c.dataset.nom || "").includes(q)) && (!etat.filtreEtat || c.dataset.etat === etat.filtreEtat);
+      c.hidden = !ok;
+      if (ok) visibles++;
+    }
+    const vide = racine.querySelector("[data-c-aucun-resultat]");
+    if (vide) vide.hidden = !cartes.length || visibles > 0;
+  };
   const afficher = () => {
     racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil }, etat);
     for (const ref of replies) racine.querySelector(`[data-c-noeud="${CSS.escape(ref)}"]`)?.closest(".constructeur-noeud")?.classList.add("constructeur-noeud--replie");
     for (const v of racine.querySelectorAll("details[data-c-volet]")) if (volets.has(v.dataset.cVolet)) v.open = volets.get(v.dataset.cVolet);
+    filtrerCartes();
     preparerApercu();
     if (!d.arbre) etat.design = null;
     afficherPanneau();
@@ -868,6 +898,12 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       if (refNoeud) replie ? replies.add(refNoeud) : replies.delete(refNoeud);
       return;
     }
+    const choixVue = ev.target.closest("[data-c-vue]");
+    if (choixVue && racine.contains(choixVue)) {
+      etat.vue = choixVue.dataset.cVue === "liste" ? "liste" : "cartes";
+      try { localStorage.setItem(CLE_VUE, etat.vue); } catch { /* stockage indisponible : choix limité à la session */ }
+      return afficher();
+    }
     const cible = ev.target.closest("[data-c-onglet],[data-c-action]");
     if (!cible) {
       const n = ev.target.closest("[data-c-noeud]");
@@ -1032,6 +1068,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
 
   racine.addEventListener("input", (ev) => {
     const s = ev.target;
+    if (s.matches?.("[data-c-recherche]")) { etat.recherche = s.value; return filtrerCartes(); }
     const fg = s.closest?.("[data-builder-valeurs]");
     if (fg) {
       if (enCours) return;
@@ -1075,6 +1112,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
 
   racine.addEventListener("change", (ev) => {
     const s = ev.target;
+    if (s.matches?.("[data-c-filtre-etat]")) { etat.filtreEtat = s.value; return filtrerCartes(); }
     if (s.closest?.("[data-design-form]")) return apercuDesign();
     if (s.matches("[data-c-affecter]")) return executer("page.affecter", { page: s.dataset.page, type: s.dataset.cAffecter, ref: s.value });
     if (s.matches("[data-c-deplacer]") && s.value) return executer("element.deplacer", { ref: s.dataset.cDeplacer, colonne: s.value });
