@@ -671,3 +671,16 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .constructeur-assistant label input { display: block; width: 100%; margin-top: .3rem; }
 .constructeur-assistant-carte:disabled { opacity: .5; cursor: not-allowed; background: #f6f7f9; }
 .constructeur-assistant-carte:disabled:hover { border-color: #d7dde5; background: #f6f7f9; }
+
+/* Menu « Vue » de l'aperçu : Composition / Structure seule / Rendu visiteur */
+.constructeur-vue-menu { position: relative; }
+.constructeur-vue-menu > summary { list-style: none; cursor: pointer; white-space: nowrap; border: 1px solid #93c5fd; background: #eff6ff; color: #1e3a8a; font-weight: 600; }
+.constructeur-vue-menu > summary::-webkit-details-marker { display: none; }
+.constructeur-vue-menu[open] > summary { background: #dbeafe; }
+.constructeur-vue-choix { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; display: grid; gap: 4px; width: 320px; padding: 6px; background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 30px rgba(15, 23, 42, .18); }
+.constructeur-vue-choix button { display: flex; gap: 10px; align-items: flex-start; width: 100%; padding: 8px 10px; text-align: left; border: 1px solid transparent; border-radius: 8px; background: none; cursor: pointer; font: inherit; color: #0f172a; }
+.constructeur-vue-choix button > span:first-child { font-size: 1.2rem; line-height: 1.4; }
+.constructeur-vue-choix button strong { display: block; font-size: .9rem; }
+.constructeur-vue-choix button small { display: block; color: #64748b; font-size: .78rem; line-height: 1.3; }
+.constructeur-vue-choix button:hover { background: #f1f5f9; }
+.constructeur-vue-choix button.actif { background: #eff6ff; border-color: #93c5fd; }

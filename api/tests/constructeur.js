@@ -172,7 +172,9 @@ async function main() {
     const editeur = rendreConstructeur({ fonctions: [] }, { ...donneesFront, arbre: a, apercu: apEntete }, {});
     assert.ok(editeur.includes("Pasc ARA IA") && editeur.includes("Ajouter une section") && editeur.includes("📱 Mobile") && editeur.includes("🎨 Design"));
     for (const classe of ["constructeur--plein-ecran", "constructeur-barre-visuelle", "constructeur-espace-visuel", "constructeur-design-zone"]) assert.ok(editeur.includes(classe), classe);
-    for (const action of ["annuler-design", "retablir-design", "copier-style", "coller-style", "apercu-seul", "enregistrer-design"]) assert.ok(editeur.includes(`data-c-action="${action}"`), action);
+    for (const action of ["annuler-design", "retablir-design", "copier-style", "coller-style", "enregistrer-design"]) assert.ok(editeur.includes(`data-c-action="${action}"`), action);
+    for (const vue of ["composition", "structure", "rendu"]) assert.ok(editeur.includes(`data-c-vue-apercu="${vue}"`), `vue ${vue}`);
+    assert.ok(documentApercu({ mode: "builder", sections: [] }).includes("body.dse-vue-structure"), "vue structure seule");
     assert.ok(editeur.includes('draggable="true"') && editeur.includes('data-c-noeud='));
     assert.ok(documentApercu({ mode: "builder", sections: [] }).includes("Aperçu vide"));
     const apercuHero = documentApercu({ mode: "builder", sections: [{ type: "STANDARD", lignes: [{ colonnes: [{

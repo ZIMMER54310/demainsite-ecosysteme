@@ -50,9 +50,21 @@ const vueMemorisee = () => { try { return localStorage.getItem(CLE_VUE) === "lis
 const CLE_COTES = "dse.constructeur.cotes-replies";
 const CLE_ZONES = "dse.constructeur.zones-masquees";
 const zonesMemorisees = () => { try { const v = JSON.parse(localStorage.getItem(CLE_ZONES) || "{}"); return { entete: v.entete === true, footer: v.footer === true }; } catch { return { entete: false, footer: false }; } };
+const CLE_VUE_APERCU = "dse.constructeur.vue-apercu";
+export const VUES_APERCU = Object.freeze([
+  { cle: "composition", icone: "🧩", libelle: "Composition", aide: "Rendu réel avec les repères section / ligne / colonne et les outils" },
+  { cle: "structure", icone: "🧱", libelle: "Structure seule", aide: "Uniquement les blocs : sections, lignes, colonnes et modules, sans le contenu" },
+  { cle: "rendu", icone: "👁", libelle: "Rendu visiteur", aide: "Exactement ce que voit le visiteur, sans repère ni panneau" }
+]);
+const vueApercuMemorisee = () => { try { const v = localStorage.getItem(CLE_VUE_APERCU); return VUES_APERCU.some((x) => x.cle === v) ? v : "composition"; } catch { return "composition"; } };
 const cotesMemorises = () => { try { const v = JSON.parse(localStorage.getItem(CLE_COTES) || "{}"); return { design: v.design === true, structure: v.structure === true }; } catch { return { design: false, structure: false }; } };
 const enteteCote = (cote, titre) => `<div class="constructeur-cote-entete"><strong class="constructeur-cote-titre">${titre}</strong>
   <button type="button" class="constructeur-cote-bascule" data-c-action="replier-cote" data-cote="${cote}" title="Réduire / développer ${titre}" aria-label="Réduire / développer ${titre}"><span aria-hidden="true">${cote === "design" ? "«" : "»"}</span></button></div>`;
+export function menuVueApercu(vue = "composition") {
+  const active = VUES_APERCU.find((x) => x.cle === vue) || VUES_APERCU[0];
+  return `<details class="constructeur-vue-menu" data-c-vue-menu><summary class="btn btn-mini" title="Choisir ce que montre l'aperçu">${active.icone} Vue : ${e(active.libelle)} ▾</summary>
+    <div class="constructeur-vue-choix" role="menu">${VUES_APERCU.map((x) => `<button type="button" role="menuitemradio" aria-checked="${x.cle === active.cle}" class="${x.cle === active.cle ? "actif" : ""}" data-c-vue-apercu="${x.cle}"><span aria-hidden="true">${x.icone}</span><span><strong>${e(x.libelle)}</strong><small>${e(x.aide)}</small></span></button>`).join("")}</div></details>`;
+}
 function barreVue(etat) {
   const vue = etat.vue || "cartes";
   const filtre = etat.filtreEtat || "";
@@ -385,6 +397,14 @@ export function documentApercu(composition, type = "page") {
     .dse-b-recursif:hover:not(:has(.dse-b-recursif:hover))>.dse-b-outils,body:not(:has(.dse-b-recursif:hover)) .dse-design-cible>.dse-b-outils{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:absolute;top:2px;right:2px;z-index:6;padding:2px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
     .dse-builder-glisse .dse-b-depot{display:block;border:1px dashed #7c3aed;padding:5px;font:12px system-ui;color:#4c1d95;background:#f5f3ff}
     .dse-b-depot.dse-depot-actif{background:#ddd6fe;border-style:solid}body:not(.dse-apercu-seul) [data-dse-ref].dse-survol>.dse-b-outils-ancien,body:not(.dse-apercu-seul):not(:has([data-dse-ref]:hover)) .dse-design-cible>.dse-b-outils-ancien{display:flex;gap:4px;background:white;color:#111;font:12px system-ui;position:absolute;top:2px;right:2px;z-index:6;padding:2px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.25)}.dse-b-outils .dse-b-corbeille{color:#b91c1c;border-color:#fca5a5;background:#fef2f2}.dse-b-outils .dse-b-corbeille:hover{background:#dc2626;color:white}body.dse-apercu-seul .dse-b-plus,body.dse-apercu-seul .dse-b-outils,body.dse-apercu-seul .dse-b-depot,body.dse-apercu-seul .dse-apercu-repere{display:none}
+    body.dse-vue-structure{background:#f8fafc!important}body.dse-vue-structure .dse-site-public-main{background:#f8fafc!important}
+    body.dse-vue-structure .dse-apercu-contexte{min-height:30px;padding-top:30px}body.dse-vue-structure .dse-apercu-contexte>*{display:none!important}
+    body.dse-vue-structure :is([data-dse-type=section],[data-dse-type=ligne],[data-dse-type=colonne],[data-dse-type=builder]){background:color-mix(in srgb,var(--dse-c) 7%,white)!important;background-image:none!important;color:#334155!important;outline:2px dashed var(--dse-c)!important;outline-offset:-2px;padding:26px 10px 10px!important;margin:6px 0!important;min-height:0!important;box-shadow:none!important}
+    body.dse-vue-structure :is([data-dse-type=section],[data-dse-type=ligne],[data-dse-type=colonne],[data-dse-type=builder])::before{content:attr(data-dse-libelle)!important;display:block!important;position:absolute;top:0;left:0;z-index:4;max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 8px;font:600 11px/18px system-ui;color:#fff;background:var(--dse-c);border-radius:0 0 6px 0;pointer-events:none}
+    body.dse-vue-structure [data-dse-ref]:not(:is([data-dse-type=section],[data-dse-type=ligne],[data-dse-type=colonne],[data-dse-type=builder])):not(:has([data-dse-ref])){display:flex!important;align-items:center;justify-content:center;min-height:52px!important;height:auto!important;margin:6px 0!important;padding:8px!important;background:white!important;background-image:none!important;border:1px solid #94a3b8;border-left:4px solid var(--dse-c,#4c5866);border-radius:6px;outline:none!important;box-shadow:none!important}
+    body.dse-vue-structure [data-dse-ref]:not(:is([data-dse-type=section],[data-dse-type=ligne],[data-dse-type=colonne],[data-dse-type=builder])):not(:has([data-dse-ref]))>:not(.dse-b-outils):not(.dse-b-plus){display:none!important}
+    body.dse-vue-structure [data-dse-ref]:not(:is([data-dse-type=section],[data-dse-type=ligne],[data-dse-type=colonne],[data-dse-type=builder])):not(:has([data-dse-ref]))::after{content:'▣ ' attr(data-dse-libelle);font:600 13px system-ui;color:#334155;text-align:center}
+    body.dse-vue-structure [data-dse-ref]:not(:is([data-dse-type=section],[data-dse-type=ligne],[data-dse-type=colonne],[data-dse-type=builder])):not(:has([data-dse-ref])).dse-survol::before{display:none}
     body.dse-apercu-seul [data-dse-ref]{outline:none!important;cursor:auto}body.dse-apercu-seul [data-dse-ref]::before{display:none!important}
     </style></head>
     <body class="dse-public">${corps}</body></html>`;
@@ -421,7 +441,7 @@ function editeur(d) {
       <span class="constructeur-groupe" role="group" aria-label="Style"><button type="button" class="btn btn-mini" data-c-action="copier-style">Copier style</button>
       <button type="button" class="btn btn-mini" data-c-action="coller-style">Coller style</button></span>
       <span class="constructeur-separateur" aria-hidden="true"></span>
-      <button type="button" class="btn btn-mini" data-c-action="apercu-seul">Aperçu</button>
+      ${menuVueApercu(d.vueApercu)}
       ${peutAction(d, type, a.generique ? "builder.enregistrer" : "design.enregistrer") ? '<button type="button" class="btn btn-primary" data-c-action="enregistrer-design">Enregistrer</button>' : ""}
       ${bouton("← Fermer", "fermer")}</div></header>
     <div class="constructeur-espace-visuel${d.cotesReplies?.design ? " constructeur-espace--design-replie" : ""}${d.cotesReplies?.structure ? " constructeur-espace--structure-replie" : ""}" data-c-espace>
@@ -520,7 +540,7 @@ export function formulaireHtml(f, titre) {
 /* ---------------- Activation (evenements) ---------------- */
 
 export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
-  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "ORDINATEUR", design: null, vue: vueMemorisee(), cotesReplies: cotesMemorises(), zonesMasquees: zonesMemorisees(), recherche: "", filtreEtat: "" };
+  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "ORDINATEUR", design: null, vue: vueMemorisee(), cotesReplies: cotesMemorises(), zonesMasquees: zonesMemorisees(), vueApercu: vueApercuMemorisee(), recherche: "", filtreEtat: "" };
   let d = donnees;
   let copieStyle = null;
   let historique = [];
@@ -647,6 +667,21 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     doc.head.appendChild(style);
     dimensionner();
   };
+  const appliquerVueApercu = () => {
+    const doc = docApercu();
+    racine.querySelector("[data-constructeur]")?.classList.toggle("constructeur--apercu-seul", etat.vueApercu === "rendu");
+    doc?.body.classList.toggle("dse-apercu-seul", etat.vueApercu === "rendu");
+    doc?.body.classList.toggle("dse-vue-structure", etat.vueApercu === "structure");
+  };
+  const changerVueApercu = (vue) => {
+    if (!VUES_APERCU.some((x) => x.cle === vue)) return;
+    etat.vueApercu = vue;
+    try { localStorage.setItem(CLE_VUE_APERCU, vue); } catch { /* choix limité à la session */ }
+    const menu = racine.querySelector("[data-c-vue-menu]");
+    if (menu) menu.outerHTML = menuVueApercu(vue);
+    appliquerVueApercu();
+    dimensionner();
+  };
   const preparerApercu = () => {
     const f = iframe();
     if (!f) return;
@@ -707,7 +742,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       doc?.addEventListener("drop", deposer);
       doc?.addEventListener("dragend", terminerGlisse);
       doc?.addEventListener("load", dimensionner, true);
-      doc?.body.classList.toggle("dse-apercu-seul", Boolean(etat.apercuSeul));
+      appliquerVueApercu();
       for (const z of ["entete", "footer"]) doc?.body.classList.toggle(`dse-masquer-${z}`, Boolean(etat.zonesMasquees[z]));
     });
     f.srcdoc = documentApercu(d.apercu, d.arbre?.type);
@@ -802,7 +837,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (vide) vide.hidden = !cartes.length || visibles > 0;
   };
   const afficher = () => {
-    racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil, cotesReplies: etat.cotesReplies, zonesMasquees: etat.zonesMasquees }, etat);
+    racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil, cotesReplies: etat.cotesReplies, zonesMasquees: etat.zonesMasquees, vueApercu: etat.vueApercu }, etat);
     for (const ref of replies) racine.querySelector(`[data-c-noeud="${CSS.escape(ref)}"]`)?.closest(".constructeur-noeud")?.classList.add("constructeur-noeud--replie");
     for (const v of racine.querySelectorAll("details[data-c-volet]")) if (volets.has(v.dataset.cVolet)) v.open = volets.get(v.dataset.cVolet);
     filtrerCartes();
@@ -1305,7 +1340,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         if (f) f.requestSubmit(); else message("Sélectionnez un élément à modifier. Les actions structurelles sont déjà enregistrées dans SharePoint.");
         return;
       }
-      case "apercu-seul": etat.apercuSeul = !etat.apercuSeul; racine.querySelector("[data-constructeur]")?.classList.toggle("constructeur--apercu-seul", etat.apercuSeul); docApercu()?.body.classList.toggle("dse-apercu-seul", etat.apercuSeul); dimensionner(); return;
+      case "apercu-seul": return changerVueApercu(etat.vueApercu === "rendu" ? "composition" : "rendu");
       case "replier-cote": return basculerCote(cible.dataset.cote);
       case "builder-medias": return ouvrirFormulaire({ textes: [], listes: [{ cle: "media", libelle: "Médias SharePoint autorisés", options: d.medias || [] }] }, "Médias du site", () => {});
       case "builder-rapide": {
@@ -1476,6 +1511,11 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   });
   addEventListener("resize", dimensionner);
 
+  racine.addEventListener("click", (ev) => {
+    const choix = ev.target.closest?.("[data-c-vue-apercu]");
+    if (choix) { ev.preventDefault(); changerVueApercu(choix.dataset.cVueApercu); }
+    else for (const m of racine.querySelectorAll("[data-c-vue-menu][open]")) if (!m.contains(ev.target)) m.open = false;
+  });
   racine.addEventListener("change", (ev) => {
     const s = ev.target;
     if (s.matches?.("[data-c-filtre-etat]")) { etat.filtreEtat = s.value; return filtrerCartes(); }
