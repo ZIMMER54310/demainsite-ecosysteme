@@ -705,3 +705,4 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .c-module-carte:hover, .c-module-carte:focus-visible { border-color: #7c3aed; background: #faf5ff; box-shadow: 0 2px 8px rgba(124, 58, 237, .18); }
 .c-module-icone { font-size: 1.9rem; line-height: 1; }
 .c-module-nom { font-size: .85rem; font-weight: 600; color: #1f2937; }
+.c-modules [hidden] { display: none !important; }
