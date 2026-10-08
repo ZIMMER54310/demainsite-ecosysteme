@@ -749,3 +749,11 @@ span.constructeur-appareil { cursor: default; }
 .constructeur-lot[hidden] { display: none; }
 .constructeur-lot-appareils { display: flex; flex-wrap: wrap; gap: .35rem; width: 100%; }
 .constructeur-lot-appareil { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.constructeur-guide-ligne { display: flex; align-items: flex-start; gap: .5rem; }
+.constructeur-guide-ligne p { margin: 0; flex: 1; }
+.constructeur-guide { max-width: min(720px, 92vw); }
+.constructeur-guide dl { display: grid; gap: .5rem; margin: .75rem 0; max-height: 60vh; overflow-y: auto; }
+.constructeur-guide dl > div { padding: .5rem .75rem; border: 1px solid #e3e8ef; border-radius: 8px; }
+.constructeur-guide dt { font-weight: 600; }
+.constructeur-guide dd { margin: .25rem 0 0; }
+.constructeur-guide-icone { display: inline-block; min-width: 1.6em; text-align: center; }

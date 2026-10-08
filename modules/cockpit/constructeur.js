@@ -261,7 +261,7 @@ function actionsNoeud(n, peut, colonnes, d) {
     ${action("element.etat") ? !n.etat.publiable
       ? action("conteneur.publier") ? bouton(n.etat.inactif || n.etat.brouillon ? "Activer" : "✅ Valider et activer", "activer", `${r}${a("activer")}`, "btn btn-mini") +
         (n.etat.brouillon && !n.etat.inactif ? corbeille : "") : ""
-      : bouton("⏸", "desactiver-direct", `${r} title="Désactiver « ${e(n.titre)} » (invisible pour les visiteurs, rien n'est supprimé)" aria-label="Désactiver ${e(n.titre)}"`, "btn btn-mini") + corbeille : ""}
+      : bouton("⏸", "desactiver-direct", `${r}${a("desactiver")} title="Désactiver « ${e(n.titre)} » (invisible pour les visiteurs, rien n'est supprimé)" aria-label="Désactiver ${e(n.titre)}"`, "btn btn-mini") + corbeille : ""}
   </span>`;
 }
 
@@ -273,14 +273,14 @@ function appareilsHtml(d, n, peut) {
     const visible = n.appareils[a] !== false;
     const titre = `${visible ? "Visible" : "Masqué"} sur ${nom}${modifiable ? ` — cliquer pour ${visible ? "masquer" : "afficher"}` : ""}`;
     return modifiable
-      ? `<button type="button" class="constructeur-appareil${visible ? "" : " constructeur-appareil--masque"}" data-c-action="basculer-appareil" data-ref="${e(n.ref)}" data-appareil="${a}" data-visible="${visible}" title="${titre}" aria-label="${titre}" aria-pressed="${visible}">${icone}</button>`
-      : `<span class="constructeur-appareil${visible ? "" : " constructeur-appareil--masque"}" title="${titre}">${icone}</span>`;
+      ? `<button type="button" class="constructeur-appareil${visible ? "" : " constructeur-appareil--masque"}" data-c-action="basculer-appareil" data-ref="${e(n.ref)}" data-appareil="${a}" data-visible="${visible}"${aideAttr(d, `appareil-${nom}`)} title="${titre}" aria-label="${titre}" aria-pressed="${visible}">${icone}</button>`
+      : `<span class="constructeur-appareil${visible ? "" : " constructeur-appareil--masque"}"${aideAttr(d, `appareil-${nom}`)} tabindex="0" title="${titre}">${icone}</span>`;
   }).join("")}</span>`;
 }
 
 function noeudHtml(d, n, peut, colonnes) {
   const lot = peut && peutAction(d, d.arbre.type, "element.etat");
-  const entete = `<div class="constructeur-noeud-entete"${peut && peutAction(d, d.arbre.type, "element.deplacer") ? ' draggable="true"' : ""} data-c-noeud="${e(n.ref)}" data-c-type="${e(n.type)}">${lot ? `<input type="checkbox" class="constructeur-coche" data-c-selection="${e(n.ref)}" aria-label="Sélectionner ${e(n.titre)}" title="Sélectionner pour une action groupée">` : ""}${n.type !== "module" ? REPLIER : ""}<span class="constructeur-type constructeur-type--${e(n.type)}">${LIBELLES[n.type]}</span>
+  const entete = `<div class="constructeur-noeud-entete"${peut && peutAction(d, d.arbre.type, "element.deplacer") ? ' draggable="true"' : ""} data-c-noeud="${e(n.ref)}" data-c-type="${e(n.type)}">${lot ? `<input type="checkbox" class="constructeur-coche" data-c-selection="${e(n.ref)}"${aideAttr(d, "selection")} aria-label="Sélectionner ${e(n.titre)}" title="Sélectionner pour une action groupée">` : ""}${n.type !== "module" ? REPLIER : ""}<span class="constructeur-type constructeur-type--${e(n.type)}">${LIBELLES[n.type]}</span>
     <strong>${e(n.titre)}</strong>${n.typeModule ? ` <span class="badge">${e(n.typeModule)}</span>` : ""}
     ${n.structure && n.type === "ligne" ? ` <span class="muted">${e(n.structure)}</span>` : ""}
     ${n.type === "colonne" && n.largeur ? ` <span class="muted">${e(n.largeur)} %</span>` : ""}
@@ -505,13 +505,14 @@ function editeur(d) {
       ${d.builder?.message ? `<p class="alerte-info">${e(d.builder.message)}</p>` : ""}
       ${peutAction(d, type, "builder.initialiser") && !a.generique && !a.sections.length && d.builder?.types?.some((x) => x.racine) ?
         bouton("Initialiser la racine générique", "builder-initialiser", `data-ref="${e(a.ref)}"`) : ""}
-      ${peut && !a.generique ? '<p class="muted constructeur-noeud-detail">Cliquez sur une section, une ligne ou une colonne (ici ou dans l\'aperçu) pour la régler et y ajouter un élément.</p>' : ""}
+      ${peut && !a.generique ? `<div class="constructeur-guide-ligne"><p class="muted constructeur-noeud-detail">Cliquez sur un élément pour le régler. ☑ = choisir plusieurs éléments à la fois · 🖥 ▭ 📱 = visible sur ordinateur, tablette, mobile (barré = masqué). Survolez une icône : Pasc ARA IA l'explique.</p>
+        ${Object.keys(d.aidesActions || {}).length ? bouton("❓ Mode d'emploi", "guide", `${aideAttr(d, "guide")} title="Toutes les icônes expliquées"`, "btn btn-mini") : ""}</div>` : ""}
       ${peut && !a.generique && peutAction(d, type, "element.etat") ? `<div class="constructeur-lot" data-c-lot hidden>
         <strong data-c-lot-nombre>0 sélectionné</strong>
-        ${bouton("✅ Activer", "lot-etat", 'data-etat="actif" title="Valider et activer toute la sélection"', "btn btn-mini")}
-        ${bouton("⏸ Désactiver", "lot-etat", 'data-etat="inactif" title="Désactiver toute la sélection (rien n\'est supprimé)"', "btn btn-mini")}
+        ${bouton("✅ Activer", "lot-etat", `data-etat="actif"${aideAttr(d, "lot-activer")} title="Valider et activer toute la sélection"`, "btn btn-mini")}
+        ${bouton("⏸ Désactiver", "lot-etat", `data-etat="inactif"${aideAttr(d, "lot-desactiver")} title="Désactiver toute la sélection (rien n'est supprimé)"`, "btn btn-mini")}
         ${peutAction(d, type, "design.enregistrer") ? `<span class="constructeur-lot-appareils">${APPAREILS_VUE.map(([a, icone, nom]) =>
-          `<span class="constructeur-lot-appareil" title="${nom}">${icone} ${bouton("Afficher", "lot-appareil", `data-appareil="${a}" data-visible="true" title="Afficher la sélection sur ${nom}"`, "btn btn-mini")}${bouton("Masquer", "lot-appareil", `data-appareil="${a}" data-visible="false" title="Masquer la sélection sur ${nom}"`, "btn btn-mini")}</span>`).join("")}</span>` : ""}
+          `<span class="constructeur-lot-appareil"${aideAttr(d, "lot-appareil")} title="${nom}">${icone} ${bouton("Afficher", "lot-appareil", `data-appareil="${a}" data-visible="true" title="Afficher la sélection sur ${nom}"`, "btn btn-mini")}${bouton("Masquer", "lot-appareil", `data-appareil="${a}" data-visible="false" title="Masquer la sélection sur ${nom}"`, "btn btn-mini")}</span>`).join("")}</span>` : ""}
         ${bouton("✖ Tout désélectionner", "lot-vider", "", "btn btn-mini btn-secondary")}
       </div>` : ""}
       <ul class="constructeur-arbre">${a.generique ? arbreGeneriqueHtml(a.generique, peut, true, d) :
@@ -1703,6 +1704,16 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       case "dupliquer-element": return executer("element.dupliquer", { ref });
       case "activer": return executer("element.etat", { ref, etat: "actif" });
       case "desactiver-element": return confirmerSuppression(ref);
+      case "guide": {
+        const dlg = dialogue();
+        dlg.innerHTML = `<div class="constructeur-guide"><h2>❓ Mode d'emploi du constructeur</h2>
+          <p class="muted">🤖 Pasc ARA IA vous explique chaque icône. Survolez-les aussi directement dans la Structure ou l'aperçu.</p>
+          <dl>${Object.entries(d.aidesActions || {}).filter(([, x]) => x.aide).map(([, x]) =>
+            `<div><dt><span class="constructeur-guide-icone">${e(x.icone || "•")}</span> ${e(x.libelle || "")}</dt><dd>${e(x.aide)}</dd></div>`).join("")}</dl>
+          <div class="cockpit-actions"><button type="button" class="btn btn-primary" data-c-fermer>J'ai compris</button></div></div>`;
+        dlg.querySelector("[data-c-fermer]").addEventListener("click", () => dlg.close());
+        return dlg.showModal();
+      }
       case "desactiver-direct": return executer("element.etat", { ref, etat: "inactif" });
       case "basculer-appareil": return basculerAppareils([ref], cible.dataset.appareil, cible.dataset.visible !== "true");
       case "lot-etat": {

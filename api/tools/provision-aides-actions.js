@@ -22,7 +22,16 @@ const AIDES = [
   ["supprimer", "🗑", "Supprimer", "Retire l'élément de la page après confirmation. Il reste conservé dans SharePoint (désactivation) et peut être réactivé."],
   ["deplacer", "✥", "Déplacer", "Glissez-déposez pour changer l'élément de place, ou utilisez les flèches pour le monter ou le descendre."],
   ["contenu", "✏️", "Contenu", "Ouvre le formulaire guidé du module pour saisir ou corriger son contenu, avec l'aide de Pasc ARA IA."],
-  ["activer", "✅", "Valider et activer", "Rend l'élément visible des visiteurs une fois le contenu vérifié."]
+  ["activer", "✅", "Valider et activer", "Rend l'élément visible des visiteurs une fois le contenu vérifié."],
+  ["desactiver", "⏸", "Désactiver", "Cache l'élément aux visiteurs sans rien supprimer. Il reste dans la structure, marqué « Désactivé », et un clic sur « Activer » le remet en ligne."],
+  ["selection", "☑", "Sélectionner", "Cochez une ou plusieurs cases (sections, lignes, colonnes, modules mélangés) : une barre bleue apparaît en haut de la Structure pour agir sur toute la sélection en une seule fois."],
+  ["appareil-ordinateur", "🖥", "Visible sur ordinateur", "Cliquez pour masquer ou afficher cet élément sur les grands écrans (plus de 1024 px). Icône barrée sur fond rouge = masqué sur ordinateur. Vérifiez le résultat avec l'aperçu « Ordinateur »."],
+  ["appareil-tablette", "▭", "Visible sur tablette", "Cliquez pour masquer ou afficher cet élément sur tablette (de 641 à 1024 px). Icône barrée sur fond rouge = masqué sur tablette. Vérifiez avec l'aperçu « Tablette »."],
+  ["appareil-mobile", "📱", "Visible sur mobile", "Cliquez pour masquer ou afficher cet élément sur téléphone (640 px et moins). Icône barrée sur fond rouge = masqué sur mobile. Vérifiez avec l'aperçu « Mobile »."],
+  ["lot-activer", "✅", "Activer la sélection", "Valide et active d'un coup tous les éléments cochés : ils deviennent visibles des visiteurs. Une fenêtre récapitule les changements avant d'enregistrer."],
+  ["lot-desactiver", "⏸", "Désactiver la sélection", "Cache d'un coup aux visiteurs tous les éléments cochés, sans rien supprimer. Une fenêtre récapitule les changements avant d'enregistrer."],
+  ["lot-appareil", "📱", "Afficher / Masquer par appareil", "Affiche ou masque tous les éléments cochés sur l'appareil choisi (ordinateur, tablette ou mobile). Exemple : cochez trois modules puis « Masquer » sur 📱 pour les retirer du téléphone uniquement."],
+  ["guide", "❓", "Mode d'emploi", "Liste toutes les icônes du constructeur avec leur explication. Astuce : survolez n'importe quelle icône pour que Pasc ARA IA vous l'explique."]
 ];
 
 async function semer(token, siteId) {
