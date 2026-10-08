@@ -80,10 +80,10 @@ export function rendreMenus(donnees, { domaine, menuRef = "", action = "" } = {}
   if (menu) {
     const roots = menu.entrees.filter((x) => !x.parentRef).sort(parOrdre);
     return `<section class="cockpit dse-menus" data-dse-menus data-domaine="${e(domaine)}" data-menu-ref="${e(menu.ref)}">
-      <header class="dse-menus__heading"><div><h1>${e(menu.titre)}</h1><p>${e(menu.description || "Organisez les liens et sous-menus de votre navigation.")}</p>
+      <header class="dse-menus__heading"><div><h1>${e(menu.titre)} <span class="badge" title="Titre interne, non visible par les visiteurs">🔒 interne</span></h1><p>${e(menu.description || "Organisez les liens et sous-menus de votre navigation.")}</p>
       <span class="badge">${e(menu.etat)}</span></div><a class="btn btn-secondary" href="${e(lienMenu(domaine))}">← Retour aux menus</a></header>
       <section class="card dse-menu-form"><h2>Réglages du menu</h2><form data-menu-edit>
-        <label>Nom du menu<input name="titre" maxlength="255" required value="${e(menu.titre)}"></label>
+        <label>Titre interne du menu <small class="muted">— visible uniquement par les concepteurs, jamais par les visiteurs du site</small><input name="titre" maxlength="255" required placeholder="Ex. : Menu principal en-tête accueil" value="${e(menu.titre)}"></label>
         <label>Description facultative<textarea name="description" rows="3" maxlength="4000">${e(menu.description)}</textarea></label>
         <button class="btn btn-secondary" type="submit">Enregistrer le brouillon</button>
       </form></section>
@@ -100,11 +100,11 @@ export function rendreMenus(donnees, { domaine, menuRef = "", action = "" } = {}
       <button class="btn btn-secondary" type="button" data-manage-placements>Gérer les emplacements</button>
       ${donnees.peutInitialiser === true ? '<button class="btn btn-secondary" type="button" data-menu-initialiser>Vérifier / réparer le Menu principal</button>' : ""}</div>
     <div data-menu-create-form hidden><form class="card dse-menu-form" data-menu-create><h2>Nouveau menu</h2>
-      <label>Nom du menu<input name="titre" maxlength="255" required></label>
+      <label>Titre interne du menu <small class="muted">— visible uniquement par les concepteurs, jamais par les visiteurs du site</small><input name="titre" maxlength="255" required placeholder="Ex. : Menu principal en-tête accueil"></label>
       <label>Description facultative<textarea name="description" rows="3" maxlength="4000"></textarea></label>
       <div class="cockpit-actions"><button class="btn btn-primary" type="submit">Créer le menu</button><button class="btn btn-secondary" type="button" data-menu-create-cancel>Annuler</button></div></form></div>
     <div data-assignment-container></div>
-    <div class="dse-menu-cards">${donnees.menus.map((m) => `<article class="card dse-menu-card"><div><h2>${e(m.titre)}</h2>
+    <div class="dse-menu-cards">${donnees.menus.map((m) => `<article class="card dse-menu-card"><div><h2 title="Titre interne, non visible par les visiteurs">🔒 ${e(m.titre)}</h2>
       <p>${e(m.description || "Aucune description")}</p><dl><dt>Emplacement</dt><dd>${m.emplacements.map(e).join(", ") || "Non affecté"}</dd>
       <dt>Éléments</dt><dd>${m.nombreEntrees}</dd><dt>État</dt><dd>${e(m.etat)}</dd>
       ${m.modifie ? `<dt>Modifié</dt><dd>${e(m.modifie)}</dd>` : ""}</dl></div>

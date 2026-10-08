@@ -47,7 +47,7 @@ const url = (f) => require("url").pathToFileURL(path.join(__dirname, "..", "..",
   assert.ok(e1.includes('href="/contact"') && !/Brouillon|Pirate|Sans URL|javascript:/.test(e1));
   const arbre = rendreEntete({
     nomSite: "Site",
-    menuArbre: { titre: "Menu principal", entrees: [
+    menuArbre: { titre: "Titre interne concepteur", entrees: [
       { titre: "Accueil", url: "/", enfants: [] },
       { titre: "Services", url: "/services", enfants: [
         { titre: "Créations", url: "https://example.test/creations", enfants: [] }
@@ -56,7 +56,7 @@ const url = (f) => require("url").pathToFileURL(path.join(__dirname, "..", "..",
     ] },
     pageUrl: "/"
   });
-  assert.ok(arbre.includes('aria-label="Menu principal"') && arbre.includes('aria-current="page"'));
+  assert.ok(arbre.includes('aria-label="Navigation principale"') && !arbre.includes("Titre interne concepteur") && arbre.includes('aria-current="page"'));
   assert.ok(arbre.includes("Créations") && !arbre.includes("javascript:"));
   const e2 = rendreEntete({ nomSite: "Repli", entete: [{ ...non, configuration: { Titre: "Inactif" } }] });
   assert.ok(e2.includes("Repli") && !e2.includes("Inactif"), "entete non valide ignore");

@@ -256,7 +256,8 @@ async function publicMenu({siteId,headerId}) {
         return [{titre:x.titre,url:href,nouvelleFenetre:x.nouvelleFenetre,enfants:construire(x.ref,branche,depth+1)}];
       });
   };
-  return {titre:menu.titre,entrees:construire()};
+  // Le titre du menu est interne aux concepteurs : jamais transmis au site public.
+  return {entrees:construire()};
 }
 
 function trouverRef(items, candidate, type) {

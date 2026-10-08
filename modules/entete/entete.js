@@ -44,7 +44,7 @@ export function rendreEntete({ nomSite = "", entete = null, logo = null, menu = 
   })).filter((m) => m.texte && m.url);
   const arbre = rendreArbreMenu(menuArbre?.entrees, pageUrl);
   const navigation = arbre
-    ? `<nav class="dse-entete-menu" aria-label="${escapeHtml(menuArbre.titre || "Navigation")}"><ul>${arbre}</ul></nav>`
+    ? `<nav class="dse-entete-menu" aria-label="Navigation principale"><ul>${arbre}</ul></nav>`
     : liens.length
       ? `<nav class="dse-entete-menu" aria-label="Menu principal">${liens.map((m) => `<a href="${escapeHtml(m.url)}">${escapeHtml(m.texte)}</a>`).join("")}</nav>`
       : "";
