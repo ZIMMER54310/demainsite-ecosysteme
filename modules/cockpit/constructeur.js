@@ -704,7 +704,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       const r = await actionConstruire(domaine, action, params, confirmation);
       if (!r?.donnees || r.donnees.refus || r.donnees.erreur) throw new Error(r?.donnees?.refus || r?.donnees?.erreur || "Réponse d'enregistrement invalide.");
       Object.assign(etat, { message: r?.donnees?.message || "Action enregistrée.", erreur: false });
-      if (action === "conteneur.dupliquer" && etat.conteneur && r.donnees.nouveau?.ref) {
+      if ((action === "conteneur.dupliquer" && etat.conteneur || action === "conteneur.creer") && r.donnees.nouveau?.ref) {
         etat.conteneur = r.donnees.nouveau.ref;
         etat.design = null;
         historiqueBuilder = [];
