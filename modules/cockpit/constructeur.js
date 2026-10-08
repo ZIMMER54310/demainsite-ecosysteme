@@ -269,13 +269,39 @@ const APPAREILS_VUE = [["ORDINATEUR", "🖥", "ordinateur"], ["TABLETTE", "▭",
 function appareilsHtml(d, n, peut) {
   if (!n.appareils) return "";
   const modifiable = peut && peutAction(d, d.arbre.type, "design.enregistrer");
-  return `<span class="constructeur-appareils" role="group" aria-label="Visibilité par appareil">${APPAREILS_VUE.map(([a, icone, nom]) => {
+  const inactif = Boolean(n.etat?.inactif);
+  return `<span class="constructeur-appareils${inactif ? " constructeur-appareils--inactif" : ""}" role="group" aria-label="Visibilité par appareil">${APPAREILS_VUE.map(([a, icone, nom]) => {
     const visible = n.appareils[a] !== false;
-    const titre = `${visible ? "Visible" : "Masqué"} sur ${nom}${modifiable ? ` — cliquer pour ${visible ? "masquer" : "afficher"}` : ""}`;
+    const titre = `${visible ? "Visible" : "Masqué"} sur ${nom}${inactif ? " (élément désactivé : invisible partout tant qu'il n'est pas réactivé)" : ""}${modifiable ? ` — cliquer pour ${visible ? "masquer" : "afficher"}` : ""}`;
     return modifiable
       ? `<button type="button" class="constructeur-appareil${visible ? "" : " constructeur-appareil--masque"}" data-c-action="basculer-appareil" data-ref="${e(n.ref)}" data-appareil="${a}" data-visible="${visible}"${aideAttr(d, `appareil-${nom}`)} title="${titre}" aria-label="${titre}" aria-pressed="${visible}">${icone}</button>`
-      : `<span class="constructeur-appareil${visible ? "" : " constructeur-appareil--masque"}"${aideAttr(d, `appareil-${nom}`)} tabindex="0" title="${titre}">${icone}</span>`;
+      : `<span class="constructeur-appareil${visible ? "" : " constructeur-appareil--masque"}" data-appareil="${a}"${aideAttr(d, `appareil-${nom}`)} tabindex="0" title="${titre}">${icone}</span>`;
   }).join("")}</span>`;
+}
+
+// Visibilite reelle d'un element pour un appareil (GENERAL = au moins un appareil), heritee des parents.
+const NOMS_APPAREILS = { ORDINATEUR: "ordinateur", TABLETTE: "tablette", MOBILE: "mobile" };
+const APPAREILS_BARRE = [{ cle: "GENERAL", libelle: "👁 Général", largeur: 1280, aide: "affichage-general" },
+  { cle: "ORDINATEUR", libelle: "🖥 Ordinateur", largeur: 1280, aide: "affichage-appareil" },
+  { cle: "TABLETTE", libelle: "▭ Tablette", largeur: 800, aide: "affichage-appareil" },
+  { cle: "MOBILE", libelle: "📱 Mobile", largeur: 390, aide: "affichage-appareil" }];
+export function visibilites(sections, appareil = "GENERAL") {
+  const res = new Map();
+  const visiter = (n, parent) => {
+    const caches = APPAREILS_VUE.filter(([a]) => n.appareils?.[a] === false).map(([a]) => a);
+    let info;
+    if (parent && !parent.visible) info = { visible: false, raison: `Caché : « ${parent.titre} » est masqué ou désactivé` };
+    else if (n.etat && !n.etat.publiable) info = { visible: false, raison: n.etat.inactif ? "Désactivé : invisible sur tous les appareils" : "Non validé : invisible pour les visiteurs" };
+    else if (appareil === "GENERAL") info = caches.length === 3 ? { visible: false, raison: "Masqué sur tous les appareils" }
+      : { visible: true, partiel: caches.length ? `Masqué sur ${caches.map((a) => NOMS_APPAREILS[a]).join(", ")}` : "" };
+    else info = caches.includes(appareil) ? { visible: false, raison: `Masqué sur ${NOMS_APPAREILS[appareil]}` } : { visible: true };
+    info.titre = n.titre;
+    info.caches = caches;
+    res.set(n.ref, info);
+    for (const x of n.enfants || []) visiter(x, info);
+  };
+  for (const s of sections || []) visiter(s, null);
+  return res;
 }
 
 function noeudHtml(d, n, peut, colonnes) {
@@ -461,7 +487,7 @@ function editeur(d) {
   const colonnes = colonnesDe(a.sections);
   const publicationRequise = !a.etat.publiable || a.generique || contientBrouillon(a.sections);
   return `<header class="constructeur-barre-visuelle"><strong>${e(d.site?.titre || "")} · ${e(a.titre)}</strong>
-    <div class="constructeur-boutons constructeur-outils-barre"><span class="constructeur-appareils" role="group" aria-label="Affichage sur l'appareil"><span class="constructeur-groupe-titre">Affichage</span>${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "ORDINATEUR") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}" aria-pressed="${x.cle === (d.appareil || "ORDINATEUR")}">${x.libelle}</button>`).join("")}</span>
+    <div class="constructeur-boutons constructeur-outils-barre"><span class="constructeur-appareils" role="group" aria-label="Affichage sur l'appareil"><span class="constructeur-groupe-titre">Affichage</span>${APPAREILS_BARRE.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "GENERAL") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}"${aideAttr(d, x.aide)} title="${x.cle === "GENERAL" ? "Tout voir : les éléments masqués sur un appareil restent affichés, encadrés en pointillés" : `Voir exactement ce que voit un visiteur sur ${NOMS_APPAREILS[x.cle]}`}" aria-pressed="${x.cle === (d.appareil || "GENERAL")}">${x.libelle}</button>`).join("")}</span>
       <span class="constructeur-separateur" aria-hidden="true"></span>
       <span class="constructeur-groupe constructeur-voir" role="group" aria-label="Zones affichées en lecture seule"><span class="constructeur-groupe-titre">Voir</span>
         ${[["entete", "En-tête"], ["footer", "Pied de page"]].filter(([z]) => z !== type).map(([z, libelle]) => `<label title="${e(libelle)} affiché en lecture seule (modifiable dans son propre onglet)"><input type="checkbox" data-c-voir="${z}"${d.zonesMasquees?.[z] ? "" : " checked"}> ${libelle}</label>`).join("")}
@@ -507,6 +533,9 @@ function editeur(d) {
         bouton("Initialiser la racine générique", "builder-initialiser", `data-ref="${e(a.ref)}"`) : ""}
       ${peut && !a.generique ? `<div class="constructeur-guide-ligne"><p class="muted constructeur-noeud-detail">Cliquez sur un élément pour le régler. ☑ = choisir plusieurs éléments à la fois · 🖥 ▭ 📱 = visible sur ordinateur, tablette, mobile (barré = masqué). Survolez une icône : Pasc ARA IA l'explique.</p>
         ${Object.keys(d.aidesActions || {}).length ? bouton("❓ Mode d'emploi", "guide", `${aideAttr(d, "guide")} title="Toutes les icônes expliquées"`, "btn btn-mini") : ""}</div>` : ""}
+      ${!a.generique && a.sections.length ? `<div class="constructeur-filtre-vue"${aideAttr(d, "filtre-structure")}><label>Montrer <select data-c-filtre-vue aria-label="Filtrer la structure">
+        ${[["", "tout"], ["visible", "ce que voient les visiteurs"], ["masque", "ce qui est masqué ou désactivé"]].map(([v, l]) => `<option value="${v}"${(d.filtreVue || "") === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>
+        <span class="muted" data-c-filtre-appareil></span></div>` : ""}
       ${peut && !a.generique && peutAction(d, type, "element.etat") ? `<div class="constructeur-lot" data-c-lot hidden>
         <strong data-c-lot-nombre>0 sélectionné</strong>
         ${bouton("✅ Activer", "lot-etat", `data-etat="actif"${aideAttr(d, "lot-activer")} title="Valider et activer toute la sélection"`, "btn btn-mini")}
@@ -584,7 +613,7 @@ export function formulaireHtml(f, titre, { valider = "Enregistrer", passer = "",
 /* ---------------- Activation (evenements) ---------------- */
 
 export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
-  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "ORDINATEUR", design: null, vue: vueMemorisee(), cotesReplies: cotesMemorises(), zonesMasquees: zonesMemorisees(), vueApercu: vueApercuMemorisee(), recherche: "", filtreEtat: "" };
+  const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "GENERAL", filtreVue: "", design: null, vue: vueMemorisee(), cotesReplies: cotesMemorises(), zonesMasquees: zonesMemorisees(), vueApercu: vueApercuMemorisee(), recherche: "", filtreEtat: "" };
   let d = donnees;
   let copieStyle = null;
   let historique = [];
@@ -681,7 +710,54 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       b.classList.toggle("btn-secondary", b.dataset.cAppareil !== appareil);
       b.setAttribute("aria-pressed", String(b.dataset.cAppareil === appareil));
     }
+    appliquerVue();
     dimensionner();
+  };
+  // Synchronise structure, apercu et panneau sur l'appareil choisi dans « Affichage ».
+  const appliquerVue = () => {
+    if (!d.arbre || d.arbre.generique) return;
+    const infos = visibilites(d.arbre.sections, etat.appareil);
+    const nomVue = etat.appareil === "GENERAL" ? "tous appareils" : NOMS_APPAREILS[etat.appareil];
+    const libelle = racine.querySelector("[data-c-filtre-appareil]");
+    if (libelle) libelle.textContent = `· vue : ${nomVue}`;
+    for (const entete of racine.querySelectorAll('.constructeur-arbre [data-c-noeud]:not([data-c-type="builder"])')) {
+      const info = infos.get(entete.dataset.cNoeud);
+      const li = entete.closest(".constructeur-noeud");
+      if (!info || !li) continue;
+      li.classList.toggle("constructeur-noeud--hors-vue", !info.visible);
+      entete.querySelector(":scope > .constructeur-vue-etat")?.remove();
+      const texte = !info.visible ? `🚫 ${info.raison}` : info.partiel ? `◐ ${info.partiel}` : "";
+      if (texte) entete.querySelector(":scope > .constructeur-appareils")?.insertAdjacentHTML("afterend",
+        `<span class="constructeur-vue-etat${info.visible ? " constructeur-vue-etat--partiel" : ""}">${e(texte)}</span>`);
+      for (const ic of entete.querySelectorAll(":scope > .constructeur-appareils > [data-appareil]"))
+        ic.classList.toggle("constructeur-appareil--courant", ic.dataset.appareil === etat.appareil);
+      li.dataset.cCorrespond = String(!etat.filtreVue || (etat.filtreVue === "visible" ? info.visible : !info.visible || Boolean(info.partiel)));
+    }
+    const noeuds = [...racine.querySelectorAll(".constructeur-arbre .constructeur-noeud")].reverse();
+    for (const li of noeuds) li.classList.toggle("constructeur-noeud--filtre", Boolean(etat.filtreVue) && li.dataset.cCorrespond !== "true" &&
+      ![...li.querySelectorAll(":scope > ul > .constructeur-noeud")].some((x) => !x.classList.contains("constructeur-noeud--filtre")));
+    appliquerAppareilApercu();
+  };
+  // En vue Général, les elements masques sur un appareil restent visibles dans l'apercu, encadres en pointilles.
+  const appliquerAppareilApercu = () => {
+    const doc = docApercu();
+    if (!doc?.body) return;
+    for (const el of doc.querySelectorAll("[class*='dse-b-cache-'], [data-c-caches]")) {
+      if (!el.dataset.cCaches) el.dataset.cCaches = [...el.classList].filter((c) => c.startsWith("dse-b-cache-")).join(" ");
+      const caches = el.dataset.cCaches.split(" ").filter(Boolean);
+      const general = etat.appareil === "GENERAL";
+      for (const c of caches) el.classList.toggle(c, !general);
+      el.classList.toggle("dse-c-masque-appareil", general && caches.length > 0);
+      if (general && caches.length) el.dataset.cMasque = `Masqué sur ${caches.map((c) => c.replace("dse-b-cache-", "")).join(", ")}`;
+      else delete el.dataset.cMasque;
+    }
+    if (!doc.getElementById("dse-c-vue-appareil")) {
+      const s = doc.createElement("style");
+      s.id = "dse-c-vue-appareil";
+      s.textContent = `.dse-c-masque-appareil{outline:2px dashed #b45309!important;outline-offset:-2px;opacity:.6;position:relative}
+.dse-c-masque-appareil::after{content:"🚫 " attr(data-c-masque);position:absolute;top:2px;right:2px;z-index:5;background:#b45309;color:#fff;font:600 11px/1.4 system-ui,sans-serif;padding:1px 6px;border-radius:999px;pointer-events:none}`;
+      doc.head.append(s);
+    }
   };
   const valeursFormulaire = () => {
     const f = racine.querySelector("[data-design-form]");
@@ -892,6 +968,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       doc?.addEventListener("dragend", terminerGlisse);
       doc?.addEventListener("load", dimensionner, true);
       appliquerVueApercu();
+      appliquerAppareilApercu();
       for (const z of ["entete", "footer"]) doc?.body.classList.toggle(`dse-masquer-${z}`, Boolean(etat.zonesMasquees[z]));
     });
     f.srcdoc = documentApercu(apercuCourant(), d.arbre?.type);
@@ -915,7 +992,27 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (!n?.etat) return "";
     const activable = !n.rendu && LIBELLES[n.type] && !n.etat.publiable && !n.verrouille && ecrit(d, FONCTION[d.arbre?.type])
       && peutAction(d, d.arbre?.type, "element.etat") && peutAction(d, d.arbre?.type, "conteneur.publier");
-    return `<span class="design-statut">${badgeEtat(n.etat)}${activable ? ` <button type="button" class="btn btn-mini btn-primary" data-c-action="activer" data-ref="${e(n.ref)}"${aideAttr(d, "activer")} title="Rendre visible aux visiteurs">✅ Activer</button>` : ""}</span>`;
+    return `<span class="design-statut">${badgeEtat(n.etat)}${activable ? ` <button type="button" class="btn btn-mini btn-primary" data-c-action="activer" data-ref="${e(n.ref)}"${aideAttr(d, "activer")} title="Rendre visible aux visiteurs">✅ Activer</button>` : ""}</span>${visibilitePanneau(n)}`;
+  };
+  // Bloc « Qui voit cet élément ? » : meme donnees et memes actions que les icones de la structure.
+  const visibilitePanneau = (n) => {
+    if (!n.appareils || n.rendu || !d.arbre?.sections) return "";
+    const info = visibilites(d.arbre.sections, "GENERAL").get(n.ref);
+    if (!info) return "";
+    const modifiable = ecrit(d, FONCTION[d.arbre.type]) && peutAction(d, d.arbre.type, "design.enregistrer");
+    const vus = APPAREILS_VUE.filter(([a]) => !info.caches.includes(a)).map(([, , nom]) => nom);
+    const resume = !info.visible && info.caches.length < 3
+      ? `🚫 ${info.raison}.${vus.length ? ` Une fois visible, il s'affichera sur : ${vus.join(", ")}.` : ""}`
+      : vus.length ? `✅ Les visiteurs le voient sur : <strong>${vus.join(", ")}</strong>.${info.caches.length ? ` Masqué sur : ${info.caches.map((a) => NOMS_APPAREILS[a]).join(", ")}.` : ""}`
+        : "🚫 Masqué sur tous les appareils : aucun visiteur ne le voit.";
+    return `<div class="design-visibilite"${aideAttr(d, "visibilite")}><strong>👁 Qui voit cet élément ?</strong><p>${resume}</p>
+      <div class="design-visibilite-appareils">${APPAREILS_VUE.map(([a, icone, nom]) => {
+        const visible = n.appareils[a] !== false;
+        const contenu = `${icone} ${nom[0].toUpperCase()}${nom.slice(1)}<small>${visible ? "✔ Affiché" : "✖ Masqué"}</small>`;
+        return modifiable ? `<button type="button" class="design-visibilite-app${visible ? "" : " design-visibilite-app--masque"}" data-c-action="basculer-appareil" data-ref="${e(n.ref)}" data-appareil="${a}" data-visible="${visible}" aria-pressed="${visible}" title="Cliquer pour ${visible ? "masquer" : "afficher"} sur ${nom}">${contenu}</button>`
+          : `<span class="design-visibilite-app${visible ? "" : " design-visibilite-app--masque"}">${contenu}</span>`;
+      }).join("")}</div>
+      ${n.etat.publiable && ecrit(d, FONCTION[d.arbre.type]) && peutAction(d, d.arbre.type, "element.etat") ? bouton("⏸ Désactiver partout", "desactiver-direct", `data-ref="${e(n.ref)}"${aideAttr(d, "desactiver")}`, "btn btn-mini") : ""}</div>`;
   };
   const afficherPanneau = () => {
     const zone = racine.querySelector("[data-c-panneau]");
@@ -999,7 +1096,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     if (vide) vide.hidden = !cartes.length || visibles > 0;
   };
   const afficher = () => {
-    racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil, cotesReplies: etat.cotesReplies, zonesMasquees: etat.zonesMasquees, vueApercu: etat.vueApercu }, etat);
+    racine.innerHTML = rendreConstructeur(moi, { ...d, appareil: etat.appareil, filtreVue: etat.filtreVue, cotesReplies: etat.cotesReplies, zonesMasquees: etat.zonesMasquees, vueApercu: etat.vueApercu }, etat);
     majLot();
     for (const ref of replies) racine.querySelector(`[data-c-noeud="${CSS.escape(ref)}"]`)?.closest(".constructeur-noeud")?.classList.add("constructeur-noeud--replie");
     for (const v of racine.querySelectorAll("details[data-c-volet]")) if (volets.has(v.dataset.cVolet)) v.open = volets.get(v.dataset.cVolet);
@@ -1007,6 +1104,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     preparerApercu();
     if (!d.arbre) etat.design = null;
     afficherPanneau();
+    appliquerVue();
   };
   const executer = async (action, params, { historiqueCommande = false } = {}) => {
     if (enCours) return false;
@@ -1845,6 +1943,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   });
   racine.addEventListener("change", (ev) => {
     const s = ev.target;
+    if (s.matches?.("[data-c-filtre-vue]")) { etat.filtreVue = s.value; return appliquerVue(); }
     if (s.matches?.("[data-c-selection]")) {
       s.checked ? selection.add(s.dataset.cSelection) : selection.delete(s.dataset.cSelection);
       return majLot();

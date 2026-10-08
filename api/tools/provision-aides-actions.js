@@ -31,7 +31,11 @@ const AIDES = [
   ["lot-activer", "✅", "Activer la sélection", "Valide et active d'un coup tous les éléments cochés : ils deviennent visibles des visiteurs. Une fenêtre récapitule les changements avant d'enregistrer."],
   ["lot-desactiver", "⏸", "Désactiver la sélection", "Cache d'un coup aux visiteurs tous les éléments cochés, sans rien supprimer. Une fenêtre récapitule les changements avant d'enregistrer."],
   ["lot-appareil", "📱", "Afficher / Masquer par appareil", "Affiche ou masque tous les éléments cochés sur l'appareil choisi (ordinateur, tablette ou mobile). Exemple : cochez trois modules puis « Masquer » sur 📱 pour les retirer du téléphone uniquement."],
-  ["guide", "❓", "Mode d'emploi", "Liste toutes les icônes du constructeur avec leur explication. Astuce : survolez n'importe quelle icône pour que Pasc ARA IA vous l'explique."]
+  ["guide", "❓", "Mode d'emploi", "Liste toutes les icônes du constructeur avec leur explication. Astuce : survolez n'importe quelle icône pour que Pasc ARA IA vous l'explique."],
+  ["affichage-general", "👁", "Affichage Général", "Montre tout le contenu de la page. Les éléments masqués sur un appareil restent visibles mais sont encadrés en pointillés orange avec l'étiquette « Masqué sur … ». Idéal pour construire."],
+  ["affichage-appareil", "🖥", "Affichage par appareil", "Montre exactement ce que voit un visiteur sur cet appareil : ce qui y est masqué disparaît de l'aperçu, et apparaît barré et hachuré dans la Structure. Tout reste synchronisé."],
+  ["filtre-structure", "🔎", "Filtrer la structure", "Choisissez « tout », « ce que voient les visiteurs » ou « ce qui est masqué ou désactivé ». Le filtre suit l'appareil choisi dans « Affichage » (Général, Ordinateur, Tablette, Mobile)."],
+  ["visibilite", "👁", "Qui voit cet élément ?", "Résumé en clair de qui voit l'élément choisi. Cliquez sur Ordinateur, Tablette ou Mobile pour l'afficher ou le masquer sur cet appareil. « Désactiver partout » le cache sur tous les appareils, sans rien supprimer."]
 ];
 
 async function semer(token, siteId) {

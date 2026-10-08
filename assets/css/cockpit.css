@@ -757,3 +757,22 @@ span.constructeur-appareil { cursor: default; }
 .constructeur-guide dt { font-weight: 600; }
 .constructeur-guide dd { margin: .25rem 0 0; }
 .constructeur-guide-icone { display: inline-block; min-width: 1.6em; text-align: center; }
+/* Vue par appareil synchronisee : structure, apercu et panneau */
+.constructeur-appareils--inactif { opacity: .45; filter: grayscale(1); }
+.constructeur-appareil--courant { outline: 2px solid #0b5cad; outline-offset: 1px; }
+.constructeur-vue-etat { display: inline-block; margin-left: .3rem; padding: 1px 8px; border-radius: 999px; font-size: .75rem; font-weight: 600; background: #fdecea; color: #a8321f; }
+.constructeur-vue-etat--partiel { background: #fff4e0; color: #8a5300; }
+.constructeur-noeud--hors-vue > .constructeur-noeud-entete { background: repeating-linear-gradient(135deg, #fafafa 0 8px, #f1f1f1 8px 16px); }
+.constructeur-noeud--hors-vue > .constructeur-noeud-entete strong { color: #6b7280; text-decoration: line-through; text-decoration-color: #c0392b; }
+.constructeur-noeud--filtre { display: none !important; }
+.constructeur-filtre-vue { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: .4rem 0; padding: .4rem .6rem; border: 1px solid #c7d7fe; border-radius: 10px; background: #f5f8ff; font-size: .85rem; }
+.constructeur-filtre-vue select { font-size: .85rem; }
+.design-visibilite { margin: .5rem 0; padding: .6rem; border: 1px solid #c7d7fe; border-radius: 10px; background: #f5f8ff; }
+.design-visibilite p { margin: .3rem 0 .5rem; font-size: .85rem; }
+.design-visibilite-appareils { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35rem; margin-bottom: .4rem; }
+.design-visibilite-app { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: .35rem .2rem; border: 2px solid #1e8e3e; border-radius: 8px; background: #e9f7ee; font: inherit; font-size: .8rem; cursor: pointer; }
+span.design-visibilite-app { cursor: default; }
+.design-visibilite-app small { font-weight: 700; color: #1e6b35; }
+.design-visibilite-app--masque { border-color: #c0392b; background: #fdecea; }
+.design-visibilite-app--masque small { color: #a8321f; }
+button.design-visibilite-app:hover { box-shadow: 0 0 0 2px #0b5cad55; }
