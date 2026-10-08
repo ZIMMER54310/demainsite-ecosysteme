@@ -118,6 +118,9 @@ function contenuDe(d, module) {
   return { type, liste, element };
 }
 
+const contenusItems = (d, liste, moduleId) => liste
+  ? (d.contenus?.[liste] || []).filter((x) => rel(x, "OBJ-MODULE-SITE-PUBLIC")?.id === moduleId) : [];
+
 // Visibilite par appareil : masque responsive du style propre + (modules) colonnes VISIBLE-ORDINATEUR/TABLETTE/MOBILE.
 function appareilsDe(d, type, el) {
   const presetId = rel(el, "OBJ-STYLE-PRESET")?.id;
@@ -139,6 +142,10 @@ function noeud(d, type, el) {
     base.typeModule = c.type || "Non renseigné";
     base.formulaire = Boolean(c.liste);
     base.contenuRenseigne = Boolean(c.element);
+    // Le public n'affiche que le contenu actif + valide : un module valide au contenu en brouillon est vide pour les visiteurs.
+    const items = contenusItems(d, c.liste, el.id);
+    base.contenuPublic = items.some(B.publiable);
+    base.contenuBrouillon = items.filter((x) => !B.publiable(x) && !inactif(x)).length;
     base.utilisations = utilisationsDe(d, el.id).length;
     base.modele = rel(el, "OBJ-MODELE-BUILDER")?.titre || null;
     return base;
@@ -1188,16 +1195,21 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       if (!mode) return { erreur: "État non autorisé.", status: 400 };
       const cibles = [];
       for (const x of refs) { const c = cible(["section", "ligne", "colonne", "module"], x); if (c.refus) return c; cibles.push(c); }
-      let n = 0;
+      let n = 0, m = 0;
       for (const c of cibles) {
         const def = NIVEAUX[c.type];
         await w.maj(def.liste, c.el.id, await w.etats(def.liste, mode));
         if (c.type === "module") {
           for (const u of utilisationsDe(d, c.el.id)) { await w.maj("OBJ-MODULE-UTILISATION", u.id, await w.etats("OBJ-MODULE-UTILISATION", mode)); n++; }
+          // Valider un module valide aussi son contenu en brouillon (sinon il resterait vide pour les visiteurs).
+          const ct = contenuDe(d, c.el);
+          if (mode === "actif") for (const x of contenusItems(d, ct.liste, c.el.id).filter((x) => !B.publiable(x) && !inactif(x))) {
+            await w.maj(ct.liste, x.id, await w.etats(ct.liste, "actif")); m++;
+          }
         }
       }
       const quoi = cibles.length > 1 ? `${cibles.length} éléments` : NIVEAUX[cibles[0].type].libelle;
-      return res(`${quoi} ${mode === "actif" ? `validé${cibles.length > 1 ? "s" : ""} et activé${cibles.length > 1 ? "s" : ""}` : `désactivé${cibles.length > 1 ? "s" : ""} (aucune suppression)`}${n ? ` — ${n} utilisation(s) synchronisée(s)` : ""}.`);
+      return res(`${quoi} ${mode === "actif" ? `validé${cibles.length > 1 ? "s" : ""} et activé${cibles.length > 1 ? "s" : ""}` : `désactivé${cibles.length > 1 ? "s" : ""} (aucune suppression)`}${n ? ` — ${n} utilisation(s) synchronisée(s)` : ""}${m ? ` — ${m} contenu(s) en brouillon validé(s)` : ""}.`);
     }
 
     case "contenu.formulaire":

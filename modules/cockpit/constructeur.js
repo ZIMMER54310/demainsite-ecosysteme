@@ -292,6 +292,8 @@ export function visibilites(sections, appareil = "GENERAL") {
     let info;
     if (parent && !parent.visible) info = { visible: false, raison: `Caché : « ${parent.titre} » est masqué ou désactivé` };
     else if (n.etat && !n.etat.publiable) info = { visible: false, raison: n.etat.inactif ? "Désactivé : invisible sur tous les appareils" : "Non validé : invisible pour les visiteurs" };
+    else if (n.type === "module" && n.formulaire && n.contenuPublic === false) info = { visible: false, contenu: true,
+      raison: n.contenuBrouillon ? "Contenu en brouillon : module vide pour les visiteurs" : "Contenu vide : rien à montrer aux visiteurs" };
     else if (appareil === "GENERAL") info = caches.length === 3 ? { visible: false, raison: "Masqué sur tous les appareils" }
       : { visible: true, partiel: caches.length ? `Masqué sur ${caches.map((a) => NOMS_APPAREILS[a]).join(", ")}` : "" };
     else info = caches.includes(appareil) ? { visible: false, raison: `Masqué sur ${NOMS_APPAREILS[appareil]}` } : { visible: true };
@@ -1012,7 +1014,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         return modifiable ? `<button type="button" class="design-visibilite-app${visible ? "" : " design-visibilite-app--masque"}" data-c-action="basculer-appareil" data-ref="${e(n.ref)}" data-appareil="${a}" data-visible="${visible}" aria-pressed="${visible}" title="Cliquer pour ${visible ? "masquer" : "afficher"} sur ${nom}">${contenu}</button>`
           : `<span class="design-visibilite-app${visible ? "" : " design-visibilite-app--masque"}">${contenu}</span>`;
       }).join("")}</div>
-      ${n.etat.publiable && ecrit(d, FONCTION[d.arbre.type]) && peutAction(d, d.arbre.type, "element.etat") ? bouton("⏸ Désactiver partout", "desactiver-direct", `data-ref="${e(n.ref)}"${aideAttr(d, "desactiver")}`, "btn btn-mini") : ""}</div>`;
+      ${info.contenu && n.contenuBrouillon && n.etat.publiable && ecrit(d, FONCTION[d.arbre.type]) && peutAction(d, d.arbre.type, "element.etat") ? `${bouton("✅ Valider le contenu", "activer", `data-ref="${e(n.ref)}"${aideAttr(d, "activer")}`, "btn btn-mini btn-primary")} ` : ""}${n.etat.publiable && ecrit(d, FONCTION[d.arbre.type]) && peutAction(d, d.arbre.type, "element.etat") ? bouton("⏸ Désactiver partout", "desactiver-direct", `data-ref="${e(n.ref)}"${aideAttr(d, "desactiver")}`, "btn btn-mini") : ""}</div>`;
   };
   const afficherPanneau = () => {
     const zone = racine.querySelector("[data-c-panneau]");

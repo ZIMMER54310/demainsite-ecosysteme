@@ -84,7 +84,7 @@ async function main() {
     .filter((m) => m.type === "HERO").length, 1, "module déjà composé non dupliqué");
   legacy.lignes[1].relations["OBJ-ACTIF"] = NON;
   assert.equal(B.composerPage(legacy, site1).sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))
-    .filter((m) => m.type === "HERO").length, 1, "module historique de page préservé quand sa hiérarchie ne le compose pas");
+    .filter((m) => m.type === "HERO").length, 0, "module placé dans une colonne : suit sa hiérarchie (masquée ou non validée = invisible)");
   legacy.lignes[1].relations["OBJ-ACTIF"] = OUI;
   legacy.modules[5].relations["OBJ-ACTIF"] = NON;
   assert.equal(B.composerPage(legacy, site1).sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((c) => c.modules)))

@@ -441,6 +441,8 @@ function composerModulesAdaptesPage(donnees, site, page, sections, options) {
   const modules = (donnees.modules || [])
     .filter((m) => visible(m) &&
       rel(m, "OBJ-PAGES-SITE")?.id === page.id &&
+      // Un module place dans une colonne suit la visibilite de sa hierarchie (jamais projete hors d'elle).
+      !rel(m, "OBJ-COLONNE-SITE")?.id &&
       MODULES_ADAPTES_PAGE.has(String(rel(m, "OBJMODULESITEPUBLICTYPE")?.titre || "").trim().toUpperCase()) &&
       !dejaComposes.has(m.id))
     .sort(parOrdre)
