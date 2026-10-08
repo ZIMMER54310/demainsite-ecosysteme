@@ -725,3 +725,4 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .c-bulle-ia p{margin:0}
 .c-bulle-ia[hidden]{display:none}
 .constructeur-colonnes-btn{font-weight:700;color:#4c1d95;border-color:#c4b5fd}
+.design-statut{display:inline-flex;align-items:center;gap:.4rem;margin:.35rem 0 .2rem;flex-wrap:wrap}

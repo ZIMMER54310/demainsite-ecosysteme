@@ -86,7 +86,7 @@ const bouton = (libelle, action, attrs = "", classe = "btn btn-secondary") =>
 const aideAttr = (d, code) => d?.aidesActions?.[code]?.aide ? ` data-c-aide="${e(code)}"` : "";
 const aideIa = (d, code) => d?.aidesActions?.[code]?.aide
   ? `<p class="c-aide-bloc">🤖 <strong>Pasc ARA IA</strong> — ${e(d.aidesActions[code].aide)}</p>` : "";
-const AIDE_CANVAS = { "ajouter-ancien": "ajouter", "contenu-ancien": "contenu", "dupliquer-ancien": "dupliquer", "supprimer-ancien": "supprimer", retirer: "supprimer" };
+const AIDE_CANVAS = { "ajouter-ancien": "ajouter", "contenu-ancien": "contenu", "dupliquer-ancien": "dupliquer", "supprimer-ancien": "supprimer", "activer-ancien": "activer", retirer: "supprimer" };
 const FONCTION = { entete: "entete", footer: "footer", page: "pages", article: "articles" };
 // Article : memes correspondances que le serveur (operations Articles existantes), le serveur recontrole chaque action.
 const OPERATIONS_ARTICLE = {
@@ -306,7 +306,7 @@ function arbreGeneriqueHtml(n, peut, racine = true, d = {}) {
     <ul>${(n.enfants || []).map((x) => arbreGeneriqueHtml(x, peut, false, d)).join("")}</ul></li>`;
 }
 
-export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", renommable = false, colonnes = "") {
+export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", renommable = false, colonnes = "", statut = "") {
   const controle = (c) => {
     const nom = `name="${e(c.ref)}"`;
     const v = (appareil ? c.surcharges?.[appareil] : c.valeur) ?? "";
@@ -329,7 +329,7 @@ export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", r
     const herite = appareil && (v === "" || v === null) ? `<small>Valeur générale : ${e(c.valeur ?? "non configurée")}</small>` : "";
     return `<label class="design-champ">${e(c.libelle)}${c.obligatoire ? " *" : ""}${input}${herite}<small>${e(c.aide || t.aide || "")}</small></label>`;
   };
-  return `<form class="card design-panneau" data-builder-valeurs data-appareil="${e(appareil)}" data-ref="${e(n.ref)}"><h3>${e(n.titre)}${renommable && !n.verrouille ? ` <button type="button" class="btn btn-mini design-renommer" data-c-action="renommer" data-ref="${e(n.ref)}" title="Modifier le nom" aria-label="Modifier le nom">✏️</button>` : ""}${colonnes && !n.verrouille ? ` <button type="button" class="btn btn-mini constructeur-colonnes-btn" data-c-action="colonnes" data-ref="${e(n.ref)}"${colonnes} title="Colonnes : nombre et largeurs en %" aria-label="Colonnes de la ligne">▥ Colonnes</button>` : ""}</h3>
+  return `<form class="card design-panneau" data-builder-valeurs data-appareil="${e(appareil)}" data-ref="${e(n.ref)}"><h3>${e(n.titre)}${renommable && !n.verrouille ? ` <button type="button" class="btn btn-mini design-renommer" data-c-action="renommer" data-ref="${e(n.ref)}" title="Modifier le nom" aria-label="Modifier le nom">✏️</button>` : ""}${colonnes && !n.verrouille ? ` <button type="button" class="btn btn-mini constructeur-colonnes-btn" data-c-action="colonnes" data-ref="${e(n.ref)}"${colonnes} title="Colonnes : nombre et largeurs en %" aria-label="Colonnes de la ligne">▥ Colonnes</button>` : ""}</h3>${statut}
     <label class="design-champ">Valeurs à modifier<select data-builder-appareil>${[["", "Général / par défaut"], ...APPAREILS_APERCU.map((x) => [x.cle, x.libelle])].map(([cle, libelle]) =>
       `<option value="${cle}"${appareil === cle ? " selected" : ""}>${e(libelle)}</option>`).join("")}</select></label>
     <div class="design-onglets" role="tablist" aria-label="Réglages">${["CONTENU", "DESIGN", "AVANCE"].map((c) =>
@@ -395,6 +395,11 @@ export function documentApercu(composition, type = "page") {
     [data-dse-ref].dse-survol{outline:2px solid var(--dse-c,#7c3aed);outline-offset:-2px}
     [data-dse-ref].dse-survol::before,[data-dse-ref].dse-design-cible::before{content:attr(data-dse-libelle);position:absolute;top:0;left:0;z-index:5;padding:2px 8px;font:600 11px/18px system-ui;color:#fff;background:var(--dse-c,#7c3aed);border-radius:0 0 6px 0;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
     [data-dse-ref].dse-design-cible{outline:3px solid var(--dse-c,#7c3aed);outline-offset:-3px}
+    .dse-b-statut{position:absolute;right:4px;bottom:4px;z-index:6;padding:2px 9px;font:700 11px/18px system-ui;border-radius:999px;pointer-events:auto;cursor:help;box-shadow:0 1px 3px #0003}
+    .dse-b-statut--brouillon{background:#fef3c7;color:#92400e;border:1px solid #f59e0b}.dse-b-statut--desactive{background:#e5e7eb;color:#374151;border:1px solid #9ca3af}
+    body:not(.dse-apercu-seul) [data-dse-statut=brouillon]:not(.dse-survol):not(.dse-design-cible){outline:2px dashed #f59e0b!important;outline-offset:-2px}
+    body:not(.dse-apercu-seul) [data-dse-statut=desactive]{opacity:.55}
+    body.dse-apercu-seul .dse-b-statut{display:none}
     [data-dse-type=section]{--dse-c:#2b87da}[data-dse-type=ligne]{--dse-c:#29c4a9}[data-dse-type=colonne]{--dse-c:#8f42ec}[data-dse-type=module],[data-dse-type=builder]{--dse-c:#4c5866}[data-dse-type=entete],[data-dse-type=footer],[data-dse-type=page],[data-dse-type=article]{--dse-c:#e09900}
     body:not(.dse-apercu-seul) :is(.dse-b-r-section,.dse-b-r-ligne,.dse-b-r-colonne,[data-dse-type=section],[data-dse-type=ligne],[data-dse-type=colonne])[data-dse-ref]:not(.dse-survol):not(.dse-design-cible){outline:1px dashed var(--dse-c);outline-offset:-1px}
     body:not(.dse-apercu-seul) .dse-b-r-section[data-dse-ref]{background:#2b87da08;padding:24px 10px 10px!important;margin:6px 0}
@@ -743,8 +748,8 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         if (commande && !enCours && commande.dataset.builderCanvas === "colonnes") return formulaireColonnes(commande.dataset.ref);
         if (commande && !enCours && commande.dataset.builderCanvas === "supprimer-ancien") return confirmerSuppression(commande.dataset.ref);
         if (commande && !enCours && commande.dataset.builderCanvas === "ajouter-ancien") return ajoutAncien(commande.dataset.ref);
-        if (commande && !enCours && ["contenu-ancien", "dupliquer-ancien"].includes(commande.dataset.builderCanvas)) {
-          const action = { "contenu-ancien": "contenu", "dupliquer-ancien": "dupliquer-element" }[commande.dataset.builderCanvas];
+        if (commande && !enCours && ["contenu-ancien", "dupliquer-ancien", "activer-ancien"].includes(commande.dataset.builderCanvas)) {
+          const action = { "contenu-ancien": "contenu", "dupliquer-ancien": "dupliquer-element", "activer-ancien": "activer" }[commande.dataset.builderCanvas];
           return racine.querySelector(`[data-c-action="${action}"][data-ref="${CSS.escape(commande.dataset.ref)}"]`)?.click();
         }
         if (commande && !enCours) return racine.querySelector(`[data-c-action="builder-${CSS.escape(commande.dataset.builderCanvas)}"][data-ref="${CSS.escape(commande.dataset.ref)}"]`)?.click();
@@ -759,7 +764,19 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         const freres = (node?.parent?.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === rendu);
         const detail = rendu === "LIGNE" ? ` · ${(node.n.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE").length || "0"} col.`
           : rendu === "COLONNE" && freres.length > 1 ? ` ${freres.indexOf(node.n) + 1}/${freres.length}` : "";
-        el.dataset.dseLibelle = `${rendu || LIBELLES[sorte] || "Élément"}${detail}${node?.n?.titre ? ` · ${node.n.titre}` : ""}`;
+        const statut = node?.n?.etat?.inactif ? "desactive" : node?.n?.etat?.brouillon ? "brouillon" : "";
+        const libStatut = { desactive: "Désactivé", brouillon: "Brouillon" }[statut];
+        el.dataset.dseLibelle = `${rendu || LIBELLES[sorte] || "Élément"}${detail}${node?.n?.titre ? ` · ${node.n.titre}` : ""}${libStatut ? ` · ${libStatut}` : ""}`;
+        // Statut visible en permanence dans le canevas (jamais dans la vue visiteur).
+        if (statut) {
+          el.dataset.dseStatut = statut;
+          if (!el.querySelector(":scope>.dse-b-statut")) {
+            const pastille = doc.createElement("span");
+            Object.assign(pastille, { className: `dse-b-statut dse-b-statut--${statut}`, textContent: `● ${libStatut}`,
+              title: statut === "brouillon" ? "Brouillon : pas encore visible par les visiteurs. Cliquez sur « Activer » pour le publier." : "Désactivé : masqué pour les visiteurs, conservé dans SharePoint." });
+            el.append(pastille);
+          }
+        }
         // Ancien format (section/ligne/colonne/module) : pas de barre generee par le rendu, on la construit ici.
         if (!rendu && node?.n && LIBELLES[node.n.type] && !node.n.etat?.inactif && !el.querySelector(":scope>.dse-b-outils")
           && ecrit(d, FONCTION[d.arbre.type])) {
@@ -771,6 +788,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
             n.type === "module" && n.formulaire && peut("contenu.enregistrer") ? ["✏️ Modifier", "contenu-ancien", "Modifier le contenu de ce module"]
               : peut("design.enregistrer") && ["✏️ Modifier", "modifier", "Ouvrir les réglages de cet élément"],
             peut("element.renommer") && ["🏷 Nom", "renommer", `Renommer ${n.titre || "cet élément"}`],
+            n.etat?.brouillon && peut("element.etat") && peut("conteneur.publier") && ["✅ Activer", "activer-ancien", `Activer ${n.titre || "cet élément"} : le rendre visible aux visiteurs`],
             node.parent && peut("element.dupliquer") && ["Dupliquer", "dupliquer-ancien", "Dupliquer cet élément"],
             node.parent && peut("element.etat") && ["🗑", "supprimer-ancien", `Supprimer ${n.titre || "cet élément"} (confirmation demandée)`],
           ].filter(Boolean);
@@ -837,6 +855,12 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     try { localStorage.setItem(CLE_COTES, JSON.stringify(etat.cotesReplies)); } catch { /* choix limité à la session */ }
     dimensionner();
   };
+  const statutPanneau = (n) => {
+    if (!n?.etat) return "";
+    const activable = !n.rendu && LIBELLES[n.type] && !n.etat.publiable && !n.verrouille && ecrit(d, FONCTION[d.arbre?.type])
+      && peutAction(d, d.arbre?.type, "element.etat") && peutAction(d, d.arbre?.type, "conteneur.publier");
+    return `<span class="design-statut">${badgeEtat(n.etat)}${activable ? ` <button type="button" class="btn btn-mini btn-primary" data-c-action="activer" data-ref="${e(n.ref)}"${aideAttr(d, "activer")} title="Rendre visible aux visiteurs">✅ Activer</button>` : ""}</span>`;
+  };
   const afficherPanneau = () => {
     const zone = racine.querySelector("[data-c-panneau]");
     if (!zone) return;
@@ -845,7 +869,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     zone.innerHTML = generic ? panneauGenerique(generic, (d.medias || []).filter((m) => m.builderAutorise !== false), etat.design.appareilValeurs || "", etat.design.ongletGenerique || "CONTENU",
       ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre?.type, "builder.renommer"),
       String(generic.rendu || "").toUpperCase() === "LIGNE" && Boolean(colonnesDirectes(generic.typeRef)) && ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre?.type, "builder.ajouter")
-        ? aideAttr(d, "colonnes") || " " : "") : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, contenu: contenuDesign(etat.design.ref), aideDesign: typeDe(trouverNoeud(etat.design.ref)?.n)?.aideDesign || "", onglet: etat.design.onglet, appareil: etat.design.appareil,
+        ? aideAttr(d, "colonnes") || " " : "", statutPanneau(generic)) : etat.design?.data ? panneauDesign(etat.design.data, { ref: etat.design.ref, statut: statutPanneau(trouverNoeud(etat.design.ref)?.n), contenu: contenuDesign(etat.design.ref), aideDesign: typeDe(trouverNoeud(etat.design.ref)?.n)?.aideDesign || "", onglet: etat.design.onglet, appareil: etat.design.appareil,
       renommable: ["section", "ligne", "colonne", "module"].includes(trouverNoeud(etat.design.ref)?.n?.type) && ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre.type, "element.renommer"),
       colonnes: ["ligne", "colonne"].includes(trouverNoeud(etat.design.ref)?.n?.type) && ecrit(d, FONCTION[d.arbre?.type]) && peutAction(d, d.arbre.type, "ligne.colonnes"),
       aideColonnes: aideAttr(d, "colonnes") })
