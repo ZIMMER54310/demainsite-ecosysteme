@@ -226,7 +226,7 @@ function ongletCatalogue(d) {
         : `<p class="muted">Aucun modèle actif et validé dans SharePoint pour ce périmètre${m.enAttente ? ` (${m.enAttente} en attente de validation)` : ""}. La construction libre reste disponible.</p>`}
     </div>
     <div class="card"><h3>Modules autorisés</h3>
-      <ul class="constructeur-types">${d.typesModules.map((t) => `<li><strong>${e(t.code)}</strong>${t.formulaire ? "" : " <span class=\"muted\">(sans formulaire de contenu)</span>"}${t.description ? ` — ${e(t.description)}` : ""}</li>`).join("")}</ul>
+      <ul class="constructeur-types">${d.typesModules.map((t) => `<li>${t.icone ? `${e(t.icone)} ` : ""}<strong>${e(t.libelle || t.code)}</strong>${t.formulaire ? "" : " <span class=\"muted\">(sans formulaire de contenu)</span>"}${t.description ? ` — ${e(t.description)}` : ""}</li>`).join("")}</ul>
     </div>
     <div class="card"><h3>Dispositions de colonnes</h3>
       <p>${d.structures.map((s) => `<span class="badge">${e(s.titre)}</span>`).join(" ") || `<span class="muted">Aucune disposition active.</span>`}</p>
@@ -274,11 +274,7 @@ function noeudHtml(d, n, peut, colonnes) {
       <button class="btn btn-mini" type="submit">➕ Ligne</button></form>`;
   }
   if (peut && n.type === "colonne" && peutAction(d, d.arbre.type, "module.ajouter")) {
-    ajout = `<form class="constructeur-ajout" data-c-ajout="module" data-ref="${e(n.ref)}">
-      <select name="typeModule" required aria-label="Type de module"><option value="">Module…</option>${d.typesModules.map((t) => `<option value="${e(t.code)}">${e(t.code)}</option>`).join("")}</select>
-      ${d.modeles.disponibles.length ? `<select name="modele" aria-label="Modèle (facultatif)"><option value="">Construction libre</option>${d.modeles.disponibles.map((m) => `<option value="${e(m.ref)}">${e(m.titre)}</option>`).join("")}</select>` : ""}
-      <input name="titre" maxlength="255" placeholder="Nom (facultatif)" aria-label="Nom du module">
-      <button class="btn btn-mini" type="submit">➕ Module</button></form>`;
+    ajout = `<div class="constructeur-ajout"><button class="btn btn-mini" type="button" data-c-action="ajouter-ancien" data-ref="${e(n.ref)}">➕ Module</button></div>`;
   }
   return `<li class="constructeur-noeud constructeur-noeud--${n.type}">${entete}<ul>${enfants}</ul>${ajout}</li>`;
 }
@@ -1219,11 +1215,55 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const n = trouverNoeud(ref)?.n;
     if (n?.type === "section") return ouvrirFormulaire({ textes: [], listes: [{ cle: "structure", libelle: "Disposition des colonnes", obligatoire: true, options: d.structures || [] }] },
       `Ajouter une ligne dans « ${n.titre || "la section"} »`, (v) => v.structure && executer("ligne.ajouter", { ref, structure: v.structure }));
-    if (n?.type === "colonne") return ouvrirFormulaire({
-      textes: [{ cle: "titre", libelle: "Nom (facultatif)", valeur: "", max: 255 }],
-      listes: [{ cle: "typeModule", libelle: "Type de module", obligatoire: true, options: (d.typesModules || []).map((t) => ({ ref: t.code, titre: t.code })) },
-        ...(d.modeles?.disponibles?.length ? [{ cle: "modele", libelle: "Modèle (facultatif)", options: d.modeles.disponibles }] : [])]
-    }, `Ajouter un module dans « ${n.titre || "la colonne"} »`, (v) => v.typeModule && executer("module.ajouter", { ref, ...Object.fromEntries(Object.entries(v).filter(([, x]) => x)) }));
+    if (n?.type === "colonne") return choisirModule(ref, n);
+  };
+  // Etape 1 : catalogue de cartes classees par categorie (tout vient de SharePoint). Etape 2 : nom et modele.
+  const choisirModule = (ref, n) => {
+    const dlg = dialogue();
+    const types = d.typesModules || [];
+    const groupes = [...(d.categoriesModules || []), { cle: "", titre: "Autres", icone: "🧩" }]
+      .map((c) => ({ ...c, types: types.filter((t) => (t.categorie || "") === c.cle) })).filter((g) => g.types.length);
+    const carte = (t) => `<button type="button" class="c-module-carte" data-c-type-module="${e(t.code)}" data-recherche="${e(`${t.libelle} ${t.code} ${t.description}`.toLowerCase())}" title="${e(t.description || t.libelle)}">
+      <span class="c-module-icone" aria-hidden="true">${e(t.icone || "🧩")}</span><span class="c-module-nom">${e(t.libelle)}</span></button>`;
+    dlg.innerHTML = `<div class="c-modules">
+      <div class="c-modules-entete"><h3>Ajouter un module dans « ${e(n.titre || "la colonne")} »</h3><button type="button" class="btn btn-mini" data-c-fermer aria-label="Fermer">✕</button></div>
+      <input type="search" class="c-modules-recherche" placeholder="🔍 Rechercher un module…" aria-label="Rechercher un module">
+      <div class="c-modules-filtres" role="group" aria-label="Catégories"><button type="button" class="c-modules-filtre actif" data-c-filtre="*">Toutes</button>${groupes.map((g) => `<button type="button" class="c-modules-filtre" data-c-filtre="${e(g.cle)}">${e(g.icone || "")} ${e(g.titre)}</button>`).join("")}</div>
+      <div class="c-modules-liste">${groupes.map((g) => `<section class="c-modules-groupe" data-c-groupe="${e(g.cle)}"><h4>${e(g.icone || "")} ${e(g.titre)}</h4><div class="c-modules-grille">${g.types.map(carte).join("")}</div></section>`).join("")}
+      <p class="muted c-modules-vide" hidden>Aucun module ne correspond.</p></div></div>`;
+    let filtre = "*";
+    const appliquer = () => {
+      const q = dlg.querySelector(".c-modules-recherche").value.trim().toLowerCase();
+      let visibles = 0;
+      for (const g of dlg.querySelectorAll("[data-c-groupe]")) {
+        let n = 0;
+        for (const c of g.querySelectorAll("[data-c-type-module]")) { c.hidden = Boolean(q) && !c.dataset.recherche.includes(q); if (!c.hidden) n++; }
+        g.hidden = (filtre !== "*" && g.dataset.cGroupe !== filtre) || !n;
+        if (!g.hidden) visibles += n;
+      }
+      dlg.querySelector(".c-modules-vide").hidden = visibles > 0;
+    };
+    dlg.querySelector("[data-c-fermer]").addEventListener("click", () => dlg.close());
+    dlg.querySelector(".c-modules-recherche").addEventListener("input", appliquer);
+    dlg.querySelector(".c-modules-filtres").addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-c-filtre]");
+      if (!b) return;
+      filtre = b.dataset.cFiltre;
+      for (const x of dlg.querySelectorAll("[data-c-filtre]")) x.classList.toggle("actif", x === b);
+      appliquer();
+    });
+    dlg.querySelector(".c-modules-liste").addEventListener("click", (ev) => {
+      const t = types.find((x) => x.code === ev.target.closest("[data-c-type-module]")?.dataset.cTypeModule);
+      if (!t) return;
+      dlg.close();
+      ouvrirFormulaire({
+        textes: [{ cle: "titre", libelle: "Nom du module", valeur: t.libelle, max: 255, obligatoire: true }],
+        listes: d.modeles?.disponibles?.length ? [{ cle: "modele", libelle: "Modèle (facultatif)", options: d.modeles.disponibles }] : []
+      }, `${t.icone || "🧩"} ${t.libelle} — dans « ${n.titre || "la colonne"} »`,
+      (v) => executer("module.ajouter", { ref, typeModule: t.code, ...Object.fromEntries(Object.entries(v).filter(([, x]) => x)) }));
+    });
+    dlg.showModal();
+    dlg.querySelector(".c-modules-recherche").focus();
   };
   const appliquerColonnes = async (ref, typeCol, largeurs) => {
     const colonnes = () => (trouverNoeud(ref)?.n?.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE");
@@ -1440,6 +1480,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       }, "Initialiser ce conteneur vide", (v) => executer("builder.initialiser", { ref, ...v }));
       case "builder-retirer": return confirmerSuppression(ref);
       case "renommer": return renommer(ref);
+      case "ajouter-ancien": return ajoutAncien(ref);
       case "ouvrir": if (!confirmerAbandon()) return; etat.conteneur = ref; etat.message = ""; historiqueBuilder = []; positionBuilder = -1; brouillons.clear(); brouillonGenerique = false; await charger().catch((err) => Object.assign(etat, { message: err.message, erreur: true })); empreinteHistorique = d.arbre?.generique?.empreinte || ""; return afficher();
       case "fermer": if (!confirmerAbandon()) return; etat.conteneur = ""; delete d.arbre; delete d.apercu; try { await charger(); } catch (err) { Object.assign(etat, { message: err.message, erreur: true }); } brouillonGenerique = false; brouillons.clear(); return afficher();
       case "ia": return message(MESSAGE_IA);

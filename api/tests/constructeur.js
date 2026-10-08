@@ -52,6 +52,17 @@ const perimetre = { sites: new Set(["4"]), clients: new Set(["A"]), superAdmin: 
 async function main() {
   const d = donnees();
   const v = C.vue(d, perimetre);
+  {
+    const dc = donnees();
+    dc.categoriesModules = [el(1, "Texte", {}, { ICONE: "📝", "ORDRE-AFFICHAGE": 2 }), el(2, "Média", {}, { ICONE: "🖼️", "ORDRE-AFFICHAGE": 1 }), el(3, "Off", {}, {}, NON, OUI)];
+    dc.types = [el(1, "TITRE", { "OBJ-MODULE-CATEGORIE": lien(1, "Texte") }, { LIBELLE: "Titre", ICONE: "🔤" }), el(2, "TEXTE", { "OBJ-MODULE-CATEGORIE": lien(3, "Off") })];
+    const vc = C.vue(dc, perimetre);
+    assert.deepEqual(vc.categoriesModules.map((c) => c.titre), ["Média", "Texte"], "categories SharePoint publiees, triees par ORDRE-AFFICHAGE");
+    const [titre, texte] = vc.typesModules;
+    assert.equal(titre.libelle, "Titre"); assert.equal(titre.icone, "🔤");
+    assert.equal(titre.categorie, vc.categoriesModules[1].cle, "type rattache a sa categorie");
+    assert.equal(texte.libelle, "TEXTE", "libelle par defaut = code"); assert.equal(texte.categorie, null, "categorie inactive => Autres");
+  }
   const uiConstructeur = await front("cockpit/constructeur.js");
   const mediasUI = await front("cockpit/medias.js");
   const mediasHtml = mediasUI.rendreMedias({ ...v, droits: { "logo-medias": { ecriture: true } },

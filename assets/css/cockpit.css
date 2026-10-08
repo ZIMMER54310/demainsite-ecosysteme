@@ -688,3 +688,20 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .constructeur-vue-choix button small { display: block; color: #64748b; font-size: .78rem; line-height: 1.3; }
 .constructeur-vue-choix button:hover { background: #f1f5f9; }
 .constructeur-vue-choix button.actif { background: #eff6ff; border-color: #93c5fd; }
+
+/* Catalogue de modules : cartes par categorie (donnees SharePoint OBJ-MODULE-CATEGORIE) */
+.constructeur-dialogue:has(.c-modules) { width: min(880px, 94vw); max-height: 88vh; }
+.c-modules { display: grid; gap: 10px; }
+.c-modules-entete { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.c-modules-entete h3 { margin: 0; font-size: 1.05rem; }
+.c-modules-recherche { padding: 8px 10px; font: inherit; width: 100%; border: 1px solid var(--line, #ccd); border-radius: 8px; }
+.c-modules-filtres { display: flex; flex-wrap: wrap; gap: 6px; }
+.c-modules-filtre { border: 1px solid #ddd6fe; background: #f5f3ff; color: #4c1d95; border-radius: 999px; padding: 4px 10px; font: inherit; font-size: .85rem; cursor: pointer; }
+.c-modules-filtre.actif { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.c-modules-liste { overflow: auto; max-height: 60vh; display: grid; gap: 14px; padding-right: 4px; }
+.c-modules-groupe h4 { margin: 0 0 6px; font-size: .9rem; color: #4c1d95; border-bottom: 1px solid #ede9fe; padding-bottom: 3px; }
+.c-modules-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.c-module-carte { display: grid; justify-items: center; gap: 6px; padding: 12px 6px; border: 1px solid var(--line, #dde); border-radius: 10px; background: #fff; cursor: pointer; font: inherit; text-align: center; }
+.c-module-carte:hover, .c-module-carte:focus-visible { border-color: #7c3aed; background: #faf5ff; box-shadow: 0 2px 8px rgba(124, 58, 237, .18); }
+.c-module-icone { font-size: 1.9rem; line-height: 1; }
+.c-module-nom { font-size: .85rem; font-weight: 600; color: #1f2937; }

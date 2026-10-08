@@ -223,9 +223,16 @@ function vue(d, perimetre) {
       entete: rel(p, "OBJ-ENTETE-SITE") ? enteteDe(rel(p, "OBJ-ENTETE-SITE").id) : null,
       footer: rel(p, "OBJ-FOOTER-SITE") ? footerDe(rel(p, "OBJ-FOOTER-SITE").id) : null
     })),
+    // Catalogue visuel : libelle, icone, ordre et categorie viennent de SharePoint (OBJ-MODULE-CATEGORIE).
+    categoriesModules: (d.categoriesModules || []).filter(B.publiable).sort(parOrdre)
+      .map((c) => ({ cle: `categorie.${signer(`categorie:${c.id}`)}`, titre: titreDe(c), icone: texte(c, "ICONE"), description: texte(c, "NOTE-COURTE") })),
     typesModules: (d.types || []).filter(B.publiable).sort(parOrdre).map((t) => {
       const code = titreDe(t).toUpperCase();
-      return { code, formulaire: Boolean(B.LISTES_CONTENU[code]), description: texte(t, "NOTE-COURTE") };
+      const cat = rel(t, "OBJ-MODULE-CATEGORIE");
+      const categorie = cat && (d.categoriesModules || []).some((c) => String(c.id) === String(cat.id) && B.publiable(c))
+        ? `categorie.${signer(`categorie:${cat.id}`)}` : null;
+      return { code, libelle: texte(t, "LIBELLE") || code, icone: texte(t, "ICONE"), categorie,
+        formulaire: Boolean(B.LISTES_CONTENU[code]), description: texte(t, "NOTE-COURTE") };
     }).filter((t) => t.code),
     structures: (d.structures || []).filter(B.publiable).sort(parOrdre)
       .map((s) => ({ ref: `structure.${signer(`structure:${s.id}`)}`, titre: titreDe(s), colonnes: Number(champ(s, ["NOMBRECOLONNES"])) || 1 })),
