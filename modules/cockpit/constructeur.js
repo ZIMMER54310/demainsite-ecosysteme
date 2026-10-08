@@ -395,7 +395,9 @@ export function documentApercu(composition, type = "page") {
     [data-dse-ref].dse-survol{outline:2px solid var(--dse-c,#7c3aed);outline-offset:-2px}
     [data-dse-ref].dse-survol::before,[data-dse-ref].dse-design-cible::before{content:attr(data-dse-libelle);position:absolute;top:0;left:0;z-index:5;padding:2px 8px;font:600 11px/18px system-ui;color:#fff;background:var(--dse-c,#7c3aed);border-radius:0 0 6px 0;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
     [data-dse-ref].dse-design-cible{outline:3px solid var(--dse-c,#7c3aed);outline-offset:-3px}
-    .dse-b-statut{position:absolute;right:4px;bottom:4px;z-index:6;padding:2px 9px;font:700 11px/18px system-ui;border-radius:999px;pointer-events:auto;cursor:help;box-shadow:0 1px 3px #0003}
+    .dse-b-statut{position:absolute;right:4px;bottom:4px;z-index:6;padding:2px 9px;font:700 11px/18px system-ui;border-radius:999px;pointer-events:auto;cursor:help;box-shadow:0 1px 3px #0003;white-space:nowrap}
+    [data-dse-type=module]>.dse-b-statut,[data-dse-type=builder]>.dse-b-statut{right:auto;left:4px}
+    [data-dse-type=ligne]>.dse-b-statut,[data-dse-type=section]>.dse-b-statut{right:auto;left:50%;transform:translateX(-50%)}
     .dse-b-statut--brouillon{background:#fef3c7;color:#92400e;border:1px solid #f59e0b}.dse-b-statut--desactive{background:#e5e7eb;color:#374151;border:1px solid #9ca3af}
     body:not(.dse-apercu-seul) [data-dse-statut=brouillon]:not(.dse-survol):not(.dse-design-cible){outline:2px dashed #f59e0b!important;outline-offset:-2px}
     body:not(.dse-apercu-seul) [data-dse-statut=desactive]{opacity:.55}
@@ -772,7 +774,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
           el.dataset.dseStatut = statut;
           if (!el.querySelector(":scope>.dse-b-statut")) {
             const pastille = doc.createElement("span");
-            Object.assign(pastille, { className: `dse-b-statut dse-b-statut--${statut}`, textContent: `● ${libStatut}`,
+            Object.assign(pastille, { className: `dse-b-statut dse-b-statut--${statut}`, textContent: `● ${LIBELLES[sorte] || "Élément"} : ${libStatut.toLowerCase()}`,
               title: statut === "brouillon" ? "Brouillon : pas encore visible par les visiteurs. Cliquez sur « Activer » pour le publier." : "Désactivé : masqué pour les visiteurs, conservé dans SharePoint." });
             el.append(pastille);
           }
