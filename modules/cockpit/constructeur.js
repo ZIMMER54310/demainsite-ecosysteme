@@ -491,7 +491,7 @@ function bandeauDesactives(d, sections, peut) {
   if (!liste.length) return "";
   const droit = peut && peutAction(d, d.arbre.type, "element.etat");
   return `<details class="constructeur-desactives"${aideAttr(d, "supprimer")}><summary>⏸ ${liste.length} élément${liste.length > 1 ? "s" : ""} désactivé${liste.length > 1 ? "s" : ""} (invisible${liste.length > 1 ? "s" : ""} ici et pour les visiteurs) — cliquez pour ${droit ? "les réactiver ou les supprimer" : "les voir"}</summary>
-    <ul>${liste.map((n) => `<li><span class="constructeur-type">${e(LIBELLES[n.type] || n.type)}</span> <strong>${e(n.titre)}</strong>${droit && !n.verrouille ? `
+    <ul>${liste.map((n) => `<li><span class="constructeur-type">${e(LIBELLES[n.type] || n.type)}</span> <strong>${e(n.titre || "sans nom")}</strong>${droit && !n.verrouille ? `
       ${peutAction(d, d.arbre.type, "conteneur.publier") ? bouton("Activer", "activer", `data-ref="${e(n.ref)}"${aideAttr(d, "activer")}`, "btn btn-mini") : ""}
       ${bouton("🗑 Supprimer", "desactiver-element", `data-ref="${e(n.ref)}"${aideAttr(d, "supprimer")} title="Supprimer définitivement (confirmation demandée)"`, "btn btn-mini constructeur-corbeille")}` : n.verrouille ? " 🔒" : ""}</li>`).join("")}</ul></details>`;
 }
@@ -1497,9 +1497,9 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const dlg = dialogue();
     dlg.innerHTML = `<form method="dialog" class="constructeur-ajout-rapide constructeur-suppression">
       <h3>🗑 Supprimer ${e(quoi)} « ${e(n.titre || "sans nom")} » ?</h3>
-      <p>${nb ? `Il contient <strong>${nb} élément${nb > 1 ? "s" : ""}</strong> (lignes, colonnes, modules…) qui suivront le même sort.` : "Il ne contient aucun autre élément."}</p>
+      <p>${nb ? `Cet élément contient <strong>${nb} élément${nb > 1 ? "s" : ""}</strong> (lignes, colonnes, modules…) qui suivront le même sort.` : "Cet élément ne contient rien d'autre."}</p>
       ${definitif ? `<fieldset class="constructeur-suppression-choix"><legend>Que voulez-vous faire ?</legend>
-        <label><input type="radio" name="mode" value="desactiver" ${dejaInactif ? "disabled" : "checked"}> <strong>⏸ Désactiver</strong> — il disparaît du site mais reste récupérable (bouton « Activer »).${dejaInactif ? " <em>Déjà désactivé.</em>" : ""}</label>
+        <label><input type="radio" name="mode" value="desactiver" ${dejaInactif ? "disabled" : "checked"}> <strong>⏸ Désactiver</strong> — disparaît du site mais reste récupérable (bouton « Activer »).${dejaInactif ? " <em>Déjà désactivé.</em>" : ""}</label>
         <label><input type="radio" name="mode" value="definitif" ${dejaInactif ? "checked" : ""}> <strong>🗑 Supprimer définitivement</strong> — effacé de SharePoint avec tout son contenu. Utile pour une erreur ou un doublon.</label>
       </fieldset>
       <label class="constructeur-suppression-ok" ${dejaInactif ? "" : "hidden"}><input type="checkbox" name="ok"> Je confirme la suppression définitive de « ${e(n.titre || "sans nom")} »${nb ? ` et de ses ${nb} élément${nb > 1 ? "s" : ""}` : ""}.</label>`
