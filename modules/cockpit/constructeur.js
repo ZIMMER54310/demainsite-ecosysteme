@@ -344,7 +344,7 @@ export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", r
 }
 
 export function documentApercu(composition, type = "page") {
-  const automatique = (texte) => () => `<span class="dse-b-vide">${texte}</span>`;
+  const automatique = (texte) => () => `<span class="dse-b-vide dse-b-vide--auto">${texte}</span>`;
   const adapteursAuto = { HEADER: automatique("🔗 Logo et menu du site · affichés automatiquement"),
     FOOTER: automatique("🔗 Mentions et copyright du site · affichés automatiquement") };
   const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: adapteursAuto, apercu: true, prefixe, typeConteneur });
@@ -402,6 +402,7 @@ export function documentApercu(composition, type = "page") {
     body:not(.dse-apercu-seul) [data-dse-statut=brouillon]:not(.dse-survol):not(.dse-design-cible){outline:2px dashed #f59e0b!important;outline-offset:-2px}
     body:not(.dse-apercu-seul) [data-dse-statut=desactive]{opacity:.55}
     body.dse-apercu-seul .dse-b-statut{display:none}
+    body.dse-vue-visiteur .dse-b-vide:not(.dse-b-vide--auto){display:none}
     [data-dse-type=section]{--dse-c:#2b87da}[data-dse-type=ligne]{--dse-c:#29c4a9}[data-dse-type=colonne]{--dse-c:#8f42ec}[data-dse-type=module],[data-dse-type=builder]{--dse-c:#4c5866}[data-dse-type=entete],[data-dse-type=footer],[data-dse-type=page],[data-dse-type=article]{--dse-c:#e09900}
     body:not(.dse-apercu-seul) :is(.dse-b-r-section,.dse-b-r-ligne,.dse-b-r-colonne,[data-dse-type=section],[data-dse-type=ligne],[data-dse-type=colonne])[data-dse-ref]:not(.dse-survol):not(.dse-design-cible){outline:1px dashed var(--dse-c);outline-offset:-1px}
     body:not(.dse-apercu-seul) .dse-b-r-section[data-dse-ref]{background:#2b87da08;padding:24px 10px 10px!important;margin:6px 0}
@@ -725,6 +726,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     racine.querySelector("[data-constructeur]")?.classList.toggle("constructeur--apercu-seul", etat.vueApercu === "rendu");
     doc?.body.classList.toggle("dse-apercu-seul", etat.vueApercu === "rendu");
     doc?.body.classList.toggle("dse-vue-structure", etat.vueApercu === "structure");
+    doc?.body.classList.toggle("dse-vue-visiteur", Boolean(d.apercuVisiteur) && apercuCourant() === d.apercuVisiteur);
   };
   const changerVueApercu = (vue) => {
     if (!VUES_APERCU.some((x) => x.cle === vue)) return;
