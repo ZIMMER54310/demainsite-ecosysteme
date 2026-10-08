@@ -1208,9 +1208,18 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     const peutAjouter = peutAction(d, d.arbre?.type, ancien ? "ligne.colonnes" : "builder.ajouter"),
       peutRetirer = peutAction(d, d.arbre?.type, ancien ? "ligne.colonnes" : "builder.desactiver");
     // Ancien format : largeurs entieres dont la somme fait exactement 100.
-    const entieres = (l) => { const r = l.map((x) => Math.max(1, Math.round(x))); r[r.length - 1] += 100 - r.reduce((a, b) => a + b, 0); return r; };
+    const entieres = (l) => {
+      const s = l.reduce((a, b) => a + b, 0) || 1;
+      const r = l.map((x) => Math.max(1, Math.round(x * 100 / s)));
+      r[r.indexOf(Math.max(...r))] += 100 - r.reduce((a, b) => a + b, 0);
+      return r;
+    };
+    // Largeurs SharePoint incoherentes (total different de 100) : remises a l'echelle.
+    const somme = largeurs.reduce((a, b) => a + b, 0);
+    if (Math.abs(somme - 100) > 0.1) largeurs = ancien ? entieres(largeurs) : largeurs.map((x) => Math.round(x * 10000 / somme) / 100);
     const dlg = dialogue();
     const rendre = () => {
+      if (ancien) largeurs = entieres(largeurs);
       const total = Math.round(largeurs.reduce((a, b) => a + b, 0) * 100) / 100;
       dlg.innerHTML = `<form method="dialog" class="constructeur-ajout-rapide constructeur-colonnes">
         <h3>▥ Colonnes de la ligne « ${e(ligne.titre || "Ligne")} »</h3>
@@ -1234,7 +1243,26 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         largeurs = l ? [...l] : egales(largeurs.length); rendre();
       });
       for (const input of dlg.querySelectorAll("input[type=number]")) input.addEventListener("change", () => {
-        largeurs[Number(input.name.slice(1))] = Math.max(1, Math.min(100, Number(input.value) || 1)); rendre();
+        const i = Number(input.name.slice(1)), nb = largeurs.length;
+        if (nb === 1) largeurs = [100];
+        else {
+          // Les autres colonnes (celles qui suivent, sinon celles qui precedent) absorbent l'ecart pour garder 100 %.
+          const brut = Math.max(1, Math.min(100 - (nb - 1), Number(input.value) || 1)), v = ancien ? Math.round(brut) : brut;
+          const autres = largeurs.map((_, j) => j).filter((j) => j !== i), apres = autres.filter((j) => j > i);
+          const cibles = apres.length ? apres : autres, fixes = autres.filter((j) => !cibles.includes(j));
+          const reste = 100 - v - fixes.reduce((t, j) => t + largeurs[j], 0);
+          largeurs[i] = v;
+          const repartir = (total, n) => {
+            const base = ancien ? Math.floor(total / n) : Math.floor(total / n * 100) / 100;
+            const r = Array.from({ length: n }, () => base);
+            r[n - 1] = Math.round((total - base * (n - 1)) * 100) / 100;
+            return r;
+          };
+          const liste = reste >= cibles.length ? cibles : autres;
+          const part = repartir(reste >= cibles.length ? reste : 100 - v, liste.length);
+          liste.forEach((j, k) => { largeurs[j] = part[k]; });
+        }
+        rendre();
         dlg.querySelector(`input[name=${input.name}]`)?.focus();
       });
       dlg.querySelector("form").addEventListener("submit", async (ev) => {
