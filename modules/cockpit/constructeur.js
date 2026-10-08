@@ -879,7 +879,8 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
     { cle: "SECTION", icone: "🧱", libelle: "Section", aide: "Un grand bloc horizontal de la page" },
     { cle: "LIGNE", icone: "▭", libelle: "Ligne", aide: "Une rangée découpée en colonnes" },
     { cle: "COLONNE", icone: "▯", libelle: "Colonne", aide: "Une colonne de plus dans la ligne" },
-    { cle: "MODULE", icone: "🧩", libelle: "Module", aide: "Texte, image, bouton, vidéo…" }
+    { cle: "MODULE", icone: "🧩", libelle: "Module", aide: "Texte, image, bouton, vidéo…" },
+    { cle: "ARTICLES", icone: "📰", libelle: "Blog / articles", aide: "Liste automatique des articles publiés" }
   ];
   const MODULES_ASSISTANT = [...MODULES_RAPIDES, ["➕", "Module vide"]];
   const optionsBranche = (branche, cible) => {
@@ -911,7 +912,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   const menuAjout = (ref) => {
     const n = trouverNoeud(ref)?.n;
     if (!n || !peutAction(d, d.arbre?.type, "builder.ajouter")) return message("Aucun ajout autorisé ici.");
-    const branches = BRANCHES.map((b) => ({ ...b, cible: cibleAjout(ref, b.cle) }))
+    const branches = BRANCHES.map((b) => ({ ...b, cible: cibleAjout(ref, b.cle) || (b.cle === "ARTICLES" ? cibleAjout(ref, "BLOG") : null) }))
       .filter((b) => b.cible && (b.cle !== "COLONNE" || b.cible.chemin.length === 1));
     const prevus = new Set(branches.flatMap((b) => b.cible.parent.ref === ref ? [b.cible.chemin[0].ref] : []));
     const autres = n.verrouille ? [] : (n.ajouts || []).filter((a) => !prevus.has(a.ref));
@@ -929,6 +930,8 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       if (s.etape === 1) {
         corps = `<p class="muted">Que voulez-vous ajouter ?</p><div class="constructeur-assistant-grille">
           ${branches.map((x) => carte(`data-branche="${x.cle}"`, x.icone, x.libelle, x.aide)).join("")}
+          ${branches.some((x) => x.cle === "ARTICLES") ? "" : `<button type="button" class="constructeur-assistant-carte" disabled title="Créer un type Builder « ARTICLES » dans SharePoint pour l'activer">
+            <span class="constructeur-assistant-icone">📰</span><strong>Blog / articles</strong><small>Bientôt : type à activer dans SharePoint</small></button>`}
           ${autres.length ? carte(`data-branche="AUTRE"`, "⋯", "Autre élément", "Types configurés dans SharePoint") : ""}</div>`;
       } else if (s.etape === 2) {
         const opts = s.branche === "AUTRE" ? autres.map((a) => ({ icone: "＋", libelle: a.titre })) : optionsBranche(s.branche, b.cible);
@@ -948,11 +951,12 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         <div class="constructeur-boutons">${pied}<button class="btn btn-secondary" type="button" data-c-fermer>Annuler</button></div></form>`;
       dlg.querySelector("[data-c-fermer]").addEventListener("click", () => dlg.close());
       dlg.querySelector("[data-assistant-retour]")?.addEventListener("click", () => {
-        s.etape = s.etape === 3 && (s.branche === "COLONNE") ? 1 : s.etape - 1; rendre();
+        s.etape = s.etape === 3 && ["COLONNE", "ARTICLES"].includes(s.branche) ? 1 : s.etape - 1; rendre();
       });
       for (const x of dlg.querySelectorAll("[data-branche]")) x.addEventListener("click", () => {
         s.branche = x.dataset.branche; s.option = null;
-        if (s.branche === "COLONNE") { s.titre = "Colonne"; s.etape = 3; } else s.etape = 2;
+        if (s.branche === "COLONNE") { s.titre = "Colonne"; s.etape = 3; }
+        else if (s.branche === "ARTICLES") { s.titre = "Derniers articles"; s.etape = 3; } else s.etape = 2;
         rendre();
       });
       for (const x of dlg.querySelectorAll("[data-option]")) x.addEventListener("click", () => {

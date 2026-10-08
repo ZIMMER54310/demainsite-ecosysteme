@@ -161,6 +161,9 @@ async function main() {
   assert.match(rendu.rendreBuilder(mono("FOOTER"), { adapteurs }), /FOOT-X/);
   assert.equal(rendu.rendreBuilder(mono("HERO"), {}), "", "HERO sans donnees => rien");
   assert.match(rendu.rendreBuilder(mono("PRODUITS"), {}), /data-dse-catalogue-builder="produits"/);
+  const blog = { ref: "builderelement.blog1", rendu: "ARTICLES", titre: "Derniers articles", champs: [], enfants: [] };
+  assert.match(rendu.rendreNoeud(blog, {}), /data-dse-catalogue-builder="articles"/, "noeud generique ARTICLES => catalogue articles");
+  assert.match(rendu.rendreNoeud(blog, { apercu: true }), /liste affichée automatiquement/);
 
   // Securite : texte enrichi et liens.
   const propre = nettoyerHtml('<p>a<img src=x onerror=alert(1)></p><a href="javascript:alert(1)">l</a><a href="https://ok.fr/x">ok</a>');

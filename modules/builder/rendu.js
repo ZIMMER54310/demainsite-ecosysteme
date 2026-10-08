@@ -25,7 +25,7 @@ const MODULES = {
 };
 
 const CATALOGUES = {
-  CATALOGUE: "tous", ARTICLES: "articles", PRODUITS: "produits", SERVICES: "services", COLLECTIONS: "collections",
+  CATALOGUE: "tous", ARTICLES: "articles", BLOG: "articles", PRODUITS: "produits", SERVICES: "services", COLLECTIONS: "collections",
   FILTRES: "tous", RECHERCHE: "tous", "PRODUITS-ASSOCIES": "produits", "ARTICLES-ASSOCIES": "articles"
 };
 
@@ -122,7 +122,9 @@ export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
         return rendre([{ champs, media: [m] }], ctx);
       }),
       champs.LIBELLEBOUTON && champs.LIEN ? rendreBouton([{ champs: { LIBELLE: champs.LIBELLEBOUTON, URL: champs.LIEN } }]) : ""
-    ].join("") : MODULES[type] ? MODULES[type](contenu, ctx) : "";
+    ].join("") : MODULES[type] ? MODULES[type](contenu, ctx) : CATALOGUES[type] ? (ctx.apercu
+      ? `<div class="dse-b-vide">📰 ${escapeHtml(noeud.titre || "Articles")} · liste affichée automatiquement sur le site</div>`
+      : `<section class="dse-catalogue" data-dse-catalogue-builder="${CATALOGUES[type]}" aria-label="${escapeHtml(noeud.titre || "Catalogue")}" hidden></section>`) : "";
     return { appareil, module };
   });
   const vide = !contenus.some((x) => x.module) && !enfants;
