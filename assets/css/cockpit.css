@@ -735,3 +735,5 @@ a.is-chargement,a[aria-disabled="true"]{pointer-events:none;opacity:.75;cursor:p
 .c-bulle-ia[hidden]{display:none}
 .constructeur-colonnes-btn{font-weight:700;color:#4c1d95;border-color:#c4b5fd}
 .design-statut{display:inline-flex;align-items:center;gap:.4rem;margin:.35rem 0 .2rem;flex-wrap:wrap}
+.constructeur-avis{position:fixed;left:50%;bottom:24px;z-index:1000;transform:translateX(-50%);max-width:min(560px,92vw);padding:10px 18px;border-radius:10px;background:#065f46;color:#fff;font-weight:600;box-shadow:0 6px 20px #0004;animation:constructeur-avis .2s ease-out}
+@keyframes constructeur-avis{from{opacity:0;transform:translate(-50%,8px)}}

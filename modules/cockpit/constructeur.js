@@ -42,6 +42,7 @@ export function badgeEtat(etat = {}) {
   if (etat.inactif) return `<span class="badge constructeur-badge constructeur-badge--inactif">Désactivé</span>`;
   if (etat.brouillon) return `<span class="badge constructeur-badge constructeur-badge--brouillon">Brouillon</span>`;
   if (etat.publiable) return `<span class="badge constructeur-badge constructeur-badge--actif">Actif et validé</span>`;
+  if (etat.publiable === false) return `<span class="badge constructeur-badge constructeur-badge--brouillon" title="Actif mais pas encore validé : invisible pour les visiteurs. Passez « Validé » à Oui pour le publier.">Non validé</span>`;
   return `<span class="badge constructeur-badge">${e(etat.actif || "")} · ${e(etat.valide || "")}</span>`;
 }
 const cleEtat = (etat = {}) => etat.inactif ? "desactive" : etat.publiable ? "actif" : "brouillon";
@@ -774,16 +775,18 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
         const freres = (node?.parent?.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === rendu);
         const detail = rendu === "LIGNE" ? ` · ${(node.n.enfants || []).filter((x) => String(x.rendu || "").toUpperCase() === "COLONNE").length || "0"} col.`
           : rendu === "COLONNE" && freres.length > 1 ? ` ${freres.indexOf(node.n) + 1}/${freres.length}` : "";
-        const statut = node?.n?.etat?.inactif ? "desactive" : node?.n?.etat?.brouillon ? "brouillon" : "";
-        const libStatut = { desactive: "Désactivé", brouillon: "Brouillon" }[statut];
+        const et = node?.n?.etat;
+        const statut = et?.inactif ? "desactive" : et?.brouillon ? "brouillon" : et?.publiable === false ? "nonvalide" : "";
+        const libStatut = { desactive: "Désactivé", brouillon: "Brouillon", nonvalide: "Non validé" }[statut];
         el.dataset.dseLibelle = `${rendu || LIBELLES[sorte] || "Élément"}${detail}${node?.n?.titre ? ` · ${node.n.titre}` : ""}${libStatut ? ` · ${libStatut}` : ""}`;
         // Statut visible en permanence dans le canevas (jamais dans la vue visiteur).
         if (statut) {
-          el.dataset.dseStatut = statut;
+          el.dataset.dseStatut = statut === "nonvalide" ? "brouillon" : statut;
           if (!el.querySelector(":scope>.dse-b-statut")) {
             const pastille = doc.createElement("span");
-            Object.assign(pastille, { className: `dse-b-statut dse-b-statut--${statut}`, textContent: `● ${LIBELLES[sorte] || "Élément"} : ${libStatut.toLowerCase()}`,
-              title: statut === "brouillon" ? "Brouillon : pas encore visible par les visiteurs. Cliquez sur « Activer » pour le publier." : "Désactivé : masqué pour les visiteurs, conservé dans SharePoint." });
+            Object.assign(pastille, { className: `dse-b-statut dse-b-statut--${statut === "nonvalide" ? "brouillon" : statut}`, textContent: `● ${LIBELLES[sorte] || "Élément"} : ${libStatut.toLowerCase()}`,
+              title: statut === "brouillon" ? "Brouillon : pas encore visible par les visiteurs. Cliquez sur « Activer » pour le publier."
+                : statut === "nonvalide" ? "Actif mais non validé : invisible pour les visiteurs. Passez « Validé » à Oui pour le publier." : "Désactivé : masqué pour les visiteurs, conservé dans SharePoint." });
             el.append(pastille);
           }
         }
@@ -1038,6 +1041,13 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
       surValider(valeurs);
     });
     dlg.showModal();
+  };
+  const avis = (texte) => {
+    racine.querySelector(".constructeur-avis")?.remove();
+    const div = document.createElement("div");
+    Object.assign(div, { className: "constructeur-avis", role: "status", textContent: texte });
+    racine.append(div);
+    setTimeout(() => div.remove(), 3500);
   };
   const message = (texte) => {
     const dlg = dialogue();
@@ -1585,7 +1595,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
           return;
         }
         const f = racine.querySelector("[data-design-form]");
-        if (f) f.requestSubmit(); else message("Sélectionnez un élément à modifier. Les actions structurelles sont déjà enregistrées dans SharePoint.");
+        if (f) f.requestSubmit(); else avis("✔ Tout est déjà enregistré dans SharePoint. Pour modifier un élément, cliquez dessus.");
         return;
       }
       case "apercu-seul": return changerVueApercu(etat.vueApercu === "rendu" ? "composition" : "rendu");
