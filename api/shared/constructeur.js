@@ -1079,7 +1079,7 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const titre = String(p.titre || "").trim().slice(0, 255);
       if (!titre) return { erreur: "Le nom est obligatoire.", status: 400 };
       await w.maj(NIVEAUX[c.type].liste, c.el.id, { Title: titre });
-      return res(`${NIVEAUX[c.type].libelle} renommé${c.type === "ligne" || c.type === "colonne" ? "e" : ""}.`);
+      return res(`${NIVEAUX[c.type].libelle} renommé${c.type === "module" ? "" : "e"}.`);
     }
 
     case "element.dupliquer": {

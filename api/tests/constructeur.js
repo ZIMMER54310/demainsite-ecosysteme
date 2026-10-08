@@ -292,7 +292,7 @@ async function main() {
       assert.equal(parListe("OBJ-MODULE-UTILISATION").length, 2);
       const renommage = await C.executer({ d: copies, perimetre, siteId: "4", action: "element.renommer",
         params: { ref: C.ref("section", 100), titre: "  Bandeau principal " } });
-      assert.match(renommage.message, /Section renommé/);
+      assert.match(renommage.message, /Section renommée/);
       assert.equal(stores.get("OBJ-SECTION-SITE/100").Title, "Bandeau principal");
       assert.equal((await C.executer({ d: copies, perimetre, siteId: "4", action: "element.renommer",
         params: { ref: C.ref("section", 100), titre: " " } })).status, 400, "nom obligatoire");
