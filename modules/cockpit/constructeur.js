@@ -384,11 +384,14 @@ function editeur(d) {
   const colonnes = colonnesDe(a.sections);
   const publicationRequise = !a.etat.publiable || a.generique || contientBrouillon(a.sections);
   return `<header class="constructeur-barre-visuelle"><strong>${e(d.site?.titre || "")} · ${e(a.titre)}</strong>
-    <div class="constructeur-boutons"><span class="constructeur-boutons" role="group" aria-label="Appareil">${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "ORDINATEUR") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}" aria-pressed="${x.cle === (d.appareil || "ORDINATEUR")}">${x.libelle}</button>`).join("")}</span>
-      <button type="button" class="btn btn-mini" data-c-action="annuler-design">↶ Annuler</button>
-      <button type="button" class="btn btn-mini" data-c-action="retablir-design">↷ Rétablir</button>
-      <button type="button" class="btn btn-mini" data-c-action="copier-style">Copier style</button>
-      <button type="button" class="btn btn-mini" data-c-action="coller-style">Coller style</button>
+    <div class="constructeur-boutons constructeur-outils-barre"><span class="constructeur-appareils" role="group" aria-label="Affichage sur l'appareil"><span class="constructeur-groupe-titre">Affichage</span>${APPAREILS_APERCU.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "ORDINATEUR") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}" aria-pressed="${x.cle === (d.appareil || "ORDINATEUR")}">${x.libelle}</button>`).join("")}</span>
+      <span class="constructeur-separateur" aria-hidden="true"></span>
+      <span class="constructeur-groupe" role="group" aria-label="Historique"><button type="button" class="btn btn-mini" data-c-action="annuler-design">↶ Annuler</button>
+      <button type="button" class="btn btn-mini" data-c-action="retablir-design">↷ Rétablir</button></span>
+      <span class="constructeur-separateur" aria-hidden="true"></span>
+      <span class="constructeur-groupe" role="group" aria-label="Style"><button type="button" class="btn btn-mini" data-c-action="copier-style">Copier style</button>
+      <button type="button" class="btn btn-mini" data-c-action="coller-style">Coller style</button></span>
+      <span class="constructeur-separateur" aria-hidden="true"></span>
       <button type="button" class="btn btn-mini" data-c-action="apercu-seul">Aperçu</button>
       ${peutAction(d, type, a.generique ? "builder.enregistrer" : "design.enregistrer") ? '<button type="button" class="btn btn-primary" data-c-action="enregistrer-design">Enregistrer</button>' : ""}
       ${bouton("← Fermer", "fermer")}</div></header>

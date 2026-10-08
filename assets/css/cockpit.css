@@ -317,6 +317,12 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .constructeur-editeur .constructeur-noeud > .constructeur-ajout:focus-within { display: flex; }
 .constructeur-editeur .constructeur-editeur-entete h3 { margin: 2px 0; font-size: 1.05rem; }
 .constructeur-boutons--compacts { gap: 4px; }
+.constructeur-outils-barre { align-items: center; margin-top: 0; }
+.constructeur-appareils { display: inline-flex; align-items: center; gap: 4px; padding: 4px 6px; border: 2px solid #c7d7fe; border-radius: 12px; background: #eef4ff; }
+.constructeur-groupe-titre { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #3b5bdb; padding: 0 6px 0 4px; }
+.constructeur-groupe { display: inline-flex; align-items: center; gap: 4px; }
+.constructeur-separateur { align-self: stretch; width: 2px; min-height: 28px; margin: 0 6px; border-radius: 2px; background: var(--line, #d0d7e2); }
+@media (max-width: 760px) { .constructeur-separateur { display: none; } }
 .constructeur-editeur [data-c-panneau]:empty { display: none; }
 .constructeur-editeur .design-panneau { position: static; max-height: none; overflow: visible; border: 2px solid var(--couleur-primaire, #7c3aed); }
 .constructeur-volet { border: 1px solid var(--line, #dde); border-radius: 8px; background: var(--surface, #fff); }
