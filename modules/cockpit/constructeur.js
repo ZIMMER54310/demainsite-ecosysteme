@@ -5,7 +5,7 @@ import { rendreBuilder, STYLES_BUILDER } from "../builder/rendu.js";
 import { nettoyerHtml } from "../texte/nettoyer.js";
 import { getConstruire, actionConstruire } from "../../services/cockpit.service.js";
 import { rendreEnteteCockpit, rendreAccompagnement } from "./cockpit.js";
-import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU } from "./design.js";
+import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU, memoriserGroupe } from "./design.js";
 import { codeChamp, controleChamp, erreurValeur } from "../builder/proprietes.js";
 import { confirmerApercuConstruction } from "./confirmation.js";
 import { getState } from "../../js/state.js";
@@ -574,7 +574,10 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   let glisse = null;
   const replies = new Set();
   const volets = new Map();
-  racine.addEventListener("toggle", (ev) => { if (ev.target.dataset?.cVolet) volets.set(ev.target.dataset.cVolet, ev.target.open); }, true);
+  racine.addEventListener("toggle", (ev) => {
+    if (ev.target.dataset?.cVolet) volets.set(ev.target.dataset.cVolet, ev.target.open);
+    if (ev.target.dataset?.designGroupe) memoriserGroupe(ev.target.dataset.designGroupe, ev.target.open);
+  }, true);
   // Bulle Pasc ARA IA (survol / focus d'une icone d'action) : texte SharePoint OBJ-AIDE-ACTION.
   const bulleIa = (() => {
     let el = null, minuteur = null;

@@ -72,13 +72,26 @@ function controle(cle, valeur, herite, design, nom) {
         : `<span class="muted">Aucune image autorisée pour ce site.</span>`;
     }
   }
-  return `<label class="design-champ${ESPACES.has(cle) ? " design-champ--cote" : ""}"><span>${e(libelle)}${indication}</span>${champ}
-    <button type="button" class="btn btn-mini design-reset" data-design-reset="${n}" title="Revenir à la valeur héritée" aria-label="Réinitialiser ${e(libelle)}">↺</button></label>`;
+  return `<label class="design-champ${ESPACES.has(cle) ? " design-champ--cote" : ""}"><span class="design-champ-tete"><span>${e(libelle)}${indication}</span>
+    <button type="button" class="btn btn-mini design-reset" data-design-reset="${n}" title="Revenir à la valeur héritée" aria-label="Réinitialiser ${e(libelle)}">↺</button></span>${champ}</label>`;
+}
+
+// Groupes ouverts dans le panneau Design (memorise pendant la session, partage entre elements).
+const stockage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+const OUVERTS = new Set(JSON.parse(stockage?.getItem("dse.design.groupes") || "[\"FOND\"]"));
+export function memoriserGroupe(groupe, ouvert) {
+  if (ouvert) OUVERTS.add(groupe); else OUVERTS.delete(groupe);
+  stockage?.setItem("dse.design.groupes", JSON.stringify([...OUVERTS]));
 }
 
 function groupeHtml(groupe, cles, valeurs, herite, design, prefixe = "") {
   const champs = cles.map((c) => controle(c, valeurs[c], herite[c], design, `${prefixe}${c}`)).filter(Boolean).join("");
-  return champs ? `<fieldset class="design-groupe design-groupe--${groupe.toLowerCase()}"><legend>${e(GROUPES[groupe] || groupe)}</legend><div class="design-grille">${champs}</div></fieldset>` : "";
+  if (!champs) return "";
+  const nom = groupe ? GROUPES[groupe] || groupe : "Visibilité";
+  const modifies = cles.filter((c) => !vide(valeurs[c])).length;
+  return `<details class="design-groupe design-groupe--${(groupe || "visibilite").toLowerCase()}" data-design-groupe="${e(groupe || "VISIBILITE")}"${OUVERTS.has(groupe || "VISIBILITE") ? " open" : ""}>
+    <summary><span>${e(nom)}</span>${modifies ? `<span class="design-groupe-compte" title="${modifies} réglage(s) personnalisé(s)">${modifies}</span>` : ""}</summary>
+    <div class="design-grille">${champs}</div></details>`;
 }
 
 export function panneauDesign(design, { ref, contenu = "", onglet = "design", appareil = "TABLETTE", renommable = false, aideDesign = "", colonnes = false, aideColonnes = "", statut = "" } = {}) {
@@ -91,7 +104,7 @@ export function panneauDesign(design, { ref, contenu = "", onglet = "design", ap
     const herite = { ...(design.herite || {}), ...(design.responsiveHerite?.[a] || {}) };
     const blocs = g.map((x) => groupeHtml(x, clesDe(x, (c) => autorises.has(c)), design.responsive?.[a] || {}, herite, design, `${a}.`)).join("");
     return `<div class="design-appareil" data-design-appareil="${a}"${a === appareil ? "" : " hidden"}>
-      ${groupeHtml("", autorises.has("masque") ? ["masque"] : [], design.responsive?.[a] || {}, {}, design, `${a}.`).replace("<legend></legend>", "<legend>Visibilité</legend>")}${blocs}</div>`;
+      ${groupeHtml("", autorises.has("masque") ? ["masque"] : [], design.responsive?.[a] || {}, {}, design, `${a}.`)}${blocs}</div>`;
   }).join("");
   const presets = design.options?.presets || [];
   const onglets = [["contenu", "CONTENU"], ["design", "DESIGN"], ["responsive", "RESPONSIVE"], ["avance", "AVANCÉ"]];

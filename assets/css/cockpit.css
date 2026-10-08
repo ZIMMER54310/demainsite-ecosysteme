@@ -399,8 +399,17 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .design-panneau { display: grid; gap: 10px; max-height: 80vh; overflow: auto; position: sticky; top: 8px; }
 .design-entete { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .design-onglets { display: flex; flex-wrap: wrap; gap: 4px; }
-.design-groupe { border: 1px solid var(--line, #dde); border-radius: 8px; padding: 6px 10px; }
-.design-groupe summary { cursor: pointer; font-weight: 600; }
+.design-groupe { border: 1px solid var(--line, #dde); border-radius: 8px; padding: 0; background: #fff; }
+.design-groupe > summary { cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: .5rem; padding: 9px 12px; list-style: none; user-select: none; border-radius: 8px; }
+.design-groupe > summary::-webkit-details-marker { display: none; }
+.design-groupe > summary::before { content: "▸"; color: #7c3aed; transition: transform .15s; }
+.design-groupe[open] > summary::before { transform: rotate(90deg); }
+.design-groupe > summary:hover { background: #f5f3ff; }
+.design-groupe[open] > summary { border-bottom: 1px solid var(--line, #dde); border-radius: 8px 8px 0 0; background: #faf5ff; }
+.design-groupe > .design-grille { padding: 0 10px 10px; }
+.design-groupe-compte { margin-left: auto; min-width: 20px; padding: 0 6px; border-radius: 999px; background: #7c3aed; color: #fff; font-size: .72rem; line-height: 20px; text-align: center; }
+.design-champ-tete { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.design-champ-tete .design-reset { flex: none; padding: 0 6px; min-height: 0; line-height: 1.4; font-size: .8rem; }
 .design-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; }
 .design-champ { display: grid; gap: 4px; font-size: .85rem; }
 .design-champ input, .design-champ select { padding: 4px 6px; font: inherit; font-size: .85rem; width: 100%; min-width: 0; }
