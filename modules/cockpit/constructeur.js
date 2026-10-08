@@ -8,16 +8,17 @@ import { rendreEnteteCockpit, rendreAccompagnement } from "./cockpit.js";
 import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU } from "./design.js";
 import { codeChamp, controleChamp, erreurValeur } from "../builder/proprietes.js";
 import { confirmerApercuConstruction } from "./confirmation.js";
+import { getState } from "../../js/state.js";
 
 export const ONGLETS = Object.freeze([
   { cle: "entetes", libelle: "En-têtes" },
   { cle: "pages", libelle: "Pages" },
-  { cle: "footers", libelle: "Footer" },
+  { cle: "footers", libelle: "Pied de page" },
   { cle: "articles", libelle: "Articles" },
   { cle: "bibliotheque", libelle: "Bibliothèque" },
   { cle: "catalogue", libelle: "Catalogue / Modèles" }
 ]);
-const LIBELLES = { entete: "En-tête", footer: "Footer", page: "Page", article: "Article", section: "Section", ligne: "Ligne", colonne: "Colonne", module: "Module" };
+const LIBELLES = { entete: "En-tête", footer: "Pied de page", page: "Page", article: "Article", section: "Section", ligne: "Ligne", colonne: "Colonne", module: "Module" };
 const MESSAGE_IA = "Cette fonctionnalité est en cours de préparation. Revenez bientôt.";
 
 export function badgeEtat(etat = {}) {
@@ -126,12 +127,12 @@ function ongletPages(d) {
     <header><h3>${e(p.titre)}</h3>${p.realisation ? realisation(p.realisation) : badgeEtat(p.etat)}</header>
     <p class="muted">${e(p.url)} · ${p.sections} section(s)</p>
     <label>En-tête ${peutAction(d, "page", "page.affecter") && peutAction(d, "entete", "page.affecter") ? `<select data-c-affecter="entete" data-page="${e(p.ref)}">${options(d.entetes, p.entete)}</select>` : `<strong>${e(p.entete?.titre || "Aucun")}</strong>`}</label>
-    <label>Footer ${peutAction(d, "page", "page.affecter") && peutAction(d, "footer", "page.affecter") ? `<select data-c-affecter="footer" data-page="${e(p.ref)}">${options(d.footers, p.footer)}</select>` : `<strong>${e(p.footer?.titre || "Aucun")}</strong>`}</label>
+    <label>Pied de page ${peutAction(d, "page", "page.affecter") && peutAction(d, "footer", "page.affecter") ? `<select data-c-affecter="footer" data-page="${e(p.ref)}">${options(d.footers, p.footer)}</select>` : `<strong>${e(p.footer?.titre || "Aucun")}</strong>`}</label>
     <div class="constructeur-boutons">${bouton("🧱 Construire / aperçu", "ouvrir", `data-ref="${e(p.ref)}"`, "btn btn-primary")}
       ${peut("pages") ? bouton("✏️ Modifier", "proprietes", `data-ref="${e(p.ref)}"`) : ""}
       ${peutAction(d, "page", "conteneur.dupliquer") ? bouton("Dupliquer", "dupliquer", `data-ref="${e(p.ref)}" data-type="page"`) : ""}</div>
   </article>`).join("") || '<p class="card muted">Aucune page pour ce site dans SharePoint.</p>'}</div>
-  <p class="muted">Une page utilise au maximum un En-tête et un Footer actifs et validés ; choisir un autre élément remplace le précédent sans suppression.</p>`;
+  <p class="muted">Une page utilise au maximum un En-tête et un Pied de page actifs et validés ; choisir un autre élément remplace le précédent sans suppression.</p>`;
 }
 
 function ongletBibliotheque(d) {
@@ -399,6 +400,8 @@ function editeur(d) {
 
 export function rendreConstructeur(moi, d, etat = {}) {
   const onglet = ONGLETS.some((o) => o.cle === etat.onglet) ? etat.onglet : "entetes";
+  const fonctions = getState().user?.fonctions;
+  const accesMenu = !Array.isArray(fonctions) || fonctions.includes("menu");
   const corps = d.arbre ? editeur(d)
     : onglet === "entetes" ? ongletConteneurs(d, "entete")
       : onglet === "footers" ? ongletConteneurs(d, "footer")
@@ -412,7 +415,7 @@ export function rendreConstructeur(moi, d, etat = {}) {
       <p class="muted">${e(d.site?.domaine || "")} — données lues et enregistrées dans SharePoint.</p>
       <a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(etat.domaine || "")}">← Retour au site</a></div>
     ${d.arbre ? "" : `<nav class="constructeur-onglets" role="tablist">${ONGLETS.map((o) =>
-      `<button type="button" role="tab" class="btn ${o.cle === onglet ? "btn-primary" : "btn-secondary"}" aria-selected="${o.cle === onglet}" data-c-onglet="${o.cle}">${o.libelle}</button>`).join("")}</nav>`}
+      `<button type="button" role="tab" class="btn ${o.cle === onglet ? "btn-primary" : "btn-secondary"}" aria-selected="${o.cle === onglet}" data-c-onglet="${o.cle}">${o.libelle}</button>${o.cle === "footers" && accesMenu ? `<a class="btn btn-secondary" href="#/cockpit/site/${encodeURIComponent(etat.domaine || "")}/menu">Menu</a>` : ""}`).join("")}</nav>`}
     <div class="constructeur-message" role="status" aria-live="polite" data-c-message>${etat.message ? `<p class="${etat.erreur ? "alerte-erreur" : "alerte-succes"}">${e(etat.message)}</p>` : ""}</div>
     ${corps}
     <dialog class="cockpit-statut-dialogue constructeur-dialogue" data-c-dialogue></dialog>

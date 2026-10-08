@@ -113,7 +113,7 @@ function simuler(site) {
   // Menu du site selectionne : groupes, Construire le site parent, element actif exact.
   const nav = await import("../../modules/cockpit/navigation-site.js");
   const items = nav.navigationSite(siteDemo, "lecture");
-  assert.ok(items.filter((x) => x.enfant).map((x) => x.libelle).join() === "Pages,En-tête,Footer,Catalogue / Modèles");
+  assert.ok(items.filter((x) => x.enfant).map((x) => x.libelle).join() === "Pages,En-tête,Pied de page,Catalogue / Modèles");
   const { actif, parent } = nav.elementActif(items, "/cockpit/site/demainsite.fr/construire?onglet=entetes");
   assert.strictEqual(actif.libelle, "En-tête");
   assert.ok(/\/construire$/.test(parent.url));

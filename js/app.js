@@ -73,8 +73,8 @@ const nomSite = (d) => {
   const s = getState().selectedSite;
   return s && !s.provisoire && (s.acces === d || s.domaine === d) && s.nom ? s.nom : nomOuverture(d);
 };
-const ONGLETS = { entetes: "En-tête", pages: "Pages", footers: "Footer", bibliotheque: "Bibliothèque", catalogue: "Catalogue / Modèles" };
-const COMPOSANTS = { articles: "Articles", menu: "Menu", seo: "SEO", entete: "En-tête", footer: "Footer" };
+const ONGLETS = { entetes: "En-tête", pages: "Pages", footers: "Pied de page", bibliotheque: "Bibliothèque", catalogue: "Catalogue / Modèles" };
+const COMPOSANTS = { articles: "Articles", menu: "Menu", seo: "SEO", entete: "En-tête", footer: "Pied de page" };
 registerRoute("/cockpit/site/:domaine/menu",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Menu"],`Chargement des menus de ${nomSite(p.domaine)}`,()=>cockpitMenusPage(p),(r,pg)=>activerMenusPage(r,pg,p.domaine)));
 registerRoute("/cockpit/site/:domaine/demandes-comptes",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Demandes de compte"],`Chargement des demandes de ${nomSite(p.domaine)}`,()=>cockpitDemandesComptesPage(p),(r,pg)=>activerDemandesComptesPage(r,pg,p.domaine)));
 registerRoute("/cockpit/site/:domaine/reglages-acces",p=>naviguer(p,["Cockpit","Mes sites",p.domaine,"Accès et comptes"],`Chargement des réglages de ${nomSite(p.domaine)}`,()=>cockpitReglagesAccesPage(p),(r,pg)=>activerReglagesAccesPage(r,pg,p.domaine)));

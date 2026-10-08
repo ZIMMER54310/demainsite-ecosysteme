@@ -22,7 +22,7 @@ export const CARTES = Object.freeze([
   { fonction: "entete", icone: "🧭", titre: "En-tête", texte: "Haut de page du site.", cible: (d) => lienSite(d, "entete") },
   { fonction: "logo-medias", icone: "🖼️", titre: "Médias", texte: "Logos, images et fichiers autorisés.", cible: (d) => d ? `#/cockpit/site/${encodeURIComponent(d)}/medias` : "#/cockpit/sites" },
   { fonction: "menu", icone: "☰", titre: "Menu", texte: "Navigation du site.", cible: (d) => lienSite(d, "menu") },
-  { fonction: "footer", icone: "⬇️", titre: "Footer", texte: "Bas de page du site.", cible: (d) => lienSite(d, "footer") },
+  { fonction: "footer", icone: "⬇️", titre: "Pied de page", texte: "Bas de page du site.", cible: (d) => lienSite(d, "footer") },
   { fonction: "seo", icone: "🔎", titre: "SEO", texte: "Référencement dans les moteurs.", cible: (d) => lienSite(d, "seo") },
   { fonction: "domaine", icone: "🔗", titre: "Domaine", texte: "Adresse publique du site.", cible: (d) => lienSite(d, "domaine") },
   { fonction: "apercu", icone: "👁️", titre: "Aperçu du site", texte: "Voir le site tel que le public le voit.", cible: (d) => (d ? `https://${d}/` : "#/cockpit/sites"), externe: true },
@@ -35,7 +35,7 @@ export const CARTES = Object.freeze([
 export const EDITIONS = Object.freeze([
   { composant: "entete", fonction: "entete", libelle: "Modifier l'En-tête" },
   { composant: "seo", fonction: "seo", libelle: "Modifier le SEO" },
-  { composant: "footer", fonction: "footer", libelle: "Modifier le Footer" },
+  { composant: "footer", fonction: "footer", libelle: "Modifier le pied de page" },
   { composant: "menu", fonction: "menu", libelle: "Modifier le menu" },
   { composant: "logo", fonction: "logo-medias", operation: "logo-medias.modifier", libelle: "Gérer le logo" },
   { composant: "pages", fonction: "pages", libelle: "Modifier les pages" },
@@ -306,7 +306,7 @@ export function rendreVueSite(moi, vue, section) {
     <div class="cockpit-site-pilotage"><article class="card cockpit-site-prochaines"><h2>${icon("chart")} Que dois-je faire maintenant ?</h2><p class="muted">Les étapes non terminées de ce site.</p>
       ${prochaines.length ? `<ol>${prochaines.map((x) => `<li><div><strong>${e(x.libelle)}</strong><p class="muted">${e(x.alerte || x.realisations?.map((r) => `${r.nom} – ${r.titre}`).join(" · ") || LIBELLES_ETAT[x.etat] || LIBELLES_ETAT.afaire)}</p></div>${lien(cibleEtape(x), x.realisations?.find((r) => r.actionAutorisee && r.libelleAction)?.libelleAction || "Continuer", "arrow")}</li>`).join("")}</ol>` : "<p>Toutes les étapes de configuration sont terminées.</p>"}</article>
       <div class="cockpit-site-detail"><article class="card"><h2>${icon("globe")} Situation du site</h2><dl class="cockpit-site-infos"><dt>Statut</dt><dd>${badgeStatut(vue.statut)}</dd><dt>Domaine principal</dt><dd>${e(vue.domaine || "À préciser")}</dd><dt>Alias</dt><dd>${(vue.alias || []).length ? vue.alias.map(e).join(", ") : "Aucun"}</dd>${vue.client ? `<dt>Client</dt><dd>${e(vue.client)}</dd>` : ""}</dl></article>
-      <article class="card"><h2>${icon("layers")} Structure du site</h2><p class="muted">Accéder aux éléments du site sélectionné.</p><div class="cockpit-site-structure">${nav.filter((x) => ["En-tête", "Pages", "Footer"].includes(x.libelle)).map((x) => lien(x.url, x.libelle, x.icone)).join("")}</div>${nav.some((x) => x.url === `${base}/construire`) ? lien(`${base}/construire`, "Ouvrir le constructeur", "arrow", "btn btn-primary") : ""}</article></div>
+      <article class="card"><h2>${icon("layers")} Structure du site</h2><p class="muted">Accéder aux éléments du site sélectionné.</p><div class="cockpit-site-structure">${nav.filter((x) => ["En-tête", "Pages", "Pied de page"].includes(x.libelle)).map((x) => lien(x.url, x.libelle, x.icone)).join("")}</div>${nav.some((x) => x.url === `${base}/construire`) ? lien(`${base}/construire`, "Ouvrir le constructeur", "arrow", "btn btn-primary") : ""}</article></div>
     </div>
     ${editionsVisibles(moi, vue.fonctions).length ? `<div class="cockpit-actions">${editionsVisibles(moi, vue.fonctions).map((x) => lien(`${base}/modifier/${x.composant}`, x.libelle, "edit")).join("")}</div>` : ""}
     <div id="progression-site">${rendreProgression(vue, section)}</div>

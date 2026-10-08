@@ -1,7 +1,7 @@
 const sections = [
   { fonction: "pages", libelle: "Pages", icone: "file", onglet: "pages" },
   { fonction: "entete", libelle: "En-tête", icone: "panel", onglet: "entetes" },
-  { fonction: "footer", libelle: "Footer", icone: "panel", onglet: "footers" },
+  { fonction: "footer", libelle: "Pied de page", icone: "panel", onglet: "footers" },
   { fonction: "articles", libelle: "Articles", icone: "file", onglet: "articles", composant: "articles" },
   { fonction: "menu", libelle: "Menu", icone: "list", route: "menu" },
   { fonction: "logo-medias", libelle: "Médias", icone: "image", route: "medias" },

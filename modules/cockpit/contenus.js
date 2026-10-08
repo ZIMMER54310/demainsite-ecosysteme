@@ -11,9 +11,9 @@ import { synchroniserMedias } from "../../services/cockpit.service.js";
 
 export const ONGLETS_CONTENUS = Object.freeze([
   { cle: "medias", libelle: "Médias", fonction: "logo-medias", icone: "image", texte: "Logos, images, vidéos, sons, favicons…" },
-  { cle: "pages", libelle: "Pages", fonction: "pages", icone: "file", texte: "Toutes les pages et leurs En-tête / Footer." },
+  { cle: "pages", libelle: "Pages", fonction: "pages", icone: "file", texte: "Toutes les pages et leurs En-tête / Pied de page." },
   { cle: "entetes", libelle: "En-têtes", fonction: "entete", icone: "layers", texte: "Les En-têtes de chaque site." },
-  { cle: "footers", libelle: "Footer", fonction: "footer", icone: "panel", texte: "Les Footer de chaque site." },
+  { cle: "footers", libelle: "Pied de page", fonction: "footer", icone: "panel", texte: "Les pieds de page de chaque site." },
   { cle: "articles", libelle: "Articles", fonction: "pages", icone: "list", texte: "Les articles publiés sur les sites." }
 ]);
 
@@ -31,7 +31,7 @@ export function rendreRaccourcisContenus(moi, { client = null, titre = null } = 
   const contexte = !!moi.contexte && !moi.porteeGlobale;
   const intitule = titre || (contexte ? "Gérer les contenus de ce site" : client ? "Gérer les sites de ce client" : moi.porteeGlobale ? "Gérer tous les sites" : "Gérer tous mes sites");
   return `<article class="card cockpit-contenus-raccourcis"><h2>${e(intitule)}</h2>
-    <p class="muted">Médias, pages, En-têtes, Footer et articles de ${contexte ? "ce site" : client ? "tous les sites du client" : moi.porteeGlobale ? "tous les sites de l'écosystème" : "tous vos sites"}, réunis au même endroit.</p>
+    <p class="muted">Médias, pages, En-têtes, pieds de page et articles de ${contexte ? "ce site" : client ? "tous les sites du client" : moi.porteeGlobale ? "tous les sites de l'écosystème" : "tous vos sites"}, réunis au même endroit.</p>
     <div class="cockpit-contenus-tuiles">${onglets.map((o) => `<a class="cockpit-contenus-tuile" href="${e(lienContenus(o.cle, client, moi.contexte?.domaine))}">${icon(o.icone)}<span><strong>${e(o.libelle)}</strong><small>${e(o.texte)}</small></span></a>`).join("")}</div></article>`;
 }
 
@@ -65,7 +65,7 @@ function actions(type, l) {
 
 function detail(type, l) {
   if (type === "medias") return `${e(l.type || "Type non renseigné")}${l.portee ? ` · ${e(l.portee)}` : ""}${l.clients?.length ? ` · ${e(l.clients.join(", "))}` : ""}`;
-  if (type === "pages") return `${e(l.url || "/")}<br><small class="muted">En-tête : ${e(l.entete || "aucun")} · Footer : ${e(l.footer || "aucun")}</small>`;
+  if (type === "pages") return `${e(l.url || "/")}<br><small class="muted">En-tête : ${e(l.entete || "aucun")} · Pied de page : ${e(l.footer || "aucun")}</small>`;
   if (type === "entetes" || type === "footers") return `Utilisé par ${Number(l.pages) || 0} page(s)`;
   return l.url ? e(l.url) : `<span class="muted">Adresse non renseignée</span>`;
 }
