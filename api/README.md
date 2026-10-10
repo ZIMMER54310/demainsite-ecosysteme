@@ -94,6 +94,8 @@ comme le site public. En composition, les zones vides restent editables.
 Un conteneur de contexte non associe ne remplace jamais le rendu du site.
 L'editeur d'en-tete/pied de page indique ses pages d'utilisation et propose
 l'affectation selon les droits ; construire un bloc ne l'affecte pas.
+Les formulaires d'informations Menu proposent « Modifier les liens du menu »
+vers l'editeur de navigation du meme site (liens, ordre et sous-menus).
 
 Le soulignement propose une couleur independante, un style SIMPLE / DOUBLE /
 POINTILLES / TIRETS / ONDULE, une epaisseur (0 a 10 px) et une distance sous

@@ -710,6 +710,16 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.ok(!TERMES_TECHNIQUES.test(htmlAdmin) && htmlAdmin.includes("#/cockpit/site/a.fr"));
   const htmlEd = ui.rendreEdition(moi, { disponible: true, libelle: "En-tête", site: "Site A", domaine: "a.fr", champs: [{ cle: cT, libelle: "Titre", valeur: "<b>", max: 20 }] }, { composant: "entete" });
   assert.ok(htmlEd.includes("data-edition") && htmlEd.includes("&lt;b&gt;") && !TERMES_TECHNIQUES.test(htmlEd));
+  assert.ok(!htmlEd.includes("Modifier les liens du menu"), "raccourci reserve au menu");
+  for (const d of [
+    { disponible: true, champs: [{ cle: cT, libelle: "Titre", valeur: "Menu" }] },
+    { selection: true, elements: [] },
+    { disponible: false, raison: "Informations indisponibles" }
+  ]) {
+    const menu = ui.rendreEdition(moi, { ...d, domaine: "site.example", libelle: "Menu" }, { composant: "menu", domaine: "autre.example" });
+    assert.ok(menu.includes('href="#/cockpit/site/site.example/menu">Modifier les liens du menu</a>'), "domaine du site conserve");
+    assert.ok(menu.includes("Ce formulaire concerne les informations du menu"));
+  }
   assert.ok(ui.rendreApercu({ changements: [{ libelle: "Titre", avant: "a", apres: "b" }] }).includes("data-confirmer"));
   assert.deepStrictEqual(ui.editionsVisibles({ niveau: "lecture" }, ["entete", "seo"]), []);
   assert.strictEqual(ui.editionsVisibles({ niveau: "ecriture" }, ["entete"]).length, 1);

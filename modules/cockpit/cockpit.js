@@ -439,7 +439,11 @@ function rendreUsagesSite(vue) {
 
 export function rendreEdition(moi, d, params = {}) {
   const retour = `#/cockpit/site/${encodeURIComponent(d.domaine || params.domaine)}`;
+  const modifierMenu = params.composant === "menu"
+    ? `<div class="cockpit-actions"><a class="btn btn-primary" href="${retour}/menu">Modifier les liens du menu</a></div>
+      <p class="c-aide">Ajoutez ou modifiez les liens, leur ordre et les sous-menus dans l’éditeur de navigation. Ce formulaire concerne les informations du menu.</p>` : "";
   if (d.selection) return `<section class="cockpit">${rendreEnteteCockpit(moi)}<div class="card"><h2>${e(d.libelle)}</h2>
+    ${modifierMenu}
     ${d.peutCreer ? `<a class="btn btn-primary" href="${retour}/modifier/${encodeURIComponent(params.composant)}?element=nouveau">Créer</a>` : ""}
     <ul class="cockpit-liste">${(d.elements || []).map((x) => `<li><a href="${retour}/modifier/${encodeURIComponent(params.composant)}?element=${encodeURIComponent(x.ref)}">${e(x.titre)}</a>
       ${d.peutDesactiver && x.actif ? `<button type="button" class="btn btn-secondary" data-edition-etat data-domaine="${e(d.domaine || params.domaine)}" data-composant="${e(params.composant)}" data-element="${e(x.ref)}" data-action="desactiver">Désactiver sans supprimer</button>` : ""}</li>`).join("")}</ul>
@@ -448,6 +452,7 @@ export function rendreEdition(moi, d, params = {}) {
     return `<section class="cockpit">${rendreEnteteCockpit(moi)}
       <div class="card"><h2>${e(d.libelle || "Réglage")} — ${e(d.site || "")}</h2>
       <p>⚠ ${e(d.raison || "Ce réglage n'est pas encore modifiable.")}</p>
+      ${modifierMenu}
       <a class="btn btn-secondary" href="${retour}">Retour au site</a></div></section>`;
   }
   const domaine = d.domainePrincipal || "";
@@ -470,6 +475,7 @@ export function rendreEdition(moi, d, params = {}) {
   return `<section class="cockpit">${rendreEnteteCockpit(moi)}
     <div class="card">
       <h2>${e(d.libelle)} — ${e(d.site || "")}</h2>
+      ${modifierMenu}
       <p class="muted">${d.creation ? "Aucun réglage n'est lié à ce site. Renseignez les valeurs pour le créer." : "Modifiez les valeurs puis vérifiez l'aperçu des changements avant de confirmer."}</p>
       <form class="cockpit-edition" data-edition data-domaine="${e(d.domaine || params.domaine)}" data-composant="${e(params.composant)}" data-element="${e(params.element || "")}">
         ${champs}
