@@ -193,6 +193,14 @@ function blocs(sel, type, style, ctx) {
       const position = s[`image${cle}Position`] || (cle === "Titre" ? "HAUT" : "BAS");
       const areas = superpose ? { HAUT: `${3 + i}/3/${4 + i}/7`, BAS: `${5 + i}/3/${6 + i}/7`, GAUCHE: `3/${3 + i}/7/${4 + i}`, DROITE: `3/${5 + i}/7/${6 + i}` }
         : { HAUT: `${1 + i}/3/${2 + i}/7`, BAS: `${7 + i}/3/${8 + i}/7`, GAUCHE: `3/${1 + i}/7/${2 + i}`, DROITE: `3/${7 + i}/7/${8 + i}` };
+      const autre = cle === "Titre" ? "Texte" : "Titre";
+      const autrePosition = s[`image${autre}Position`] || (autre === "Titre" ? "HAUT" : "BAS");
+      if (superpose && ["GAUCHE", "DROITE"].includes(position) && s[`image${autre}Mode`] === "SUPERPOSE" && s[`image${autre}Masque`] !== true) {
+        const debut = autrePosition === "HAUT" ? 5 - i : 3;
+        const fin = autrePosition === "BAS" ? 6 - i : 7;
+        areas.GAUCHE = `${debut}/${3 + i}/${fin}/${4 + i}`;
+        areas.DROITE = `${debut}/${5 + i}/${fin}/${6 + i}`;
+      }
       add(`${sel} .dse-b-image-${cle.toLowerCase()}`, [`display:${s[`image${cle}Masque`] === true ? "none" : "block"}`, `grid-area:${areas[position] || areas.BAS}`, "min-width:0", "margin:0", "padding:8px", "overflow-wrap:anywhere", `max-width:${["GAUCHE", "DROITE"].includes(position) ? "18rem" : "none"}`, `z-index:${superpose ? 1 : "auto"}`]);
     }
   } else if (["GALERIE", "CARROUSEL", "VIDEO"].includes(t)) {

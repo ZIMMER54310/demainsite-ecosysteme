@@ -297,6 +297,12 @@ async function main() {
     for (const declaration of ["border-top-left-radius:10px", "border-top-right-radius:20px", "border-bottom-right-radius:30px", "border-bottom-left-radius:40px", "border-top-width:2px", "border-top-color:#123456", "border-top-style:double", "border-left-width:0px"]) assert.ok(cssDetails.includes(declaration), declaration);
     assert.match(cssDetails, /dse-b-image-texte\{display:none/);
     assert.match(cssDetails, /border-top-left-radius:5px !important/);
+    for (const titre of ["HAUT", "BAS", "GAUCHE", "DROITE"]) for (const texte of ["HAUT", "BAS", "GAUCHE", "DROITE"]) {
+      const placement = styles.cssElement("dse-b-placement", "IMAGE", { imageTitreMode: "SUPERPOSE", imageTexteMode: "SUPERPOSE", imageTitrePosition: titre, imageTextePosition: texte });
+      const area = (cle) => placement.match(new RegExp(`dse-b-image-${cle}\\{[^}]*grid-area:(\\d+)/(\\d+)/(\\d+)/(\\d+)`)).slice(1).map(Number);
+      const a = area("titre"), b = area("texte");
+      assert.ok(a[2] <= b[0] || b[2] <= a[0] || a[3] <= b[1] || b[3] <= a[1], `superpositions distinctes ${titre}/${texte}`);
+    }
     const image = await front("image/image.js");
     const rendu = image.rendreImage([{ champs: { TITREIMAGE: "Titre visible", TEXTE: "Texte visible", LEGENDE: "Légende", TEXTEALTERNATIF: "Alternative" }, media: [{ id: "1" }] }], {});
     assert.match(rendu, /class="dse-b-image-titre">Titre visible/);
