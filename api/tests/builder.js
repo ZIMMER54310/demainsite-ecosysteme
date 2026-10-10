@@ -308,10 +308,13 @@ async function main() {
     assert.match(rendu, /class="dse-b-image-titre">Titre visible/);
     assert.match(rendu, /class="dse-b-image-texte">Texte visible/);
     assert.match(rendu, /alt="Alternative"/);
-    assert.match(rendu, /Légende/);
+    assert.ok(!rendu.includes("Légende"), "le titre remplace la legende");
     const ancien = image.rendreImage([{ titre: "Nom de repère", champs: { LEGENDE: "Légende" }, media: [{ id: "1" }] }], {});
     assert.ok(!ancien.includes("Nom de repère"));
-    assert.ok(!ancien.includes("dse-b-image--contenu"), "rendu image historique preserve");
+    assert.match(ancien, /dse-b-image-titre">Légende/, "ancienne legende reprise comme titre public");
+    assert.ok(!ancien.includes("figcaption"), "plus de legende distincte");
+    const sansTexte = image.rendreImage([{ champs: {}, media: [{ id: "1" }] }], {});
+    assert.ok(!sansTexte.includes("dse-b-image--contenu"), "image sans titre ni texte conserve son rendu simple");
   }
 
   console.log("OK tests builder");

@@ -518,12 +518,21 @@ async function formulaireContenu(w, nomListe, perimetre, d) {
   const cols = await w.cols(nomListe);
   // Aide sous chaque champ : description de la colonne SharePoint.
   const aideDe = (nom) => String(cols.find((c) => c.name === nom)?.description || "").trim();
-  const textes = ecriture.champsModifiables(cols).filter((c) => !/^ORDRE/i.test(c.nom)).map((c) => ({ ...c, aide: aideDe(c.nom) }));
+  const image = nomListe === "OBJ-MODULE-IMAGE";
+  const textes = ecriture.champsModifiables(cols).filter((c) => !/^ORDRE/i.test(c.nom) && !(image && ["LEGENDE", "ALIGNEMENT"].includes(cleChamp(c.nom))))
+    .map((c) => ({ ...c, aide: aideDe(c.nom) }));
   // Colonne Title + colonne TITRE affichee : la premiere devient le nom de repere pour eviter deux champs « Titre ».
   if (nomListe === "OBJ-MODULE-IMAGE") for (const c of textes) {
-    if (c.nom === "Title") c.libelle = "Nom de repère";
-    else if (cleChamp(c.nom) === "TITREIMAGE") c.libelle = "Titre visible de l’image";
-    else if (cleChamp(c.nom) === "TEXTE") c.libelle = "Texte de l’image";
+    if (c.nom === "Title") {
+      c.libelle = "Nom de repère";
+      c.aide = "Ce nom sert uniquement à retrouver ce contenu dans le cockpit. Il n’est pas affiché au public.";
+    } else if (cleChamp(c.nom) === "TITREIMAGE") {
+      c.libelle = "Titre de l’image pour le public";
+      c.aide = "Ce titre accompagne l’image sur le site. Cochez « Afficher le titre au public » pour le rendre visible ; sa position et sa typographie se règlent dans Design.";
+    } else if (cleChamp(c.nom) === "TEXTE") {
+      c.libelle = "Texte de l’image pour le public";
+      c.aide = "Ce texte décrit ou complète l’image sur le site. Cochez « Afficher le texte au public » pour le rendre visible ; sa position et sa typographie se règlent dans Design.";
+    }
   }
   if (textes.filter((c) => c.libelle === "Titre").length > 1) for (const c of textes) if (c.nom === "Title") c.libelle = "Nom de repère";
   const libre = (c) => !c.readOnly && !c.hidden && !String(c.name).startsWith("_");
@@ -543,20 +552,23 @@ async function formulaireContenu(w, nomListe, perimetre, d) {
   const exclus = new Set([...ETATS, "OBJ-MODULE-SITE-PUBLIC"].map(cleChamp));
   const listes = [];
   for (const c of cols) {
-    if (!c.lookup || c.lookup.allowMultipleValues || c.readOnly || c.hidden || exclus.has(cleChamp(c.displayName))) continue;
+    if (!c.lookup || c.lookup.allowMultipleValues || c.readOnly || c.hidden || exclus.has(cleChamp(c.displayName)) || image && cleChamp(c.displayName) === "ALIGNEMENT") continue;
     const cible = w.g.listes.find((l) => l.id === c.lookup.listId);
     if (!cible) continue;
     let options;
     if (cleChamp(cible.displayName) === cleChamp("OBJ-MEDIA")) {
-      options = (d.medias || []).filter((m) => mediaAutorise(m, perimetre)).map((m) => ({ id: m.id, titre: titreDe(m), media: true }));
+      options = (d.medias || []).filter((m) => mediaAutorise(m, perimetre) &&
+        (!image || /IMAGE|PHOTO|FOND|BANNI|LOGO|FAVICON|AFFICHE/i.test(cleChamp(rel(m, "OBJ-MEDIA-TYPE")?.titre) || "IMAGE")))
+        .map((m) => ({ id: m.id, titre: titreDe(m), media: true }));
     } else {
       const items = await ecriture.collecterFrais(w.g, `/sites/${w.g.siteGraphId}/lists/${cible.id}/items?$expand=fields($select=Title)&$top=200`);
       options = items.map((i) => ({ id: String(i.id), titre: String(i.fields?.Title || "") })).filter((o) => o.titre);
     }
     listes.push({ cle: `l${signer(`champ:${c.name}`).slice(0, 10)}`, nom: `${c.name}LookupId`, libelle: String(c.displayName || "").replace(/^OBJ[-_ ]?/i, "").replace(/[-_]+/g, " "),
-      obligatoire: Boolean(c.required), aide: aideDe(c.name), options });
+      obligatoire: Boolean(c.required), aide: aideDe(c.name), choisirImage: image && cleChamp(cible.displayName) === cleChamp("OBJ-MEDIA"), options });
   }
-  return { textes, listes };
+  return { textes, listes, image, titreImage: textes.find((c) => cleChamp(c.nom) === "TITREIMAGE")?.nom,
+    legende: image ? cols.find((c) => cleChamp(c.displayName) === "LEGENDE" && !c.readOnly)?.name : undefined };
 }
 
 function adresseLibre(titre, prises) {
@@ -570,8 +582,11 @@ function adresseLibre(titre, prises) {
 function formulairePublic(form, valeurs = {}) {
   return {
     textes: form.textes.map((c) => ({ cle: c.cle, libelle: c.libelle, aide: c.aide || "", obligatoire: c.obligatoire, multiligne: c.multiligne, max: c.max,
-      valeur: c.type === "lien" ? String(valeurs[c.nom]?.Url ?? "") : c.type === "riche" ? ecriture.htmlVersTexte(valeurs[c.nom]) : String(valeurs[c.nom] ?? "") })),
+      affichage: form.image ? ({ TITREIMAGE: "afficherTitreImage", TEXTE: "afficherTexteImage" })[cleChamp(c.nom)] : undefined,
+      valeur: c.type === "lien" ? String(valeurs[c.nom]?.Url ?? "") : c.type === "riche" ? ecriture.htmlVersTexte(valeurs[c.nom]) :
+        String((form.image && c.nom === form.titreImage ? valeurs[c.nom] || valeurs[form.legende] : valeurs[c.nom]) ?? "") })),
     listes: form.listes.map((l) => ({ cle: l.cle, libelle: l.libelle, aide: l.aide || "", obligatoire: l.obligatoire,
+      choisirImage: Boolean(l.choisirImage),
       options: l.options.map((o) => ({ ref: signer(`opt:${l.nom}:${o.id}`), titre: o.titre, url: o.media ? `/api/v1/media/${encodeURIComponent(o.id)}` : null })),
       valeur: valeurs[l.nom] ? signer(`opt:${l.nom}:${valeurs[l.nom]}`) : "" }))
   };
@@ -595,7 +610,11 @@ function validerFormulaire(form, valeurs) {
   for (const l of form.listes) {
     if (!Object.hasOwn(valeurs || {}, l.cle)) continue;
     const brut = String(valeurs[l.cle] || "");
-    if (!brut) { if (l.obligatoire) erreurs.push(`${l.libelle} : valeur obligatoire.`); continue; }
+    if (!brut) {
+      if (l.obligatoire) erreurs.push(`${l.libelle} : valeur obligatoire.`);
+      else if (l.choisirImage) propres[l.nom] = null;
+      continue;
+    }
     const o = l.options.find((x) => signer(`opt:${l.nom}:${x.id}`) === brut);
     if (!o) { erreurs.push(`${l.libelle} : choix non autorisé.`); continue; }
     propres[l.nom] = o.id;
@@ -606,6 +625,7 @@ function validerFormulaire(form, valeurs) {
     propres[c.nom] = valeurs[c.cle];
   }
   const connues = new Set([...form.textes.map((c) => c.cle), ...form.listes.map((l) => l.cle), ...(form.cases || []).map((c) => c.cle)]);
+  if (form.image) for (const cle of ["afficherTitreImage", "afficherTexteImage"]) connues.add(cle);
   if (Object.keys(valeurs || {}).some((k) => !connues.has(k))) erreurs.push("Un champ inconnu a été transmis.");
   return { erreurs: [...new Set(erreurs)], propres };
 }
@@ -851,10 +871,10 @@ const operationArticle = (action) => {
  * perimetre : { sites:Set(ID natifs du groupe), clients:Set, superAdmin, peut(fonction) }.
  * Retour : { refus } | { erreur, status } | { message, journal, cree? }.
  */
-async function executer({ d, perimetre, siteId, action, params = {}, apercu = false, attendus = [] }) {
+async function executer({ d, perimetre, siteId, action, params = {}, apercu = false, attendus = [], ecrivain }) {
   const p = params && typeof params === "object" ? params : {};
   const g = await ecriture.contexteGraph();
-  const w = new Ecrivain(g, { apercu, attendus });
+  const w = ecrivain || new Ecrivain(g, { apercu, attendus });
 
   // Element cible + controle de site (le site de l'element doit appartenir au perimetre demande).
   const cible = (types, reference) => {
@@ -1323,22 +1343,55 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const ct = contenuDe(d, c.el);
       if (!ct.liste) return { erreur: "Ce type de module n'a pas de formulaire de contenu.", status: 400 };
       const form = await formulaireContenu(w, ct.liste, perimetre, d);
-      if (action === "contenu.formulaire") return { formulaire: formulairePublic(form, ct.element?._fields || {}), type: ct.type };
+      if (action === "contenu.formulaire") {
+        const formulaire = formulairePublic(form, ct.element?._fields || {});
+        if (form.image) {
+          const style = B.styleResolu(B.contexteComposition(d, { id: String(siteId) }), typeStyleDe(d, c.type, c.el), rel(c.el, "OBJ-STYLE-PRESET")?.id).style;
+          formulaire.visibiliteImage = { titre: style.imageTitreMasque !== true, texte: style.imageTexteMasque !== true };
+          formulaire.aide = "Choisissez une image, renseignez son titre et son texte pour le public. Le nom de repère reste interne ; le texte alternatif aide les personnes utilisant un lecteur d’écran.";
+        }
+        return { formulaire, type: ct.type };
+      }
       const { erreurs, propres } = validerFormulaire(form, p.valeurs);
       if (erreurs.length) return { erreur: erreurs.join(" "), status: 400 };
+      let visibiliteModifiee = false;
+      if (p.valeurs && (Object.hasOwn(p.valeurs, "afficherTitreImage") || Object.hasOwn(p.valeurs, "afficherTexteImage"))) {
+        if (!form.image) return { erreur: "Visibilité réservée aux images.", status: 400 };
+        const style = B.styleResolu(B.contexteComposition(d, { id: String(siteId) }), typeStyleDe(d, c.type, c.el), rel(c.el, "OBJ-STYLE-PRESET")?.id).style;
+        const valeurs = {};
+        for (const [cle, masque] of [["afficherTitreImage", "imageTitreMasque"], ["afficherTexteImage", "imageTexteMasque"]]) {
+          if (!Object.hasOwn(p.valeurs, cle)) continue;
+          if (!["true", "false"].includes(p.valeurs[cle])) return { erreur: "Visibilité de l’image invalide.", status: 400 };
+          const cacher = p.valeurs[cle] === "false";
+          if (cacher !== (style[masque] === true)) valeurs[masque] = cacher;
+        }
+        if (Object.keys(valeurs).length) {
+          const resultat = await executer({ d, perimetre, siteId, action: "design.enregistrer", params: { ref: p.ref, valeurs }, apercu, attendus, ecrivain: w });
+          if (resultat.erreur || resultat.refus) return resultat;
+          visibiliteModifiee = true;
+        }
+      }
+      if (form.image && form.legende && form.titreImage && Object.hasOwn(propres, form.titreImage)) propres[form.legende] = "";
+      const enregistrerContenu = async (operation) => {
+        try { await operation(); }
+        catch (err) {
+          if (visibiliteModifiee) err.message = `La visibilité a été enregistrée, mais le contenu n’a pas pu être enregistré. Réouvrez le formulaire pour vérifier les valeurs. ${err.message}`;
+          throw err;
+        }
+      };
       if (ct.element) {
         // Seuls les champs reellement modifies sont ecrits (preserve la mise en forme riche non retouchee).
         const avant = ecriture.valeursDe(ct.element._fields || {}, Object.keys(propres));
         const nouveaux = ecriture.valeursDe(propres, Object.keys(propres));
         for (const n of Object.keys(propres)) if (avant[n] === nouveaux[n]) delete propres[n];
-        if (!Object.keys(propres).length) return res("Aucune modification à enregistrer.");
-        await w.maj(ct.liste, ct.element.id, propres);
+        if (!Object.keys(propres).length) return res(visibiliteModifiee ? "Contenu du module enregistré." : "Aucune modification à enregistrer.");
+        await enregistrerContenu(() => w.maj(ct.liste, ct.element.id, propres));
         return res("Contenu du module enregistré.");
       }
       const nMod = await w.lookup(ct.liste, "OBJ-MODULE-SITE-PUBLIC");
       if (!nMod) return { refus: "Relation du contenu au module indisponible." };
       const etats = await w.etats(ct.liste, B.publiable(c.el) ? "actif" : "brouillon");
-      await w.creer(ct.liste, { Title: titreDe(c.el) || ct.type, ...propres, ...etats, [nMod]: String(c.el.id) });
+      await enregistrerContenu(() => w.creer(ct.liste, { Title: titreDe(c.el) || ct.type, ...propres, ...etats, [nMod]: String(c.el.id) }));
       return res("Contenu du module créé.");
     }
 

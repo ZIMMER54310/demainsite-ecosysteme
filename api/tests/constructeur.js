@@ -68,6 +68,22 @@ async function main() {
   }
   const uiConstructeur = await front("cockpit/constructeur.js");
   {
+    const options = Array.from({ length: 500 }, (_, i) => ({ ref: `image.${i}`, titre: `Image ${i}`, url: `/api/v1/media/${i}` }));
+    options[99].titre = "Été portrait";
+    assert.equal(uiConstructeur.pageImages(options).images.length, 24);
+    assert.equal(uiConstructeur.pageImages(options).pages, 21);
+    assert.equal(uiConstructeur.pageImages(options, "", 20).images.length, 20);
+    assert.equal(uiConstructeur.pageImages(options, "ete").images[0].ref, "image.99");
+    assert.equal(uiConstructeur.pageImages(options, "absent").total, 0);
+    const h = uiConstructeur.formulaireHtml({ textes: [{ cle: "t", libelle: "Titre public", aide: "Explication", affichage: "afficherTitreImage", valeur: "" }],
+      visibiliteImage: { titre: false, texte: true }, listes: [{ cle: "m", choisirImage: true, options, valeur: "image.99" }] }, "Image");
+    assert.equal((h.match(/<img /g) || []).length, 1, "500 medias : seule la selection est rendue avant ouverture");
+    assert.ok(!h.includes("<option"), "aucune liste geante de medias");
+    assert.ok(h.includes("data-c-image-recherche"));
+    assert.ok(h.includes('name="afficherTitreImage" value="true">'), "visibilite initiale respectee");
+    assert.ok(h.indexOf("Explication") > h.indexOf('name="t"'), "aide sous le champ");
+  }
+  {
     const h = uiConstructeur.formulaireHtml({ aide: "Aide type", textes: [{ cle: "c1", libelle: "Contenu", aide: "Aide champ", multiligne: true, valeur: "" }], listes: [] },
       "Étape", { valider: "Suivant", passer: "Passer", ia: true });
     for (const x of ["Aide type", "Aide champ", "data-c-ia=\"c1\"", "data-c-passer", ">Suivant<"]) assert.ok(h.includes(x), `formulaire guide : ${x}`);
@@ -587,6 +603,43 @@ async function main() {
       assert.equal(resetDetails.bordureRayonHautGauche, undefined);
       assert.equal(resetDetails.bordureEpaisseurHaut, 2.5, "modification partielle conserve les autres cotes");
       assert.equal((await enregistrerTypo({ imageTitrePosition: "invalide" })).status, 400);
+      ecriture.contexteGraph = async () => ({ listes: [{ id: "media", displayName: "OBJ-MEDIA" }, { id: "align", displayName: "OBJ-ALIGNEMENT" }] });
+      const contenuImage = el(8000, "Repere interne", { "OBJ-MODULE-SITE-PUBLIC": lien(7000) });
+      contenuImage._fields = { Title: "Repere interne", LEGENDE: "Ancien titre public", TITREIMAGE: "", TEXTE: "Description", MEDIALookupId: "1" };
+      copies.contenus["OBJ-MODULE-IMAGE"] = [contenuImage];
+      const colsStyle = ["TYPOTITRE", "TYPOTEXTE", "IMAGEDISPOSITION", "BORDURESDETAIL"].map((name) => ({ name, text: { allowMultipleLines: true, textType: "plain" } }));
+      proto.cols = async (liste) => liste === "OBJ-MODULE-IMAGE" ? [
+        { name: "Title", displayName: "Titre", required: true, text: { maxLength: 255 } },
+        { name: "TITREIMAGE", displayName: "TITRE-IMAGE", text: { maxLength: 255 } },
+        { name: "TEXTE", displayName: "TEXTE", text: { allowMultipleLines: true, textType: "plain" } },
+        { name: "LEGENDE", displayName: "LEGENDE", text: {} },
+        { name: "MEDIA", displayName: "MEDIA", lookup: { listId: "media" } },
+        { name: "ALIGNEMENT", displayName: "ALIGNEMENT", lookup: { listId: "align" } }
+      ] : colsStyle;
+      const contenu = (action, valeurs) => C.executer({ d: copies, perimetre, siteId: "4", action, params: { ref: C.ref("module", 7000), valeurs } });
+      const f = (await contenu("contenu.formulaire")).formulaire;
+      assert.ok(!f.textes.some((x) => x.libelle === "LEGENDE"));
+      assert.ok(!f.listes.some((x) => x.libelle === "ALIGNEMENT"));
+      const titrePublic = f.textes.find((x) => x.affichage === "afficherTitreImage");
+      assert.equal(titrePublic.valeur, "Ancien titre public");
+      assert.match(titrePublic.aide, /Design/);
+      assert.equal(f.visibiliteImage.texte, false, "masquage Design relu dans le contenu");
+      assert.equal(f.listes[0].choisirImage, true);
+      const invalid = await contenu("contenu.enregistrer", { [titrePublic.cle]: "Titre", afficherTexteImage: "invalid" });
+      assert.equal(invalid.status, 400);
+      const saveImage = await contenu("contenu.enregistrer", { [titrePublic.cle]: "Titre public", afficherTitreImage: "false", afficherTexteImage: "true" });
+      assert.match(saveImage.message, /Contenu du module enregistré/);
+      assert.equal(stores.get("OBJ-MODULE-IMAGE/8000").TITREIMAGE, "Titre public");
+      assert.equal(stores.get("OBJ-MODULE-IMAGE/8000").LEGENDE, "");
+      assert.equal(stores.get("OBJ-MODULE-IMAGE/8000").Title, undefined, "nom de repere non modifie");
+      const disposition = JSON.parse(stores.get(`OBJ-STYLE-PRESET/${dernier.id}`).IMAGEDISPOSITION);
+      assert.equal(disposition.imageTitreMasque, true);
+      assert.equal(disposition.imageTexteMasque, false);
+      assert.equal(disposition.imageTitrePosition, "DROITE", "autres reglages conserves");
+      assert.equal(disposition.responsive.MOBILE.imageTitreMode, "AUTOUR", "responsive conserve");
+      const retirer = await contenu("contenu.enregistrer", { [f.listes[0].cle]: "" });
+      assert.match(retirer.message, /enregistré/);
+      assert.equal(stores.get("OBJ-MODULE-IMAGE/8000").MEDIALookupId, null);
     } finally {
       ecriture.contexteGraph = originalGraph;
       ecriture.lireItemFrais = originalLecture;

@@ -618,19 +618,42 @@ export function rendreConstructeur(moi, d, etat = {}) {
 
 export function formulaireHtml(f, titre, { valider = "Enregistrer", passer = "", ia = false } = {}) {
   const aide = (t) => t ? `<small class="c-aide">${e(t)}</small>` : "";
-  const textes = (f.textes || []).map((c) => `<label>${e(c.libelle)}${c.obligatoire ? " *" : ""}${aide(c.aide)}
+  const textes = (f.textes || []).map((c) => `<div class="c-champ"><label>${e(c.libelle)}${c.obligatoire ? " *" : ""}
     ${ia && c.multiligne ? `<button type="button" class="btn btn-mini c-ia" data-c-ia="${e(c.cle)}" title="Demander de l'aide à Pasc ARA IA">✨ Aide Pasc ARA IA</button><small class="c-ia-reponse" data-c-ia-reponse="${e(c.cle)}" hidden></small>` : ""}
     ${c.multiligne ? `<textarea name="${e(c.cle)}" rows="4"${c.max ? ` maxlength="${c.max}"` : ""}>${e(c.valeur)}</textarea>`
-      : `<input name="${e(c.cle)}" value="${e(c.valeur)}"${c.max ? ` maxlength="${c.max}"` : ""}${c.obligatoire ? " required" : ""}>`}</label>`).join("");
-  const listes = (f.listes || []).map((l) => `<label>${e(l.libelle)}${l.obligatoire ? " *" : ""}${aide(l.aide)}
+      : `<input name="${e(c.cle)}" value="${e(c.valeur)}"${c.max ? ` maxlength="${c.max}"` : ""}${c.obligatoire ? " required" : ""}>`}${aide(c.aide)}</label>
+    ${c.affichage && f.visibiliteImage ? `<label class="c-visibilite"><input type="checkbox" name="${e(c.affichage)}" value="true"${f.visibiliteImage[c.affichage === "afficherTitreImage" ? "titre" : "texte"] ? " checked" : ""}>Afficher ${c.affichage === "afficherTitreImage" ? "le titre" : "le texte"} au public</label>` : ""}</div>`).join("");
+  const listes = (f.listes || []).map((l) => {
+    if (l.choisirImage) {
+      const selection = l.options.find((o) => o.ref === l.valeur);
+      return `<div class="c-champ" data-c-image="${e(l.cle)}"><strong>Image choisie${l.obligatoire ? " *" : ""}</strong>
+        <input type="hidden" name="${e(l.cle)}" value="${e(l.valeur)}">
+        <div data-c-image-selection>${selection ? `<figure class="c-image-selection"><img src="${e(selection.url)}" alt="${e(selection.titre)}"><figcaption>${e(selection.titre)}</figcaption></figure>` : "<p>Aucune image choisie.</p>"}</div>
+        <div class="constructeur-boutons"><button type="button" class="btn btn-secondary" data-c-image-ouvrir aria-expanded="false">${selection ? "Changer l’image" : "Choisir une image"}</button>
+        ${l.obligatoire ? "" : `<button type="button" class="btn btn-secondary" data-c-image-retirer${selection ? "" : " hidden"}>Retirer l’image</button>`}</div>
+        ${aide("Ouvrez la médiathèque pour rechercher et choisir une image. Seule l’image sélectionnée apparaît ici.")}
+        <section data-c-image-choix hidden aria-label="Choisir une image dans la médiathèque"><label>Rechercher une image<input type="search" data-c-image-recherche placeholder="Nom de l’image"></label>
+        <div class="c-image-resultats" data-c-image-resultats></div><p role="status" data-c-image-compteur></p>
+        <div class="constructeur-boutons"><button type="button" class="btn btn-secondary" data-c-image-precedent>Précédent</button><button type="button" class="btn btn-secondary" data-c-image-suivant>Suivant</button><button type="button" class="btn btn-secondary" data-c-image-fermer>Fermer la sélection</button></div></section></div>`;
+    }
+    return `<label>${e(l.libelle)}${l.obligatoire ? " *" : ""}
     <select name="${e(l.cle)}"><option value="">— Aucun —</option>${l.options.map((o) => `<option value="${e(o.ref)}"${o.ref === l.valeur ? " selected" : ""}>${e(o.titre)}</option>`).join("")}</select>
     ${l.options.some((o) => o.url) ? `<span class="constructeur-medias constructeur-medias--mini">${l.options.filter((o) => o.url).map((o) => `<img src="${e(o.url)}" alt="${e(o.titre)}" title="${e(o.titre)}" loading="lazy">`).join("")}</span>` : ""}
-  </label>`).join("");
+    ${aide(l.aide)}</label>`;
+  }).join("");
   return `<form method="dialog" data-c-formulaire><h3>${e(titre)}</h3>${f.aide ? `<p class="c-aide-bloc">💡 ${e(f.aide)}</p>` : ""}${textes}${listes || ""}
     ${textes || listes ? "" : `<p class="muted">Aucun champ modifiable.</p>`}
     <div class="constructeur-boutons"><button class="btn btn-primary" value="ok" type="submit">${e(valider)}</button>
     ${passer ? `<button class="btn btn-secondary" type="button" data-c-passer>${e(passer)}</button>` : ""}
     <button class="btn btn-secondary" value="annuler" type="button" data-c-fermer>Annuler</button></div></form>`;
+}
+
+export function pageImages(options, recherche = "", page = 0) {
+  const normaliser = (v) => String(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const liste = options.filter((o) => normaliser(o.titre).includes(normaliser(recherche)));
+  const pages = Math.max(1, Math.ceil(liste.length / 24));
+  const index = Math.max(0, Math.min(pages - 1, page));
+  return { images: liste.slice(index * 24, (index + 1) * 24), total: liste.length, page: index, pages };
 }
 
 /* ---------------- Activation (evenements) ---------------- */
@@ -1234,9 +1257,53 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
       zone.textContent = `🤖 Pasc ARA IA : ${MESSAGE_IA}`;
       zone.hidden = false;
     });
+    for (const liste of (f.listes || []).filter((l) => l.choisirImage)) {
+      const zone = dlg.querySelector(`[data-c-image="${CSS.escape(liste.cle)}"]`);
+      const panneau = zone.querySelector("[data-c-image-choix]");
+      const ouvrir = zone.querySelector("[data-c-image-ouvrir]");
+      const recherche = zone.querySelector("[data-c-image-recherche]");
+      const input = zone.querySelector("[name]");
+      let page = 0;
+      const fermer = () => { panneau.hidden = true; panneau.querySelector("[data-c-image-resultats]").replaceChildren(); ouvrir.setAttribute("aria-expanded", "false"); ouvrir.focus(); };
+      const choisir = (image) => {
+        input.value = image?.ref || "";
+        zone.querySelector("[data-c-image-selection]").innerHTML = image
+          ? `<figure class="c-image-selection"><img src="${e(image.url)}" alt="${e(image.titre)}"><figcaption>${e(image.titre)}</figcaption></figure>` : "<p>Aucune image choisie.</p>";
+        ouvrir.textContent = image ? "Changer l’image" : "Choisir une image";
+        const retirer = zone.querySelector("[data-c-image-retirer]");
+        if (retirer) retirer.hidden = !image;
+        fermer();
+      };
+      const rendre = () => {
+        const resultat = pageImages(liste.options, recherche.value, page);
+        page = resultat.page;
+        zone.querySelector("[data-c-image-resultats]").innerHTML = resultat.images.map((o) =>
+          `<button type="button" class="c-image-option" data-c-image-option="${e(o.ref)}"${o.ref === input.value ? ' aria-pressed="true"' : ' aria-pressed="false"'}><img src="${e(o.url)}" alt="" loading="lazy"><span>${e(o.titre)}</span></button>`).join("");
+        zone.querySelector("[data-c-image-compteur]").textContent = resultat.total ? `${resultat.total} image(s) · Page ${page + 1} sur ${resultat.pages}` : "Aucune image ne correspond à votre recherche.";
+        zone.querySelector("[data-c-image-precedent]").disabled = page === 0;
+        zone.querySelector("[data-c-image-suivant]").disabled = page + 1 === resultat.pages;
+      };
+      ouvrir.addEventListener("click", () => { panneau.hidden = false; ouvrir.setAttribute("aria-expanded", "true"); rendre(); recherche.focus(); });
+      recherche.addEventListener("input", () => { page = 0; rendre(); });
+      zone.querySelector("[data-c-image-precedent]").addEventListener("click", () => { page--; rendre(); });
+      zone.querySelector("[data-c-image-suivant]").addEventListener("click", () => { page++; rendre(); });
+      zone.querySelector("[data-c-image-fermer]").addEventListener("click", fermer);
+      zone.querySelector("[data-c-image-retirer]")?.addEventListener("click", () => choisir(null));
+      zone.querySelector("[data-c-image-resultats]").addEventListener("click", (ev) => {
+        const bouton = ev.target.closest("[data-c-image-option]");
+        if (bouton) choisir(liste.options.find((o) => o.ref === bouton.dataset.cImageOption));
+      });
+    }
     dlg.querySelector("form").addEventListener("submit", (ev) => {
       ev.preventDefault();
       const valeurs = Object.fromEntries(new FormData(ev.target).entries());
+      for (const l of (f.listes || []).filter((x) => x.choisirImage && x.obligatoire)) if (!valeurs[l.cle]) {
+        const zone = dlg.querySelector(`[data-c-image="${CSS.escape(l.cle)}"]`);
+        zone.querySelector("[data-c-image-ouvrir]").click();
+        zone.querySelector("[data-c-image-compteur]").textContent = "Choisissez une image avant d’enregistrer.";
+        return;
+      }
+      for (const c of dlg.querySelectorAll(".c-visibilite input")) valeurs[c.name] = String(c.checked);
       dlg.close();
       surValider(valeurs);
     });
@@ -1918,7 +1985,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
           const f = r?.donnees?.formulaire;
           if (!f) return message("Formulaire indisponible.");
           const t = action === "contenu" ? (d.typesModules || []).find((x) => x.code === String(r.donnees.type || "").toUpperCase()) : null;
-          return ouvrirFormulaire(t ? { ...f, aide: t.aide || t.description || "" } : f,
+          return ouvrirFormulaire(t ? { ...f, aide: f.aide || t.aide || t.description || "" } : f,
             action === "contenu" ? `${t?.icone || ""} Contenu du module ${t?.libelle || r.donnees.type || ""}`.trim() : "Modifier les informations",
             (valeurs) => executer(action === "contenu" ? "contenu.enregistrer" : "conteneur.modifier", { ref, valeurs }), { ia: action === "contenu" });
         } catch (err) { return message(err.message || "Formulaire indisponible."); }

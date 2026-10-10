@@ -33,14 +33,27 @@ Les types IMAGE et IMAGE-TEXTE disposent egalement des deux typographies.
 Dans `OBJ-MODULE-IMAGE`, `TITRE-IMAGE` (texte facultatif sur une ligne)
 et `TEXTE` (texte brut multiligne facultatif) fournissent les contenus visibles.
 La colonne systeme `Title` reste le nom de repere obligatoire ; elle ne
-devient jamais automatiquement le titre visible. Le texte alternatif,
-la legende et le lien existants restent inchanges.
+devient jamais automatiquement le titre visible. Le texte alternatif et
+le lien existants restent inchanges. Le formulaire ne propose plus la legende
+ni l'alignement (regle dans Design). Une ancienne legende est reprise comme
+titre public si `TITRE-IMAGE` est vide ; a l'enregistrement de ce titre,
+la legende est videe pour eviter tout doublon ou reapparition apres effacement.
+Les aides des formulaires dynamiques se trouvent sous les champs, en italique
+et dans une couleur distincte. Le selecteur d'image s'ouvre a la demande,
+propose une recherche insensible aux accents et 24 resultats par page ;
+le formulaire ferme n'affiche que l'image choisie.
 `IMAGE-DISPOSITION` et `BORDURES-DETAIL`, dans `OBJ-STYLE-PRESET`, sont des
 colonnes de texte brut multiligne facultatives, sans ajout des modifications.
 Le cockpit y enregistre des objets JSON valides, avec les surcharges
 `responsive.TABLETTE` et `responsive.MOBILE`. Chaque titre/texte est masquable
 independamment, autour ou sur l'image, en haut/bas/gauche/droite.
 Le placement par defaut est titre au-dessus et texte en dessous.
+Les cases « Afficher le titre/texte au public » du formulaire de contenu
+utilisent les memes masquages generaux que Design dans `IMAGE-DISPOSITION`.
+Les surcharges tablette/mobile sont conservees. Les valeurs inchangees
+n'ecrivent pas le preset. Les ecritures de visibilite et de contenu ne sont
+pas transactionnelles dans Graph : une erreur du contenu apres modification
+de visibilite signale explicitement cet enregistrement partiel.
 Les bordures proposent quatre rayons (0 a 200 px), puis une epaisseur
 (0 a 20 px), une couleur et un style pour chacun des quatre cotes.
 Les reglages precis priment sur les reglages globaux ; les reinitialiser
