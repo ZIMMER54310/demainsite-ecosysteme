@@ -32,6 +32,25 @@ function regleRole(politique, roleId) {
   };
 }
 
+function roleSuperAdministrateur(politique, roleId) {
+  const r = regleRole(politique, roleId);
+  return r?.portee === "tous" && r.niveau === "administration" &&
+    r.fonctions.includes("administration") && r.fonctions.includes("utilisateurs") && r.fonctions.includes("plateforme");
+}
+
+function estSuperAdministrateur(d) {
+  return d?.reconnu === true && d.global === true && d.niveau === "administration" &&
+    ["administration", "utilisateurs", "plateforme"].every((f) => d.fonctions?.includes(f));
+}
+
+function protegerSuperAdministrateurs(donnees, utilisateurId, roleId, politique = donnees.politique) {
+  const restants = donnees.utilisateurs.filter((u) => u.actif && u.valide && u.entraObjectId &&
+    roleSuperAdministrateur(politique, String(u.id) === String(utilisateurId) ? roleId : u.roleId));
+  const identites = donnees.utilisateurs.filter((u) => u.entraObjectId).map((u) => minuscule(u.entraObjectId));
+  return restants.some((u) => identites.filter((id) => id === minuscule(u.entraObjectId)).length === 1)
+    ? null : "Il doit rester au moins un super administrateur global actif, valide et lié à une identité unique.";
+}
+
 /*
  * Un role ne peut attribuer qu'un role dont la portee, le niveau ET les fonctions
  * sont inclus dans les siens : jamais d'elevation de privilege.
@@ -39,7 +58,7 @@ function regleRole(politique, roleId) {
 function peutAttribuer(droitsActeur, roleIdCible, politique = { roles: {} }) {
   const cible = regleRole(politique, roleIdCible);
   if (!cible || !droitsActeur?.reconnu || !droitsActeur.portee) return false;
-  if (droitsActeur.contexte?.etat === "COMPLET") {
+  if (droitsActeur.contexte?.etat === "COMPLET" && !estSuperAdministrateur(droitsActeur)) {
     if (cible.portee === "tous") return false;
   } else if (RANG_PORTEE[cible.portee] > RANG_PORTEE[droitsActeur.portee]) return false;
   if (RANG_NIVEAU[cible.niveau] > RANG_NIVEAU[droitsActeur.niveau]) return false;
@@ -130,6 +149,23 @@ function contexteSite(base, donnees, siteId) {
   const refus = (message) => ({ ...base, siteIds: [], clientIds: [], fonctions: [], niveau: null, portee: null, role: null, roleId: null, accesType: null,
     global: false, contexte: { etat: "CONTEXTE INCOMPLET", message, siteId: id } });
   if (!base.reconnu) return refus("Utilisateur non reconnu.");
+  if (estSuperAdministrateur(base)) {
+    const site = donnees.sites.find((s) => s.id === id && s.actif && s.valide);
+    const client = site && donnees.clients.find((c) => c.id === site.clientId);
+    if (!site || !client || !base.siteIds.includes(id)) return refus("Site ou client invalide.");
+    const ops = (donnees.dynamique?.operations || []).filter((o) => o.mode !== "compatibility");
+    const decisions = ops.map((o) => {
+      const politique = autorisations.decisionPolitique(donnees.dynamique, o, [client.id], id);
+      return { operation: o.operation, fonction: o.fonction, libelle: o.libelle,
+        autorise: politique.autorise, categorie: politique.autorise ? "autorise" : politique.categorie,
+        demandable: false, message: politique.message || null };
+    });
+    return { ...base, siteIds: [id], clientIds: [client.id],
+      autorisations: donnees.dynamique ? { actif: true, operations: ops.filter((o) =>
+        decisions.find((d) => d.operation === o.operation).autorise), decisions, affectations: [], refuses: decisions.filter((d) => !d.autorise).map((d) => d.operation) } : null,
+      contexte: { etat: "COMPLET", siteId: id, source: "SUPER-ADMINISTRATEUR-GLOBAL",
+        client: { titre: client.titre }, role: base.role, verrouille: false } };
+  }
   if (donnees.dynamique) {
     const resolution = autorisations.resoudre(donnees.dynamique, base.utilisateurId, id);
     if (resolution.actif) {
@@ -389,4 +425,4 @@ function viderCache() {
   cache = { valeur: null, expiration: 0, promesse: null };
 }
 
-module.exports = { calculerDroits, contexteSite, contexteRelation, droitsPour, sitesIndex, donneesDroits, viderCache, peutAttribuer, regleRole, RANG_PORTEE, RANG_NIVEAU };
+module.exports = { calculerDroits, contexteSite, contexteRelation, droitsPour, sitesIndex, donneesDroits, viderCache, peutAttribuer, regleRole, RANG_PORTEE, RANG_NIVEAU, roleSuperAdministrateur, estSuperAdministrateur, protegerSuperAdministrateurs };

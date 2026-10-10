@@ -811,7 +811,7 @@ async function confirmer(req, res) {
           if (op.adminAction === "changer-statut-site" &&
             (!a.op || a.op.listId !== op.listId || a.op.itemId !== op.itemId ||
               ecriture.hash(a.op.champs) !== ecriture.hash(op.champs))) return "Le site ou le statut a changé. Relisez avant confirmation.";
-          if (["ajouter-acces-site", "modifier-acces-site", "deverrouiller-acces-site", "lier-identite-utilisateur"].includes(op.adminAction) && a.op) {
+          if (["ajouter-acces-site", "modifier-acces-site", "deverrouiller-acces-site", "lier-identite-utilisateur", "changer-role", "modifier-politique-role"].includes(op.adminAction) && a.op) {
             if (op.listId !== a.op.listId || op.itemId !== a.op.itemId ||
               ecriture.hash(op.champs) !== ecriture.hash(a.op.champs)) return "Le rattachement utilisateur/client/site ou les états ont changé.";
           }
@@ -839,14 +839,15 @@ async function confirmer(req, res) {
 /* ---------------- Administration ---------------- */
 
 async function contexteDroitsAdmin(ctx, domaine) {
-  const superAdministrateur = ctx.droits.global === true && ctx.droits.fonctions.includes("plateforme");
+  const base = ctx.droits;
+  const superAdministrateur = droits.estSuperAdministrateur(base);
   if (!domaine && !superAdministrateur) return null;
   if (domaine && !await siteDuPerimetre(ctx, domaine)) return null;
   const donnees = await droits.donneesDroits();
   const regle = droits.regleRole(donnees.politique, ctx.droits.roleId);
   if (!superAdministrateur && (regle?.niveau !== "administration" ||
     !regle.fonctions.includes("administration") || !ctx.droits.fonctions.includes("administration"))) return null;
-  return { ...ctx.droits, reconnu: true, niveau: "administration",
+  return { ...(superAdministrateur ? base : ctx.droits), reconnu: true, niveau: "administration",
     fonctions: [...new Set([...ctx.droits.fonctions, "administration"])],
     global: superAdministrateur, superAdministrateur };
 }

@@ -56,7 +56,8 @@ function utilisateursVisibles(d, donnees) {
   });
 }
 
-const rolesAttribuables = (d, donnees) => donnees.roles.filter((r) => droits.peutAttribuer(d, r.id, donnees.politique));
+const rolesAttribuables = (d, donnees) => donnees.roles.filter((r) => droits.peutAttribuer(d, r.id, donnees.politique) &&
+  (!droits.roleSuperAdministrateur(donnees.politique, r.id) || droits.estSuperAdministrateur(d)));
 
 function vueUtilisateur(u, d, donnees, ctxSites) {
   const moi = String(u.id) === String(d.utilisateurId);
@@ -95,7 +96,9 @@ function vueUtilisateur(u, d, donnees, ctxSites) {
     sites,
     portee: droits.regleRole(donnees.politique || {}, u.roleId)?.portee || null,
     modifiable,
-    roleGlobalModifiable: d.global && !moi && (!u.roleId || droits.peutAttribuer(d, u.roleId, donnees.politique))
+    roleGlobalModifiable: d.global && !moi && (!u.roleId || droits.peutAttribuer(d, u.roleId, donnees.politique)) &&
+      (!droits.roleSuperAdministrateur(donnees.politique, u.roleId) ||
+        droits.estSuperAdministrateur(d) && !droits.protegerSuperAdministrateurs(donnees, u.id, null))
   };
 }
 
@@ -223,6 +226,11 @@ async function construireAction(d, action, params, g) {
     }
     const candidat = { ...role, portee: params.portee, niveau: params.niveau, fonctions: params.fonctions };
     const p = politiqueDepuisRoles([candidat], donnees.correspondances || []);
+    if (droits.roleSuperAdministrateur(politique, role.id)) {
+      if (!droits.estSuperAdministrateur(d)) return { refus: "Seul un super administrateur peut modifier ce rôle." };
+      const refus = droits.protegerSuperAdministrateurs(donnees, null, null, { roles: { ...politique.roles, [role.id]: p.roles[role.id] } });
+      if (refus) return { refus };
+    }
     if (!droits.peutAttribuer(d, role.id, p)) return { refus: "Politique incomplète, inconnue ou supérieure à vos droits." };
     if (!S.listes.role) return { refus: "Gestion des politiques indisponible." };
     const champs = { PORTEE: candidat.portee, NIVEAUACCES: candidat.niveau, FONCTIONS: candidat.fonctions };
@@ -241,6 +249,10 @@ async function construireAction(d, action, params, g) {
     if (String(cible.id) === String(d.utilisateurId)) return { refus: "Vous ne pouvez pas modifier votre propre rôle." };
     if (cible.roleId && !droits.peutAttribuer(d, cible.roleId, politique)) return { refus: "Cet utilisateur dispose de droits supérieurs aux vôtres." };
     if (!role || !droits.peutAttribuer(d, role.id, politique)) return { refus: "Vous ne pouvez pas attribuer ce rôle." };
+    if ((droits.roleSuperAdministrateur(politique, cible.roleId) || droits.roleSuperAdministrateur(politique, role.id)) &&
+      !droits.estSuperAdministrateur(d)) return { refus: "Seul un super administrateur peut attribuer ou retirer ce rôle." };
+    const dernier = droits.protegerSuperAdministrateurs(donnees, cible.id, role.id);
+    if (dernier) return { refus: dernier };
     if (droits.regleRole(politique, role.id)?.portee === "client" &&
       !donnees.clients.some((c) => String(c.id) === String(cible.clientId))) return { refus: "Ce rôle exige un client valide sur l'utilisateur." };
     if (!S.colonnes.utilisateurRole) return { refus: "La gestion des rôles est momentanément indisponible." };
@@ -280,6 +292,8 @@ async function construireAction(d, action, params, g) {
     if (!cible.actif || !cible.valide) return { refus: "Utilisateur non actif ou non validé." };
     if (String(cible.id) === String(d.utilisateurId)) return { refus: "Vous ne pouvez pas modifier vos propres accès." };
     if (!role || !role.actif || !role.valide || !droits.peutAttribuer(d, role.id, politique)) return { refus: "Rôle contextuel absent ou non attribuable." };
+    if ((droits.roleSuperAdministrateur(politique, cible.roleId) || droits.roleSuperAdministrateur(politique, role.id)) &&
+      !droits.estSuperAdministrateur(d)) return { refus: "Seul un super administrateur peut modifier ces accès." };
     const acces = (donnees.accesTypes || []).find((a) => ref("a", a.id) === params.accesType && a.actif && a.valide);
     if (!acces) return { refus: "Profil d'accès valide obligatoire." };
     const groupe = perimetre.groupeParDomaine(await sitesAffectables(d), minuscule(params.domaine));
@@ -434,6 +448,10 @@ async function preparerAction({ identite, d, action, params }) {
   }
   if (r.aucunChangement) return { status: 200, aucunChangement: true, changements: [] };
   const op = { ...r.op, portee: "admin", adminAction: action, adminParams: params };
+  if (["changer-role", "modifier-politique-role"].includes(action)) {
+    op.cleDoublon = "gouvernance-super-administrateurs";
+    op.verrouRessource = "gouvernance-super-administrateurs";
+  }
   if (["changer-role", "creer-utilisateur", "modifier-politique-role"].includes(action)) op.journalComptes = true;
   op.contexteJournal = { acteur: identite.sujet, utilisateurId: d.utilisateurId || null,
     clientId: d.clientIds?.length === 1 ? d.clientIds[0] : null, siteId: null, ...op.contexteJournal };

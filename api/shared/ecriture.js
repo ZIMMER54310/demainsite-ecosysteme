@@ -220,7 +220,7 @@ async function executer({ identite, jeton, revalider, acteur }) {
     return { status: resultat.succes ? 200 : 502, ...resultat, deja: true };
   }
   if (enCours.has(cle)) return { status: 409, erreur: "Cet enregistrement est déjà en cours." };
-  const ressource = `${op.listId}:${op.journalComptes ? op.cleDoublon || op.itemId || cle : op.itemId || op.cleDoublon || cle}`;
+  const ressource = op.verrouRessource || `${op.listId}:${op.journalComptes ? op.cleDoublon || op.itemId || cle : op.itemId || op.cleDoublon || cle}`;
   if (ressourcesEnCours.has(ressource)) return { status: 409, erreur: "Une modification de cet élément est déjà en cours." };
   enCours.add(cle);
   ressourcesEnCours.add(ressource);

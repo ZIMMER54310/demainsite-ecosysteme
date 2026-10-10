@@ -28,6 +28,26 @@ ses propres acces ou des droits verrouilles. Une politique de role absente
 ne permet jamais d'inferer un niveau inferieur. Le super administrateur
 (politique globale avec fonction `plateforme`) peut egalement gerer les
 profils et ajouter des droits au catalogue. Son propre profil est protege.
+Le super administrateur est **global pour tous les sites**, meme lorsqu'un
+site possede une affectation locale plus restrictive. Il peut modifier
+les contenus et administrer les comptes/profils ; les indisponibilites
+globales de fonctions et options client restent appliquees. Le titre
+d'un role local ne transforme jamais a lui seul un compte en super
+administrateur global.
+
+Seul un super administrateur peut attribuer ou retirer le role global
+d'un autre super administrateur. Une modification de role ou de politique
+doit conserver au moins un compte super administrateur actif, valide et
+lie a une identite Entra unique. Les modifications de roles et de politiques
+partagent un verrou de gouvernance, puis relisent les droits avant ecriture,
+pour empecher deux retraits concurrents du dernier acces. La protection
+s'applique aux ecritures du cockpit ; une modification directe des donnees
+officielles hors DSE ne passe pas par ces controles.
+
+`tools/promouvoir-super-administrateur.js` permet une promotion de maintenance
+**uniquement apres accord explicite**, avec ID utilisateur, nom exact et ID
+du role global officiel. Sans `--apply`, aucune ecriture ; avec `--apply`,
+seule la relation du role global est modifiee, avec ETag, journal et relecture.
 
 Le schema est complete par `node tools/provision-droits-individuels.js`
 (simulation), puis `--apply` apres autorisation. Quatre colonnes facultatives :
@@ -49,7 +69,9 @@ Les operations globales (creation et validation d'un site) figurent
 egalement dans le catalogue. Le super administrateur dispose d'entrees
 « Droits globaux » pour les comptes globaux autorises ; leur permission
 precise n'a pas d'affectation a un site, et les controles de creation/
-validation utilisent le meme moteur de selection par operation.
+validation utilisent le meme moteur de selection par operation pour les
+comptes globaux restreints ; le super administrateur global conserve
+l'acces complet aux operations disponibles.
 
 Les nouveaux droits crees depuis le tableau portent `INDIVIDUEL-REQUIS=true` :
 aucune permission historique ne les attribue automatiquement. Creer une

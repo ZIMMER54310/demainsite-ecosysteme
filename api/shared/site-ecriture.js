@@ -4,6 +4,7 @@ const crypto = require("node:crypto");
 const dse = require("./dse");
 const ecriture = require("./ecriture");
 const catalogue = require("./catalogue");
+const autorisations = require("../auth/autorisations");
 
 const cle = catalogue.cleChamp;
 const normaliserNomSite = (valeur) => String(valeur || "").normalize("NFD")
@@ -34,7 +35,9 @@ function operationGlobaleAutorisee(droits, donnees, operation) {
   const modeAttendu = { "site.creer": "create", "site.valider": "validate" }[operation];
   if (!definition || !modeAttendu || definition.mode !== modeAttendu) return false;
   if (!dynamique.roles.some((role) => String(role.id) === String(droits.roleId))) return false;
-  const autorisations = require("../auth/autorisations");
+  if (require("../auth/droits").estSuperAdministrateur(droits)) {
+    return autorisations.decisionPolitique(dynamique, definition, droits.clientIds || [], null).autorise;
+  }
   const roleCapacite = autorisations.basePour(dynamique, droits.roleId, definition) &&
     dynamique.possibles.some((item) => String(item.capaciteId) === String(definition.capaciteId) &&
       String(item.actionId) === String(definition.actionId));

@@ -28,7 +28,7 @@
     "provision:demandes-comptes": "node tools/provision-autorisations.js --demandes-comptes",
     "test:builder": "node tests/builder.js && node tests/constructeur.js && node tests/builder-recursif.js && node tests/builder-proprietes.js",
     "test:menus": "node tests/multi-menus-schema.js",
-    "test:droits-individuels": "node tests/droits-individuels.js"
+    "test:droits-individuels": "node tests/droits-individuels.js && node tests/super-administrateurs.js"
   },
   "engines": {
     "node": ">=22"

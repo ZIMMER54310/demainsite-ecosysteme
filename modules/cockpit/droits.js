@@ -47,7 +47,8 @@ export function rendreDroits(moi, d, domaine = "") {
     <p><a href="#/cockpit/administration${domaine ? `?domaine=${encodeURIComponent(domaine)}` : ""}">Retour à l’administration</a></p>
     <div data-administration-droits data-configuration="${e(JSON.stringify(d))}" data-domaine="${e(domaine)}">
       <p>Chaque case concerne une seule action. Ouvrez un groupe pour voir les détails. « Tout » ne modifie que les cases disponibles ; les droits protégés restent inchangés.</p>
-      <p>Vos propres accès ne sont pas modifiables ici. Les réglages existants restent hérités tant que vous ne cochez ou décochez pas une case. Le droit effectif tient aussi compte du profil et des autres affectations.</p>
+      <p>Le super administrateur gère tous les sites. Seul un autre super administrateur peut lui retirer ce rôle ; le dernier super administrateur global est protégé. Vos propres accès et votre profil restent protégés ici. Les administrateurs ne gèrent que leurs sites et les droits autorisés par le super administrateur.</p>
+      <p>Les réglages existants restent hérités tant que vous ne cochez ou décochez pas une case. Le droit effectif tient aussi compte du profil et des autres affectations.</p>
       <form data-modifier-droits>
         <p><label>Gérer les droits <select data-mode-droits><option value="utilisateur">D’un utilisateur, sur ses sites</option>${d.peutCreer ? '<option value="profil">D’un profil de rôle</option>' : ""}</select></label></p>
         <p><label>Choisir <select data-cible-droits></select></label></p>
