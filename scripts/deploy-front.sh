@@ -29,7 +29,12 @@ fi
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 git archive "$SHA" "${FICHIERS[@]}" "${DOSSIERS[@]}" | tar -x -C "$TMP"
-node scripts/version-front.js "$TMP" "$SHA"
+# Premiere publication numerotee : le premier commit front suivant cette base vaut V 10.20.00.
+BASE_VERSION="f7429c73bf583d719949c5a927f6006592c0c977"
+git merge-base --is-ancestor "$BASE_VERSION" "$SHA" || { echo "ERREUR : historique de version absent" >&2; exit 1; }
+PUBLICATIONS="$(git rev-list --count "$BASE_VERSION..$SHA" -- "${FICHIERS[@]}" "${DOSSIERS[@]}")"
+COMPTEUR=$((PUBLICATIONS > 0 ? PUBLICATIONS - 1 : 0))
+node scripts/version-front.js "$TMP" "$SHA" "$COMPTEUR"
 
 # Controle avant copie : rien d'interdit, tous les fichiers requis presents.
 for f in "${FICHIERS[@]}"; do [ -f "$TMP/$f" ] || { echo "ERREUR : $f absent" >&2; exit 1; }; done

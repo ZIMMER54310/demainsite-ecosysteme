@@ -95,6 +95,9 @@ export function renderSidebar() {
   const route = location.hash.slice(1) || "/";
   const current = route.split("?")[0];
   const user = getState()?.user;
+  if (!user?.authenticated) {
+    return `<nav class="sidebar" aria-label="Navigation principale"><a class="nav-link nav-public" href="/" title="Retour au site">${icon("globe")}<span>Voir le site</span></a></nav>`;
+  }
   const menu = user?.menu;
   const entrees = Array.isArray(menu) && menu.length
     ? menu.filter((m) => typeof m.url === "string" && m.url.startsWith("/cockpit")).map((m) => [m.url, m.icone || "•", m.libelle || ""])

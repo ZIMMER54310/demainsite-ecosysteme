@@ -104,6 +104,15 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
 
   // --- Rendu frontend -----------------------------------------------------
   const ui = await import(url("modules/cockpit/cockpit.js"));
+  const connexion = ui.rendreConnexion({ fournisseurs: [
+    { id: "entra", libelle: "Compte Microsoft", disponible: true },
+    { id: "externe", libelle: "Accès sans compte Microsoft", disponible: false }
+  ] });
+  assert.ok(connexion.includes("Connectez-vous pour accéder à votre compte."));
+  assert.ok(connexion.includes(">Se connecter</a>"));
+  assert.ok(connexion.includes("/api/v1/auth/entra/connexion"), "authentification existante conservee");
+  assert.ok(!connexion.includes("Microsoft") && !connexion.includes("vos sites"));
+  assert.ok(ui.rendreConnexion().includes("La connexion n'est pas encore ouverte."));
   assert.strictEqual(ui.ETAPES_ASSISTANT.length, 3);
   assert.deepStrictEqual(ui.ETAPES_ASSISTANT.map((x) => x.libelle), ["Informations", "Domaine", "Aperçu et validation"]);
   const moi = { nom: "Pascal <b>", role: { titre: "Profil test" }, fonctions: toutes, nombreSites: 1 };
@@ -124,7 +133,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     assert.ok(!TERMES_TECHNIQUES.test(html.replace(/\/api\/v1\/auth\/[^"]+/g, "")), `terme technique visible : ${html.match(TERMES_TECHNIQUES)?.[0]}`);
     assert.ok(!html.includes("<b>"), "nom echappe");
   }
-  assert.ok(pages[0].includes("/api/v1/auth/entra/connexion") && pages[0].includes("Bientôt disponible"));
+  assert.ok(pages[0].includes("/api/v1/auth/entra/connexion") && !pages[0].includes("Bientôt disponible"));
   assert.ok(pages[2].includes("Bonjour Pascal") && pages[2].includes("exemple.fr") && pages[2].includes("Actif"));
   assert.ok(pages[4].includes("⚠") && pages[4].includes("✅") && pages[4].includes("⬜"));
   assert.deepStrictEqual(vue.statistiques.pages, { total: 1, publiees: 1 });
@@ -288,7 +297,7 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   {
     const { creerSuiviVersion, rendreVersion, versionPubliee } = await import(url("js/mise-a-jour.js"));
     const version = "a".repeat(40), nouvelle = "b".repeat(40);
-    const html = (v) => `<script type="module" src="/js/app.js?v=${v}"></script>`;
+    const html = (v) => `<meta name="dse-version" content="10.20.01"><script type="module" src="/js/app.js?v=${v}"></script>`;
     assert.equal(versionPubliee(html(nouvelle)), nouvelle);
     assert.throws(() => versionPubliee('<script src="https://autre.test/js/app.js?v=' + nouvelle + '"></script>'));
     assert.throws(() => versionPubliee(html("invalide")));
@@ -302,11 +311,13 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     });
     await Promise.all([suivi.verifier(), suivi.verifier()]);
     assert.equal(lectures, 1, "pas de verification concurrente");
-    assert.ok(rendreVersion(suivi.etat).includes("Version aaaaaaa"));
+    assert.ok(rendreVersion(suivi.etat).includes("V 10.20.00"));
+    assert.ok(!rendreVersion(suivi.etat).includes(version), "SHA technique absent de l'affichage client");
     assert.ok(!rendreVersion(suivi.etat).includes("data-cockpit-mise-a-jour"), "pas de bouton lorsque le cockpit est a jour");
     publication = nouvelle;
     await suivi.verifier();
     assert.ok(rendreVersion(suivi.etat).includes("data-cockpit-mise-a-jour"));
+    assert.ok(rendreVersion(suivi.etat).includes("Nouvelle version V 10.20.01"));
     assert.equal(navigation, null, "jamais de rechargement automatique");
     assert.equal(suivi.appliquer(), false, "annulation conserve les saisies");
     accord = true;
@@ -328,6 +339,30 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
     const indisponible = creerSuiviVersion({ version, lire: async () => { throw new Error("Réseau indisponible"); } });
     await indisponible.verifier();
     assert.ok(rendreVersion(indisponible.etat).includes("Réseau indisponible"));
+  }
+  {
+    const fs = require("node:fs");
+    const { versionner, numeroPublication } = require("../../scripts/version-front");
+    assert.equal(numeroPublication(0), "10.20.00");
+    assert.equal(numeroPublication(1), "10.20.01");
+    assert.equal(numeroPublication(100), "10.21.00");
+    assert.throws(() => numeroPublication(-1));
+    const dossier = fs.mkdtempSync(path.join(require("node:os").tmpdir(), "dse-version-test-"));
+    try {
+      for (const d of ["components", "js", "modules", "pages", "services"]) fs.mkdirSync(path.join(dossier, d));
+      fs.writeFileSync(path.join(dossier, "index.html"), '<head></head><script type="module" src="./js/app.js"></script>');
+      const sha = "c".repeat(40);
+      versionner(dossier, sha, "10.20.01");
+      const document = fs.readFileSync(path.join(dossier, "index.html"), "utf8");
+      assert.ok(document.includes('<meta name="dse-version" content="10.20.01">'));
+      assert.ok(document.includes(`./js/app.js?v=${sha}`));
+      assert.ok(document.includes(`/js/version.js?v=${sha}`));
+      assert.equal(fs.readFileSync(path.join(dossier, "js/version.js"), "utf8"), 'export const NUMERO_VERSION = "10.20.01";\n');
+      versionner(dossier, sha, "10.20.01");
+      assert.equal(fs.readFileSync(path.join(dossier, "index.html"), "utf8"), document, "publication deterministe");
+    } finally {
+      fs.rmSync(dossier, { recursive: true });
+    }
   }
 
   const sidebar = await import(url("components/sidebar.js"));
@@ -400,6 +435,14 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.ok(!sidebar.renderSidebar().includes("Site choisi"), "jamais de contexte du site precedent");
   state.setState({ selectedSite: null });
   state.setState({ user: null });
+  const visiteur = sidebar.renderSidebar();
+  assert.ok(visiteur.includes('href="/"') && visiteur.includes("Voir le site"));
+  assert.ok(!visiteur.includes("data-nav-groupe") && !visiteur.includes("Réduire le menu"));
+  state.setState({ user: { authenticated: false, menu: [{ url: "/cockpit/administration", libelle: "Administration" }] },
+    selectedSite: { nom: "Ancien contexte", domaine: "example.test" } });
+  assert.ok(!sidebar.renderSidebar().includes("Administration") && !sidebar.renderSidebar().includes("Ancien contexte"),
+    "aucun menu ni contexte residuel apres deconnexion");
+  state.setState({ user: null, selectedSite: null });
   global.location = ancienLocation;
   const vueUsages = ui.rendreVueSite({ niveau: "ecriture", fonctions: ["sites"] }, {
     acces: "alias.example.test", domaine: "principal.example.test", nom: "Site réel",

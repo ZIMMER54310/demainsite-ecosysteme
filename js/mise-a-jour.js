@@ -1,4 +1,5 @@
 import { escapeHtml as e } from "../modules/public/outils.js";
+import { NUMERO_VERSION } from "./version.js";
 
 const SHA = /^[a-f0-9]{40}$/;
 export const VERSION_COCKPIT = new URL(import.meta.url).searchParams.get("v") || "";
@@ -12,15 +13,17 @@ export function versionPubliee(html) {
   throw new Error("La version publiée n'a pas pu être identifiée.");
 }
 
-export function creerSuiviVersion({ version, lire, confirmer, naviguer, avant = () => true, notifier = () => {} }) {
-  const etat = { version, disponible: "", verification: false, erreur: "" };
+export function creerSuiviVersion({ version, numero = NUMERO_VERSION, lire, confirmer, naviguer, avant = () => true, notifier = () => {} }) {
+  const etat = { version, numero, numeroDisponible: "", disponible: "", verification: false, erreur: "" };
   const verifier = async () => {
     if (etat.verification || !SHA.test(version)) return;
     etat.verification = true;
     etat.erreur = "";
     notifier();
     try {
-      etat.disponible = versionPubliee(await lire());
+      const html = await lire();
+      etat.disponible = versionPubliee(html);
+      etat.numeroDisponible = /<meta name="dse-version" content="(\d+\.\d{2}\.\d{2})">/.exec(html)?.[1] || "";
     } catch (err) {
       etat.erreur = err.message || "Impossible de vérifier les mises à jour.";
     } finally {
@@ -39,11 +42,11 @@ export function creerSuiviVersion({ version, lire, confirmer, naviguer, avant = 
 }
 
 export function rendreVersion(etat = suivi.etat) {
-  const version = SHA.test(etat.version) ? etat.version.slice(0, 7) : "Développement";
+  const version = `V ${etat.numero || NUMERO_VERSION}`;
   const disponible = !etat.erreur && etat.disponible && etat.disponible !== etat.version;
   return `<span class="cockpit-version" data-cockpit-version>
-    <span title="${e(etat.version)}">Version ${e(version)}</span>
-    <span role="status" aria-live="polite">${etat.erreur ? e(etat.erreur) : disponible ? `Nouvelle version ${e(etat.disponible.slice(0, 7))}` : ""}</span>
+    <span>${e(version)}</span>
+    <span role="status" aria-live="polite">${etat.erreur ? e(etat.erreur) : disponible ? `Nouvelle version${etat.numeroDisponible ? ` V ${e(etat.numeroDisponible)}` : " disponible"}` : ""}</span>
     ${disponible ? `<button type="button" class="btn btn-primary btn-mini" data-cockpit-mise-a-jour${etat.verification ? " disabled" : ""}>Mettre à jour</button>` : ""}
     ${SHA.test(etat.version) ? `<button type="button" class="btn btn-secondary btn-mini" data-cockpit-verifier-version${etat.verification ? " disabled" : ""}>${etat.verification ? "Vérification…" : etat.erreur ? "Réessayer" : "Vérifier"}</button>` : ""}
   </span>`;

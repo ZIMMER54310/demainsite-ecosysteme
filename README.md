@@ -108,8 +108,13 @@ Le script exporte le commit via `git archive`, ne publie que `index.html`, `404.
 `.env`, sauvegardes, etc.), controle avant/apres copie et ne touche pas a `/var/www/html/media`.
 Il ecrit le SHA deploye dans `/var/www/.dse-front-commit`.
 
-Le cockpit affiche la version du front charge par le navigateur (identifiant
-court du commit), y compris dans le constructeur plein ecran. Il verifie la
+Le cockpit affiche la version du front charge par le navigateur au format
+`V 10.20.00`, y compris dans le constructeur plein ecran. Le script de deploiement
+incremente le dernier nombre pour chaque nouveau commit touchant le front
+apres la premiere publication numerotee : `V 10.20.01`, etc. Republier le meme
+commit conserve son numero ; les commits API seuls ne l'incrementent pas.
+Le SHA reste utilise pour les URL de cache, sans etre affiche aux clients.
+Le cockpit verifie la
 version publiee a l'ouverture du cockpit, puis chaque minute et au retour sur
 l'onglet visible. Le bouton « Verifier » permet une verification immediate.
 Si une autre version est publiee, « Mettre a jour » propose un rechargement
@@ -120,6 +125,11 @@ un enregistrement du constructeur en cours bloque la mise a jour.
 Ce bouton ne deploie aucun code serveur et ne provisionne pas SharePoint.
 Une erreur de verification est affichee avec « Reessayer », sans annoncer
 que le cockpit est a jour.
+
+Sans connexion, le menu ne propose que « Voir le site ». Les groupes de gestion
+restent reserves aux sessions authentifiees. Le texte de connexion vise le
+compte client (pas seulement les sites) et un fournisseur unique est presente
+par le bouton « Se connecter », sans changer le mecanisme d'authentification.
 
 ## Deploiement / redemarrage de l'API
 

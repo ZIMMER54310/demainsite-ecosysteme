@@ -108,16 +108,14 @@ export function rendreProgression(vue, sectionActive) {
 
 export function rendreConnexion({ fournisseurs = [], message = "" } = {}) {
   const disponibles = fournisseurs.filter((f) => f.disponible);
-  const bientot = fournisseurs.filter((f) => !f.disponible);
   const retour = typeof location !== "undefined" ? location.hostname.replace(/^www\./, "") : "";
   return `<section class="cockpit cockpit-connexion card">
     <h1 class="page-title">Espace de gestion</h1>
-    <p>Connectez-vous pour accéder à vos sites et à vos fonctions.</p>
+    <p>Connectez-vous pour accéder à votre compte.</p>
     ${message ? `<p class="cockpit-alerte" role="alert">${e(message)}</p>` : ""}
     <div class="cockpit-actions">${disponibles.map((f) =>
-      `<a class="btn btn-primary" href="/api/v1/auth/${encodeURIComponent(f.id)}/connexion?domaine=${encodeURIComponent(retour)}">Se connecter · ${e(f.libelle)}</a>`).join("")}
+      `<a class="btn btn-primary" href="/api/v1/auth/${encodeURIComponent(f.id)}/connexion?domaine=${encodeURIComponent(retour)}">Se connecter${disponibles.length > 1 ? ` · ${e(f.libelle)}` : ""}</a>`).join("")}
       ${disponibles.length ? "" : `<p class="muted">La connexion n'est pas encore ouverte.</p>`}</div>
-    ${bientot.length ? `<p class="muted">Bientôt disponible : ${bientot.map((f) => e(f.libelle)).join(", ")}.</p>` : ""}
   </section>`;
 }
 
