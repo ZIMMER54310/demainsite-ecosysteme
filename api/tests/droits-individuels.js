@@ -165,6 +165,11 @@ function fixture() {
     assert.equal((await admin.planifier(superActeur, { action: "profil", cible: profil.ref, operation: op.ref, valeur: "false" })).champs.AUTORISATION, false);
     const propreProfil = superVue.profils.find((p) => p.titre === "Administrateur");
     await assert.rejects(admin.planifier(superActeur, { action: "profil", cible: propreProfil.ref, operation: op.ref, valeur: "false" }), /profil ne peut pas/);
+    const ancienneAffectation = f.dynamique.affectations[0].roleId;
+    f.dynamique.affectations[0].roleId = "editeur";
+    assert.ok((await admin.planifier(superActeur, { action: "profil", cible: profil.ref, operation: op.ref, valeur: "false" })).champs,
+      "un ancien rôle local ne protège pas le profil contre le super administrateur global");
+    f.dynamique.affectations[0].roleId = ancienneAffectation;
     f.source["OBJ-ROLE"].cols.push({ name: "Verrou", displayName: "VERROUILLE", boolean: {} });
     f.source["OBJ-ROLE"].items.find((r) => r.id === "editeur").fields.Verrou = true;
     f.dynamique.roles.find((r) => r.id === "editeur").verrouille = true;

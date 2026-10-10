@@ -75,8 +75,8 @@ function profilDisponible(data, donnees, a, op) {
 }
 
 function propreProfil(data, donnees, d, roleId) {
-  return data.affectations.some((a) => a.utilisateurId === String(d.utilisateurId) && a.roleId === roleId) ||
-    donnees.utilisateurs.find((u) => u.id === String(d.utilisateurId))?.roleId === roleId;
+  return donnees.utilisateurs.find((u) => u.id === String(d.utilisateurId))?.roleId === roleId ||
+    !superAdmin(d) && data.affectations.some((a) => a.utilisateurId === String(d.utilisateurId) && a.roleId === roleId);
 }
 
 async function lire(d) {
