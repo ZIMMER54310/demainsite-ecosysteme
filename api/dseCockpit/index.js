@@ -1029,7 +1029,8 @@ async function construireLire(req, res) {
       donnees.apercu = { mode: apercu.mode, ...z(apercu), theme: apercu.theme || {}, entete: z(apercu.entete), footer: z(apercu.footer),
         ...(apercu.contexte ? { contexte: { entete: zc(apercu.contexte.entete), footer: zc(apercu.contexte.footer), page: apercu.contexte.page || "" } } : {}) };
       const visiteur = C.apercu(d, p.info.id, r.type, r.el, req.query.appareil, p, { visiteur: true });
-      donnees.apercuVisiteur = { ...donnees.apercu, ...z(visiteur) };
+      donnees.apercuVisiteur = { ...donnees.apercu, ...z(visiteur), visiteur: true,
+        contexte: { entete: zc(visiteur.contexte?.entete), footer: zc(visiteur.contexte?.footer), page: visiteur.contexte?.page || "" } };
     }
     experienceCockpit.decorerConstruction(donnees, experience.realisations);
     res.set("Cache-Control", "no-store");

@@ -390,12 +390,12 @@ export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", r
       <button type="submit" class="btn btn-primary">Enregistrer</button></div></fieldset></form>`;
 }
 
-export function documentApercu(composition, type = "page") {
+export function documentApercu(composition, type = "page", rendus = rendusSite) {
   const bandeau = type === "page" && composition?.bandeauChantier
     ? `<aside class="dse-bandeau-chantier" role="status">⚠ Cette page est en cours de construction ou de modification.</aside>` : "";
   const automatique = (texte) => () => `<span class="dse-b-vide dse-b-vide--auto">${texte}</span>`;
-  const adapteursAuto = { HEADER: automatique("🔗 Logo et menu du site · affichés automatiquement"),
-    FOOTER: automatique("🔗 Mentions et copyright du site · affichés automatiquement") };
+  const adapteursAuto = { HEADER: rendus?.entete ? () => rendus.entete : automatique("🔗 Logo et menu du site · affichés automatiquement"),
+    FOOTER: rendus?.footer ? () => rendus.footer : automatique("🔗 Mentions et copyright du site · affichés automatiquement") };
   const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: adapteursAuto, apercu: true, prefixe, typeConteneur });
   // Meme rendu HERO que le site public (pages/accueil.js), alimente par le contenu du module edite.
   const heroApercu = (module) => {
@@ -423,16 +423,17 @@ export function documentApercu(composition, type = "page") {
       responsive: z.responsive, theme: composition.theme }, optionsLecture(prefixe, t)) : "";
     const source = z?.origine !== "site" ? "associé" : type === "page" ? "exemple du site, non associé à cette page" : "celui du site";
     // Comme le site public : sans element associe et rempli, le visiteur voit l'affichage historique du site.
-    const historique = rendusSite?.[cle];
-    if (historique && type === "page" && (!html || z?.origine === "site")) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z?.titre && z.origine !== "site" ? ` « ${e(z.titre)} » vide :` : " non associé :"} affichage historique du site, comme le voit le visiteur · lecture seule">${historique}</div>`;
+    const historique = rendus?.[cle];
+    if (historique && (!html || z?.origine === "site")) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z?.titre && z.origine !== "site" ? ` « ${e(z.titre)} » vide :` : " non associé :"} affichage historique du site, comme le voit le visiteur · lecture seule">${historique}</div>`;
     if (html) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise} class="dse-b-${cle}">${html}</${balise}></div>`;
     if (z) return `<div class="dse-apercu-contexte dse-apercu-contexte--${cle}" data-libelle="🔒 ${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} · ${source} · lecture seule"><${balise} class="dse-apercu-repere">${e(libelle)}${z.titre ? ` « ${e(z.titre)} »` : ""} : aucun contenu renseigné pour l'instant (à compléter dans son propre onglet)</${balise}></div>`;
     const absent = type === "page" ? `aucun ${libelle.toLowerCase()} associé à cette page (le site garde l'affichage historique)` : `aucun ${libelle.toLowerCase()} actif sur ce site`;
     return `<${balise} class="dse-apercu-repere dse-apercu-contexte--${cle}">${e(libelle)} : ${e(absent)}</${balise}>`;
   };
   const pageRepere = `<div class="dse-apercu-repere dse-apercu-repere--page">Contenu des pages${contexte.page ? ` · exemple : ${e(contexte.page)}` : ""}</div>`;
-  const haut = type === "entete" ? `<header class="dse-apercu-edite">${principal || vide}</header>` : zoneContexte(contexte.entete, "entete", "header", "e", "ENTETE", "En-tête");
-  const bas = type === "footer" ? `<footer class="dse-apercu-edite">${principal || vide}</footer>` : zoneContexte(contexte.footer, "footer", "footer", "f", "FOOTER", "Pied de page");
+  const edite = (cle) => principal || (composition?.visiteur && rendus?.[cle] ? rendus[cle] : vide);
+  const haut = type === "entete" ? `<header class="dse-apercu-edite dse-b-entete">${edite("entete")}</header>` : zoneContexte(contexte.entete, "entete", "header", "e", "ENTETE", "En-tête");
+  const bas = type === "footer" ? `<footer class="dse-apercu-edite dse-b-footer">${edite("footer")}</footer>` : zoneContexte(contexte.footer, "footer", "footer", "f", "FOOTER", "Pied de page");
   const corps = `<div class="dse-site-public">${haut}<main class="dse-apercu-principal dse-site-public-main">${bandeau}${["entete", "footer"].includes(type) ? pageRepere : principal || vide}</main>${bas}</div>`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     ${["app", "components", "responsive", "public"].map((f) => `<link rel="stylesheet" href="/assets/css/${f}.css">`).join("")}
@@ -1132,6 +1133,10 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
       if (!confirmerAbandon()) return;
       if (brouillonGenerique) {
         await charger();
+        if (["conteneur.modifier", "contenu.enregistrer"].includes(action) && ["entete", "footer"].includes(d.arbre?.type)) {
+          rendusSite = await chargerRendusSite(domaine);
+          if (!rendusSite) Object.assign(etat, { erreur: true, message: `${etat.message} Le rendu public de l'en-tête et du pied de page n'a pas pu être rechargé. Actualisez le cockpit avant de poursuivre.` });
+        }
         brouillonGenerique = false;
         brouillons.clear();
         const f = iframe();

@@ -86,6 +86,12 @@ est actif, y compris apres reinitialisation ou annuler/retablir. Desactiver
 une ombre heritee supprime effectivement son rendu et conserve ses details.
 Un dessin distingue « Espace autour de l'element » (distance des voisins)
 et « Espace entre le bord et le contenu » (place a l'interieur).
+Les blocs adaptes HEADER/FOOTER dans l'apercu reutilisent le rendu public du
+logo/menu et des mentions, au lieu de simples reperes. Le contexte visiteur
+est calcule separement du contexte de travail ; les brouillons recursifs
+sont exclus. Une zone vide en vue visiteur reprend le rendu historique,
+comme le site public. En composition, les zones vides restent editables.
+Un conteneur de contexte non associe ne remplace jamais le rendu du site.
 
 Le soulignement propose une couleur independante, un style SIMPLE / DOUBLE /
 POINTILLES / TIRETS / ONDULE, une epaisseur (0 a 10 px) et une distance sous

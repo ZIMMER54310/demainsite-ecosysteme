@@ -336,6 +336,7 @@ function apercu(d, siteId, type, el, appareil, perimetre, { visiteur = false } =
     const root = R.trouverRacine(d, siteId, t, e.id);
     return { sections: root ? [] : sectionsForce || sections(t, e),
       ...(root ? { noeuds: [R.arbre(d, root, { reference: referenceBuilder,
+        public: visiteur,
         mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetreBuilder(perimetre, siteId))) })] } : {}),
       ...B.styleElement(ctx, TYPE_CONTENEUR[t], e), _ref: ref(t, e.id) };
   };
@@ -343,7 +344,7 @@ function apercu(d, siteId, type, el, appareil, perimetre, { visiteur = false } =
   // Contexte en lecture seule : en-tete et pied de page affiches autour de l'element edite (jamais modifiables ici).
   const duSite = (x) => rels(x, "OBJ-SITE-PUBLIC").some((s) => String(s.id) === String(siteId));
   const pagesSite = (d.pages || []).filter((p) => !inactif(p) && duSite(p)).sort(parOrdre);
-  const actifDe = (t, r) => r ? (d[CONTENEURS[t].cle] || []).find((x) => String(x.id) === String(r.id) && !inactif(x)) : null;
+  const actifDe = (t, r) => r ? (d[CONTENEURS[t].cle] || []).find((x) => String(x.id) === String(r.id) && (visiteur ? B.publiable(x) : !inactif(x))) : null;
   const parDefaut = (t) => pagesSite.map((p) => actifDe(t, rel(p, CONTENEURS[t].relation))).find(Boolean)
     || (d[CONTENEURS[t].cle] || []).filter((x) => !inactif(x) && duSite(x)).sort(parOrdre)[0];
   const lecture = (t, c, origine) => c ? { ...zone(t, c), titre: titreDe(c), origine } : null;

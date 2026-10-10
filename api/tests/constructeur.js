@@ -291,6 +291,20 @@ async function main() {
     assert.ok(apercuHero.includes("/api/v1/media/123"));
     assert.ok(!apercuHero.includes("alert(1)") && !apercuHero.includes("javascript:"), "aperçu historique sûr");
     assert.ok(badgeEtat({ brouillon: true }).includes("Brouillon"));
+    const rendus = { entete: '<div class="dse-site-public-header">Logo et navigation publics</div>',
+      footer: '<div class="dse-footer">Mentions publiques</div>' };
+    for (const [type, rendu] of [["entete", "HEADER"], ["footer", "FOOTER"]]) {
+      const composition = { mode: "builder", sections: [{ lignes: [{ colonnes: [{ modules: [{ type: rendu, _ref: "module.auto" }] }] }] }] };
+      const html = documentApercu(composition, type, rendus);
+      assert.ok(html.includes(type === "entete" ? rendus.entete : rendus.footer), "bloc automatique identique au public");
+      assert.ok(!html.includes("affichés automatiquement"), "pas de repere a la place du contenu");
+      const videPublic = documentApercu({ mode: "builder", sections: [], visiteur: true }, type, rendus);
+      assert.ok(videPublic.includes(rendus[type]), "zone vide publique : repli historique comme le site");
+      assert.ok(documentApercu({ mode: "builder", sections: [] }, type, rendus).includes("Aperçu vide"), "composition vide reste editable");
+      const autre = type === "entete" ? "footer" : "entete";
+      const contexte = documentApercu({ ...composition, contexte: { [autre]: { origine: "site", sections: [{ lignes: [{ colonnes: [{ modules: [{ type: "TEXTE", contenu: [{ champs: { CONTENU: "Mauvais contexte" } }] }] }] }] }] } } }, type, rendus);
+      assert.ok(contexte.includes(rendus[autre]) && !contexte.includes("Mauvais contexte"), "ne pas substituer une zone non associee au rendu du site");
+    }
   }
   // Import de medias : nom sur, signature du contenu, refus sans droit (aucun appel Graph), formulaire front.
   {
