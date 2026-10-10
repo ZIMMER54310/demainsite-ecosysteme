@@ -1058,7 +1058,12 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
     const trouver = (n) => n.ref === ref ? n : (n.enfants || n.sections || []).map(trouver).find(Boolean);
     const n = d.arbre ? trouver(d.arbre) : null;
     if (d.arbre?.ref === ref) return `<p>Titre, adresse et informations de ${e(d.arbre.titre)}.</p>${bouton("✏️ Modifier les informations", "proprietes", `data-ref="${e(ref)}"`)}`;
-    if (n?.type === "module" && n.formulaire) return `${typeDe(n)?.aide ? `<p class="c-aide-bloc">💡 ${e(typeDe(n).aide)}</p>` : "<p>Textes, liens et médias du module.</p>"}${bouton("✏️ Modifier le contenu", "contenu", `data-ref="${e(ref)}"`)}`;
+    if (n?.type === "module" && n.formulaire) {
+      const aide = String(n.typeModule).toUpperCase() === "IMAGE"
+        ? "Choisissez une image et renseignez son titre et son texte pour le public. Leur visibilité se choisit dans le formulaire ; leur présentation se règle dans Design."
+        : typeDe(n)?.aide;
+      return `${aide ? `<p class="c-aide-bloc">💡 ${e(aide)}</p>` : "<p>Textes, liens et médias du module.</p>"}${bouton("✏️ Modifier le contenu", "contenu", `data-ref="${e(ref)}"`)}`;
+    }
     return `<p class="muted">Cet élément organise les éléments qu'il contient ; utilisez l'arbre de construction pour ajouter, déplacer ou dupliquer.</p>`;
   };
   const basculerCote = (cote, replie = !etat.cotesReplies[cote]) => {
@@ -1709,7 +1714,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
     let f;
     try { f = (await actionConstruire(domaine, "contenu.formulaire", { ref }))?.donnees?.formulaire; } catch { f = null; }
     if (!f) return versDesign();
-    ouvrirFormulaire({ ...f, aide: t.aide || t.description || "" }, `Étape 2/3 — ${t.icone || "🧩"} Contenu du module ${t.libelle}`,
+    ouvrirFormulaire({ ...f, aide: f.aide || t.aide || t.description || "" }, `Étape 2/3 — ${t.icone || "🧩"} Contenu du module ${t.libelle}`,
       async (valeurs) => { if (await executer("contenu.enregistrer", { ref, valeurs })) await versDesign(); },
       { valider: "Enregistrer et passer au design ➜", passer: "Passer cette étape", surPasser: versDesign, ia: true });
   };
