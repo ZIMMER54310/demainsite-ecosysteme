@@ -256,6 +256,8 @@ function fixture() {
     assert.match(matrice, /data-tout-droits/);
     assert.equal((matrice.match(/data-droit=/g) || []).length, 2);
     assert.match(rendu, /data-recherche-droits/);
+    assert.match(rendu, /<div class="droits-filtres">\s*<label>Gestion des droits <select data-mode-droits>/);
+    assert.match(rendu, /<label><span data-libelle-cible-droits>Utilisateur et site<\/span> <select data-cible-droits>/);
     assert.match(rendu, /data-filtre-groupe/);
     assert.match(rendu, /data-filtre-action/);
     assert.match(matrice, /data-recherche-groupe/);

@@ -76,9 +76,9 @@ export function rendreDroits(moi, d, domaine = "") {
       <p>Le super administrateur gère tous les sites. Seul un autre super administrateur peut lui retirer ce rôle ; le dernier super administrateur global est protégé. Vos propres accès et votre profil restent protégés ici. Les administrateurs ne gèrent que leurs sites et les droits autorisés par le super administrateur.</p>
       <p>Les réglages existants restent hérités tant que vous ne cochez ou décochez pas une case. Le droit effectif tient aussi compte du profil et des autres affectations.</p>
       <form data-modifier-droits>
-        <p><label>Gérer les droits <select data-mode-droits><option value="utilisateur">D’un utilisateur, sur ses sites</option>${d.peutCreer ? '<option value="profil">D’un profil de rôle</option>' : ""}</select></label></p>
-        <p><label>Choisir <select data-cible-droits></select></label></p>
         <div class="droits-filtres">
+          <label>Gestion des droits <select data-mode-droits><option value="utilisateur">D’un utilisateur, sur ses sites</option>${d.peutCreer ? '<option value="profil">D’un profil de rôle</option>' : ""}</select></label>
+          <label><span data-libelle-cible-droits>Utilisateur et site</span> <select data-cible-droits></select></label>
           <label>Rechercher un droit <input type="search" data-recherche-droits placeholder="Nom, groupe ou action"></label>
           <label>Groupe <select data-filtre-groupe><option value="">Tous les groupes</option>${[...new Set(d.operations.map((o) => o.groupe))].map((g) => `<option value="${e(g)}">${e(g)}</option>`).join("")}</select></label>
           ${filtreEtat("data-etat-droits")}
@@ -161,6 +161,7 @@ export function activerDroits(racine = document) {
   };
   const choisir = () => {
     const xs = mode.value === "profil" ? d.profils : d.utilisateurs;
+    root.querySelector("[data-libelle-cible-droits]").textContent = mode.value === "profil" ? "Profil de rôle" : "Utilisateur et site";
     cible.innerHTML = xs.map((x) => `<option value="${e(x.ref)}">${e(x.titre)}${x.profil ? ` · ${e(x.profil)} · ${e(x.sites.join(", "))}` : ""}</option>`).join("");
     afficher();
   };

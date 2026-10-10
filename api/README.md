@@ -21,6 +21,8 @@ que les cases **affichees et modifiables** du groupe. Les groupes et information
 sont repliables. Le tableau distingue le reglage herite/individuel du droit
 effectif, qui tient aussi compte du profil, des options et des autres affectations.
 La recherche globale (nom, code, groupe, action ; accents/casse ignores)
+est regroupee avec les selecteurs « Gestion des droits » et « Utilisateur et site »
+(« Profil de role » en mode profil) dans la zone des filtres. Elle
 se combine aux filtres groupe, type d'action et etat : active, desactive,
 modifiable ou protege. Chaque groupe possede aussi sa propre recherche et
 son filtre d'etat. Les filtres ne modifient ni n'effacent les cases choisies.
