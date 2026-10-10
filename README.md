@@ -136,6 +136,8 @@ directement `/#/cockpit`, sans lancer la connexion ; les etats d'acces refuses
 ou en attente restent non cliquables et expliquent leur statut.
 Le bandeau « Page en chantier » est affiche juste sous l'en-tete, avant la
 presentation de la page, dans le site public et l'apercu du constructeur.
+Chaque fiche de l'onglet Pages indique si le bandeau est affiche ou masque
+et permet de le basculer avec la meme case que dans le constructeur.
 
 ## Deploiement / redemarrage de l'API
 

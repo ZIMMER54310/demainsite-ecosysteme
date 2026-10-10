@@ -243,6 +243,19 @@ async function main() {
     }, { onglet: "pages" });
     assert.ok(pageSansFooterBuilder.includes("Pied de page du site (automatique)"),
       "une page sans footer Builder indique le pied de page automatique du site au lieu de « Aucun »");
+    assert.ok(pageSansFooterBuilder.includes('data-c-bandeau-chantier data-page="page.accueil" disabled'),
+      "case sur la fiche de page visible et désactivée sans droit");
+    const fichesBandeau = rendreConstructeur({}, {
+      ...donneesFront, operations: ["constructeur.page.conteneur.modifier"],
+      pages: [
+        { ref: "page.accueil", titre: "Accueil", url: "/", sections: 0, bandeauChantier: true },
+        { ref: "page.contact", titre: "Contact", url: "/contact", sections: 0, bandeauChantier: false }
+      ], footers: []
+    }, { onglet: "pages" });
+    assert.ok(fichesBandeau.includes('data-c-bandeau-chantier data-page="page.accueil" checked'));
+    assert.ok(fichesBandeau.includes('data-c-bandeau-chantier data-page="page.contact">'));
+    assert.ok(fichesBandeau.includes("Bandeau affiché") && fichesBandeau.includes("Bandeau masqué"),
+      "état indépendant de chaque page dans la liste");
     assert.equal(/HERO/i.test(html), false, "vocabulaire En-tete, jamais HERO");
     const editeur = rendreConstructeur({ fonctions: [] }, { ...donneesFront, arbre: a, apercu: apEntete }, {});
     assert.ok(editeur.includes("Pasc ARA IA") && editeur.includes("Ajouter une section") && editeur.includes("📱 Mobile") && editeur.includes("🎨 Design"));

@@ -201,6 +201,7 @@ function ongletPages(d) {
     <p class="muted">${e(p.url)} · ${p.sections} section(s)</p>
     <label>En-tête ${peutAction(d, "page", "page.affecter") && peutAction(d, "entete", "page.affecter") ? `<select data-c-affecter="entete" data-page="${e(p.ref)}">${options(d.entetes, p.entete)}</select>` : `<strong>${e(p.entete?.titre || "Aucun")}</strong>`}</label>
     <label>Pied de page ${peutAction(d, "page", "page.affecter") && peutAction(d, "footer", "page.affecter") ? `<select data-c-affecter="footer" data-page="${e(p.ref)}">${options(d.footers, p.footer, true)}</select>` : `<strong>${e(p.footer?.titre || "Pied de page du site (automatique)")}</strong>`}</label>
+    <label title="${peutAction(d, "page", "conteneur.modifier") ? "Afficher ou retirer le bandeau juste sous l'en-tête de cette page" : "Votre profil ne dispose pas du droit de modifier cette page"}"><input type="checkbox" data-c-bandeau-chantier data-page="${e(p.ref)}"${p.bandeauChantier ? " checked" : ""}${peutAction(d, "page", "conteneur.modifier") ? "" : " disabled"}> Page en chantier · Bandeau ${p.bandeauChantier ? "affiché" : "masqué"}</label>
     <div class="constructeur-boutons">${bouton("🧱 Construire / aperçu", "ouvrir", `data-ref="${e(p.ref)}"`, "btn btn-primary")}
       ${peut("pages") ? bouton("✏️ Modifier", "proprietes", `data-ref="${e(p.ref)}"`) : ""}
       ${peutAction(d, "page", "conteneur.dupliquer") ? bouton("Dupliquer", "dupliquer", `data-ref="${e(p.ref)}" data-type="page"`) : ""}</div>
@@ -2025,9 +2026,16 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
   racine.addEventListener("change", async (ev) => {
     const s = ev.target;
     if (s.matches?.("[data-c-bandeau-chantier]")) {
+      const ref = s.dataset.page || d.arbre?.ref;
+      const page = s.dataset.page ? d.pages?.find((p) => p.ref === ref) : d.arbre;
+      const precedent = Boolean(page?.bandeauChantier);
       const actif = s.checked;
-      const resultat = await executer("conteneur.modifier", { ref: d.arbre?.ref, valeurs: { bandeauChantier: actif } });
-      if (!resultat) s.checked = Boolean(d.arbre?.bandeauChantier);
+      s.disabled = true;
+      const resultat = await executer("conteneur.modifier", { ref, valeurs: { bandeauChantier: actif } });
+      if (!resultat) {
+        s.checked = precedent;
+        s.disabled = !peutAction(d, "page", "conteneur.modifier");
+      }
       return;
     }
     if (s.matches?.("[data-c-filtre-vue]")) { etat.filtreVue = s.value; return appliquerVue(); }
