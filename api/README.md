@@ -17,9 +17,19 @@ Le cockpit utilise une session native Entra et des controles de perimetre cote s
 Depuis Administration, « Tableau des droits et autorisations » ouvre
 `#/cockpit/droits?domaine=…`. Chaque affectation utilisateur/site dispose de
 cases par operation technique, regroupees par capacite ; « Tout » ne change
-que les cases modifiables du groupe. Les groupes et informations techniques
+que les cases **affichees et modifiables** du groupe. Les groupes et informations techniques
 sont repliables. Le tableau distingue le reglage herite/individuel du droit
 effectif, qui tient aussi compte du profil, des options et des autres affectations.
+La recherche globale (nom, code, groupe, action ; accents/casse ignores)
+se combine aux filtres groupe, type d'action et etat : active, desactive,
+modifiable ou protege. Chaque groupe possede aussi sa propre recherche et
+son filtre d'etat. Les filtres ne modifient ni n'effacent les cases choisies.
+« Reinitialiser les filtres » les efface sans perdre les modifications.
+Les compteurs globaux et par groupe indiquent **actives / total**, le nombre
+desactives et le nombre affiche. Le total inclut les droits proteges et
+masques par les filtres. Les cases choisies actualisent immediatement ces
+compteurs et les couleurs vert/rouge, avec libelles « Active/Desactive » ;
+la colonne du droit effectif reste celle de l'etat enregistre.
 
 L'administrateur agit dans le contexte d'un site autorise, uniquement sur
 les affectations dont **tous** les sites sont dans ce contexte. Il ne peut

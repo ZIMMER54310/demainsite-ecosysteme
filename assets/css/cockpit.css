@@ -1,4 +1,21 @@
 /* Cockpit DSE unique et adaptatif */
+[data-administration-droits] [hidden] { display: none !important; }
+.droits-filtres { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 16px 0; }
+.droits-filtres label { display: grid; gap: 6px; flex: 1 1 180px; min-width: 0; }
+.droits-filtres input, .droits-filtres select { width: 100%; min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+.droits-tableau { overflow-x: auto; }
+.droits-tableau table { width: 100%; }
+[data-groupe-droits] > summary { cursor: pointer; padding: 8px 0; }
+.droits-compteur, [data-desactives-groupe] { display: inline-block; margin-left: 12px; font-size: .85rem; }
+.droits-compteur { color: #166534; font-weight: 600; }
+[data-desactives-groupe] { color: #991b1b; }
+.droits-etat { display: inline-block; border-radius: 6px; padding: 3px 8px; font-size: .8rem; font-weight: 600; margin: 4px; }
+[data-etat-droit="actif"] .droits-etat, .droits-etat[data-etat-droit="actif"] { color: #166534; background: #dcfce7; }
+[data-etat-droit="inactif"] .droits-etat, .droits-etat[data-etat-droit="inactif"] { color: #991b1b; background: #fee2e2; }
+[data-ligne-droit][data-etat-droit="actif"] > td { background: #f0fdf4; }
+[data-ligne-droit][data-etat-droit="inactif"] > td { background: #fff1f2; }
+[data-ligne-droit] input[type="checkbox"] { accent-color: #166534; }
+.droits-legende { font-size: .85rem; }
 .dse-icon { width: 20px; height: 20px; flex: 0 0 auto; vertical-align: middle; }
 body:not(.dse-public) {
   --accent: #0860ed;

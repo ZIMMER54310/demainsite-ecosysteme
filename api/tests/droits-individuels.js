@@ -255,6 +255,23 @@ function fixture() {
     const matrice = html.rendreMatrice(vue, cible);
     assert.match(matrice, /data-tout-droits/);
     assert.equal((matrice.match(/data-droit=/g) || []).length, 2);
+    assert.match(rendu, /data-recherche-droits/);
+    assert.match(rendu, /data-filtre-groupe/);
+    assert.match(rendu, /data-filtre-action/);
+    assert.match(matrice, /data-recherche-groupe/);
+    assert.match(matrice, /data-etat-groupe/);
+    assert.match(matrice, /droits activés/);
+    assert.match(matrice, /data-etat-droit="actif"/);
+    assert.match(matrice, /data-libelle-etat/);
+    assert.deepEqual(html.resumeDroits([{ checked: true }, { checked: false }, { checked: true }]), { actifs: 2, inactifs: 1, total: 3 });
+    assert.deepEqual(html.resumeDroits([]), { actifs: 0, inactifs: 0, total: 0 });
+    const filtre = { texte: "Images · Téléchargement · image.telecharger", actif: true, modifiable: false };
+    assert.equal(html.correspondDroit(filtre, " telechargement ", "actif"), true);
+    assert.equal(html.correspondDroit(filtre, "IMAGE.TELECHARGER", "protege"), true);
+    assert.equal(html.correspondDroit(filtre, "", "inactif"), false);
+    assert.equal(html.correspondDroit(filtre, "", "modifiable"), false);
+    assert.equal(html.correspondDroit(filtre, "introuvable"), false);
+    assert.equal(html.correspondDroit({ ...filtre, actif: false, modifiable: true }, "", "inactif"), true);
     const cases = [{ checked: true }, { checked: false }];
     const tout = {};
     const groupe = { querySelectorAll: () => cases, querySelector: () => tout };
@@ -262,6 +279,9 @@ function fixture() {
     assert.equal(tout.indeterminate, true);
     cases[1].checked = true; html.synchroniserTout(groupe); assert.equal(tout.checked, true);
     cases.length = 0; html.synchroniserTout(groupe); assert.equal(tout.disabled, true);
+    cases.push({ checked: false, closest: () => ({ hidden: true }) }, { checked: true, closest: () => ({ hidden: false }) });
+    html.synchroniserTout(groupe);
+    assert.equal(tout.checked, true, "Tout ne compte que les cases visibles et modifiables");
 
     // Le pipeline commun réalise une écriture unique, avec ETag, journal et relecture.
     const originals = Object.fromEntries(["obtenirJetonGraph", "obtenirSiteGraph", "collecter", "graphSansCache", "graphEcriture"].map((k) => [k, dse[k]]));
