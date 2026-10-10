@@ -5,7 +5,7 @@ import { rendreBuilder, STYLES_BUILDER } from "../builder/rendu.js";
 import { nettoyerHtml } from "../texte/nettoyer.js";
 import { getConstruire, actionConstruire } from "../../services/cockpit.service.js";
 import { rendreEnteteCockpit, rendreAccompagnement } from "./cockpit.js";
-import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU, memoriserGroupe } from "./design.js";
+import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU, memoriserGroupe, controleTypographie, appliquerValeursDesign } from "./design.js";
 import { codeChamp, controleChamp, erreurValeur } from "../builder/proprietes.js";
 import { confirmerApercuConstruction } from "./confirmation.js";
 import { getState } from "../../js/state.js";
@@ -357,6 +357,7 @@ export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", r
     const nom = `name="${e(c.ref)}"`;
     const v = (appareil ? c.surcharges?.[appareil] : c.valeur) ?? "";
     const t = controleChamp(c);
+    if (c.categorie === "DESIGN" && codeChamp(c.cle) === "ALIGNEMENT") return controleTypographie("alignement", v, appareil ? c.valeur : "", c.ref);
     const globalSeulement = c.categorie === "AVANCE" && ["IDCSS", "CLASSECSS"].includes(codeChamp(c.cle));
     if (appareil && globalSeulement) return `<p class="muted">${e(c.libelle)} : réglage général uniquement.</p>`;
     let input;
@@ -825,11 +826,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
   const appliquerValeurs = (valeurs) => {
     const f = racine.querySelector("[data-design-form]");
     if (!f) return;
-    for (const input of f.querySelectorAll("[name]")) {
-      const [a, cle] = input.name.includes(".") ? input.name.split(".") : [null, input.name];
-      const v = a ? valeurs.responsive?.[a]?.[cle] : valeurs[cle];
-      input.value = v === true ? "OUI" : v === false ? "NON" : v ?? "";
-    }
+    appliquerValeursDesign(f, valeurs);
     apercuDesign();
   };
   const memoriser = () => {
@@ -1765,7 +1762,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
       etat.design.ongletGenerique = ongletBuilder.dataset.builderOnglet;
       return afficherPanneau();
     }
-    const d1 = ev.target.closest("[data-c-appareil],[data-design-onglet],[data-design-choix-appareil],[data-design-fermer],[data-design-reset],[data-design-media],[data-design-appliquer]");
+    const d1 = ev.target.closest("[data-c-appareil],[data-design-onglet],[data-design-choix-appareil],[data-design-fermer],[data-design-reset],[data-design-outil],[data-design-media],[data-design-appliquer]");
     if (d1 && racine.contains(d1)) return actionDesign(d1);
     const replier = ev.target.closest("[data-c-replier]");
     if (replier && racine.contains(replier)) {
@@ -1931,7 +1928,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
   });
 
   function actionDesign(b) {
-    const form = racine.querySelector("[data-design-form]");
+    const form = b.closest("[data-design-form],[data-builder-valeurs]");
     if (b.dataset.cAppareil) {
       if (d.arbre?.generique && etat.design) {
         etat.design.appareilValeurs = b.dataset.cAppareil;
@@ -1959,6 +1956,17 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
     if (b.dataset.designReset) {
       const champ = form.querySelector(`[name="${CSS.escape(b.dataset.designReset)}"]`);
       if (champ) champ.value = "";
+      for (const outil of form.querySelectorAll("[data-design-outil]")) if (outil.dataset.designOutil === b.dataset.designReset) outil.setAttribute("aria-pressed", "false");
+      if (form.matches("[data-builder-valeurs]")) return champ?.dispatchEvent(new Event("input", { bubbles: true }));
+      memoriser();
+      return apercuDesign();
+    }
+    if (b.dataset.designOutil) {
+      const champ = form.querySelector(`[name="${CSS.escape(b.dataset.designOutil)}"]`);
+      if (!champ) return;
+      champ.value = b.dataset.designValeur;
+      for (const outil of form.querySelectorAll("[data-design-outil]")) if (outil.dataset.designOutil === b.dataset.designOutil) outil.setAttribute("aria-pressed", String(outil === b));
+      if (form.matches("[data-builder-valeurs]")) return champ.dispatchEvent(new Event("input", { bubbles: true }));
       memoriser();
       return apercuDesign();
     }

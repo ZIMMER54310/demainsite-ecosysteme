@@ -19,6 +19,20 @@ Le bandeau « Page en chantier » utilise la colonne booleenne
 `SOULIGNEMENT` de `OBJ-STYLE-PRESET`. La liste `OBJ-POLICE` porte les familles
 proposees dans le panneau Design.
 
+Les modules CARTE, LISTE-CARTES, CTA, FAQ, ACCORDEON et HERO disposent de deux
+groupes independants « Typographie du titre » et « Typographie du texte ».
+Ils utilisent `TYPO-TITRE` et `TYPO-TEXTE` dans `OBJ-STYLE-PRESET` :
+plusieurs lignes de texte **brut**, non obligatoires, sans ajout des modifications.
+Le cockpit y enregistre un objet JSON valide contenant les proprietes
+typographiques et `responsive.TABLETTE` / `responsive.MOBILE`. Les polices
+sont des references a `OBJ-POLICE`, resolues au rendu. Ces champs ne doivent
+pas etre edites manuellement. Une colonne absente ou de mauvais type bloque
+explicitement l'enregistrement. Les presets partages restent inchanges :
+le constructeur cree une variante propre a l'element.
+Les alignements, l'italique, le soulignement et la casse utilisent des
+boutons accessibles au clavier avec infobulles et etat selectionne ;
+la fleche de reinitialisation revient a la valeur heritee.
+
 Pour installer uniquement ces reglages et les 25 familles de polices, sans
 provisionner les autres modules ni les modeles :
 

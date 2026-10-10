@@ -67,7 +67,7 @@ async function main() {
       assert.equal(await provisionneur.typographieChantier("plan"), 0);
       assert.deepEqual(definitionsLues.map((d) => d.nom), ["OBJ-POLICE", "OBJ-STYLE-PRESET", "OBJ-PAGES-SITE"]);
       assert.deepEqual(definitionsLues.find((d) => d.nom === "OBJ-STYLE-PRESET").colonnes.map((c) => c.name),
-        ["SOULIGNEMENT", "STYLE-POLICE", "TRANSFORMATION-TEXTE", "ESPACEMENT-LETTRES"]);
+        ["SOULIGNEMENT", "STYLE-POLICE", "TRANSFORMATION-TEXTE", "ESPACEMENT-LETTRES", "TYPO-TITRE", "TYPO-TEXTE"]);
       await assert.rejects(provisionneur.typographieChantier("apply"), /Droit de provisionnement absent/);
     } finally {
       Object.assign(P, originaux);
@@ -250,6 +250,26 @@ async function main() {
     assert.match(typo, /font-style:italic/);
     assert.match(typo, /text-decoration:underline/);
     assert.match(styles.cssElement("dse-b-no-underline", "TITRE", { soulignement: false }), /text-decoration:none/);
+    const parent = el(91, { "TYPO-TITRE": JSON.stringify({ tailleTexte: 30, poidsPolice: 700, responsive: { MOBILE: { tailleTexte: 20 } } }),
+      "TYPO-TEXTE": JSON.stringify({ tailleTexte: 16, soulignement: false }) });
+    const enfant = el(92, { "TYPO-TITRE": JSON.stringify({ couleurTexte: "#123456", responsive: { MOBILE: { alignement: "CENTRE" } } }) },
+      { "PRESET-PARENT": lien(91) });
+    donnees.presets.push(parent, enfant);
+    const compose = B.styleResolu(B.contexteComposition(donnees, { id: "1" }), "CARTE", "92");
+    assert.equal(compose.style.typoTitre.tailleTexte, 30);
+    assert.equal(compose.style.typoTexte.tailleTexte, 16);
+    assert.deepEqual(compose.responsive.MOBILE.typoTitre, { tailleTexte: 20, alignement: "CENTRE" });
+    const separe = styles.cssElement("dse-b-separe", "CARTE", compose.style, compose.responsive);
+    assert.match(separe, /\.dse-b-carte h3\{[^}]*font-size:30px/);
+    assert.match(separe, /\.dse-b-carte p\{[^}]*font-size:16px/);
+    assert.match(separe, /@media[^}]*h3\{[^}]*font-size:20px !important/);
+    const decoration = styles.cssElement("dse-b-separe", "CARTE", { soulignement: true, typoTitre: { soulignement: false }, typoTexte: {} });
+    assert.ok(!decoration.includes(".dse-b-separe{text-decoration:underline"), "pas de soulignement sur l'ancetre");
+    assert.throws(() => B.normaliserTypographie({ tailleTexte: 200 }), /entre 8 et 96/);
+    assert.throws(() => B.normaliserTypographie({ couleurTexte: "red;}body{x" }), /invalide/);
+    assert.throws(() => B.normaliserTypographie({ poidsPolice: 950 }), /non autorisé/);
+    assert.throws(() => B.typographiesDepuisPreset(el(93, { "TYPO-TITRE": "pas JSON" })), /illisible/);
+    assert.throws(() => B.typographiesDepuisPreset(el(93, { "TYPO-TITRE": '{"responsive":{"ORDINATEUR":{}}}' })), /appareils invalides/);
   }
 
   console.log("OK tests builder");

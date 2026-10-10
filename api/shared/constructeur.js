@@ -783,6 +783,7 @@ function typeStyleDe(d, type, el) {
 /* Style imbrique (moteur) -> valeurs plates (formulaire). */
 function plat(style = {}, polices = []) {
   const v = {};
+  for (const cle of ["typoTitre", "typoTexte"]) if (style[cle]) v[cle] = plat(style[cle], polices);
   for (const k of ["couleurTexte", "couleurFond", "couleurBordure", "couleurDegrade", "tailleTexte", "poidsPolice", "soulignement", "stylePolice", "hauteurLigne",
     "espacementLettres", "transformation", "alignement", "fondPosition", "fondTaille", "fondRepetition", "fondOpacite", "degradeAngle", "largeur",
     "largeurMinimale", "largeurMaximale", "hauteur", "hauteurMinimale", "hauteurMaximale", "bordureLargeur", "bordureStyle", "bordureRayon", "justification", "masque"]) {
@@ -1360,13 +1361,16 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const herite = B.styleResolu(ctx, code, presetOk ? rel(preset, "PRESET-PARENT")?.id : null);
       const propre = presetOk ? B.styleDepuisPreset(preset, ctx.referentiels) : {};
       const propreResp = presetOk ? B.responsiveDepuisPreset(preset.id, d.responsifs, ctx.referentiels) : {};
+      if (presetOk) for (const [a, v] of Object.entries(B.typographiesDepuisPreset(preset, ctx.referentiels).responsive)) Object.assign(propreResp[a] ||= {}, v);
+      const typeModule = c.type === "module" ? contenuDe(d, c.el).type : "";
+      const typographieSeparee = B.TYPES_TYPO_SEPAREE.includes(typeModule);
       const choix = B.CHOIX;
       const alignements = (d.alignements || []).filter((a) => !inactif(a)).sort(parOrdre).map((a) => titreDe(a).toUpperCase()).filter((a) => B.ALIGNS.includes(a));
       const presets = (d.presets || []).filter((x) => B.presetDuSite(x, ctx.site)).sort(parOrdre)
         .map((x) => ({ ref: `preset.${signer(`preset:${x.id}`)}`, titre: titreDe(x), actuel: x.id === preset?.id }));
       return {
         design: {
-          type: code, libelle: TYPES[c.type].libelle, titre: titreDe(c.el) || "", groupes: B.groupesDesign(d, code),
+          type: typeModule || code, typographieSeparee, libelle: TYPES[c.type].libelle, titre: titreDe(c.el) || "", groupes: B.groupesDesign(d, code),
           valeurs: plat(propre, polices), herite: plat(herite.style, polices),
           responsive: Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, plat(propreResp[a] || {}, polices)])),
           responsiveHerite: Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, plat(herite.responsive[a] || {}, polices)])),
@@ -1404,6 +1408,38 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const polices = policesDe(d);
       const couleurs = new Map();
       const erreurs = [];
+      const champsTypo = {};
+      const typeModule = c.type === "module" ? contenuDe(d, c.el).type : "";
+      for (const [cle, colonne] of [["typoTitre", "TYPO-TITRE"], ["typoTexte", "TYPO-TEXTE"]]) {
+        if (!(cle in v) && !APPAREILS_SURCHARGE.some((a) => cle in (resp[a] || {}))) continue;
+        if (!B.TYPES_TYPO_SEPAREE.includes(typeModule)) return { erreur: "Cet élément ne possède pas de titre et de texte séparés.", status: 400 };
+        const nom = await w.simple("OBJ-STYLE-PRESET", colonne);
+        const col = (await w.cols("OBJ-STYLE-PRESET")).find((x) => x.name === nom);
+        if (!nom || !col?.text?.allowMultipleLines || col.text.textType === "richText") return { erreur: `Ajoutez ${colonne} dans OBJ-STYLE-PRESET : plusieurs lignes de texte brut, non obligatoire.`, status: 400 };
+        const convertirTypo = (brut) => {
+          if (!brut || typeof brut !== "object" || Array.isArray(brut)) throw new Error("Typographie invalide.");
+          const valeurs = { ...brut };
+          if (valeurs.police) {
+            const p = polices.find((x) => x.ref === valeurs.police);
+            if (!p) throw new Error("Police inconnue.");
+            valeurs.police = String(p.id);
+          }
+          return B.normaliserTypographie(valeurs);
+        };
+        try {
+          const presetActuel = (d.presets || []).find((x) => x.id === rel(c.el, "OBJ-STYLE-PRESET")?.id);
+          let precedent = {};
+          const brut = presetActuel && champ(presetActuel, [cleChamp(colonne)]);
+          if (brut) {
+            B.typographiesDepuisPreset(presetActuel, B.contexteComposition(d, { id: String(siteId) }).referentiels);
+            precedent = JSON.parse(brut);
+          }
+          const { responsive: anciensAppareils = {}, ...ancienneBase } = precedent;
+          const objet = cle in v ? convertirTypo(v[cle]) : ancienneBase;
+          objet.responsive = Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, cle in (resp[a] || {}) ? convertirTypo(resp[a][cle]) : anciensAppareils[a] || {}]));
+          champsTypo[nom] = JSON.stringify(objet);
+        } catch (err) { erreurs.push(`${colonne} : ${err.message}`); }
+      }
 
       const colonneDe = async (liste, colonne, nature) => (["couleur", "police", "alignement", "media"].includes(nature)
         ? w.lookup(liste, colonne, { couleur: "OBJ-COULEUR", police: "OBJ-POLICE", alignement: "OBJ-ALIGNEMENT", media: "OBJ-MEDIA" }[nature])
@@ -1425,7 +1461,10 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const convertir = async (liste, table, cle, brut, libelle) => {
         const [, colonne, nature, min, max] = table[cle];
         const nom = await colonneDe(liste, colonne, nature);
-        if (!nom) return null;
+        if (!nom) {
+          if (cle === "soulignement" && brut !== "" && brut !== null && brut !== undefined) erreurs.push(`Soulignement : colonne SOULIGNEMENT manquante dans ${liste}.`);
+          return null;
+        }
         const vide = brut === "" || brut === null || brut === undefined;
         if (vide) return [nom, null];
         if (nature === "nombre") {
@@ -1472,7 +1511,7 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
         return null;
       };
 
-      const champsPreset = {};
+      const champsPreset = { ...champsTypo };
       for (const [cle, brut] of Object.entries(v)) {
         if (cle === "responsive" || !DESIGN[cle] || !groupes.has(DESIGN[cle][0])) continue;
         const r = await convertir("OBJ-STYLE-PRESET", DESIGN, cle, brut, cle);

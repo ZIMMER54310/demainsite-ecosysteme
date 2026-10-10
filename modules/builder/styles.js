@@ -145,6 +145,8 @@ function blocs(sel, type, style, ctx) {
   const s = style || {};
   const h = survol(s);
   const t = String(type || "").toUpperCase();
+  const typoSeparee = ["CARTE", "LISTE-CARTES", "CTA", "FAQ", "ACCORDEON", "HERO"].includes(t) && (s.typoTitre || s.typoTexte);
+  if (typoSeparee) g.typo = [];
   const r = [];
   const add = (selecteur, d) => { if (d.length) r.push([selecteur, d]); };
 
@@ -184,6 +186,15 @@ function blocs(sel, type, style, ctx) {
     add(sel, [...tout(g), ...g.flex]);
     add(`${sel}:hover`, h);
   }
+  const cibles = {
+    CARTE: [".dse-b-carte h3", ".dse-b-carte p"],
+    "LISTE-CARTES": [".dse-b-carte h3", ".dse-b-carte p"],
+    CTA: [".dse-b-cta h2", ".dse-b-cta p"],
+    FAQ: [".dse-b-faq-item summary", ".dse-b-faq-item p"],
+    ACCORDEON: [".dse-b-faq-item summary", ".dse-b-faq-item p"],
+    HERO: [".dse-hero-title", ".dse-hero-text"]
+  };
+  if (typoSeparee) for (const [i, cle] of ["typoTitre", "typoTexte"].entries()) add(`${sel} ${cibles[t][i]}`, groupes({ ...s, ...s[cle] }, ctx).typo);
   return r;
 }
 
@@ -198,7 +209,11 @@ export function cssElement(identifiant, type, style = {}, responsive = {}, ctx =
     const r = responsive?.[appareil];
     if (!r || typeof r !== "object") continue;
     const { masque, ...valeurs } = r;
-    const regles = css(blocs(sel, type, valeurs, ctx), true);
+    const scoped = {};
+    for (const cle of ["typoTitre", "typoTexte"]) if (style[cle] || valeurs[cle]) {
+      scoped[cle] = valeurs[cle] || {};
+    }
+    const regles = css(blocs(sel, type, { ...valeurs, ...scoped }, ctx), true);
     if (regles) sortie += `@media ${media}{${regles}}`;
   }
   return sortie;

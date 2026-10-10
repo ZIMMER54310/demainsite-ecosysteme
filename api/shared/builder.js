@@ -89,6 +89,64 @@ const GROUPES_REPLI = {
 // Type de module -> type de style (un module sans correspondance garde son propre code).
 const TYPE_STYLE = { "TEXTE-ENRICHI": "TEXTE", BOUTONS: "BOUTON", CTA: "BOUTON", "IMAGE-TEXTE": "IMAGE", CARROUSEL: "GALERIE" };
 const typeStyle = (type) => TYPE_STYLE[String(type || "").toUpperCase()] || String(type || "").toUpperCase();
+const TYPES_TYPO_SEPAREE = ["CARTE", "LISTE-CARTES", "CTA", "FAQ", "ACCORDEON", "HERO"];
+const TYPO_CLES = ["police", "couleurTexte", "tailleTexte", "poidsPolice", "soulignement", "stylePolice", "hauteurLigne", "espacementLettres", "transformation", "alignement"];
+function normaliserTypographie(valeurs) {
+  if (!valeurs || typeof valeurs !== "object" || Array.isArray(valeurs)) throw new Error("Typographie invalide.");
+  const sortie = {};
+  const bornes = { tailleTexte: [8, 96], hauteurLigne: [1, 3], espacementLettres: [-5, 20] };
+  for (const [cle, brut] of Object.entries(valeurs)) {
+    if (!TYPO_CLES.includes(cle)) throw new Error(`Réglage typographique inconnu : ${cle}.`);
+    if (brut === "" || brut === null || brut === undefined) continue;
+    let v = brut;
+    if (bornes[cle]) {
+      v = Number(String(brut).replace(",", "."));
+      const [min, max] = bornes[cle];
+      if (typeof brut === "boolean" || !Number.isFinite(v) || v < min || v > max) throw new Error(`${cle} : valeur entre ${min} et ${max}.`);
+    } else if (CHOIX[cle]) {
+      v = String(brut).toUpperCase();
+      if (!CHOIX[cle].includes(v)) throw new Error(`${cle} : choix non autorisé.`);
+      if (cle === "poidsPolice") v = Number(v);
+    } else if (cle === "alignement") {
+      if (!ALIGNS.includes(v)) throw new Error("Alignement non autorisé.");
+    } else if (cle === "couleurTexte") {
+      if (!HEX.test(String(v))) throw new Error("Couleur typographique invalide.");
+    } else if (cle === "soulignement") {
+      if (typeof v !== "boolean") throw new Error("Soulignement invalide.");
+    } else if (cle === "police" && !/^\d{1,12}$/.test(String(v))) throw new Error("Police inconnue.");
+    sortie[cle] = v;
+  }
+  return sortie;
+}
+
+function typographiesDepuisPreset(preset, referentiels = {}) {
+  const style = {}, responsive = {};
+  for (const [cle, colonne] of [["typoTitre", "TYPO-TITRE"], ["typoTexte", "TYPO-TEXTE"]]) {
+    const brut = f(preset, colonne);
+    if (!brut) continue;
+    let objet;
+    try { objet = JSON.parse(brut); } catch { throw new Error(`${colonne} : contenu typographique illisible.`); }
+    if (!objet || typeof objet !== "object" || Array.isArray(objet)) throw new Error(`${colonne} : contenu typographique invalide.`);
+    const { responsive: appareils = {}, ...base } = objet;
+    if (!appareils || typeof appareils !== "object" || Array.isArray(appareils) || Object.keys(appareils).some((a) => !["TABLETTE", "MOBILE"].includes(a))) throw new Error(`${colonne} : appareils invalides.`);
+    const resoudre = (v) => {
+      const s = normaliserTypographie(v);
+      if (s.police) {
+        const p = referentiels.polices?.get(String(s.police));
+        const famille = String(f(p, "FAMILLE") || f(p, "CODE") || "").trim();
+        if (!famille) throw new Error(`${colonne} : police indisponible.`);
+        delete s.police;
+        if (POLICES[famille.toUpperCase()]) { s.police = famille.toUpperCase(); s.policeFamille = null; }
+        else if (/^[A-Za-z0-9 ]{2,40}$/.test(famille)) { s.policeFamille = famille; s.police = null; }
+        else throw new Error(`${colonne} : famille de police invalide.`);
+      }
+      return s;
+    };
+    style[cle] = resoudre(base);
+    for (const [a, v] of Object.entries(appareils)) (responsive[a] ||= {})[cle] = resoudre(v);
+  }
+  return { style, responsive };
+}
 
 function groupesDesign(donnees, type) {
   const code = typeStyle(type);
@@ -121,6 +179,7 @@ function styleDepuisPreset(preset, referentiels = {}) {
   const survol = sansNuls({ couleurTexte: hexDe("OBJ-COULEUR-TEXTE-SURVOL"), couleurFond: hexDe("OBJ-COULEUR-FOND-SURVOL"), couleurBordure: hexDe("OBJ-COULEUR-BORDURE-SURVOL") });
 
   return sansNuls({
+    ...typographiesDepuisPreset(preset, referentiels).style,
     couleurTexte: hexDe("OBJ-COULEUR-TEXTE"), couleurFond: hexDe("OBJ-COULEUR-FOND"), couleurBordure: hexDe("OBJ-COULEUR-BORDURE"),
     police, policeFamille, tailleTexte: borne(f(preset, "TAILLE-TEXTE"), 8, 96), poidsPolice: borne(f(preset, "POIDS-POLICE"), 100, 900),
     soulignement: f(preset, "SOULIGNEMENT") === null ? null : booleen(preset, "SOULIGNEMENT", false),
@@ -225,6 +284,7 @@ function styleResolu(ctx, type, presetId) {
   for (const p of chaine) {
     style = fusionner(style, styleDepuisPreset(p, ctx.referentiels));
     for (const [a, v] of Object.entries(responsiveDepuisPreset(p.id, ctx.donnees.responsifs, ctx.referentiels))) responsive[a] = fusionner(responsive[a] || {}, v);
+    for (const [a, v] of Object.entries(typographiesDepuisPreset(p, ctx.referentiels).responsive)) responsive[a] = fusionner(responsive[a] || {}, v);
   }
   return { style, responsive };
 }
@@ -509,7 +569,7 @@ function listerTypes(donnees) {
   return (donnees.types || []).filter(publiable).sort(parOrdre).map((t) => String(f(t, "Title") || "").toUpperCase()).filter(Boolean);
 }
 
-module.exports = { CHOIX, ALIGNS,
+module.exports = { CHOIX, ALIGNS, TYPES_TYPO_SEPAREE, TYPO_CLES, normaliserTypographie, typographiesDepuisPreset,
   LISTES_CONTENU, LISTES_BUILDER, POLICES, APPAREILS,
   composerPage, composerSections, contexteComposition, composerModule, listerModeles, listerTypes, styleDepuisPreset, responsiveDepuisPreset, trouverPage, publiable, enfants, parOrdre,
   composerModulesAdaptesPage, styleResolu, styleElement, themeGlobal, groupesDesign, typeStyle, chainePresets, presetDuSite, GROUPES, GROUPES_REPLI

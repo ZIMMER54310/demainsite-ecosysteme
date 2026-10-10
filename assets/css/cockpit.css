@@ -417,6 +417,13 @@ body:not(.dse-public) #app-header { position: sticky; top: 0; z-index: 30; }
 .design-champ-tete .design-reset { flex: none; padding: 0 6px; min-height: 0; line-height: 1.4; font-size: .8rem; }
 .design-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; }
 .design-champ { display: grid; gap: 4px; font-size: .85rem; }
+.design-outils { display: flex; flex-wrap: wrap; gap: 4px; }
+.design-outil { min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+.design-outil[aria-pressed="true"] { color: #fff; background: var(--dse-c, #7c3aed); border-color: var(--dse-c, #7c3aed); }
+.design-outil:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.design-icone--souligne { text-decoration: underline; }
+.design-icone--non-souligne { text-decoration: line-through; }
+.design-icone--italique { font-style: italic; }
 .design-champ input, .design-champ select { padding: 4px 6px; font: inherit; font-size: .85rem; width: 100%; min-width: 0; }
 .design-couleur, .design-nombre { display: flex; gap: 4px; align-items: center; }
 .design-couleur input[type=color] { width: 34px; height: 30px; padding: 0; flex: none; }

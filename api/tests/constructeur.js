@@ -324,6 +324,31 @@ async function main() {
     const typographie = design.panneauDesign(d, { ref: "noeud.x" });
     assert.match(typographie, /<option value="900" selected>Ultra gras<\/option>/);
     assert.match(typographie, /Soulignement/);
+    const double = { ...d, type: "CARTE", typographieSeparee: true, valeurs: { typoTitre: { tailleTexte: 30 }, typoTexte: { tailleTexte: 16 } } };
+    const panneau = design.panneauDesign(double, { ref: "module.x" });
+    assert.match(panneau, /Typographie du titre/);
+    assert.match(panneau, /Typographie du texte/);
+    assert.match(panneau, /name="MOBILE.typoTitre.stylePolice"/);
+    assert.match(panneau, /data-design-outil="typoTexte.alignement"/);
+    assert.match(panneau, /aria-label="Initiales en majuscules"/);
+    assert.ok(!panneau.includes('name="tailleTexte"'), "pas de typographie unique pour les cartes");
+    const valeurs = design.lireValeurs({ querySelectorAll: () => [
+      { name: "typoTitre.tailleTexte", value: "30" }, { name: "typoTexte.soulignement", value: "NON" },
+      { name: "MOBILE.typoTexte.tailleTexte", value: "12" }, { name: "typoTitre.inconnu", value: "x" }
+    ] });
+    assert.deepEqual(valeurs.typoTitre, { tailleTexte: "30" });
+    assert.equal(valeurs.typoTexte.soulignement, false);
+    assert.equal(valeurs.responsive.MOBILE.typoTexte.tailleTexte, "12");
+    const inputs = [{ name: "typoTitre.tailleTexte", value: "" }, { name: "MOBILE.typoTexte.tailleTexte", value: "" }, { name: "typoTexte.soulignement", value: "" }];
+    const outil = { dataset: { designOutil: "typoTexte.soulignement", designValeur: "NON" }, setAttribute: (_cle, v) => { outil.pressed = v; } };
+    design.appliquerValeursDesign({ querySelectorAll: (sel) => sel === "[name]" ? inputs : [outil] }, valeurs);
+    assert.deepEqual(inputs.map((x) => x.value), ["30", "12", "NON"], "annuler/coller conserve les deux typographies");
+    assert.equal(outil.pressed, "true");
+    const cssDouble = design.cssApercu("dse-b-separe", { ...double, herite: { typoTitre: { poidsPolice: 700 } } }, { ...valeurs, typoTexte: { tailleTexte: "16", soulignement: false } });
+    assert.match(cssDouble, /h3\{[^}]*font-size:30px;[^}]*font-weight:700/);
+    assert.match(cssDouble, /p\{[^}]*font-size:16px/);
+    assert.match(cssDouble, /@media[^}]*p\{[^}]*font-size:12px !important/);
+    assert.deepEqual(C.plat({ typoTitre: { tailleTexte: 30 }, typoTexte: { soulignement: false } }), { typoTitre: { tailleTexte: 30 }, typoTexte: { soulignement: false } });
   }
   {
     const ecriture = require("../shared/ecriture");
@@ -474,6 +499,38 @@ async function main() {
       assert.equal(stores.get("OBJ-MODULE-SITE-PUBLIC/7002").OBJACTIFLookupId, "3");
       assert.ok((await lot([C.ref("colonne", 5000), C.ref("module", 99999)])).refus, "élément inconnu : tout le lot est refusé");
       assert.equal((await lot(Array.from({ length: 51 }, (_, i) => C.ref("module", i)))).status, 400, "lot plafonné à 50");
+      copies.types.push(el(3, "CARTE"));
+      copies.modules[0].relations.OBJMODULESITEPUBLICTYPE = lien(3, "CARTE");
+      copies.builderElements = [];
+      const enregistrerTypo = (valeurs) => C.executer({ d: copies, perimetre, siteId: "4", action: "design.enregistrer",
+        params: { ref: C.ref("module", 7000), valeurs } });
+      const avantTypo = writes.length;
+      const absent = await enregistrerTypo({ typoTitre: { tailleTexte: 30 } });
+      assert.equal(absent.status, 400);
+      assert.match(absent.erreur, /TYPO-TITRE/);
+      assert.equal(writes.length, avantTypo, "aucune ecriture si schema absent");
+      proto.cols = async () => ["TYPOTITRE", "TYPOTEXTE"].map((name) => ({ name, text: { allowMultipleLines: true, textType: "plain" } }));
+      const invalide = await enregistrerTypo({ typoTitre: { tailleTexte: 999 } });
+      assert.equal(invalide.status, 400);
+      assert.equal(writes.length, avantTypo, "aucune creation si valeur invalide");
+      const ok = await enregistrerTypo({ typoTitre: { tailleTexte: 30, poidsPolice: "700" }, typoTexte: { tailleTexte: 16, soulignement: false },
+        responsive: { MOBILE: { typoTitre: { tailleTexte: 20 } } } });
+      assert.match(ok.message, /Design enregistré/);
+      const dernier = writes.at(-1);
+      assert.equal(dernier.liste, "OBJ-STYLE-PRESET");
+      assert.equal(JSON.parse(dernier.champs.TYPOTITRE).responsive.MOBILE.tailleTexte, 20);
+      const preset = el(dernier.id, "Style", {}, { "TYPO-TITRE": dernier.champs.TYPOTITRE, "TYPO-TEXTE": dernier.champs.TYPOTEXTE });
+      copies.presets.push(preset);
+      copies.modules[0].relations["OBJ-STYLE-PRESET"] = lien(dernier.id);
+      const relu = await C.executer({ d: copies, perimetre, siteId: "4", action: "design.lire", params: { ref: C.ref("module", 7000) } });
+      assert.equal(relu.design.typographieSeparee, true);
+      assert.equal(relu.design.valeurs.typoTitre.tailleTexte, 30);
+      assert.equal(relu.design.valeurs.typoTexte.tailleTexte, 16);
+      assert.equal(relu.design.responsive.MOBILE.typoTitre.tailleTexte, 20);
+      await enregistrerTypo({ responsive: { MOBILE: { typoTitre: { tailleTexte: 18 } } } });
+      const partiel = JSON.parse(stores.get(`OBJ-STYLE-PRESET/${dernier.id}`).TYPOTITRE);
+      assert.equal(partiel.tailleTexte, 30, "une surcharge seule conserve le general");
+      assert.equal(partiel.responsive.MOBILE.tailleTexte, 18);
     } finally {
       ecriture.contexteGraph = originalGraph;
       ecriture.lireItemFrais = originalLecture;

@@ -44,6 +44,7 @@ const LISTES = [
     colonnes: [T("CODE-STYLE"), L("OBJ-STYLE-TYPE", "OBJ-STYLE-TYPE"), L("OBJ-COULEUR-TEXTE", "OBJ-COULEUR"),
       L("OBJ-COULEUR-FOND", "OBJ-COULEUR"), L("OBJ-POLICE", "OBJ-POLICE"), N("TAILLE-TEXTE"), N("POIDS-POLICE"), B("SOULIGNEMENT"),
       T("STYLE-POLICE"), T("TRANSFORMATION-TEXTE"), N("HAUTEUR-LIGNE"), N("ESPACEMENT-LETTRES"),
+      TL("TYPO-TITRE"), TL("TYPO-TEXTE"),
       L("ALIGNEMENT", "OBJ-ALIGNEMENT"), N("LARGEUR"), N("LARGEUR-MAXIMALE"),
       ...STYLE_ESPACES("MARGE"), ...STYLE_ESPACES("PADDING"), N("BORDURE-LARGEUR"), N("BORDURE-RAYON"),
       L("OBJ-COULEUR-BORDURE", "OBJ-COULEUR"), T("OMBRE"), ...ETAT_VEROUILLE()]
@@ -353,7 +354,7 @@ async function verifier(token, siteId, etat) {
 async function typographieChantier(mode) {
   const definitions = LISTES.filter((l) => ["OBJ-POLICE", "OBJ-PAGES-SITE", "OBJ-STYLE-PRESET"].includes(l.nom))
     .map((l) => l.nom === "OBJ-STYLE-PRESET" ? { ...l, creer: false, colonnes: l.colonnes.filter((c) =>
-      ["SOULIGNEMENT", "STYLE-POLICE", "TRANSFORMATION-TEXTE", "ESPACEMENT-LETTRES"].includes(c.name)) } : l);
+      ["SOULIGNEMENT", "STYLE-POLICE", "TRANSFORMATION-TEXTE", "ESPACEMENT-LETTRES", "TYPO-TITRE", "TYPO-TEXTE"].includes(c.name)) } : l);
   const { token, site, large } = await P.contexteProvisionnement(mode);
   let etat = await P.lireEtat(token, site.id, definitions);
   const plan = P.planifierListes(etat, definitions);

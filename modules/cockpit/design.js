@@ -11,6 +11,7 @@ export const APPAREILS_APERCU = Object.freeze([
 ]);
 
 const GROUPES = {
+  TYPO_TITRE: "Typographie du titre", TYPO_TEXTE: "Typographie du texte",
   TYPO: "Typographie", FOND: "Fond", DIMENSIONS: "Dimensions", ESPACEMENT: "Marges et espacements internes",
   BORDURE: "Bordures et coins arrondis", OMBRE: "Ombre", ALIGNEMENT: "Alignement des éléments", SURVOL: "Survol (bouton, lien)"
 };
@@ -60,7 +61,22 @@ function controle(cle, valeur, herite, design, nom) {
       : String(herite === true ? "oui" : herite))}</span>`;
   const n = e(nom);
   let champ;
-  if (nature === "couleur") {
+  const visuels = {
+    alignement: [["GAUCHE", "Aligner à gauche", "gauche"], ["CENTRE", "Centrer", "centre"], ["DROITE", "Aligner à droite", "droite"], ["JUSTIFIE", "Justifier", "justifie"]],
+    stylePolice: [["NORMAL", "Normal", "N"], ["ITALIQUE", "Italique", "I"]],
+    soulignement: [["OUI", "Souligner", "U"], ["NON", "Sans soulignement", "U"]],
+    transformation: [["AUCUNE", "Casse d’origine", "—"], ["MAJUSCULES", "Majuscules", "AA"], ["MINUSCULES", "Minuscules", "aa"], ["CAPITALES", "Initiales en majuscules", "Aa"]]
+  };
+  if (visuels[cle]) {
+    const actif = typeof valeur === "boolean" ? valeur ? "OUI" : "NON" : valeur ?? "";
+    champ = `<input type="hidden" name="${n}" value="${e(actif)}"><span class="design-outils" role="group" aria-label="${e(libelle)}">${visuels[cle].map(([v, titre, icone]) => {
+      if (cle === "alignement") {
+        const x = v === "DROITE" ? 7 : v === "CENTRE" ? 4 : 1;
+        icone = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M1 4h22M${x} 9h${v === "JUSTIFIE" ? 22 : 16}M1 14h22M${x} 19h${v === "JUSTIFIE" ? 22 : 16}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`;
+      } else icone = `<span aria-hidden="true" class="design-icone--${cle === "soulignement" ? v === "OUI" ? "souligne" : "non-souligne" : cle === "stylePolice" && v === "ITALIQUE" ? "italique" : "normal"}">${e(icone)}</span>`;
+      return `<button type="button" class="btn btn-mini design-outil" data-design-outil="${n}" data-design-valeur="${v}" aria-label="${e(titre)}" title="${e(titre)}" aria-pressed="${String(actif) === v}">${icone}</button>`;
+    }).join("")}</span>`;
+  } else if (nature === "couleur") {
     const v = HEX.test(String(valeur || "")) ? valeur : "";
     champ = `<span class="design-couleur"><input type="color" value="${e(v || (HEX.test(String(herite || "")) ? herite : "#000000"))}" data-design-pipette="${n}" aria-label="${e(libelle)}">
       <input name="${n}" value="${e(v)}" placeholder="${e(herite || "#rrggbb")}" pattern="#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?" maxlength="7" size="8"></span>`;
@@ -80,9 +96,15 @@ function controle(cle, valeur, herite, design, nom) {
       champ += opts.length ? `<span class="constructeur-medias constructeur-medias--mini">${opts.slice(0, 24).map((m) => `<img src="${e(m.url)}" alt="${e(m.titre)}" title="${e(m.titre)}" loading="lazy" data-design-media="${e(m.ref)}" data-design-cible="${n}">`).join("")}</span>`
         : `<span class="muted">Aucune image autorisée pour ce site.</span>`;
     }
+
   }
-  return `<label class="design-champ${ESPACES.has(cle) ? " design-champ--cote" : ""}"><span class="design-champ-tete"><span>${e(libelle)}${indication}</span>
-    <button type="button" class="btn btn-mini design-reset" data-design-reset="${n}" title="Revenir à la valeur héritée" aria-label="Réinitialiser ${e(libelle)}">↺</button></span>${champ}</label>`;
+  const balise = visuels[cle] ? "div" : "label";
+  return `<${balise} class="design-champ${ESPACES.has(cle) ? " design-champ--cote" : ""}"><span class="design-champ-tete"><span>${e(libelle)}${indication}</span>
+    <button type="button" class="btn btn-mini design-reset" data-design-reset="${n}" title="Revenir à la valeur héritée" aria-label="Réinitialiser ${e(libelle)}">↺</button></span>${champ}</${balise}>`;
+}
+
+export function controleTypographie(cle, valeur, herite, nom) {
+  return controle(cle, valeur, herite, {}, nom);
 }
 
 // Groupes ouverts dans le panneau Design (memorise pendant la session, partage entre elements).
@@ -106,12 +128,18 @@ function groupeHtml(groupe, cles, valeurs, herite, design, prefixe = "") {
 export function panneauDesign(design, { ref, contenu = "", onglet = "design", appareil = "TABLETTE", renommable = false, aideDesign = "", colonnes = false, aideColonnes = "", statut = "" } = {}) {
   const g = design.groupes || [];
   const clesDe = (groupe, filtre = () => true) => Object.keys(CHAMPS).filter((c) => CHAMPS[c][0] === groupe && filtre(c));
-  const designHtml = g.map((x) => groupeHtml(x, clesDe(x), design.valeurs || {}, design.herite || {}, design)).join("")
+  const groupesHtml = (valeurs, herite, prefixe = "", filtre = () => true) => {
+    const doubles = design.typographieSeparee ? ["typoTitre", "typoTexte"].map((cle) => groupeHtml(cle === "typoTitre" ? "TYPO_TITRE" : "TYPO_TEXTE",
+      clesDe("TYPO"), valeurs[cle] || {}, { ...Object.fromEntries(clesDe("TYPO").map((c) => [c, herite[c]])), ...(herite[cle] || {}) }, design, `${prefixe}${cle}.`)).join("") : "";
+    return doubles + g.filter((x) => !design.typographieSeparee || x !== "TYPO").map((x) => groupeHtml(x, clesDe(x, filtre), valeurs, herite, design, prefixe)).join("");
+  };
+  const designHtml = groupesHtml(design.valeurs || {}, design.herite || {})
     || `<p class="muted">Aucun réglage de design n'est déclaré pour ce type d'élément.</p>`;
   const autorises = new Set(design.champsResponsive || []);
   const responsiveHtml = ["TABLETTE", "MOBILE"].map((a) => {
-    const herite = { ...(design.herite || {}), ...(design.responsiveHerite?.[a] || {}) };
-    const blocs = g.map((x) => groupeHtml(x, clesDe(x, (c) => autorises.has(c)), design.responsive?.[a] || {}, herite, design, `${a}.`)).join("");
+    const herite = { ...(design.herite || {}), ...(design.valeurs || {}), ...(design.responsiveHerite?.[a] || {}) };
+    for (const cle of ["typoTitre", "typoTexte"]) herite[cle] = { ...(design.herite?.[cle] || {}), ...(design.valeurs?.[cle] || {}), ...(design.responsiveHerite?.[a]?.[cle] || {}) };
+    const blocs = groupesHtml(design.responsive?.[a] || {}, herite, `${a}.`, (c) => autorises.has(c));
     return `<div class="design-appareil" data-design-appareil="${a}"${a === appareil ? "" : " hidden"}>
       ${groupeHtml("", autorises.has("masque") ? ["masque"] : [], design.responsive?.[a] || {}, {}, design, `${a}.`)}${blocs}</div>`;
   }).join("");
@@ -142,19 +170,40 @@ export function panneauDesign(design, { ref, contenu = "", onglet = "design", ap
 export function lireValeurs(form) {
   const v = { responsive: { TABLETTE: {}, MOBILE: {} } };
   for (const el of form.querySelectorAll("[name]")) {
-    const [a, cle] = el.name.includes(".") ? el.name.split(".") : [null, el.name];
+    const chemin = el.name.split(".");
+    const a = ["TABLETTE", "MOBILE"].includes(chemin[0]) ? chemin.shift() : null;
+    const cible = ["typoTitre", "typoTexte"].includes(chemin[0]) ? chemin.shift() : null;
+    const cle = chemin[0];
+    if (chemin.length !== 1) continue;
     if (!CHAMPS[cle]) continue;
     let val = String(el.value || "").trim();
     if (CHAMPS[cle][2] === "ouinon") val = val === "OUI" ? true : val === "NON" ? false : "";
-    if (a) { if (v.responsive[a]) v.responsive[a][cle] = val; } else v[cle] = val;
+    let dest = a ? v.responsive[a] : v;
+    if (cible) dest = dest[cible] ||= {};
+    dest[cle] = val;
   }
+
   return v;
+}
+
+export function appliquerValeursDesign(form, valeurs) {
+  for (const input of form.querySelectorAll("[name]")) {
+    const chemin = input.name.split(".");
+    if (["TABLETTE", "MOBILE"].includes(chemin[0])) chemin.unshift("responsive");
+    const v = chemin.reduce((objet, cle) => objet?.[cle], valeurs);
+    input.value = v === true ? "OUI" : v === false ? "NON" : v ?? "";
+  }
+  for (const outil of form.querySelectorAll("[data-design-outil]")) {
+    const input = [...form.querySelectorAll("[name]")].find((x) => x.name === outil.dataset.designOutil);
+    outil.setAttribute("aria-pressed", String(input?.value === outil.dataset.designValeur));
+  }
 }
 
 /* Valeurs plates (formulaire) -> style imbrique attendu par le generateur CSS. */
 function imbriquer(plat, design) {
   const s = {};
   for (const [k, v] of Object.entries(plat)) {
+    if (["typoTitre", "typoTexte"].includes(k)) { s[k] = imbriquer(v, design); continue; }
     if (vide(v) || ESPACES.has(k) || /^(ombre|survol)/.test(k) || ["police", "fondMedia", "couleurOmbre"].includes(k)) continue;
     s[k] = v;
   }
@@ -176,7 +225,11 @@ function imbriquer(plat, design) {
   return s;
 }
 
-const fusion = (base, ajout) => ({ ...base, ...Object.fromEntries(Object.entries(ajout).filter(([, x]) => !vide(x))) });
+const fusion = (base, ajout) => {
+  const sortie = { ...base };
+  for (const [k, v] of Object.entries(ajout)) if (!vide(v)) sortie[k] = v && typeof v === "object" ? fusion(base[k] || {}, v) : v;
+  return sortie;
+};
 
 /* CSS instantane de l'element en cours d'edition (heritage + saisie), injecte dans l'apercu. */
 export function cssApercu(identifiant, design, valeurs) {
