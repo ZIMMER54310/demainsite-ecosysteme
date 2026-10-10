@@ -9,7 +9,10 @@ export function rendreMatrice(d, cible) {
     if (!groupes.has(op.groupe)) groupes.set(op.groupe, []);
     groupes.get(op.groupe).push(op);
   }
-  return [...groupes].map(([groupe, operations]) => {
+  const protection = cible.verrouille ? `<p>Ce profil est verrouillé.${cible.peutDeverrouiller
+    ? ' <button type="button" class="btn btn-secondary" data-deverrouiller-profil>Déverrouiller ce profil pour modifier ses droits</button>'
+    : " Votre propre profil reste protégé."}</p>` : "";
+  return protection + [...groupes].map(([groupe, operations]) => {
     const lignes = operations.map((op) => {
       const droit = cible.droits.find((x) => x.ref === op.ref);
       const checked = droit.valeur === null ? droit.effectif : droit.valeur;
@@ -133,6 +136,11 @@ export function activerDroits(racine = document) {
     });
     else if (c.matches("[data-droit]") && !c.disabled) c.dataset.modifie = "true";
     synchroniserTout(groupe);
+  });
+  matrice.addEventListener("click", (event) => {
+    if (event.target.closest("[data-deverrouiller-profil]")) {
+      void enregistrer([{ action: "deverrouiller-profil", cible: cible.value }]);
+    }
   });
   async function enregistrer(demandes) {
     if (occupe) return;

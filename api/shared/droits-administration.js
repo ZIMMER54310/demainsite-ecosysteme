@@ -74,6 +74,11 @@ function profilDisponible(data, donnees, a, op) {
     (!acces.niveau || ["ecriture", "administration"].includes(String(acces.niveau).toLowerCase()));
 }
 
+function propreProfil(data, donnees, d, roleId) {
+  return data.affectations.some((a) => a.utilisateurId === String(d.utilisateurId) && a.roleId === roleId) ||
+    donnees.utilisateurs.find((u) => u.id === String(d.utilisateurId))?.roleId === roleId;
+}
+
 async function lire(d) {
   const { data, donnees } = await contexte(d);
   const operations = data.operations.filter((o) => o.mode !== "compatibility");
@@ -114,13 +119,14 @@ async function lire(d) {
       }) });
   }
   const profils = superAdmin(d) ? data.roles.map((role) => ({
-    ref: ref("role", role.id), titre: role.titre, droits: operations.map((op) => {
+    ref: ref("role", role.id), titre: role.titre, verrouille: role.verrouille,
+    peutDeverrouiller: role.verrouille && !propreProfil(data, donnees, d, role.id),
+    droits: operations.map((op) => {
       const exactes = data.bases.filter((b) => b.roleId === role.id && b.operationId === op.id);
       return { ref: ref("operation", op.id), valeur: exactes.length ? exactes.every((b) => b.autorisation === true) : null,
         effectif: exactes.length ? exactes.every((b) => b.autorisation === true) : !op.individuelRequis && data.bases.some((b) => b.roleId === role.id && b.capaciteId === op.capaciteId && !b.operationId),
         modifiable: !role.verrouille && !exactes.some((b) => b.verrouille) &&
-          !data.affectations.some((a) => a.utilisateurId === String(d.utilisateurId) && a.roleId === role.id) &&
-          donnees.utilisateurs.find((u) => u.id === String(d.utilisateurId))?.roleId !== role.id,
+          !propreProfil(data, donnees, d, role.id),
         motif: "Profil verrouillé ou utilisé par votre propre compte." };
     })
   })) : [];
@@ -155,7 +161,23 @@ function etats(data, nom) {
 async function planifier(d, params) {
   const { data, donnees } = await contexte(d);
   let nom, fields, existants = [], titre;
-  if (params.action === "creer") {
+  if (params.action === "deverrouiller-profil") {
+    const role = trouver(data.roles, "role", params.cible);
+    if (!superAdmin(d) || !role || !role.verrouille || propreProfil(data, donnees, d, role.id)) erreur("Déverrouillage de ce profil non autorisé.");
+    nom = "OBJ-ROLE";
+    titre = `Déverrouiller le profil ${role.titre}`;
+    const cols = data.source[nom].cols.filter((c) => !c.hidden && !c.readOnly &&
+      ["VERROUILLE", "OBJVEROUILLE", "OBJVERROUILLE"].includes(String(c.displayName).replace(/[^A-Z]/g, "")));
+    if (cols.length !== 1) throw new Error("Colonne de verrouillage du profil unique requise.");
+    const c = cols[0];
+    if (c.boolean) fields = { [c.name]: false };
+    else if (c.lookup && !c.lookup.allowMultipleValues && c.lookup.listId.toLowerCase() === data.source["OBJ-VEROUILLE"].id.toLowerCase()) {
+      const non = data.source["OBJ-VEROUILLE"].items.filter((i) => /^non\b/i.test(i.fields.Title));
+      if (non.length !== 1) throw new Error("Valeur Non de verrouillage unique requise.");
+      fields = { [`${c.name}LookupId`]: non[0].id };
+    } else throw new Error("Type de verrouillage de profil incompatible.");
+    existants = [{ id: role.id }];
+  } else if (params.action === "creer") {
     if (!superAdmin(d)) erreur("Seul un super administrateur peut ajouter un droit.");
     const capacite = trouver(data.capacites, "capacite", params.capacite);
     const action = trouver(data.actions, "action", params.typeAction);
@@ -209,8 +231,7 @@ async function planifier(d, params) {
       };
     } else if (params.action === "profil") {
       const role = trouver(data.roles, "role", params.cible);
-      if (!superAdmin(d) || !role || role.verrouille || donnees.utilisateurs.find((u) => u.id === String(d.utilisateurId))?.roleId === role.id ||
-        data.affectations.some((a) => a.utilisateurId === String(d.utilisateurId) && a.roleId === role.id)) erreur("Ce profil ne peut pas être modifié par votre compte.");
+      if (!superAdmin(d) || !role || role.verrouille || propreProfil(data, donnees, d, role.id)) erreur("Ce profil ne peut pas être modifié par votre compte.");
       nom = "OBJ-ROLE-CAPACITE";
       existants = data.bases.filter((b) => b.roleId === role.id && b.operationId === op.id);
       if (existants.some((b) => b.verrouille)) erreur("Ce droit de profil est verrouillé.");
@@ -234,7 +255,10 @@ async function planifier(d, params) {
 
 async function preparer(identite, d, params) {
   const op = await planifier(d, params);
-  return { jeton: ecriture.emettreJeton(identite, op).jeton, changements: [{ libelle: op.nom, avant: "Configuration actuelle", apres: params.action === "creer" ? "Nouveau droit (aucune autorisation attribuée automatiquement)" : params.valeur === "true" ? "Autoriser cette action" : "Interdire cette action" }] };
+  return { jeton: ecriture.emettreJeton(identite, op).jeton, changements: [{ libelle: op.nom, avant: "Configuration actuelle",
+    apres: params.action === "creer" ? "Nouveau droit (aucune autorisation attribuée automatiquement)" :
+      params.action === "deverrouiller-profil" ? "Profil déverrouillé ; ses droits restent inchangés jusqu’à leur modification explicite" :
+        params.valeur === "true" ? "Autoriser cette action" : "Interdire cette action" }] };
 }
 
 async function revalider(d, op) {

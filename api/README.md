@@ -28,6 +28,11 @@ ses propres acces ou des droits verrouilles. Une politique de role absente
 ne permet jamais d'inferer un niveau inferieur. Le super administrateur
 (politique globale avec fonction `plateforme`) peut egalement gerer les
 profils et ajouter des droits au catalogue. Son propre profil est protege.
+Un profil verrouille propose « Deverrouiller ce profil pour modifier ses
+droits » uniquement au super administrateur, hors de ses propres profils.
+Cette action exige apercu/confirmation, ETag et journal ; elle ne modifie
+que le verrou du role, pas ses permissions. Les droits individuellement
+verrouilles restent proteges.
 Le super administrateur est **global pour tous les sites**, meme lorsqu'un
 site possede une affectation locale plus restrictive. Il peut modifier
 les contenus et administrer les comptes/profils ; les indisponibilites

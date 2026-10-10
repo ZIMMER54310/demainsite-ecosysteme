@@ -165,6 +165,21 @@ function fixture() {
     assert.equal((await admin.planifier(superActeur, { action: "profil", cible: profil.ref, operation: op.ref, valeur: "false" })).champs.AUTORISATION, false);
     const propreProfil = superVue.profils.find((p) => p.titre === "Administrateur");
     await assert.rejects(admin.planifier(superActeur, { action: "profil", cible: propreProfil.ref, operation: op.ref, valeur: "false" }), /profil ne peut pas/);
+    f.source["OBJ-ROLE"].cols.push({ name: "Verrou", displayName: "VERROUILLE", boolean: {} });
+    f.source["OBJ-ROLE"].items.find((r) => r.id === "editeur").fields.Verrou = true;
+    f.dynamique.roles.find((r) => r.id === "editeur").verrouille = true;
+    const vueVerrouillee = await admin.lire(superActeur);
+    const verrouille = vueVerrouillee.profils.find((p) => p.titre === "Éditeur");
+    assert.equal(verrouille.peutDeverrouiller, true);
+    const unlock = await admin.planifier(superActeur, { action: "deverrouiller-profil", cible: verrouille.ref });
+    assert.equal(unlock.type, "modifier");
+    assert.deepEqual(unlock.champs, { Verrou: false });
+    assert.equal(unlock.avant, E.hash({ Verrou: "true" }));
+    await assert.rejects(admin.planifier(f.acteur, { action: "deverrouiller-profil", cible: verrouille.ref }), /non autorisé/);
+    await assert.rejects(admin.planifier(superActeur, { action: "deverrouiller-profil", cible: propreProfil.ref }), /non autorisé/);
+    assert.match((await import(pathToFileURL(path.join(__dirname, "../../modules/cockpit/droits.js")).href)).rendreMatrice(vueVerrouillee, verrouille), /data-deverrouiller-profil/);
+    f.dynamique.roles.find((r) => r.id === "editeur").verrouille = false;
+    f.source["OBJ-ROLE"].items.find((r) => r.id === "editeur").fields.Verrou = false;
     const creation = { action: "creer", titre: "Télécharger une image", code: "image.telecharger",
       capacite: superVue.capacites[0].ref, typeAction: superVue.actions[0].ref, fonction: "logo-medias", route: "medias", mode: "read" };
     const cree = await admin.planifier(superActeur, creation);
