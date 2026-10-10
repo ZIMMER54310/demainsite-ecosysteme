@@ -62,6 +62,7 @@ const zone = (z) => ({ sections: nettoyer(z.sections), ...(z.noeuds ? { noeuds: 
   ...(z.style ? { style: z.style } : {}), ...(z.responsive ? { responsive: z.responsive } : {}) });
 const sortie = (r) => ({ mode: r.mode, sections: nettoyer(r.sections),
   ...(r.noeuds ? { noeuds: r.noeuds } : {}),
+  ...(typeof r.page?.bandeauChantier === "boolean" ? { bandeauChantier: r.page.bandeauChantier } : {}),
   ...(r.page?.style ? { style: r.page.style, responsive: r.page.responsive || {} } : {}),
   ...(r.theme && Object.keys(r.theme).length ? { theme: r.theme } : {}),
   ...(r.entete ? { entete: zone(r.entete) } : {}),

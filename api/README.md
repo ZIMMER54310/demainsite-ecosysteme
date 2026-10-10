@@ -12,6 +12,28 @@ Le cockpit utilise une session native Entra et des controles de perimetre cote s
 
 ## Droits et edition cockpit
 
+### Bandeau de chantier et typographie
+
+Le bandeau « Page en chantier » utilise la colonne booleenne
+`AFFICHER-BANDEAU-CHANTIER` de `OBJ-PAGES-SITE`. Le soulignement utilise
+`SOULIGNEMENT` de `OBJ-STYLE-PRESET`. La liste `OBJ-POLICE` porte les familles
+proposees dans le panneau Design.
+
+Pour installer uniquement ces reglages et les 25 familles de polices, sans
+provisionner les autres modules ni les modeles :
+
+```bash
+node tools/provision-dse-builder.js --plan --typographie-chantier
+node tools/provision-dse-builder.js --apply --typographie-chantier
+node tools/provision-dse-builder.js --verify --typographie-chantier
+```
+
+L'application exige les droits de provisionnement existants, sauvegarde le
+schema et relit les champs et familles apres ecriture. Elle ne donne aucun
+droit utilisateur et ne remplace pas une police deja presente mais incomplete.
+Publier egalement le front avec le script du depot, puis redemarrer l'API :
+les fichiers du dossier de travail ne sont pas automatiquement servis au navigateur.
+
 ### Lot cockpit / construction / accompagnement
 
 `node tools/provision-cockpit.js --apply` sauvegarde le schema concerne avant

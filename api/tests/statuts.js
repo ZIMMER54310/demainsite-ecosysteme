@@ -107,12 +107,13 @@ const NON_ACTIFS = ["1", "3", "4", "5", "6"];
   courant = { ...site("2"), pagePubliqueId: "22" };
   builder.composerPage = (_donnees, _site, options) => {
     optionsComposees = options;
-    return { mode: "builder", page: { id: options.pageId }, sections: [] };
+    return { mode: "builder", page: { id: options.pageId, bandeauChantier: true }, sections: [] };
   };
   builderSource.obtenirDonnees = async () => ({});
   const actif = await appelBuilder();
   assert.strictEqual(optionsComposees.pageId, "22");
   assert.strictEqual(actif.donnees.mode, "builder");
+  assert.strictEqual(actif.donnees.bandeauChantier, true, "l'API publique transmet le réglage de bandeau");
   builder.composerPage = composerPageOriginal;
   builderSource.obtenirDonnees = obtenirDonneesOriginal;
 

@@ -52,6 +52,7 @@ export function groupes(style = {}, ctx = {}) {
   if (nb(s.tailleTexte, 8, 96) !== null) g.typo.push(`font-size:${nb(s.tailleTexte, 8, 96)}px`);
   if (nb(s.poidsPolice, 100, 900) !== null) g.typo.push(`font-weight:${Math.round(nb(s.poidsPolice, 100, 900) / 100) * 100}`);
   if (STYLE_POLICE[s.stylePolice]) g.typo.push(`font-style:${STYLE_POLICE[s.stylePolice]}`);
+  if (typeof s.soulignement === "boolean") g.typo.push(`text-decoration:${s.soulignement ? "underline" : "none"}`);
   if (nb(s.hauteurLigne, 1, 3) !== null) g.typo.push(`line-height:${nb(s.hauteurLigne, 1, 3)}`);
   if (nb(s.espacementLettres, -5, 20) !== null) g.typo.push(`letter-spacing:${nb(s.espacementLettres, -5, 20)}px`);
   if (TRANSFORMATION[s.transformation]) g.typo.push(`text-transform:${TRANSFORMATION[s.transformation]}`);

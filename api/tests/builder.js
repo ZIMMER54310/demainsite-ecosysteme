@@ -4,6 +4,11 @@ const assert = require("node:assert/strict");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const B = require("../shared/builder");
+const provisionneur = require("../tools/provision-dse-builder");
+assert.equal(provisionneur.POLICES.length, 25);
+assert.ok(provisionneur.POLICES.includes("Segoe UI"));
+const schemaPreset = provisionneur.LISTES.find((l) => l.nom === "OBJ-STYLE-PRESET");
+assert.ok(schemaPreset.colonnes.some((c) => c.name === "SOULIGNEMENT" && c.type === "bool"));
 
 const front = (f) => import(pathToFileURL(path.join(__dirname, "..", "..", "modules", f)).href);
 const OUI = { id: "1", titre: "OUI" };
@@ -15,7 +20,8 @@ const lien = (id, titre = null) => ({ id: String(id), titre });
 
 function donneesBase(extra = {}) {
   return {
-    pages: [el(10, { URL: "/" }, { "OBJ-SITE-PUBLIC": lien(1) }), el(20, { URL: "/" }, { "OBJ-SITE-PUBLIC": lien(2) })],
+    pages: [el(10, { URL: "/", "AFFICHER-BANDEAU-CHANTIER": true }, { "OBJ-SITE-PUBLIC": lien(1) }),
+      el(20, { URL: "/", "AFFICHER-BANDEAU-CHANTIER": false }, { "OBJ-SITE-PUBLIC": lien(2) })],
     sections: [el(100, { "ORDRE-AFFICHAGE": 20 }, { "OBJ-PAGES-SITE": lien(10) }), el(101, { "ORDRE-AFFICHAGE": 10 }, { "OBJ-PAGES-SITE": lien(10) }),
       el(102, {}, { "OBJ-PAGES-SITE": lien(10) }, [1, 2]), el(200, {}, { "OBJ-PAGES-SITE": lien(20) })],
     lignes: [el(1000, {}, { "OBJ-SECTION-SITE": lien(100), "OBJ-LIGNE-STRUCTURE": lien(1, "50-50") }),
@@ -47,9 +53,30 @@ const site2 = { id: "2" };
 const aplatir = (c) => c.sections.flatMap((s) => s.lignes.flatMap((l) => l.colonnes.flatMap((k) => k.modules)));
 
 async function main() {
+  {
+    const P = require("../shared/provisionnement");
+    const originaux = { contexteProvisionnement: P.contexteProvisionnement, lireEtat: P.lireEtat, afficherPlan: P.afficherPlan };
+    let definitionsLues;
+    try {
+      P.contexteProvisionnement = async () => ({ token: "", site: { id: "test" }, large: false });
+      P.lireEtat = async (_token, _site, definitions) => {
+        definitionsLues = definitions;
+        return { ids: {}, colonnes: {} };
+      };
+      P.afficherPlan = () => {};
+      assert.equal(await provisionneur.typographieChantier("plan"), 0);
+      assert.deepEqual(definitionsLues.map((d) => d.nom), ["OBJ-POLICE", "OBJ-STYLE-PRESET", "OBJ-PAGES-SITE"]);
+      assert.deepEqual(definitionsLues.find((d) => d.nom === "OBJ-STYLE-PRESET").colonnes.map((c) => c.name),
+        ["SOULIGNEMENT", "STYLE-POLICE", "TRANSFORMATION-TEXTE", "ESPACEMENT-LETTRES"]);
+      await assert.rejects(provisionneur.typographieChantier("apply"), /Droit de provisionnement absent/);
+    } finally {
+      Object.assign(P, originaux);
+    }
+  }
   // Hierarchie, ordre, elements non valides ou inactifs, colonne vide, module sans contenu.
   const c = B.composerPage(donneesBase(), site1);
   assert.equal(c.mode, "builder");
+  assert.equal(c.page.bandeauChantier, true, "l'option du bandeau est transmise au rendu public");
   assert.equal(c.sections.length, 2, "section non validee ignoree");
   assert.equal(c.sections[0].lignes.length, 1, "ligne inactive ignoree");
   assert.deepEqual(c.sections[1].lignes[0].colonnes.map((k) => k.largeur), [50, 50], "largeurs deduites de la structure");
@@ -58,6 +85,7 @@ async function main() {
 
   // Isolation entre domaines.
   const autre = B.composerPage(donneesBase(), site2);
+  assert.equal(autre.page.bandeauChantier, false, "bandeau désactivé par défaut sur l'autre page");
   assert.equal(aplatir(autre).every((m) => m.contenu.every((x) => x.champs.TEXTE !== "Bonjour")), true);
   assert.equal(B.composerPage(donneesBase(), site2, { pageId: "10" }).mode, "historique", "page d'un autre site refusee");
   assert.equal(B.composerPage(donneesBase(), { id: "99" }).mode, "historique");
@@ -217,6 +245,11 @@ async function main() {
     const css = styles.cssElement("dse-b-m1", "BOUTON", r.style, r.responsive, {});
     assert.match(css, /border-radius:12px/);
     assert.match(css, /@media \(max-width:640px\)/);
+    const typo = styles.cssElement("dse-b-typo", "TITRE", { poidsPolice: 900, soulignement: true, stylePolice: "ITALIQUE" });
+    assert.match(typo, /font-weight:900/);
+    assert.match(typo, /font-style:italic/);
+    assert.match(typo, /text-decoration:underline/);
+    assert.match(styles.cssElement("dse-b-no-underline", "TITRE", { soulignement: false }), /text-decoration:none/);
   }
 
   console.log("OK tests builder");

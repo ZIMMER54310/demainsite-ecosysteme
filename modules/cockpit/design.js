@@ -15,10 +15,15 @@ const GROUPES = {
   BORDURE: "Bordures et coins arrondis", OMBRE: "Ombre", ALIGNEMENT: "Alignement des éléments", SURVOL: "Survol (bouton, lien)"
 };
 const COTES = [["Haut", "haut"], ["Droite", "droite"], ["Bas", "bas"], ["Gauche", "gauche"]];
+const GRAISSES = [
+  ["100", "Très fin"], ["200", "Extra-fin"], ["300", "Fin"], ["400", "Normal"], ["500", "Moyen"],
+  ["600", "Demi-gras"], ["700", "Gras"], ["800", "Extra gras"], ["900", "Ultra gras"]
+];
 // cle -> [groupe, libelle, nature, unite, min, max, pas]
 const CHAMPS = {
   police: ["TYPO", "Police", "police"], couleurTexte: ["TYPO", "Couleur du texte", "couleur"],
-  tailleTexte: ["TYPO", "Taille du texte", "nombre", "px", 8, 96, 1], poidsPolice: ["TYPO", "Graisse", "nombre", "", 100, 900, 100],
+  tailleTexte: ["TYPO", "Taille du texte", "nombre", "px", 8, 96, 1], poidsPolice: ["TYPO", "Graisse", "poids"],
+  soulignement: ["TYPO", "Soulignement", "ouinon"],
   stylePolice: ["TYPO", "Style", "choix"], hauteurLigne: ["TYPO", "Hauteur de ligne", "nombre", "×", 1, 3, 0.05],
   espacementLettres: ["TYPO", "Espacement des lettres", "nombre", "px", -5, 20, 0.5], transformation: ["TYPO", "Casse", "choix"],
   alignement: ["TYPO", "Alignement du texte", "alignement"],
@@ -50,7 +55,9 @@ function controle(cle, valeur, herite, design, nom) {
   const [, libelle, nature, unite, min, max, pas] = CHAMPS[cle];
   const o = design.options || {};
   const indication = vide(herite) ? "" : ` <span class="muted design-herite">hérité : ${e(nature === "media" || nature === "police"
-    ? ((nature === "media" ? o.medias : o.polices) || []).find((x) => x.ref === herite)?.titre || "défini" : String(herite === true ? "oui" : herite))}</span>`;
+    ? ((nature === "media" ? o.medias : o.polices) || []).find((x) => x.ref === herite)?.titre || "défini"
+    : nature === "poids" ? GRAISSES.find(([poids]) => poids === String(herite))?.[1] || String(herite)
+      : String(herite === true ? "oui" : herite))}</span>`;
   const n = e(nom);
   let champ;
   if (nature === "couleur") {
@@ -59,6 +66,8 @@ function controle(cle, valeur, herite, design, nom) {
       <input name="${n}" value="${e(v)}" placeholder="${e(herite || "#rrggbb")}" pattern="#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?" maxlength="7" size="8"></span>`;
   } else if (nature === "nombre") {
     champ = `<span class="design-nombre"><input type="number" name="${n}" value="${e(vide(valeur) ? "" : valeur)}" placeholder="${e(vide(herite) ? "" : herite)}" min="${min}" max="${max}" step="${pas}">${unite ? `<span>${e(unite)}</span>` : ""}</span>`;
+  } else if (nature === "poids") {
+    champ = `<select name="${n}"><option value="">${vide(herite) ? "Par défaut" : "Hérité"}</option>${GRAISSES.map(([poids, titre]) => `<option value="${poids}"${String(poids) === String(valeur) ? " selected" : ""}>${titre}</option>`).join("")}</select>`;
   } else if (nature === "ouinon") {
     champ = `<select name="${n}"><option value="">${vide(herite) ? "Par défaut" : "Hérité"}</option><option value="OUI"${valeur === true ? " selected" : ""}>Oui</option><option value="NON"${valeur === false ? " selected" : ""}>Non</option></select>`;
   } else {
@@ -66,7 +75,7 @@ function controle(cle, valeur, herite, design, nom) {
       : nature === "alignement" ? (o.alignements || []).map((x) => ({ ref: x, titre: lisible(x) }))
         : nature === "police" ? o.polices || [] : o.medias || [];
     if (!opts.length && nature !== "media") return "";
-    champ = `<select name="${n}"><option value="">${vide(herite) ? "Par défaut" : "Hérité"}</option>${opts.map((x) => `<option value="${e(x.ref)}"${x.ref === valeur ? " selected" : ""}>${e(x.titre)}</option>`).join("")}</select>`;
+    champ = `<select name="${n}"><option value="">${vide(herite) ? "Par défaut" : "Hérité"}</option>${opts.map((x) => `<option value="${e(x.ref)}"${String(x.ref) === String(valeur) ? " selected" : ""}>${e(x.titre)}</option>`).join("")}</select>`;
     if (nature === "media") {
       champ += opts.length ? `<span class="constructeur-medias constructeur-medias--mini">${opts.slice(0, 24).map((m) => `<img src="${e(m.url)}" alt="${e(m.titre)}" title="${e(m.titre)}" loading="lazy" data-design-media="${e(m.ref)}" data-design-cible="${n}">`).join("")}</span>`
         : `<span class="muted">Aucune image autorisée pour ce site.</span>`;

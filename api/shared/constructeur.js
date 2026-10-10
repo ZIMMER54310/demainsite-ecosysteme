@@ -133,6 +133,22 @@ function arbreASupprimer(d, type, el) {
   return sortie;
 }
 
+/* Conteneur complet : sections (et tout leur contenu), composition Builder (valeurs puis elements, du plus profond
+   au plus haut), puis le conteneur lui-meme. */
+function conteneurASupprimer(d, type, el) {
+  const sortie = [];
+  for (const s of enfantsDe(d, type, el)) sortie.push(...arbreASupprimer(d, "section", s));
+  const tous = d.builderElements || [];
+  const racines = new Set(tous.filter((x) => R.lien(x, R.CIBLES[type]) === String(el.id) && !R.lien(x, "ELEMENT-PARENT")).map((x) => x.id));
+  const elements = tous.filter((x) => racines.has(x.id) || racines.has(R.lien(x, "ELEMENT-RACINE")));
+  const ids = new Set(elements.map((x) => x.id));
+  const profondeur = (x) => { let n = 0, p = R.lien(x, "ELEMENT-PARENT"); while (p && ids.has(p) && n < 64) { n++; p = R.lien(tous.find((y) => y.id === p), "ELEMENT-PARENT"); } return n; };
+  for (const v of (d.builderValeurs || []).filter((x) => ids.has(R.lien(x, "OBJ-BUILDER-ELEMENT")))) sortie.push({ liste: "OBJ-BUILDER-VALEUR", id: v.id, el: v });
+  for (const x of elements.sort((a, b) => profondeur(b) - profondeur(a))) sortie.push({ liste: "OBJ-BUILDER-ELEMENT", id: x.id, el: x });
+  sortie.push({ liste: CONTENEURS[type].liste, id: el.id, el });
+  return sortie;
+}
+
 function sauvegarderSuppression(siteId, c, items) {
   const fs = require("node:fs"), path = require("node:path");
   const dossier = process.env.DSE_DOSSIER_SUPPRESSIONS || path.join(__dirname, "..", ".sauvegardes", "suppressions");
@@ -179,6 +195,7 @@ function noeud(d, type, el) {
 function arbre(d, type, el, perimetre) {
   const root = R.trouverRacine(d, siteDuConteneur({ type, el }), type, el.id);
   return { ref: ref(type, el.id), type, titre: titreDe(el), etat: etat(el),
+    ...(type === "page" ? { bandeauChantier: vrai(champ(el, [cleChamp("AFFICHER-BANDEAU-CHANTIER")])) } : {}),
     ...(root ? { generique: R.arbre(d, root, { reference: referenceBuilder,
       mediaVisible: (m) => Boolean(perimetre && mediaAutorise(m, perimetreBuilder(perimetre, siteDuConteneur({ type, el })))) }) } : {}),
     sections: enfantsDe(d, type, el).map((s) => noeud(d, "section", s)) };
@@ -259,6 +276,7 @@ function vue(d, perimetre) {
       }),
     pages: pages.map((p) => ({
       ref: ref("page", p.id), titre: titreDe(p), url: texte(p, "URL") || "/", etat: etat(p),
+      bandeauChantier: vrai(champ(p, [cleChamp("AFFICHER-BANDEAU-CHANTIER")])),
       sections: nombreSections("page", p),
       entete: rel(p, "OBJ-ENTETE-SITE") ? enteteDe(rel(p, "OBJ-ENTETE-SITE").id) : null,
       footer: rel(p, "OBJ-FOOTER-SITE") ? footerDe(rel(p, "OBJ-FOOTER-SITE").id) : null
@@ -577,7 +595,12 @@ function validerFormulaire(form, valeurs) {
     if (!o) { erreurs.push(`${l.libelle} : choix non autorisé.`); continue; }
     propres[l.nom] = o.id;
   }
-  const connues = new Set([...form.textes.map((c) => c.cle), ...form.listes.map((l) => l.cle)]);
+  for (const c of form.cases || []) {
+    if (!Object.hasOwn(valeurs || {}, c.cle)) continue;
+    if (typeof valeurs[c.cle] !== "boolean") { erreurs.push(`${c.libelle} : valeur invalide.`); continue; }
+    propres[c.nom] = valeurs[c.cle];
+  }
+  const connues = new Set([...form.textes.map((c) => c.cle), ...form.listes.map((l) => l.cle), ...(form.cases || []).map((c) => c.cle)]);
   if (Object.keys(valeurs || {}).some((k) => !connues.has(k))) erreurs.push("Un champ inconnu a été transmis.");
   return { erreurs: [...new Set(erreurs)], propres };
 }
@@ -722,7 +745,8 @@ function descendants(d, type, el) {
 const COTES = [["Haut", "HAUT"], ["Droite", "DROITE"], ["Bas", "BAS"], ["Gauche", "GAUCHE"]];
 const DESIGN = {
   couleurTexte: ["TYPO", "OBJ-COULEUR-TEXTE", "couleur"], police: ["TYPO", "OBJ-POLICE", "police"],
-  tailleTexte: ["TYPO", "TAILLE-TEXTE", "nombre", 8, 96], poidsPolice: ["TYPO", "POIDS-POLICE", "nombre", 100, 900],
+  tailleTexte: ["TYPO", "TAILLE-TEXTE", "nombre", 8, 96], poidsPolice: ["TYPO", "POIDS-POLICE", "poids"],
+  soulignement: ["TYPO", "SOULIGNEMENT", "ouinon"],
   stylePolice: ["TYPO", "STYLE-POLICE", "choix"], hauteurLigne: ["TYPO", "HAUTEUR-LIGNE", "nombre", 1, 3],
   espacementLettres: ["TYPO", "ESPACEMENT-LETTRES", "nombre", -5, 20], transformation: ["TYPO", "TRANSFORMATION-TEXTE", "choix"],
   alignement: ["TYPO", "ALIGNEMENT", "alignement"],
@@ -759,7 +783,7 @@ function typeStyleDe(d, type, el) {
 /* Style imbrique (moteur) -> valeurs plates (formulaire). */
 function plat(style = {}, polices = []) {
   const v = {};
-  for (const k of ["couleurTexte", "couleurFond", "couleurBordure", "couleurDegrade", "tailleTexte", "poidsPolice", "stylePolice", "hauteurLigne",
+  for (const k of ["couleurTexte", "couleurFond", "couleurBordure", "couleurDegrade", "tailleTexte", "poidsPolice", "soulignement", "stylePolice", "hauteurLigne",
     "espacementLettres", "transformation", "alignement", "fondPosition", "fondTaille", "fondRepetition", "fondOpacite", "degradeAngle", "largeur",
     "largeurMinimale", "largeurMaximale", "hauteur", "hauteurMinimale", "hauteurMaximale", "bordureLargeur", "bordureStyle", "bordureRayon", "justification", "masque"]) {
     if (style[k] !== undefined && style[k] !== null) v[k] = style[k];
@@ -803,7 +827,7 @@ const OPERATIONS_ARTICLE = {
 };
 // Le renommage reutilise les droits « modifier » existants ; la suppression definitive exige le droit ADMINISTRER (element.etat).
 const ACTION_DROIT = { "element.renommer": "element.deplacer", "builder.renommer": "builder.enregistrer", "ligne.colonnes": "ligne.ajouter",
-  "element.supprimer": "element.etat" };
+  "element.supprimer": "element.etat", "conteneur.supprimer": "conteneur.desactiver" };
 const actionDroit = (action) => ACTION_DROIT[action] || action;
 const operationArticle = (action) => {
   action = actionDroit(action);
@@ -896,7 +920,17 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const c = cible(["entete", "footer", "page"], p.ref);
       if (c.refus) return c;
       const def = CONTENEURS[c.type];
-      const form = { textes: ecriture.champsModifiables(await w.cols(def.liste)).filter((x) => c.type === "page" || !/^URL$/i.test(x.nom)), listes: [] };
+      const colonnes = await w.cols(def.liste);
+      const champBandeau = c.type === "page" ? colonnes.find((x) => x.boolean && !x.hidden && !x.readOnly &&
+        (cleChamp(x.displayName) === cleChamp("AFFICHER-BANDEAU-CHANTIER") || cleChamp(x.name) === cleChamp("AFFICHER-BANDEAU-CHANTIER"))) : null;
+      if (c.type === "page" && p.valeurs && Object.hasOwn(p.valeurs, "bandeauChantier") && !champBandeau) {
+        return { erreur: "Le réglage du bandeau n'est pas installé sur ce site. Appliquez le schéma du constructeur puis réessayez.", status: 400 };
+      }
+      const form = {
+        textes: ecriture.champsModifiables(colonnes).filter((x) => c.type === "page" || !/^URL$/i.test(x.nom)),
+        listes: [],
+        cases: champBandeau ? [{ cle: "bandeauChantier", nom: champBandeau.name, libelle: "Afficher le bandeau « Page en cours de construction ou de modification »" }] : []
+      };
       if (!p.valeurs) return { formulaire: formulairePublic(form, c.el._fields) };
       const { erreurs, propres } = validerFormulaire(form, p.valeurs);
       if (erreurs.length) return { erreur: erreurs.join(" "), status: 400 };
@@ -1232,6 +1266,19 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       return res(`${NIVEAUX[c.type].libelle} « ${titreDe(c.el)} » supprimé${c.type === "module" ? "" : "e"} définitivement${autres ? ` avec ${autres} élément(s) contenu(s)` : ""}.`);
     }
 
+    case "conteneur.supprimer": {
+      // Suppression definitive d'une page : sections, contenus, composition Builder ; sauvegarde JSON prealable.
+      const c = cible(["page"], p.ref);
+      if (c.refus) return c;
+      if (p.confirmation !== "SUPPRIMER") return { erreur: "Confirmation de suppression manquante.", status: 400 };
+      if (texte(c.el, "URL") === "/") return { refus: "La page d'accueil (adresse « / ») ne peut pas être supprimée : donnez d'abord l'adresse « / » à une autre page." };
+      const items = conteneurASupprimer(d, c.type, c.el);
+      sauvegarderSuppression(siteId, c, items);
+      for (const x of items) await w.supprimer(x.liste, x.id);
+      const autres = items.length - 1;
+      return res(`Page « ${titreDe(c.el)} » supprimée définitivement${autres ? ` avec ${autres} élément(s) contenu(s)` : ""}.`);
+    }
+
     case "element.etat": {
       // Un element (ref) ou plusieurs a la fois (refs, 50 maximum), toutes natures confondues.
       const refs = Array.isArray(p.refs) ? [...new Set(p.refs.map(String))] : [p.ref];
@@ -1385,6 +1432,11 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
           const n = Number(String(brut).replace(",", "."));
           if (!Number.isFinite(n) || n < min || n > max) { erreurs.push(`${libelle} : valeur entre ${min} et ${max}.`); return null; }
           return [nom, n];
+        }
+        if (nature === "poids") {
+          const val = String(brut);
+          if (!B.CHOIX.poidsPolice.includes(val)) { erreurs.push(`${libelle} : graisse non autorisée.`); return null; }
+          return [nom, Number(val)];
         }
         if (nature === "couleur") {
           if (!HEX.test(String(brut))) { erreurs.push(`${libelle} : couleur invalide.`); return null; }

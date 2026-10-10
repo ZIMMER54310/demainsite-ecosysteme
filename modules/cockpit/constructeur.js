@@ -188,7 +188,7 @@ function ongletArticles(d, domaine) {
 
 function ongletPages(d) {
   const peut = (f) => ecrit(d, f);
-  const options = (liste, actuel) => `<option value="">— Aucun —</option>${liste.filter((x) => x.etat.publiable)
+  const options = (liste, actuel, automatique = false) => `<option value="">${automatique ? "— Pied de page du site (automatique) —" : "— Aucun —"}</option>${liste.filter((x) => x.etat.publiable)
     .map((x) => `<option value="${e(x.ref)}"${actuel?.ref === x.ref ? " selected" : ""}>${e(x.titre)}</option>`).join("")}`;
   const creer = peutAction(d, "page", "conteneur.creer") ? `<form class="card constructeur-creer" data-c-creer="page">
     <label>Créer une page <input name="titre" required maxlength="255"></label>
@@ -199,7 +199,7 @@ function ongletPages(d) {
     <header><h3>${e(p.titre)}</h3>${p.realisation ? realisation(p.realisation) : badgeEtat(p.etat)}</header>
     <p class="muted">${e(p.url)} · ${p.sections} section(s)</p>
     <label>En-tête ${peutAction(d, "page", "page.affecter") && peutAction(d, "entete", "page.affecter") ? `<select data-c-affecter="entete" data-page="${e(p.ref)}">${options(d.entetes, p.entete)}</select>` : `<strong>${e(p.entete?.titre || "Aucun")}</strong>`}</label>
-    <label>Pied de page ${peutAction(d, "page", "page.affecter") && peutAction(d, "footer", "page.affecter") ? `<select data-c-affecter="footer" data-page="${e(p.ref)}">${options(d.footers, p.footer)}</select>` : `<strong>${e(p.footer?.titre || "Aucun")}</strong>`}</label>
+    <label>Pied de page ${peutAction(d, "page", "page.affecter") && peutAction(d, "footer", "page.affecter") ? `<select data-c-affecter="footer" data-page="${e(p.ref)}">${options(d.footers, p.footer, true)}</select>` : `<strong>${e(p.footer?.titre || "Pied de page du site (automatique)")}</strong>`}</label>
     <div class="constructeur-boutons">${bouton("🧱 Construire / aperçu", "ouvrir", `data-ref="${e(p.ref)}"`, "btn btn-primary")}
       ${peut("pages") ? bouton("✏️ Modifier", "proprietes", `data-ref="${e(p.ref)}"`) : ""}
       ${peutAction(d, "page", "conteneur.dupliquer") ? bouton("Dupliquer", "dupliquer", `data-ref="${e(p.ref)}" data-type="page"`) : ""}</div>
@@ -388,10 +388,14 @@ export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", r
 }
 
 export function documentApercu(composition, type = "page") {
+  const bandeau = type === "page" && composition?.bandeauChantier
+    ? `<aside class="dse-bandeau-chantier" role="status">⚠ Cette page est en cours de construction ou de modification.</aside>` : "";
+  const insertionBandeau = { html: bandeau, inseree: false };
   const automatique = (texte) => () => `<span class="dse-b-vide dse-b-vide--auto">${texte}</span>`;
   const adapteursAuto = { HEADER: automatique("🔗 Logo et menu du site · affichés automatiquement"),
     FOOTER: automatique("🔗 Mentions et copyright du site · affichés automatiquement") };
-  const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: adapteursAuto, apercu: true, prefixe, typeConteneur });
+  const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: adapteursAuto, apercu: true, prefixe, typeConteneur,
+    ...(type === "page" ? { apresPremiereSection: insertionBandeau } : {}) });
   // Meme rendu HERO que le site public (pages/accueil.js), alimente par le contenu du module edite.
   const heroApercu = (module) => {
     const contenu = module?.contenu?.find((x) => x?.champs || x?.media);
@@ -428,7 +432,8 @@ export function documentApercu(composition, type = "page") {
   const pageRepere = `<div class="dse-apercu-repere dse-apercu-repere--page">Contenu des pages${contexte.page ? ` · exemple : ${e(contexte.page)}` : ""}</div>`;
   const haut = type === "entete" ? `<header class="dse-apercu-edite">${principal || vide}</header>` : zoneContexte(contexte.entete, "entete", "header", "e", "ENTETE", "En-tête");
   const bas = type === "footer" ? `<footer class="dse-apercu-edite">${principal || vide}</footer>` : zoneContexte(contexte.footer, "footer", "footer", "f", "FOOTER", "Pied de page");
-  const corps = `<div class="dse-site-public">${haut}<main class="dse-apercu-principal dse-site-public-main">${["entete", "footer"].includes(type) ? pageRepere : principal || vide}</main>${bas}</div>`;
+  const avantContenu = bandeau && !insertionBandeau.inseree ? bandeau : "";
+  const corps = `<div class="dse-site-public">${haut}<main class="dse-apercu-principal dse-site-public-main">${avantContenu}${["entete", "footer"].includes(type) ? pageRepere : principal || vide}</main>${bas}</div>`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     ${["app", "components", "responsive", "public"].map((f) => `<link rel="stylesheet" href="/assets/css/${f}.css">`).join("")}
     <style>body{margin:0}.dse-site-public{min-height:100vh;display:flex;flex-direction:column}body.dse-public main.dse-apercu-principal{flex:1 0 auto;min-height:0!important}${STYLES_BUILDER}
@@ -505,9 +510,10 @@ function editeur(d) {
   return `<header class="constructeur-barre-visuelle"><strong>${e(d.site?.titre || "")} · ${e(a.titre)}</strong>
     <div class="constructeur-boutons constructeur-outils-barre"><span class="constructeur-appareils" role="group" aria-label="Affichage sur l'appareil"><span class="constructeur-groupe-titre">Affichage</span>${APPAREILS_BARRE.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "GENERAL") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}"${aideAttr(d, x.aide)} title="${x.cle === "GENERAL" ? "Tout voir : les éléments masqués sur un appareil restent affichés, encadrés en pointillés" : `Voir exactement ce que voit un visiteur sur ${NOMS_APPAREILS[x.cle]}`}" aria-pressed="${x.cle === (d.appareil || "GENERAL")}">${x.libelle}</button>`).join("")}</span>
       <span class="constructeur-separateur" aria-hidden="true"></span>
-      <span class="constructeur-groupe constructeur-voir" role="group" aria-label="Zones affichées en lecture seule"><span class="constructeur-groupe-titre">Voir</span>
+      <span class="constructeur-groupe constructeur-voir" role="group" aria-label="Options d'affichage"><span class="constructeur-groupe-titre">Voir</span>
         ${[["entete", "En-tête"], ["footer", "Pied de page"]].filter(([z]) => z !== type).map(([z, libelle]) => `<label title="${e(libelle)} affiché en lecture seule (modifiable dans son propre onglet)"><input type="checkbox" data-c-voir="${z}"${d.zonesMasquees?.[z] ? "" : " checked"}> ${libelle}</label>`).join("")}
-        ${d.apercuVisiteur ? `<label title="Décoché : la composition montre exactement ce que voit le visiteur (brouillons, désactivés et contenus non validés masqués)"><input type="checkbox" data-c-voir="brouillons"${d.zonesMasquees?.brouillons ? "" : " checked"}> Brouillons</label>` : ""}</span>
+        ${d.apercuVisiteur ? `<label title="Décoché : la composition montre exactement ce que voit le visiteur (brouillons, désactivés et contenus non validés masqués)"><input type="checkbox" data-c-voir="brouillons"${d.zonesMasquees?.brouillons ? "" : " checked"}> Brouillons</label>` : ""}
+        ${type === "page" ? `<label title="${peutAction(d, type, "conteneur.modifier") ? "Afficher aux visiteurs un message après la section de présentation (hero)" : "Votre profil ne dispose pas du droit de modifier cette page"}"><input type="checkbox" data-c-bandeau-chantier${a.bandeauChantier ? " checked" : ""}${peutAction(d, type, "conteneur.modifier") ? "" : " disabled"}> Page en chantier</label>` : ""}</span>
       <span class="constructeur-separateur" aria-hidden="true"></span>
       <span class="constructeur-groupe" role="group" aria-label="Historique"><button type="button" class="btn btn-mini" data-c-action="annuler-design">↶ Annuler</button>
       <button type="button" class="btn btn-mini" data-c-action="retablir-design">↷ Rétablir</button></span>
@@ -632,6 +638,8 @@ export function formulaireHtml(f, titre, { valider = "Enregistrer", passer = "",
 export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   const etat = { domaine, onglet: ONGLETS.some((o) => o.cle === onglet) ? onglet : "entetes", conteneur: "", message: "", erreur: false, appareil: "GENERAL", filtreVue: "", design: null, vue: vueMemorisee(), cotesReplies: cotesMemorises(), zonesMasquees: zonesMemorisees(), vueApercu: vueApercuMemorisee(), recherche: "", filtreEtat: "" };
   let d = donnees;
+  const documentApercuActuel = (composition, type = d.arbre?.type) =>
+    documentApercu({ ...composition, bandeauChantier: type === "page" && Boolean(d.arbre?.bandeauChantier) }, type);
   let copieStyle = null;
   let historique = [];
   let positionHistorique = -1;
@@ -710,7 +718,7 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   };
   const actualiserCanvas = () => {
     const f = iframe();
-    if (f) f.srcdoc = documentApercu({ ...d.apercu, noeuds: [d.arbre.generique] }, d.arbre.type);
+    if (f) f.srcdoc = documentApercuActuel({ ...d.apercu, noeuds: [d.arbre.generique] }, d.arbre.type);
   };
   const modifierChamps = (node, modifier) => {
     const avant = structuredClone(node.champs);
@@ -883,7 +891,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
   };
   // Rendu visiteur (ou brouillons masques) : meme regle que le site public, calculee par l'API.
   const apercuCourant = () => (etat.vueApercu === "rendu" || etat.zonesMasquees.brouillons) && d.apercuVisiteur ? d.apercuVisiteur : d.apercu;
-  const rechargerApercu = () => { const f = iframe(); if (f && d.apercu) f.srcdoc = documentApercu(apercuCourant(), d.arbre?.type); };
+  const rechargerApercu = () => { const f = iframe(); if (f && d.apercu) f.srcdoc = documentApercuActuel(apercuCourant(), d.arbre?.type); };
   const appliquerVueApercu = () => {
     const doc = docApercu();
     racine.querySelector("[data-constructeur]")?.classList.toggle("constructeur--apercu-seul", etat.vueApercu === "rendu");
@@ -1018,7 +1026,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
       appliquerAppareilApercu();
       for (const z of ["entete", "footer"]) doc?.body.classList.toggle(`dse-masquer-${z}`, Boolean(etat.zonesMasquees[z]));
     });
-    f.srcdoc = documentApercu(apercuCourant(), d.arbre?.type);
+    f.srcdoc = documentApercuActuel(apercuCourant(), d.arbre?.type);
   };
   const typeDe = (n) => n?.typeModule ? (d.typesModules || []).find((t) => t.code === String(n.typeModule).toUpperCase()) : null;
   const contenuDesign = (ref) => {
@@ -1096,7 +1104,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
         brouillonGenerique = false;
         brouillons.clear();
         const f = iframe();
-        if (f) f.srcdoc = documentApercu(apercuCourant(), d.arbre.type);
+        if (f) f.srcdoc = documentApercuActuel(apercuCourant(), d.arbre.type);
       }
     }
     if (ref.startsWith("builderelement.")) {
@@ -2010,8 +2018,14 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
     if (choix) { ev.preventDefault(); changerVueApercu(choix.dataset.cVueApercu); }
     else for (const m of racine.querySelectorAll("[data-c-vue-menu][open]")) if (!m.contains(ev.target)) m.open = false;
   });
-  racine.addEventListener("change", (ev) => {
+  racine.addEventListener("change", async (ev) => {
     const s = ev.target;
+    if (s.matches?.("[data-c-bandeau-chantier]")) {
+      const actif = s.checked;
+      const resultat = await executer("conteneur.modifier", { ref: d.arbre?.ref, valeurs: { bandeauChantier: actif } });
+      if (!resultat) s.checked = Boolean(d.arbre?.bandeauChantier);
+      return;
+    }
     if (s.matches?.("[data-c-filtre-vue]")) { etat.filtreVue = s.value; return appliquerVue(); }
     if (s.matches?.("[data-c-selection]")) {
       s.checked ? selection.add(s.dataset.cSelection) : selection.delete(s.dataset.cSelection);
@@ -2143,7 +2157,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
   if (rendusSite?.domaine !== domaine) chargerRendusSite(domaine).then((r) => {
     rendusSite = r;
     const f = iframe();
-    if (r && f && d.apercu) f.srcdoc = documentApercu(apercuCourant(), d.arbre?.type);
+    if (r && f && d.apercu) f.srcdoc = documentApercuActuel(apercuCourant(), d.arbre?.type);
   });
   racine.dseChangerOnglet = (onglet) => {
     if (d.arbre || enCours || brouillons.size || brouillonGenerique) return false;

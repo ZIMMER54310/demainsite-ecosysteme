@@ -11,6 +11,12 @@ const { cle, T, TL, N, B, D, L, ETAT, ETAT_VEROUILLE } = P;
 /* ---------- Schema ---------- */
 
 const STYLE_ESPACES = (prefixe) => ["HAUT", "BAS", "GAUCHE", "DROITE"].map((c) => N(`${prefixe}-${c}`));
+const POLICES = [
+  "Arial", "Arial Black", "Aptos", "Bahnschrift", "Calibri", "Cambria", "Cambria Math", "Candara", "Comic Sans MS",
+  "Consolas", "Constantia", "Corbel", "Courier New", "Franklin Gothic Medium", "Garamond", "Georgia", "Impact",
+  "Lucida Console", "Lucida Sans Unicode", "Palatino Linotype", "Segoe UI", "Tahoma", "Times New Roman",
+  "Trebuchet MS", "Verdana"
+];
 const REF = (extra = []) => [T("CODE"), T("NOTE-COURTE"), N("ORDRE-AFFICHAGE"), ...extra, ...ETAT_VEROUILLE()];
 const CONTENU = (...champs) => [L("OBJ-MODULE-SITE-PUBLIC", "OBJ-MODULE-SITE-PUBLIC"), N("ORDRE-AFFICHAGE"), ...champs, ...ETAT_VEROUILLE()];
 const STYLE_BASE = () => [L("OBJ-MODELE-BUILDER", "OBJ-MODELE-BUILDER"), L("OBJ-STYLE-PRESET", "OBJ-STYLE-PRESET")];
@@ -36,8 +42,9 @@ const LISTES = [
   {
     nom: "OBJ-STYLE-PRESET", creer: true,
     colonnes: [T("CODE-STYLE"), L("OBJ-STYLE-TYPE", "OBJ-STYLE-TYPE"), L("OBJ-COULEUR-TEXTE", "OBJ-COULEUR"),
-      L("OBJ-COULEUR-FOND", "OBJ-COULEUR"), L("OBJ-POLICE", "OBJ-POLICE"), N("TAILLE-TEXTE"), N("POIDS-POLICE"),
-      N("HAUTEUR-LIGNE"), L("ALIGNEMENT", "OBJ-ALIGNEMENT"), N("LARGEUR"), N("LARGEUR-MAXIMALE"),
+      L("OBJ-COULEUR-FOND", "OBJ-COULEUR"), L("OBJ-POLICE", "OBJ-POLICE"), N("TAILLE-TEXTE"), N("POIDS-POLICE"), B("SOULIGNEMENT"),
+      T("STYLE-POLICE"), T("TRANSFORMATION-TEXTE"), N("HAUTEUR-LIGNE"), N("ESPACEMENT-LETTRES"),
+      L("ALIGNEMENT", "OBJ-ALIGNEMENT"), N("LARGEUR"), N("LARGEUR-MAXIMALE"),
       ...STYLE_ESPACES("MARGE"), ...STYLE_ESPACES("PADDING"), N("BORDURE-LARGEUR"), N("BORDURE-RAYON"),
       L("OBJ-COULEUR-BORDURE", "OBJ-COULEUR"), T("OMBRE"), ...ETAT_VEROUILLE()]
   },
@@ -72,7 +79,7 @@ const LISTES = [
       B("VISIBLE-ORDINATEUR"), B("VISIBLE-TABLETTE"), B("VISIBLE-MOBILE"), T("CLASSE-CSS"), T("ANCRAGE-CSS")]
   },
   { nom: "OBJ-MODULE-SITE-PUBLIC-TYPE", creer: false, colonnes: [] },
-  { nom: "OBJ-PAGES-SITE", creer: false, colonnes: [] },
+  { nom: "OBJ-PAGES-SITE", creer: false, colonnes: [B("AFFICHER-BANDEAU-CHANTIER")] },
 
   { nom: "OBJ-MODULE-TITRE", creer: true, colonnes: CONTENU(T("TEXTE"), L("OBJ-NIVEAU-TITRE", "OBJ-NIVEAU-TITRE"), L("OBJ-ALIGNEMENT", "OBJ-ALIGNEMENT")) },
   { nom: "OBJ-MODULE-TEXTE", creer: true, colonnes: CONTENU(TL("CONTENU"), TL("TEXTE-ENRICHI"), L("OBJ-ALIGNEMENT", "OBJ-ALIGNEMENT")) },
@@ -231,6 +238,12 @@ async function semer(token, siteId) {
       }));
     }
   }
+  for (const [i, famille] of POLICES.entries()) {
+    bilan.referentiels += await compter("OBJ-POLICE", () => creer("OBJ-POLICE", famille, {
+      ...etatChamps("OBJ-POLICE"), [col("OBJ-POLICE", "CODE")]: famille, [col("OBJ-POLICE", "FAMILLE")]: famille,
+      [col("OBJ-POLICE", "ORDRE-AFFICHAGE")]: i + 1
+    }));
+  }
 
   // Types de modules : completer sans doublon.
   const listeTypes = "OBJ-MODULE-SITE-PUBLIC-TYPE";
@@ -321,7 +334,7 @@ async function verifier(token, siteId, etat) {
   let ok = actions.length === 0;
   if (!ok) return false;
 
-  const controles = { ...VALEURS, "OBJ-MODULE-SITE-PUBLIC-TYPE": TYPES_MODULES, "OBJ-MODELE-BUILDER": MODELES.map((m) => m.titre) };
+  const controles = { ...VALEURS, "OBJ-POLICE": POLICES, "OBJ-MODULE-SITE-PUBLIC-TYPE": TYPES_MODULES, "OBJ-MODELE-BUILDER": MODELES.map((m) => m.titre) };
   for (const [liste, valeurs] of Object.entries(controles)) {
     const items = await P.elementsDe(token, siteId, etat.ids[liste]);
     const manquants = valeurs.filter((v) => !items.some((i) => cle(i.fields?.Title) === cle(v)));
@@ -337,7 +350,53 @@ async function verifier(token, siteId, etat) {
   return ok;
 }
 
+async function typographieChantier(mode) {
+  const definitions = LISTES.filter((l) => ["OBJ-POLICE", "OBJ-PAGES-SITE", "OBJ-STYLE-PRESET"].includes(l.nom))
+    .map((l) => l.nom === "OBJ-STYLE-PRESET" ? { ...l, creer: false, colonnes: l.colonnes.filter((c) =>
+      ["SOULIGNEMENT", "STYLE-POLICE", "TRANSFORMATION-TEXTE", "ESPACEMENT-LETTRES"].includes(c.name)) } : l);
+  const { token, site, large } = await P.contexteProvisionnement(mode);
+  let etat = await P.lireEtat(token, site.id, definitions);
+  const plan = P.planifierListes(etat, definitions);
+  P.afficherPlan(plan);
+  if (mode === "plan") return 0;
+  if (mode === "apply") {
+    if (!large) throw new Error("Droit de provisionnement absent. Aucune ecriture effectuee.");
+    console.log(`Sauvegarde du schema : ${P.sauvegarder(etat, "typographie-chantier")}`);
+    await P.appliquerPlan(token, site.id, etat, definitions);
+    etat = await P.lireEtat(token, site.id, definitions);
+  } else if (mode !== "verify") throw new Error("Utiliser --plan, --apply ou --verify avec --typographie-chantier.");
+  if (P.planifierListes(etat, definitions).length) throw new Error("Schema typographie/chantier incomplet.");
+  const liste = "OBJ-POLICE";
+  const existants = await P.elementsDe(token, site.id, etat.ids[liste]);
+  if (mode === "apply") {
+    const champsEtat = {};
+    for (const [champ, titre] of [["OBJ-ACTIF", "OUI"], ["OBJ-VALIDE", "OUI"], ["OBJ-VEROUILLE", "NON"]]) {
+      const colonne = P.nomInterne(etat, liste, champ);
+      if (!colonne && champ === "OBJ-VEROUILLE") continue;
+      const valeurs = etat.ids[champ] ? await P.elementsDe(token, site.id, etat.ids[champ]) : [];
+      const valeur = valeurs.find((v) => cle(v.fields?.Title) === cle(titre));
+      if (!colonne || !valeur) throw new Error(`Etat officiel manquant : ${champ} / ${titre}.`);
+      champsEtat[`${colonne}LookupId`] = Number(valeur.id);
+    }
+    for (const [i, famille] of POLICES.entries()) {
+      await P.creerSiAbsent(token, site.id, etat.ids[liste], famille, {
+        ...champsEtat,
+        [P.nomInterne(etat, liste, "CODE")]: famille,
+        [P.nomInterne(etat, liste, "FAMILLE")]: famille,
+        [P.nomInterne(etat, liste, "ORDRE-AFFICHAGE")]: i + 1
+      }, existants);
+    }
+  }
+  const relus = await P.elementsDe(token, site.id, etat.ids[liste]);
+  const manquantes = POLICES.filter((famille) => !relus.some((v) => cle(v.fields?.Title) === cle(famille) &&
+    v.fields?.[P.nomInterne(etat, liste, "FAMILLE")] === famille));
+  if (manquantes.length) throw new Error(`Polices absentes ou incompletes : ${manquantes.join(", ")}.`);
+  console.log(`VERIFICATION OK : schema typographie/chantier et ${POLICES.length} familles de polices relus.`);
+  return 0;
+}
+
 async function principal(mode) {
+  if (process.argv.includes("--typographie-chantier")) return typographieChantier(mode);
   console.log(`DEBUT provisionnement DSE Builder (${mode})`);
   const { token, site, large } = await P.contexteProvisionnement(mode);
   const etat = await P.lireEtat(token, site.id, LISTES);
@@ -366,6 +425,6 @@ async function principal(mode) {
   return 0;
 }
 
-module.exports = { LISTES, VALEURS, TYPES_MODULES, MODELES, COMPOSITIONS, planifier };
+module.exports = { LISTES, VALEURS, POLICES, TYPES_MODULES, MODELES, COMPOSITIONS, planifier, typographieChantier };
 
 if (require.main === module) P.lancer(principal, ["plan", "apply", "seed", "verify"]);

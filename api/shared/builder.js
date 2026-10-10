@@ -64,6 +64,7 @@ const sansNuls = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v
 const ALIGNS = ["GAUCHE", "CENTRE", "DROITE", "JUSTIFIE"];
 // Valeurs techniques reconnues par le generateur CSS (enumerations, pas des valeurs de design).
 const CHOIX = {
+  poidsPolice: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   stylePolice: ["NORMAL", "ITALIQUE"], transformation: ["AUCUNE", "MAJUSCULES", "MINUSCULES", "CAPITALES"],
   fondPosition: ["CENTRE", "HAUT", "BAS", "GAUCHE", "DROITE"], fondTaille: ["COUVRIR", "CONTENIR", "AUTO"],
   fondRepetition: ["NON", "OUI", "HORIZONTALE", "VERTICALE"], bordureStyle: ["AUCUNE", "PLEINE", "TIRETS", "POINTILLES", "DOUBLE"],
@@ -122,6 +123,7 @@ function styleDepuisPreset(preset, referentiels = {}) {
   return sansNuls({
     couleurTexte: hexDe("OBJ-COULEUR-TEXTE"), couleurFond: hexDe("OBJ-COULEUR-FOND"), couleurBordure: hexDe("OBJ-COULEUR-BORDURE"),
     police, policeFamille, tailleTexte: borne(f(preset, "TAILLE-TEXTE"), 8, 96), poidsPolice: borne(f(preset, "POIDS-POLICE"), 100, 900),
+    soulignement: f(preset, "SOULIGNEMENT") === null ? null : booleen(preset, "SOULIGNEMENT", false),
     hauteurLigne: borne(f(preset, "HAUTEUR-LIGNE"), 1, 3), alignement: alignDe(preset),
     stylePolice: choix(preset, "STYLE-POLICE", CHOIX.stylePolice),
     espacementLettres: borne(f(preset, "ESPACEMENT-LETTRES"), -5, 20),
@@ -470,17 +472,18 @@ function composerPage(donnees, site, options = {}) {
   const entete = composerConteneurPage(donnees, site, page, { liste: "entetes", relation: "OBJ-ENTETE-SITE" }, opts);
   const footer = composerConteneurPage(donnees, site, page, { liste: "footers", relation: "OBJ-FOOTER-SITE" }, opts);
   const root = R.trouverRacine(donnees, site.id, "page", page.id);
+  const bandeauChantier = booleen(page, "AFFICHER-BANDEAU-CHANTIER", false);
   if (root) {
     const noeud = R.arbre(donnees, root, { public: true, reference: () => "",
       mediaVisible: (m) => publiable(m) && R.mediaDansSite(m, site) });
-    if (noeud) return { mode: "builder", page: { ...styleElement(opts.ctx, "PAGE", page) },
+    if (noeud) return { mode: "builder", page: { ...styleElement(opts.ctx, "PAGE", page), bandeauChantier },
       sections: [], noeuds: [noeud], entete, footer, theme: themeGlobal(opts.ctx) };
   }
 
   const sectionsComposees = composerModulesAdaptesPage(donnees, site, page, sections, opts);
 
   if (!aDesModules(sectionsComposees) && !entete && !footer) return { mode: "historique", page: null, sections: [] };
-  return { mode: "builder", page: { id: page.id, ...styleElement(opts.ctx, "PAGE", page) }, sections: aDesModules(sectionsComposees) ? sectionsComposees : [], entete, footer,
+  return { mode: "builder", page: { id: page.id, ...styleElement(opts.ctx, "PAGE", page), bandeauChantier }, sections: aDesModules(sectionsComposees) ? sectionsComposees : [], entete, footer,
     theme: themeGlobal(opts.ctx) };
 }
 

@@ -73,6 +73,33 @@ async function main() {
     for (const x of ["Aide type", "Aide champ", "data-c-ia=\"c1\"", "data-c-passer", ">Suivant<"]) assert.ok(h.includes(x), `formulaire guide : ${x}`);
     assert.ok(!uiConstructeur.formulaireHtml({ textes: [{ cle: "c1", libelle: "X", multiligne: true }] }, "T").includes("data-c-ia"), "pas d'IA par defaut");
   }
+  const accueilPublic = await import(pathToFileURL(path.join(__dirname, "..", "..", "pages", "accueil.js")).href);
+  assert.ok(accueilPublic.rendreBandeauChantier(true).includes("en cours de construction ou de modification"));
+  assert.equal(accueilPublic.rendreBandeauChantier(false), "", "bandeau masqué par défaut");
+  assert.ok(uiConstructeur.documentApercu({ mode: "builder", sections: [], bandeauChantier: true }, "page").includes("dse-bandeau-chantier"),
+    "bandeau visible dans l'aperçu de la page");
+  const apercuAvecBandeau = uiConstructeur.documentApercu({ mode: "builder", bandeauChantier: true, sections: [
+    { type: "STANDARD", lignes: [{ colonnes: [{ modules: [{ type: "HERO", contenu: [{ champs: { "TITRE-PRINCIPAL": "Présentation" } }] }] }] }] },
+    { type: "STANDARD", lignes: [{ colonnes: [{ modules: [{ type: "ARTICLES" }] }] }] }
+  ] }, "page");
+  const positionHero = apercuAvecBandeau.indexOf("dse-b-module--hero");
+  const positionBandeau = apercuAvecBandeau.indexOf("dse-bandeau-chantier");
+  const positionArticles = apercuAvecBandeau.indexOf("data-dse-catalogue-builder=\"articles\"");
+  assert.ok(positionHero >= 0 && positionHero < positionBandeau && positionBandeau < positionArticles,
+    "bandeau placé après le Hero et avant la section Articles");
+  const apercuBuilderRecursif = uiConstructeur.documentApercu({ mode: "builder", bandeauChantier: true, noeuds: [{
+    rendu: "PAGE", enfants: [
+      { rendu: "SECTION", titre: "Hero", enfants: [{ rendu: "LIGNE", enfants: [{ rendu: "COLONNE", enfants: [{ rendu: "TITRE", titre: "Présentation" }] }] }] },
+      { rendu: "SECTION", titre: "Articles", enfants: [{ rendu: "LIGNE", enfants: [{ rendu: "COLONNE", enfants: [{
+        rendu: "MODULE", champs: [{ cle: "TEXTE", categorie: "CONTENU", nature: "TEXTE", valeur: "Liste des articles" }]
+      }] }] }] }
+    ]
+  }] }, "page");
+  const positionSectionHero = apercuBuilderRecursif.indexOf("Hero");
+  const positionBandeauRecursif = apercuBuilderRecursif.indexOf("dse-bandeau-chantier");
+  const positionArticlesRecursif = apercuBuilderRecursif.indexOf("Liste des articles");
+  assert.ok(positionSectionHero >= 0 && positionSectionHero < positionBandeauRecursif && positionBandeauRecursif < positionArticlesRecursif,
+    `bandeau placé après le Hero et avant les Articles dans la composition récursive du Builder (${positionSectionHero}, ${positionBandeauRecursif}, ${positionArticlesRecursif})`);
   const mediasUI = await front("cockpit/medias.js");
   const mediasHtml = mediasUI.rendreMedias({ ...v, droits: { "logo-medias": { ecriture: true } },
     medias: [
@@ -123,6 +150,8 @@ async function main() {
   assert.equal(m.contenuRenseigne, true);
 
   const pageAvecBrouillons = donnees();
+  pageAvecBrouillons.pages[0]._fields["AFFICHER-BANDEAU-CHANTIER"] = true;
+  pageAvecBrouillons.pages[0].configuration["AFFICHER-BANDEAU-CHANTIER"] = true;
   pageAvecBrouillons.sections.push(el(200, "Section en brouillon", { "OBJ-PAGES-SITE": lien(2) }, {}, BROUILLON, NON));
   pageAvecBrouillons.lignes.push(el(2000, "Ligne", { "OBJ-SECTION-SITE": lien(200) }));
   pageAvecBrouillons.colonnes.push(el(2001, "Colonne", { "OBJ-LIGNE-SITE": lien(2000) }));
@@ -138,8 +167,20 @@ async function main() {
     modeles: { disponibles: [] }, structures: [], typesSection: [], typesModules: [], medias: []
   }, { domaine: "dseco.fr" });
   assert.ok(htmlConstructeur.includes("data-c-action=\"publier\""), "un conteneur publié propose de publier ses nouveaux brouillons");
+  assert.ok(htmlConstructeur.includes('data-c-bandeau-chantier') && htmlConstructeur.includes("Page en chantier"),
+    "case à cocher de mise en chantier visible dans le groupe Voir pour une page modifiable");
   assert.ok(htmlConstructeur.includes("✅ Valider et activer"), "un élément actif mais non validé peut être validé depuis son nœud");
   assert.ok(htmlConstructeur.includes("Activer"), "un nouvel élément en brouillon peut être activé depuis son nœud");
+  assert.ok(htmlConstructeur.includes('data-c-bandeau-chantier checked') && htmlConstructeur.includes("Page en chantier"),
+    "case de bandeau dans le groupe Voir du haut de l'éditeur");
+  const htmlSansDroitBandeau = uiConstructeur.rendreConstructeur({ nom: "Pascal" }, {
+    site: { titre: "DemainSite Écosystème" },
+    arbre: C.arbre(pageAvecBrouillons, "page", pageAvecBrouillons.pages[0]),
+    operations: [], modeles: { disponibles: [] }, structures: [], typesSection: [], typesModules: [], medias: []
+  }, { domaine: "dseco.fr" });
+  assert.ok(/data-c-bandeau-chantier[^>]*disabled/.test(htmlSansDroitBandeau) &&
+    htmlSansDroitBandeau.includes("Votre profil ne dispose pas du droit de modifier cette page"),
+  "case toujours visible, mais désactivée et expliquée sans autorisation de modification");
   const arbreAvecBrouillons = C.arbre(pageAvecBrouillons, "page", pageAvecBrouillons.pages[0]);
   const moduleEnBrouillon = arbreAvecBrouillons.sections.flatMap((s) => s.enfants.flatMap((l) =>
     l.enfants.flatMap((c) => c.enfants))).find((m) => m.titre === "Module en brouillon");
@@ -193,6 +234,13 @@ async function main() {
     assert.ok(!html.includes("Affecter aux pages"), "Affectation masquée sans droit de modification de la page.");
     assert.ok(rendreConstructeur({}, { ...donneesFront, droits: { ...donneesFront.droits, pages: { ecriture: true } } }, {})
       .includes("Affecter aux pages"));
+    const pageSansFooterBuilder = rendreConstructeur({}, {
+      ...donneesFront,
+      pages: [{ ref: "page.accueil", titre: "Accueil", url: "/", sections: 0, footer: null }],
+      footers: []
+    }, { onglet: "pages" });
+    assert.ok(pageSansFooterBuilder.includes("Pied de page du site (automatique)"),
+      "une page sans footer Builder indique le pied de page automatique du site au lieu de « Aucun »");
     assert.equal(/HERO/i.test(html), false, "vocabulaire En-tete, jamais HERO");
     const editeur = rendreConstructeur({ fonctions: [] }, { ...donneesFront, arbre: a, apercu: apEntete }, {});
     assert.ok(editeur.includes("Pasc ARA IA") && editeur.includes("Ajouter une section") && editeur.includes("📱 Mobile") && editeur.includes("🎨 Design"));
@@ -235,13 +283,13 @@ async function main() {
   // Moteur Design : aplatissement, liste blanche, panneau et apercu instantane.
   {
     const polices = [{ ref: "police.abc", titre: "SANS", famille: "SANS" }];
-    const v = C.plat({ couleurTexte: "#112233", police: "SANS", marge: { haut: 10 }, padding: { gauche: 4 }, bordureRayon: 12,
+    const v = C.plat({ couleurTexte: "#112233", police: "SANS", soulignement: true, marge: { haut: 10 }, padding: { gauche: 4 }, bordureRayon: 12,
       ombre: { x: 1, y: 2, flou: 3, etalement: 0, couleur: "#000000" }, survol: { couleurFond: "#ffffff" }, inconnu: "x" }, polices);
-    assert.deepEqual(v, { couleurTexte: "#112233", bordureRayon: 12, police: "police.abc", margeHaut: 10, paddingGauche: 4,
+    assert.deepEqual(v, { couleurTexte: "#112233", soulignement: true, bordureRayon: 12, police: "police.abc", margeHaut: 10, paddingGauche: 4,
       ombre: true, ombreX: 1, ombreY: 2, ombreFlou: 3, ombreEtalement: 0, couleurOmbre: "#000000", survolFond: "#ffffff" });
-    for (const k of ["couleurTexte", "couleurFond", "bordureRayon", "margeHaut", "paddingGauche", "survolFond", "fondMedia"]) assert.ok(C.DESIGN[k], k);
+    for (const k of ["couleurTexte", "couleurFond", "bordureRayon", "margeHaut", "paddingGauche", "survolFond", "fondMedia", "poidsPolice", "soulignement"]) assert.ok(C.DESIGN[k], k);
     const design = await front("cockpit/design.js");
-    const d = { type: "BOUTON", libelle: "Bouton", groupes: ["TYPO", "FOND", "BORDURE", "SURVOL"], valeurs: { couleurFond: "#112233" }, herite: { couleurTexte: "#ffffff" },
+    const d = { type: "BOUTON", libelle: "Bouton", groupes: ["TYPO", "FOND", "BORDURE", "SURVOL"], valeurs: { couleurFond: "#112233", poidsPolice: 900 }, herite: { couleurTexte: "#ffffff", poidsPolice: 900, soulignement: true },
       responsive: { TABLETTE: {}, MOBILE: {} }, responsiveHerite: { TABLETTE: {}, MOBILE: {} }, champsResponsive: ["tailleTexte", "masque"],
       options: { polices, alignements: [], choix: B.CHOIX, presets: [], medias: [] }, partage: false };
     const html = design.panneauDesign(d, { ref: "noeud.x" });
@@ -253,16 +301,20 @@ async function main() {
     const css = design.cssApercu("dse-b-pm1", d, { couleurFond: "#445566", bordureRayon: 8, survolFond: "#000000", responsive: { MOBILE: { tailleTexte: 14 } } });
     assert.match(css, /\.dse-b-pm1 \.dse-b-bouton\{[^}]*background-color:#445566/);
     assert.match(css, /color:#ffffff/);
+    assert.match(css, /font-weight:900/);
     assert.match(css, /border-radius:8px/);
     assert.match(css, /:focus-visible\{background-color:#000000\}/);
     assert.match(css, /@media \(max-width:640px\)\{\.dse-b-pm1 \.dse-b-bouton\{[^}]*font-size:14px/);
     assert.equal(design.cssApercu("dse-b-pm1", d, { couleurFond: "red;}body{x" }).includes("body{"), false, "injection CSS refusee");
+    const typographie = design.panneauDesign(d, { ref: "noeud.x" });
+    assert.match(typographie, /<option value="900" selected>Ultra gras<\/option>/);
+    assert.match(typographie, /Soulignement/);
   }
   {
     const ecriture = require("../shared/ecriture");
     const originalGraph = ecriture.contexteGraph, originalLecture = ecriture.lireItemFrais;
     const proto = C.Ecrivain.prototype;
-    const methodes = ["copiables", "lookup", "simple", "etats", "liste", "creer", "maj"];
+    const methodes = ["copiables", "lookup", "simple", "etats", "liste", "cols", "creer", "maj"];
     const originaux = Object.fromEntries(methodes.map((k) => [k, proto[k]]));
     const copies = donnees(), writes = [], stores = new Map();
     copies.builderTypes = [el(41, "Racine", {}, { ACTIF: true, "EST-RACINE": true, "EST-CONTENEUR": true, "CLE-RENDU": "PAGE" })];
@@ -278,6 +330,11 @@ async function main() {
       proto.copiables = async () => ({});
       proto.lookup = async (_liste, nom) => `${nom.replace(/-/g, "")}LookupId`;
       proto.simple = async (_liste, nom) => nom.replace(/-/g, "");
+      proto.cols = async () => [
+        { name: "Title", displayName: "Title", text: { maxLength: 255 } },
+        { name: "URL", displayName: "URL", text: { maxLength: 255 } },
+        { name: "AFFICHER_x002d_BANDEAU_x002d_CHANTIER", displayName: "AFFICHER-BANDEAU-CHANTIER", boolean: {} }
+      ];
       proto.etats = async () => ({ OBJACTIFLookupId: "3", OBJVALIDELookupId: "2" });
       proto.liste = (nom) => ({ id: nom });
       proto.creer = async function (liste, champs) {
@@ -288,6 +345,14 @@ async function main() {
         return id;
       };
       proto.maj = async (liste, id, champs) => stores.set(`${liste}/${id}`, { ...stores.get(`${liste}/${id}`), ...champs });
+      copies.pages.find((x) => x.id === "2")._fields.AFFICHER_x002d_BANDEAU_x002d_CHANTIER = true;
+      const propsPage = await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.modifier",
+        params: { ref: C.ref("page", 2) } });
+      assert.ok(propsPage.formulaire.textes, "le formulaire standard de propriétés reste disponible");
+      const modifBandeau = await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.modifier",
+        params: { ref: C.ref("page", 2), valeurs: { bandeauChantier: false } } });
+      assert.equal(modifBandeau.message, "Page enregistré.");
+      assert.equal(stores.get("OBJ-PAGES-SITE/2").AFFICHER_x002d_BANDEAU_x002d_CHANTIER, false, "désactivation enregistrée");
       assert.ok((await executerCopie("")).refus);
       assert.ok((await executerCopie("/")).refus);
       assert.equal(writes.length, 0, "URL absente ou existante : aucune création");
@@ -339,6 +404,20 @@ async function main() {
       assert.ok(effaces.indexOf("OBJ-MODULE-SITE-PUBLIC/7000") < effaces.indexOf("OBJ-COLONNE-SITE/5000"), "module avant sa colonne");
       assert.equal(require("node:fs").readdirSync(dossierSup).length, 1, "sauvegarde avant suppression");
       assert.equal(C.actionDroit("element.supprimer"), "element.etat", "droit ADMINISTRER existant");
+      // Suppression definitive d'une page : accueil protege, sections avant la page, sauvegarde.
+      assert.match((await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.supprimer",
+        params: { ref: C.ref("page", 2), confirmation: "SUPPRIMER" } })).refus, /accueil/, "page d'accueil protégée");
+      copies.pages.push(el(30, "A jeter", { "OBJ-SITE-PUBLIC": lien(4) }, { URL: "/a-jeter" }));
+      copies.sections.push(el(300, "Section a jeter", { "OBJ-PAGES-SITE": lien(30) }));
+      effaces.length = 0;
+      assert.equal((await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.supprimer",
+        params: { ref: C.ref("page", 30) } })).status, 400, "confirmation obligatoire (page)");
+      const supPage = await C.executer({ d: copies, perimetre, siteId: "4", action: "conteneur.supprimer",
+        params: { ref: C.ref("page", 30), confirmation: "SUPPRIMER" } });
+      assert.match(supPage.message, /Page « A jeter » supprimée définitivement avec 1 élément/);
+      assert.deepEqual(effaces, ["OBJ-SECTION-SITE/300", "OBJ-PAGES-SITE/30"], "section puis page");
+      assert.equal(C.actionDroit("conteneur.supprimer"), "conteneur.desactiver", "droit ADMINISTRER des pages");
+      copies.pages.pop(); copies.sections.pop();
       delete process.env.DSE_DOSSIER_SUPPRESSIONS;
       require("node:fs").rmSync(dossierSup, { recursive: true });
       copies.colonnes.push(el(5002, "C3", { "OBJ-LIGNE-SITE": lien(1000) }));

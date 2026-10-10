@@ -483,6 +483,10 @@ function rendreSitePublic({
   const pageUrl = String(page?.configuration?.URL ?? page?.url ?? "/");
   const enteteHistorique = () => enteteSharePoint({ nomSite, ...entete, pageUrl, nettoyerTexte: texteSharePoint });
   const footerHistorique = rendreFooter(footer, { nomSite, nettoyerTexte: texteSharePoint });
+  const valeurBandeau = composition && Object.hasOwn(composition, "bandeauChantier")
+    ? composition.bandeauChantier : valeurConfiguration(page?.configuration, "AFFICHER-BANDEAU-CHANTIER");
+  const bandeauChantier = rendreBandeauChantier(valeurBandeau === true || ["1", "true", "oui", "yes"].includes(String(valeurBandeau ?? "").trim().toLowerCase()));
+  const insertionBandeau = { html: bandeauChantier, inseree: false };
   // En-tete / Footer construits (Constructeur DSE) : prioritaires s'ils sont affectes a la page, actifs et valides.
   const zone = (z, classe) => {
     const html = z?.sections?.length ? rendreBuilder({ mode: "builder", sections: z.sections, style: z.style, responsive: z.responsive, theme: composition?.theme },
@@ -498,11 +502,11 @@ function rendreSitePublic({
 
   // Mode Builder : prioritaire uniquement si une composition validee existe ; sinon rendu historique.
   const builder = rendreBuilder(composition, {
-    apiBase: CONFIG.API_BASE_URL, prefixe: "p", typeConteneur: "PAGE",
+    apiBase: CONFIG.API_BASE_URL, prefixe: "p", typeConteneur: "PAGE", apresPremiereSection: insertionBandeau,
     adapteurs: {
       HERO: () => (hero ? rendreHero(hero) : ""),
       FOOTER: () => footerHtml,
-      HEADER: rendreEntete
+      HEADER: enteteHistorique
     }
   });
 
@@ -511,7 +515,7 @@ function rendreSitePublic({
     <div class="dse-site-public" data-site-id="${escapeHtml(site?.id ?? "")}" data-page-id="${escapeHtml(page?.id ?? "")}">
       <style>${STYLES_BUILDER}</style>
       ${typesComposition.has("HEADER") ? "" : rendreEntete()}
-      <main class="dse-site-public-main">${builder}</main>
+      <main class="dse-site-public-main">${insertionBandeau.inseree ? "" : bandeauChantier}${builder}</main>
       ${typesComposition.has("FOOTER") ? "" : footerHtml}
     </div>`;
   }
@@ -547,6 +551,8 @@ function rendreSitePublic({
             `
         }
 
+        ${bandeauChantier}
+
         <section
           class="dse-catalogue"
           data-dse-catalogue
@@ -560,6 +566,12 @@ function rendreSitePublic({
 
     </div>
   `;
+}
+
+export function rendreBandeauChantier(visible) {
+  return visible ? `<aside class="dse-bandeau-chantier" role="status" aria-live="polite">
+    <span aria-hidden="true">⚠</span> Cette page est en cours de construction ou de modification.
+  </aside>` : "";
 }
 
 /* =========================================================
