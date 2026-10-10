@@ -939,5 +939,8 @@ body.dse-public .dse-public-page > .dse-footer {
   text-decoration: none;
 }
 .dse-acces-bouton:focus-visible { outline: 3px solid #19a974; outline-offset: 3px; }
+.dse-acces-icone { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 1.2rem; }
+.dse-acces-infobulle { position: absolute; right: 0; bottom: calc(100% + 8px); width: max-content; max-width: min(280px, calc(100vw - 32px)); padding: 8px 12px; border-radius: 8px; background: #10243e; color: #fff; font-size: .85rem; visibility: hidden; opacity: 0; pointer-events: none; }
+.dse-acces-icone:hover .dse-acces-infobulle, .dse-acces-icone:focus .dse-acces-infobulle { visibility: visible; opacity: 1; }
 .dse-demande-compte { max-width: 680px; margin: 24px auto; padding: 24px; }
 .dse-demande-compte [role="status"] { min-height: 1.5em; }

@@ -190,7 +190,7 @@ const entra = require("../auth/fournisseurs/entra");
 
     changer(global, "window", { location: { origin: "https://site.example.test" } });
     changer(global, "document", { createElement: (tag) => ({ tag, isConnected: true, enfants: [],
-      setAttribute() {}, append(e) { this.enfants.push(e); } }) });
+      attributs: {}, setAttribute(n, v) { this.attributs[n] = v; }, append(e) { this.enfants.push(e); } }) });
     const { monterAccesPublic } = await import("../../modules/public/acces.js");
     for (const etat of ["visiteur", "autorise", "attente", "refuse", "bloque"]) {
       global.fetch = async () => ({ ok: true, json: async () => ({ donnees: { etat } }) });
@@ -198,8 +198,13 @@ const entra = require("../auth/fournisseurs/entra");
       await monterAccesPublic(racine);
       const bouton = racine.enfants[0].enfants[0];
       assert.strictEqual(bouton.tag, ["visiteur", "autorise"].includes(etat) ? "a" : "span");
-      if (bouton.tag === "a") assert.strictEqual(bouton.href, "/api/v1/acces/entrer");
-      assert.ok(bouton.textContent.length > 0);
+      if (bouton.tag === "a") assert.strictEqual(bouton.href, "/#/cockpit", "ouvre le cockpit sans lancer OAuth");
+      else assert.strictEqual(bouton.attributs["aria-disabled"], "true");
+      assert.ok(bouton.attributs["aria-label"].length > 0);
+      assert.ok(bouton.className.includes("dse-acces-icone"));
+      assert.strictEqual(bouton.enfants[0].attributs["aria-hidden"], "true");
+      assert.strictEqual(bouton.enfants[1].className, "dse-acces-infobulle");
+      assert.ok(bouton.enfants[1].textContent.length > 0);
     }
     global.fetch = async () => ({ ok: true, json: async () => ({ donnees: {
       etat: "visiteur", afficherAccesCockpit: true, creationCompteAutorisee: true

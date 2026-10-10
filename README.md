@@ -130,6 +130,10 @@ Sans connexion, le menu ne propose que « Voir le site ». Les groupes de gestio
 restent reserves aux sessions authentifiees. Le texte de connexion vise le
 compte client (pas seulement les sites) et un fournisseur unique est presente
 par le bouton « Se connecter », sans changer le mecanisme d'authentification.
+Sur le site public, l'acces a l'espace est une icone compacte avec libelle au
+survol et au focus clavier. Pour un visiteur ou un compte autorise, elle ouvre
+directement `/#/cockpit`, sans lancer la connexion ; les etats d'acces refuses
+ou en attente restent non cliquables et expliquent leur statut.
 
 ## Deploiement / redemarrage de l'API
 

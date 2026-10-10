@@ -20,10 +20,23 @@ export async function monterAccesPublic(racine) {
     if (r.donnees?.afficherAccesCockpit !== false) {
       const autorise = etat === "visiteur" || etat === "autorise";
       const bouton = document.createElement(autorise ? "a" : "span");
-      bouton.className = "dse-acces-bouton";
-      bouton.textContent = libelles[etat] || "🔒 Accès sécurisé";
-      if (autorise) bouton.href = "/api/v1/acces/entrer";
-      else bouton.title = etat === "bloque" ? "Contactez votre administrateur pour vérifier votre accès." : "Votre administrateur doit vérifier votre accès.";
+      bouton.className = "dse-acces-bouton dse-acces-icone";
+      const libelle = libelles[etat] || "🔒 Accès sécurisé";
+      const texte = libelle.replace(/^\S+\s+/, "");
+      bouton.setAttribute("aria-label", texte);
+      const icone = document.createElement("span");
+      icone.textContent = libelle.split(" ")[0];
+      icone.setAttribute("aria-hidden", "true");
+      const bulle = document.createElement("span");
+      bulle.className = "dse-acces-infobulle";
+      bulle.textContent = autorise ? texte : `${texte} — Contactez votre administrateur pour vérifier votre accès.`;
+      bouton.append(icone);
+      bouton.append(bulle);
+      if (autorise) bouton.href = "/#/cockpit";
+      else {
+        bouton.setAttribute("tabindex", "0");
+        bouton.setAttribute("aria-disabled", "true");
+      }
       zone.append(bouton);
     }
     if (r.donnees?.creationCompteAutorisee && etat === "visiteur") {
