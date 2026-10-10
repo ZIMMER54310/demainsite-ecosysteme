@@ -520,6 +520,11 @@ async function formulaireContenu(w, nomListe, perimetre, d) {
   const aideDe = (nom) => String(cols.find((c) => c.name === nom)?.description || "").trim();
   const textes = ecriture.champsModifiables(cols).filter((c) => !/^ORDRE/i.test(c.nom)).map((c) => ({ ...c, aide: aideDe(c.nom) }));
   // Colonne Title + colonne TITRE affichee : la premiere devient le nom de repere pour eviter deux champs « Titre ».
+  if (nomListe === "OBJ-MODULE-IMAGE") for (const c of textes) {
+    if (c.nom === "Title") c.libelle = "Nom de repère";
+    else if (cleChamp(c.nom) === "TITREIMAGE") c.libelle = "Titre visible de l’image";
+    else if (cleChamp(c.nom) === "TEXTE") c.libelle = "Texte de l’image";
+  }
   if (textes.filter((c) => c.libelle === "Titre").length > 1) for (const c of textes) if (c.nom === "Title") c.libelle = "Nom de repère";
   const libre = (c) => !c.readOnly && !c.hidden && !String(c.name).startsWith("_");
   // Texte riche : saisi en texte simple puis converti en HTML minimal sur (paragraphes).
@@ -787,6 +792,7 @@ function typeStyleDe(d, type, el) {
 /* Style imbrique (moteur) -> valeurs plates (formulaire). */
 function plat(style = {}, polices = []) {
   const v = {};
+  for (const cle of Object.keys(B.DETAILS_DESIGN)) if (style[cle] !== undefined && style[cle] !== null) v[cle] = style[cle];
   for (const cle of ["soulignementCouleur", "soulignementStyle", "soulignementEpaisseur", "soulignementDistance"]) if (style[cle] !== undefined && style[cle] !== null) v[cle] = style[cle];
   for (const cle of ["typoTitre", "typoTexte"]) if (style[cle]) v[cle] = plat(style[cle], polices);
   for (const k of ["couleurTexte", "couleurFond", "couleurBordure", "couleurDegrade", "tailleTexte", "poidsPolice", "soulignement", "stylePolice", "hauteurLigne",
@@ -1367,6 +1373,7 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const propre = presetOk ? B.styleDepuisPreset(preset, ctx.referentiels) : {};
       const propreResp = presetOk ? B.responsiveDepuisPreset(preset.id, d.responsifs, ctx.referentiels) : {};
       if (presetOk) for (const [a, v] of Object.entries(B.typographiesDepuisPreset(preset, ctx.referentiels).responsive)) Object.assign(propreResp[a] ||= {}, v);
+      if (presetOk) for (const [a, v] of Object.entries(B.detailsDepuisPreset(preset).responsive)) Object.assign(propreResp[a] ||= {}, v);
       const typeModule = c.type === "module" ? contenuDe(d, c.el).type : "";
       const typographieSeparee = B.TYPES_TYPO_SEPAREE.includes(typeModule);
       const choix = B.CHOIX;
@@ -1379,7 +1386,7 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
           valeurs: plat(propre, polices), herite: plat(herite.style, polices),
           responsive: Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, plat(propreResp[a] || {}, polices)])),
           responsiveHerite: Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, plat(herite.responsive[a] || {}, polices)])),
-          champsResponsive: RESPONSIVE,
+          champsResponsive: [...RESPONSIVE, ...Object.keys(B.DETAILS_DESIGN)],
           options: {
             polices: polices.map(({ ref: r, titre, famille }) => ({ ref: r, titre: titre || famille, famille })), alignements, choix, presets,
             medias: (d.medias || []).filter((m) => mediaAutorise(m, perimetre) && /IMAGE|PHOTO|FOND|BANNI/i.test(cleChamp(rel(m, "OBJ-MEDIA-TYPE")?.titre) || "IMAGE"))
@@ -1415,6 +1422,27 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
       const erreurs = [];
       const champsTypo = {};
       const typeModule = c.type === "module" ? contenuDe(d, c.el).type : "";
+      for (const colonne of ["IMAGE-DISPOSITION", "BORDURES-DETAIL"]) {
+        const cles = Object.keys(B.DETAILS_DESIGN).filter((k) => B.DETAILS_DESIGN[k][0] === colonne);
+        const present = (o) => cles.some((k) => Object.hasOwn(o, k));
+        if (!present(v) && !APPAREILS_SURCHARGE.some((a) => present(resp[a] || {}))) continue;
+        if (colonne === "IMAGE-DISPOSITION" && !["IMAGE", "IMAGE-TEXTE"].includes(typeModule)) return { erreur: "Disposition réservée aux images.", status: 400 };
+        if (colonne === "BORDURES-DETAIL" && !groupes.has("BORDURE")) return { erreur: "Bordures non disponibles pour cet élément.", status: 400 };
+        const nom = await w.simple("OBJ-STYLE-PRESET", colonne);
+        const col = (await w.cols("OBJ-STYLE-PRESET")).find((x) => x.name === nom);
+        if (!nom || !col?.text?.allowMultipleLines || col.text.textType !== "plain" || col.text.appendChangesToExistingText) return { erreur: `${colonne} : colonne de texte brut multiligne requise, sans ajout des modifications.`, status: 400 };
+        try {
+          const presetActuel = (d.presets || []).find((x) => x.id === rel(c.el, "OBJ-STYLE-PRESET")?.id);
+          const brut = presetActuel && champ(presetActuel, [cleChamp(colonne)]);
+          const precedent = brut ? JSON.parse(brut) : {};
+          if (brut) B.detailsDepuisPreset(presetActuel);
+          const { responsive: anciens = {}, ...base } = precedent;
+          const extraire = (o, avant) => B.normaliserDetails({ ...avant, ...Object.fromEntries(cles.filter((k) => Object.hasOwn(o, k)).map((k) => [k, o[k]])) }, colonne);
+          const objet = present(v) ? extraire(v, base) : base;
+          objet.responsive = Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, present(resp[a] || {}) ? extraire(resp[a], anciens[a] || {}) : anciens[a] || {}]));
+          champsTypo[nom] = JSON.stringify(objet);
+        } catch (err) { erreurs.push(`${colonne} : ${err.message}`); }
+      }
       for (const [cle, colonne] of [["typoTitre", "TYPO-TITRE"], ["typoTexte", "TYPO-TEXTE"]]) {
         if (!(cle in v) && !APPAREILS_SURCHARGE.some((a) => cle in (resp[a] || {}))) continue;
         if (!B.TYPES_TYPO_SEPAREE.includes(typeModule)) return { erreur: "Cet élément ne possède pas de titre et de texte séparés.", status: 400 };

@@ -11,6 +11,8 @@ export const APPAREILS_APERCU = Object.freeze([
 ]);
 
 const GROUPES = {
+  IMAGE_DISPOSITION: "Titre et texte de l’image : affichage et placement",
+  COINS: "Coins arrondis indépendants", BORDURE_HAUT: "Bordure du haut", BORDURE_DROITE: "Bordure de droite", BORDURE_BAS: "Bordure du bas", BORDURE_GAUCHE: "Bordure de gauche",
   TYPO_TITRE: "Typographie du titre", TYPO_TEXTE: "Typographie du texte",
   TYPO: "Typographie", FOND: "Fond", DIMENSIONS: "Dimensions", ESPACEMENT: "Marges et espacements internes",
   BORDURE: "Bordures et coins arrondis", OMBRE: "Ombre", ALIGNEMENT: "Alignement des éléments", SURVOL: "Survol (bouton, lien)"
@@ -22,6 +24,18 @@ const GRAISSES = [
 ];
 // cle -> [groupe, libelle, nature, unite, min, max, pas]
 const CHAMPS = {
+  imageTitreMasque: ["IMAGE_DISPOSITION", "Masquer le titre", "ouinon"],
+  imageTexteMasque: ["IMAGE_DISPOSITION", "Masquer le texte", "ouinon"],
+  imageTitrePosition: ["IMAGE_DISPOSITION", "Position du titre", "choix"],
+  imageTextePosition: ["IMAGE_DISPOSITION", "Position du texte", "choix"],
+  imageTitreMode: ["IMAGE_DISPOSITION", "Placement du titre", "choix"],
+  imageTexteMode: ["IMAGE_DISPOSITION", "Placement du texte", "choix"],
+  ...Object.fromEntries([["HautGauche", "haut gauche"], ["HautDroite", "haut droite"], ["BasDroite", "bas droite"], ["BasGauche", "bas gauche"]].map(([k, l]) => [`bordureRayon${k}`, ["COINS", `Coin ${l}`, "nombre", "px", 0, 200, 1]])),
+  ...Object.fromEntries(COTES.flatMap(([k]) => [
+    [`bordureEpaisseur${k}`, [`BORDURE_${k.toUpperCase()}`, "Épaisseur", "nombre", "px", 0, 20, 0.5]],
+    [`bordureCouleur${k}`, [`BORDURE_${k.toUpperCase()}`, "Couleur", "couleur"]],
+    [`bordureStyle${k}`, [`BORDURE_${k.toUpperCase()}`, "Style", "choix"]]
+  ])),
   police: ["TYPO", "Police", "police"], couleurTexte: ["TYPO", "Couleur du texte", "couleur"],
   tailleTexte: ["TYPO", "Taille du texte", "nombre", "px", 8, 96, 1], poidsPolice: ["TYPO", "Graisse", "poids"],
   soulignement: ["TYPO", "Soulignement", "ouinon"],
@@ -91,7 +105,8 @@ function controle(cle, valeur, herite, design, nom) {
   } else if (nature === "ouinon") {
     champ = `<select name="${n}"><option value="">${vide(herite) ? "Par défaut" : "Hérité"}</option><option value="OUI"${valeur === true ? " selected" : ""}>Oui</option><option value="NON"${valeur === false ? " selected" : ""}>Non</option></select>`;
   } else {
-    const opts = nature === "choix" ? (o.choix?.[cle] || []).map((x) => ({ ref: x, titre: lisible(x) }))
+    const choixLocal = /^bordureStyle(Haut|Droite|Bas|Gauche)$/.test(cle) ? o.choix?.bordureStyle : /^image.*Position$/.test(cle) ? ["HAUT", "BAS", "GAUCHE", "DROITE"] : /^image.*Mode$/.test(cle) ? ["AUTOUR", "SUPERPOSE"] : o.choix?.[cle];
+    const opts = nature === "choix" ? (choixLocal || []).map((x) => ({ ref: x, titre: x === "SUPERPOSE" ? "Sur l’image" : x === "AUTOUR" ? "Autour de l’image" : lisible(x) }))
       : nature === "alignement" ? (o.alignements || []).map((x) => ({ ref: x, titre: lisible(x) }))
         : nature === "police" ? o.polices || [] : o.medias || [];
     if (!opts.length && nature !== "media") return "";
@@ -131,11 +146,14 @@ function groupeHtml(groupe, cles, valeurs, herite, design, prefixe = "") {
 
 export function panneauDesign(design, { ref, contenu = "", onglet = "design", appareil = "TABLETTE", renommable = false, aideDesign = "", colonnes = false, aideColonnes = "", statut = "" } = {}) {
   const g = design.groupes || [];
+  const groupes = [...g];
+  if (["IMAGE", "IMAGE-TEXTE"].includes(design.type)) groupes.unshift("IMAGE_DISPOSITION");
+  if (g.includes("BORDURE")) groupes.push("COINS", "BORDURE_HAUT", "BORDURE_DROITE", "BORDURE_BAS", "BORDURE_GAUCHE");
   const clesDe = (groupe, filtre = () => true) => Object.keys(CHAMPS).filter((c) => CHAMPS[c][0] === groupe && filtre(c));
   const groupesHtml = (valeurs, herite, prefixe = "", filtre = () => true) => {
     const doubles = design.typographieSeparee ? ["typoTitre", "typoTexte"].map((cle) => groupeHtml(cle === "typoTitre" ? "TYPO_TITRE" : "TYPO_TEXTE",
       clesDe("TYPO"), valeurs[cle] || {}, { ...Object.fromEntries(clesDe("TYPO").map((c) => [c, herite[c]])), ...(herite[cle] || {}) }, design, `${prefixe}${cle}.`)).join("") : "";
-    return doubles + g.filter((x) => !design.typographieSeparee || x !== "TYPO").map((x) => groupeHtml(x, clesDe(x, filtre), valeurs, herite, design, prefixe)).join("");
+    return doubles + groupes.filter((x) => !design.typographieSeparee || x !== "TYPO").map((x) => groupeHtml(x, clesDe(x, filtre), valeurs, herite, design, prefixe)).join("");
   };
   const designHtml = groupesHtml(design.valeurs || {}, design.herite || {})
     || `<p class="muted">Aucun réglage de design n'est déclaré pour ce type d'élément.</p>`;

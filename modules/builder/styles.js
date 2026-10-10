@@ -96,6 +96,18 @@ export function groupes(style = {}, ctx = {}) {
     if (hex(s.couleurBordure)) g.bord.push(`border-color:${s.couleurBordure}`);
   }
   if (nb(s.bordureRayon, 0, 200) !== null) g.bord.push(`border-radius:${nb(s.bordureRayon, 0, 200)}px`);
+  for (const [cle, cote] of [["HautGauche", "top-left"], ["HautDroite", "top-right"], ["BasDroite", "bottom-right"], ["BasGauche", "bottom-left"]]) {
+    if (nb(s[`bordureRayon${cle}`], 0, 200) !== null) g.bord.push(`border-${cote}-radius:${nb(s[`bordureRayon${cle}`], 0, 200)}px`);
+  }
+  for (const [cle, cote] of [["Haut", "top"], ["Droite", "right"], ["Bas", "bottom"], ["Gauche", "left"]]) {
+    const epaisseur = nb(s[`bordureEpaisseur${cle}`], 0, 20);
+    const style = BORDURE_STYLE[s[`bordureStyle${cle}`]];
+    if (epaisseur !== null) {
+      g.bord.push(`border-${cote}-width:${epaisseur}px`);
+      g.bord.push(`border-${cote}-style:${style || styleBord || "solid"}`);
+    } else if (style) g.bord.push(`border-${cote}-style:${style}`);
+    if (hex(s[`bordureCouleur${cle}`])) g.bord.push(`border-${cote}-color:${s[`bordureCouleur${cle}`]}`);
+  }
 
   const o = s.ombre;
   if (o && typeof o === "object") {
@@ -150,7 +162,7 @@ function blocs(sel, type, style, ctx) {
   const s = style || {};
   const h = survol(s);
   const t = String(type || "").toUpperCase();
-  const typoSeparee = ["CARTE", "LISTE-CARTES", "CTA", "FAQ", "ACCORDEON", "HERO"].includes(t) && (s.typoTitre || s.typoTexte);
+  const typoSeparee = ["CARTE", "LISTE-CARTES", "CTA", "FAQ", "ACCORDEON", "HERO", "IMAGE", "IMAGE-TEXTE"].includes(t) && (s.typoTitre || s.typoTexte);
   if (typoSeparee) g.typo = [];
   const r = [];
   const add = (selecteur, d) => { if (d.length) r.push([selecteur, d]); };
@@ -168,9 +180,21 @@ function blocs(sel, type, style, ctx) {
     add(`${sel}:hover`, h.filter((x) => !x.startsWith("color")));
   } else if (t === "IMAGE" || t === "IMAGE-TEXTE") {
     add(sel, [...g.typo, ...g.fond, ...g.marge, ...g.padding]);
+    if (typoSeparee) add(`${sel} figcaption`, groupes(s, ctx).typo);
     const dims = g.dim.some((x) => x.startsWith("height")) ? [...g.dim, "object-fit:cover"] : g.dim;
     add(`${sel} .dse-b-image-img`, [...dims, ...g.bord, ...g.ombre]);
     add(`${sel} .dse-b-image-img:hover`, h.filter((x) => x.startsWith("border")));
+    add(`${sel} .dse-b-image--contenu`, ["display:grid", "grid-template-columns:auto auto minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto auto", "grid-template-rows:auto auto auto minmax(0,1fr) minmax(0,1fr) auto auto auto auto", "isolation:isolate"]);
+    add(`${sel} .dse-b-image-media`, ["grid-area:3/3/7/7", "min-width:0"]);
+    add(`${sel} .dse-b-image-media img`, ["display:block", "max-width:100%"]);
+    add(`${sel} .dse-b-image-legende`, ["grid-area:9/1/10/9"]);
+    for (const [i, cle] of ["Titre", "Texte"].entries()) {
+      const superpose = s[`image${cle}Mode`] === "SUPERPOSE";
+      const position = s[`image${cle}Position`] || (cle === "Titre" ? "HAUT" : "BAS");
+      const areas = superpose ? { HAUT: `${3 + i}/3/${4 + i}/7`, BAS: `${5 + i}/3/${6 + i}/7`, GAUCHE: `3/${3 + i}/7/${4 + i}`, DROITE: `3/${5 + i}/7/${6 + i}` }
+        : { HAUT: `${1 + i}/3/${2 + i}/7`, BAS: `${7 + i}/3/${8 + i}/7`, GAUCHE: `3/${1 + i}/7/${2 + i}`, DROITE: `3/${7 + i}/7/${8 + i}` };
+      add(`${sel} .dse-b-image-${cle.toLowerCase()}`, [`display:${s[`image${cle}Masque`] === true ? "none" : "block"}`, `grid-area:${areas[position] || areas.BAS}`, "min-width:0", "margin:0", "padding:8px", "overflow-wrap:anywhere", `max-width:${["GAUCHE", "DROITE"].includes(position) ? "18rem" : "none"}`, `z-index:${superpose ? 1 : "auto"}`]);
+    }
   } else if (["GALERIE", "CARROUSEL", "VIDEO"].includes(t)) {
     add(sel, [...g.typo, ...g.fond, ...g.dim, ...g.marge, ...g.padding]);
     add(`${sel} img,${sel} video,${sel} iframe`, [...g.bord, ...g.ombre]);
@@ -197,7 +221,9 @@ function blocs(sel, type, style, ctx) {
     CTA: [".dse-b-cta h2", ".dse-b-cta p"],
     FAQ: [".dse-b-faq-item summary", ".dse-b-faq-item p"],
     ACCORDEON: [".dse-b-faq-item summary", ".dse-b-faq-item p"],
-    HERO: [".dse-hero-title", ".dse-hero-text"]
+    HERO: [".dse-hero-title", ".dse-hero-text"],
+    IMAGE: [".dse-b-image-titre", ".dse-b-image-texte"],
+    "IMAGE-TEXTE": [".dse-b-image-titre", ".dse-b-image-texte"]
   };
   if (typoSeparee) for (const [i, cle] of ["typoTitre", "typoTexte"].entries()) add(`${sel} ${cibles[t][i]}`, groupes({ ...s, ...s[cle] }, ctx).typo);
   return r;
@@ -218,7 +244,9 @@ export function cssElement(identifiant, type, style = {}, responsive = {}, ctx =
     for (const cle of ["typoTitre", "typoTexte"]) if (style[cle] || valeurs[cle]) {
       scoped[cle] = valeurs[cle] || {};
     }
-    const regles = css(blocs(sel, type, { ...valeurs, ...scoped }, ctx), true);
+    const imageDisposition = {};
+    if (["IMAGE", "IMAGE-TEXTE"].includes(type)) for (const cle of ["imageTitreMode", "imageTexteMode", "imageTitrePosition", "imageTextePosition", "imageTitreMasque", "imageTexteMasque"]) imageDisposition[cle] = valeurs[cle] ?? style[cle];
+    const regles = css(blocs(sel, type, { ...valeurs, ...imageDisposition, ...scoped }, ctx), true);
     if (regles) sortie += `@media ${media}{${regles}}`;
   }
   return sortie;

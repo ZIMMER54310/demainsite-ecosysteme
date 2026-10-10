@@ -282,6 +282,30 @@ async function main() {
     assert.throws(() => B.normaliserTypographie({ poidsPolice: 950 }), /non autorisé/);
     assert.throws(() => B.typographiesDepuisPreset(el(93, { "TYPO-TITRE": "pas JSON" })), /illisible/);
     assert.throws(() => B.typographiesDepuisPreset(el(93, { "TYPO-TITRE": '{"responsive":{"ORDINATEUR":{}}}' })), /appareils invalides/);
+    const details = { bordureRayonHautGauche: 10, bordureRayonHautDroite: 20, bordureRayonBasDroite: 30, bordureRayonBasGauche: 40,
+      bordureEpaisseurHaut: 2, bordureCouleurHaut: "#123456", bordureStyleHaut: "DOUBLE", bordureEpaisseurGauche: 0 };
+    assert.deepEqual(B.normaliserDetails(details, "BORDURES-DETAIL"), details);
+    assert.throws(() => B.normaliserDetails({ bordureRayonHautGauche: 201 }, "BORDURES-DETAIL"));
+    assert.throws(() => B.normaliserDetails({ bordureCouleurHaut: "red;}body{x" }, "BORDURES-DETAIL"));
+    assert.throws(() => B.normaliserDetails({ imageTitrePosition: "invalide" }, "IMAGE-DISPOSITION"));
+    const detailPreset = el(96, { "BORDURES-DETAIL": JSON.stringify({ ...details, responsive: { MOBILE: { bordureRayonHautGauche: 5 } } }),
+      "IMAGE-DISPOSITION": JSON.stringify({ imageTitreMode: "SUPERPOSE", imageTitrePosition: "DROITE", imageTexteMasque: true }) });
+    const resolu = B.detailsDepuisPreset(detailPreset);
+    assert.equal(resolu.style.imageTexteMasque, true);
+    assert.equal(resolu.responsive.MOBILE.bordureRayonHautGauche, 5);
+    const cssDetails = styles.cssElement("dse-b-detail", "IMAGE", { ...resolu.style, typoTitre: { tailleTexte: 28 }, typoTexte: { tailleTexte: 14 } }, resolu.responsive);
+    for (const declaration of ["border-top-left-radius:10px", "border-top-right-radius:20px", "border-bottom-right-radius:30px", "border-bottom-left-radius:40px", "border-top-width:2px", "border-top-color:#123456", "border-top-style:double", "border-left-width:0px"]) assert.ok(cssDetails.includes(declaration), declaration);
+    assert.match(cssDetails, /dse-b-image-texte\{display:none/);
+    assert.match(cssDetails, /border-top-left-radius:5px !important/);
+    const image = await front("image/image.js");
+    const rendu = image.rendreImage([{ champs: { TITREIMAGE: "Titre visible", TEXTE: "Texte visible", LEGENDE: "Légende", TEXTEALTERNATIF: "Alternative" }, media: [{ id: "1" }] }], {});
+    assert.match(rendu, /class="dse-b-image-titre">Titre visible/);
+    assert.match(rendu, /class="dse-b-image-texte">Texte visible/);
+    assert.match(rendu, /alt="Alternative"/);
+    assert.match(rendu, /Légende/);
+    const ancien = image.rendreImage([{ titre: "Nom de repère", champs: { LEGENDE: "Légende" }, media: [{ id: "1" }] }], {});
+    assert.ok(!ancien.includes("Nom de repère"));
+    assert.ok(!ancien.includes("dse-b-image--contenu"), "rendu image historique preserve");
   }
 
   console.log("OK tests builder");

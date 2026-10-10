@@ -29,6 +29,23 @@ sont des references a `OBJ-POLICE`, resolues au rendu. Ces champs ne doivent
 pas etre edites manuellement. Une colonne absente ou de mauvais type bloque
 explicitement l'enregistrement. Les presets partages restent inchanges :
 le constructeur cree une variante propre a l'element.
+Les types IMAGE et IMAGE-TEXTE disposent egalement des deux typographies.
+Dans `OBJ-MODULE-IMAGE`, `TITRE-IMAGE` (texte facultatif sur une ligne)
+et `TEXTE` (texte brut multiligne facultatif) fournissent les contenus visibles.
+La colonne systeme `Title` reste le nom de repere obligatoire ; elle ne
+devient jamais automatiquement le titre visible. Le texte alternatif,
+la legende et le lien existants restent inchanges.
+`IMAGE-DISPOSITION` et `BORDURES-DETAIL`, dans `OBJ-STYLE-PRESET`, sont des
+colonnes de texte brut multiligne facultatives, sans ajout des modifications.
+Le cockpit y enregistre des objets JSON valides, avec les surcharges
+`responsive.TABLETTE` et `responsive.MOBILE`. Chaque titre/texte est masquable
+independamment, autour ou sur l'image, en haut/bas/gauche/droite.
+Le placement par defaut est titre au-dessus et texte en dessous.
+Les bordures proposent quatre rayons (0 a 200 px), puis une epaisseur
+(0 a 20 px), une couleur et un style pour chacun des quatre cotes.
+Les reglages precis priment sur les reglages globaux ; les reinitialiser
+revient au style herite. Pour une image, les bordures ciblent l'image
+elle-meme, pas ses textes. Aucun champ JSON ne doit etre edite manuellement.
 Les alignements, l'italique, le soulignement et la casse utilisent des
 boutons accessibles au clavier avec infobulles et etat selectionne ;
 la fleche de reinitialisation revient a la valeur heritee.

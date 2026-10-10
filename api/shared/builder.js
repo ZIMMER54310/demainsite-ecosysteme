@@ -90,7 +90,57 @@ const GROUPES_REPLI = {
 // Type de module -> type de style (un module sans correspondance garde son propre code).
 const TYPE_STYLE = { "TEXTE-ENRICHI": "TEXTE", BOUTONS: "BOUTON", CTA: "BOUTON", "IMAGE-TEXTE": "IMAGE", CARROUSEL: "GALERIE" };
 const typeStyle = (type) => TYPE_STYLE[String(type || "").toUpperCase()] || String(type || "").toUpperCase();
-const TYPES_TYPO_SEPAREE = ["CARTE", "LISTE-CARTES", "CTA", "FAQ", "ACCORDEON", "HERO"];
+const TYPES_TYPO_SEPAREE = ["CARTE", "LISTE-CARTES", "CTA", "FAQ", "ACCORDEON", "HERO", "IMAGE", "IMAGE-TEXTE"];
+const DETAILS_DESIGN = {
+  imageTitreMasque: ["IMAGE-DISPOSITION", "boolean"], imageTexteMasque: ["IMAGE-DISPOSITION", "boolean"],
+  imageTitrePosition: ["IMAGE-DISPOSITION", ["HAUT", "BAS", "GAUCHE", "DROITE"]],
+  imageTextePosition: ["IMAGE-DISPOSITION", ["HAUT", "BAS", "GAUCHE", "DROITE"]],
+  imageTitreMode: ["IMAGE-DISPOSITION", ["AUTOUR", "SUPERPOSE"]],
+  imageTexteMode: ["IMAGE-DISPOSITION", ["AUTOUR", "SUPERPOSE"]],
+  ...Object.fromEntries(["HautGauche", "HautDroite", "BasDroite", "BasGauche"].map((c) => [`bordureRayon${c}`, ["BORDURES-DETAIL", "number", 0, 200]])),
+  ...Object.fromEntries(["Haut", "Droite", "Bas", "Gauche"].flatMap((c) => [
+    [`bordureEpaisseur${c}`, ["BORDURES-DETAIL", "number", 0, 20]],
+    [`bordureCouleur${c}`, ["BORDURES-DETAIL", "hex"]],
+    [`bordureStyle${c}`, ["BORDURES-DETAIL", ["AUCUNE", "PLEINE", "TIRETS", "POINTILLES", "DOUBLE"]]]
+  ]))
+};
+function normaliserDetails(valeurs, colonne) {
+  if (!valeurs || typeof valeurs !== "object" || Array.isArray(valeurs)) throw new Error(`${colonne} : réglages invalides.`);
+  const sortie = {};
+  for (const [cle, brut] of Object.entries(valeurs)) {
+    const def = DETAILS_DESIGN[cle];
+    if (!def || def[0] !== colonne) throw new Error(`${colonne} : réglage inconnu ${cle}.`);
+    if (brut === "" || brut === null || brut === undefined) continue;
+    const [, type, min, max] = def;
+    let v = brut;
+    if (type === "number") {
+      v = Number(String(brut).replace(",", "."));
+      if (typeof brut === "boolean" || !Number.isFinite(v) || v < min || v > max) throw new Error(`${cle} : valeur entre ${min} et ${max}.`);
+    } else if (type === "boolean" && typeof brut !== "boolean") throw new Error(`${cle} : booléen requis.`);
+    else if (type === "hex" && !HEX.test(String(brut))) throw new Error(`${cle} : couleur invalide.`);
+    else if (Array.isArray(type) && !type.includes(brut)) throw new Error(`${cle} : choix invalide.`);
+    sortie[cle] = v;
+  }
+  return sortie;
+}
+function detailsDepuisPreset(preset) {
+  const style = {}, responsive = {};
+  for (const colonne of ["IMAGE-DISPOSITION", "BORDURES-DETAIL"]) {
+    const brut = f(preset, colonne);
+    if (!brut) continue;
+    let objet;
+    try { objet = JSON.parse(brut); } catch { throw new Error(`${colonne} : contenu illisible.`); }
+    if (!objet || typeof objet !== "object" || Array.isArray(objet)) throw new Error(`${colonne} : contenu invalide.`);
+    const { responsive: appareils = {}, ...base } = objet;
+    Object.assign(style, normaliserDetails(base, colonne));
+    if (!appareils || typeof appareils !== "object" || Array.isArray(appareils)) throw new Error(`${colonne} : appareils invalides.`);
+    for (const [a, v] of Object.entries(appareils)) {
+      if (!["TABLETTE", "MOBILE"].includes(a)) throw new Error(`${colonne} : appareil inconnu.`);
+      Object.assign(responsive[a] ||= {}, normaliserDetails(v, colonne));
+    }
+  }
+  return { style, responsive };
+}
 const TYPO_CLES = ["police", "couleurTexte", "tailleTexte", "poidsPolice", "soulignement", "soulignementCouleur", "soulignementStyle", "soulignementEpaisseur", "soulignementDistance", "stylePolice", "hauteurLigne", "espacementLettres", "transformation", "alignement"];
 function normaliserTypographie(valeurs) {
   if (!valeurs || typeof valeurs !== "object" || Array.isArray(valeurs)) throw new Error("Typographie invalide.");
@@ -180,6 +230,7 @@ function styleDepuisPreset(preset, referentiels = {}) {
   const survol = sansNuls({ couleurTexte: hexDe("OBJ-COULEUR-TEXTE-SURVOL"), couleurFond: hexDe("OBJ-COULEUR-FOND-SURVOL"), couleurBordure: hexDe("OBJ-COULEUR-BORDURE-SURVOL") });
 
   return sansNuls({
+    ...detailsDepuisPreset(preset).style,
     ...typographiesDepuisPreset(preset, referentiels).style,
     couleurTexte: hexDe("OBJ-COULEUR-TEXTE"), couleurFond: hexDe("OBJ-COULEUR-FOND"), couleurBordure: hexDe("OBJ-COULEUR-BORDURE"),
     police, policeFamille, tailleTexte: borne(f(preset, "TAILLE-TEXTE"), 8, 96), poidsPolice: borne(f(preset, "POIDS-POLICE"), 100, 900),
@@ -290,6 +341,7 @@ function styleResolu(ctx, type, presetId) {
     style = fusionner(style, styleDepuisPreset(p, ctx.referentiels));
     for (const [a, v] of Object.entries(responsiveDepuisPreset(p.id, ctx.donnees.responsifs, ctx.referentiels))) responsive[a] = fusionner(responsive[a] || {}, v);
     for (const [a, v] of Object.entries(typographiesDepuisPreset(p, ctx.referentiels).responsive)) responsive[a] = fusionner(responsive[a] || {}, v);
+    for (const [a, v] of Object.entries(detailsDepuisPreset(p).responsive)) responsive[a] = fusionner(responsive[a] || {}, v);
   }
   return { style, responsive };
 }
@@ -574,7 +626,7 @@ function listerTypes(donnees) {
   return (donnees.types || []).filter(publiable).sort(parOrdre).map((t) => String(f(t, "Title") || "").toUpperCase()).filter(Boolean);
 }
 
-module.exports = { CHOIX, ALIGNS, TYPES_TYPO_SEPAREE, TYPO_CLES, normaliserTypographie, typographiesDepuisPreset,
+module.exports = { CHOIX, ALIGNS, TYPES_TYPO_SEPAREE, TYPO_CLES, normaliserTypographie, typographiesDepuisPreset, DETAILS_DESIGN, normaliserDetails, detailsDepuisPreset,
   LISTES_CONTENU, LISTES_BUILDER, POLICES, APPAREILS,
   composerPage, composerSections, contexteComposition, composerModule, listerModeles, listerTypes, styleDepuisPreset, responsiveDepuisPreset, trouverPage, publiable, enfants, parOrdre,
   composerModulesAdaptesPage, styleResolu, styleElement, themeGlobal, groupesDesign, typeStyle, chainePresets, presetDuSite, GROUPES, GROUPES_REPLI

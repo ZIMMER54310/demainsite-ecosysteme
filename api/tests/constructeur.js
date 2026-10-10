@@ -560,6 +560,33 @@ async function main() {
       assert.equal(platSauve.SOULIGNEMENTSTYLE, "DOUBLE");
       assert.equal(platSauve.SOULIGNEMENTEPAISSEUR, 2.5);
       assert.equal(platSauve.SOULIGNEMENTDISTANCE, 4);
+      copies.types.push(el(4, "IMAGE"));
+      copies.modules[0].relations.OBJMODULESITEPUBLICTYPE = lien(4, "IMAGE");
+      assert.equal((await enregistrerTypo({ imageTitreMode: "SUPERPOSE" })).status, 400, "disposition refusee sans colonne");
+      proto.cols = async () => ["TYPOTITRE", "TYPOTEXTE", "IMAGEDISPOSITION", "BORDURESDETAIL"].map((name) => ({ name, text: { allowMultipleLines: true, textType: "plain" } }));
+      const detail = await enregistrerTypo({ imageTitreMode: "SUPERPOSE", imageTitrePosition: "DROITE", imageTexteMasque: true,
+        bordureRayonHautGauche: 12, bordureEpaisseurHaut: 2.5, bordureCouleurHaut: "#123456",
+        responsive: { MOBILE: { imageTitreMode: "AUTOUR", bordureRayonHautGauche: 5 } } });
+      assert.match(detail.message, /Design enregistré/);
+      const detailSauve = stores.get(`OBJ-STYLE-PRESET/${dernier.id}`);
+      preset.configuration["IMAGE-DISPOSITION"] = detailSauve.IMAGEDISPOSITION;
+      preset.configuration["BORDURES-DETAIL"] = detailSauve.BORDURESDETAIL;
+      const detailRelu = await C.executer({ d: copies, perimetre, siteId: "4", action: "design.lire", params: { ref: C.ref("module", 7000) } });
+      assert.equal(detailRelu.design.type, "IMAGE");
+      assert.equal(detailRelu.design.typographieSeparee, true);
+      assert.equal(detailRelu.design.valeurs.imageTitrePosition, "DROITE");
+      assert.equal(detailRelu.design.valeurs.bordureEpaisseurHaut, 2.5);
+      assert.equal(detailRelu.design.responsive.MOBILE.imageTitreMode, "AUTOUR");
+      assert.equal(detailRelu.design.responsive.MOBILE.bordureRayonHautGauche, 5);
+      assert.ok(detailRelu.design.champsResponsive.includes("imageTexteMasque"));
+      const designUi = await front("cockpit/design.js");
+      const imagePanneau = designUi.panneauDesign(detailRelu.design, { ref: "module.x" });
+      for (const nom of ["imageTitreMode", "imageTexteMasque", "bordureRayonBasGauche", "bordureCouleurDroite", "MOBILE.bordureEpaisseurBas"]) assert.ok(imagePanneau.includes(`name="${nom}"`), nom);
+      await enregistrerTypo({ bordureRayonHautGauche: "" });
+      const resetDetails = JSON.parse(stores.get(`OBJ-STYLE-PRESET/${dernier.id}`).BORDURESDETAIL);
+      assert.equal(resetDetails.bordureRayonHautGauche, undefined);
+      assert.equal(resetDetails.bordureEpaisseurHaut, 2.5, "modification partielle conserve les autres cotes");
+      assert.equal((await enregistrerTypo({ imageTitrePosition: "invalide" })).status, 400);
     } finally {
       ecriture.contexteGraph = originalGraph;
       ecriture.lireItemFrais = originalLecture;
