@@ -85,8 +85,10 @@ async function main() {
   const positionHero = apercuAvecBandeau.indexOf("dse-b-module--hero");
   const positionBandeau = apercuAvecBandeau.indexOf("dse-bandeau-chantier");
   const positionArticles = apercuAvecBandeau.indexOf("data-dse-catalogue-builder=\"articles\"");
-  assert.ok(positionHero >= 0 && positionHero < positionBandeau && positionBandeau < positionArticles,
-    "bandeau placé après le Hero et avant la section Articles");
+  assert.ok(positionHero >= 0 && positionBandeau < positionHero && positionHero < positionArticles,
+    "bandeau placé sous l'en-tête, avant le Hero et les Articles");
+  assert.ok(apercuAvecBandeau.includes('dse-site-public-main"><aside class="dse-bandeau-chantier"'),
+    "bandeau premier élément du contenu sous l'en-tête");
   const apercuBuilderRecursif = uiConstructeur.documentApercu({ mode: "builder", bandeauChantier: true, noeuds: [{
     rendu: "PAGE", enfants: [
       { rendu: "SECTION", titre: "Hero", enfants: [{ rendu: "LIGNE", enfants: [{ rendu: "COLONNE", enfants: [{ rendu: "TITRE", titre: "Présentation" }] }] }] },
@@ -98,8 +100,8 @@ async function main() {
   const positionSectionHero = apercuBuilderRecursif.indexOf("Hero");
   const positionBandeauRecursif = apercuBuilderRecursif.indexOf("dse-bandeau-chantier");
   const positionArticlesRecursif = apercuBuilderRecursif.indexOf("Liste des articles");
-  assert.ok(positionSectionHero >= 0 && positionSectionHero < positionBandeauRecursif && positionBandeauRecursif < positionArticlesRecursif,
-    `bandeau placé après le Hero et avant les Articles dans la composition récursive du Builder (${positionSectionHero}, ${positionBandeauRecursif}, ${positionArticlesRecursif})`);
+  assert.ok(positionSectionHero >= 0 && positionBandeauRecursif < positionSectionHero && positionSectionHero < positionArticlesRecursif,
+    "bandeau avant la présentation dans la composition récursive du Builder");
   const mediasUI = await front("cockpit/medias.js");
   const mediasHtml = mediasUI.rendreMedias({ ...v, droits: { "logo-medias": { ecriture: true } },
     medias: [

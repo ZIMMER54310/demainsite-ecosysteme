@@ -96,14 +96,7 @@ export function rendreSection(section, ctx) {
   const ancre = section.ancrage ? ` id="${escapeHtml(section.ancrage)}"` : "";
   const h = habiller(section, "SECTION", "s", ctx);
   const html = `${h.enLigne}<section class="${["dse-b-section", `dse-b-section--${type}`, h.identifiant, ...h.cache].join(" ")}"${ancre}${h.ref}><div class="dse-b-contenu">${lignes}</div></section>`;
-  return apresPremiereSection(html, ctx);
-}
-
-function apresPremiereSection(html, ctx) {
-  const insertion = ctx.apresPremiereSection;
-  if (!insertion?.html || insertion.inseree) return html;
-  insertion.inseree = true;
-  return `${html}${insertion.html}`;
+  return html;
 }
 
 export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
@@ -171,7 +164,7 @@ export function rendreNoeud(noeud, ctx = {}, profondeur = 0) {
   const variants = contenus.filter((x) => x.module).map((x) => `<div class="dse-b-appareil dse-b-appareil--${x.appareil.toLowerCase()}">${x.module}</div>`).join("");
   const depot = (position) => ctx.apercu ? `<div class="dse-b-depot" data-builder-depot="${position}" data-ref="${escapeHtml(noeud.ref)}">${{ avant: "Déposer avant", apres: "Déposer après", dans: "Déposer ici" }[position]}</div>` : "";
   const html = `${depot("avant")}${h.enLigne}<${tag}${id} class="dse-b-module dse-b-recursif dse-b-r-${type.toLowerCase().replace(/[^a-z-]/g, "")} ${h.identifiant}${classe}"${h.ref}>${barre}${variants}${enfants}${vide && ctx.apercu ? `<span class="dse-b-vide">${escapeHtml(noeud.titre || "Élément vide")}</span>` : ""}${ctx.apercu && noeud.conteneur && (noeud.ajouts || []).length ? `<button type="button" class="dse-b-plus" data-builder-canvas="ajouter" data-ref="${escapeHtml(noeud.ref)}" title="Ajouter dans ${escapeHtml(noeud.titre || "cet élément")}" aria-label="Ajouter dans ${escapeHtml(noeud.titre || "cet élément")}">＋</button>` : ""}${noeud.conteneur ? depot("dans") : ""}</${tag}>${depot("apres")}`;
-  return type === "SECTION" ? apresPremiereSection(html, ctx) : html;
+  return html;
 }
 
 /*

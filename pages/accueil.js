@@ -486,7 +486,6 @@ function rendreSitePublic({
   const valeurBandeau = composition && Object.hasOwn(composition, "bandeauChantier")
     ? composition.bandeauChantier : valeurConfiguration(page?.configuration, "AFFICHER-BANDEAU-CHANTIER");
   const bandeauChantier = rendreBandeauChantier(valeurBandeau === true || ["1", "true", "oui", "yes"].includes(String(valeurBandeau ?? "").trim().toLowerCase()));
-  const insertionBandeau = { html: bandeauChantier, inseree: false };
   // En-tete / Footer construits (Constructeur DSE) : prioritaires s'ils sont affectes a la page, actifs et valides.
   const zone = (z, classe) => {
     const html = z?.sections?.length ? rendreBuilder({ mode: "builder", sections: z.sections, style: z.style, responsive: z.responsive, theme: composition?.theme },
@@ -502,11 +501,11 @@ function rendreSitePublic({
 
   // Mode Builder : prioritaire uniquement si une composition validee existe ; sinon rendu historique.
   const builder = rendreBuilder(composition, {
-    apiBase: CONFIG.API_BASE_URL, prefixe: "p", typeConteneur: "PAGE", apresPremiereSection: insertionBandeau,
+    apiBase: CONFIG.API_BASE_URL, prefixe: "p", typeConteneur: "PAGE",
     adapteurs: {
       HERO: () => (hero ? rendreHero(hero) : ""),
       FOOTER: () => footerHtml,
-      HEADER: enteteHistorique
+      HEADER: () => `${enteteHistorique()}${bandeauChantier}`
     }
   });
 
@@ -515,7 +514,7 @@ function rendreSitePublic({
     <div class="dse-site-public" data-site-id="${escapeHtml(site?.id ?? "")}" data-page-id="${escapeHtml(page?.id ?? "")}">
       <style>${STYLES_BUILDER}</style>
       ${typesComposition.has("HEADER") ? "" : rendreEntete()}
-      <main class="dse-site-public-main">${insertionBandeau.inseree ? "" : bandeauChantier}${builder}</main>
+      <main class="dse-site-public-main">${typesComposition.has("HEADER") ? "" : bandeauChantier}${builder}</main>
       ${typesComposition.has("FOOTER") ? "" : footerHtml}
     </div>`;
   }
@@ -530,6 +529,8 @@ function rendreSitePublic({
       ${rendreEntete()}
 
       <main class="dse-site-public-main">
+
+        ${bandeauChantier}
 
         ${
           hero
@@ -550,8 +551,6 @@ function rendreSitePublic({
               </section>
             `
         }
-
-        ${bandeauChantier}
 
         <section
           class="dse-catalogue"

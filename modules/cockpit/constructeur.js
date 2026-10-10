@@ -391,12 +391,10 @@ export function panneauGenerique(n, medias, appareil = "", onglet = "CONTENU", r
 export function documentApercu(composition, type = "page") {
   const bandeau = type === "page" && composition?.bandeauChantier
     ? `<aside class="dse-bandeau-chantier" role="status">⚠ Cette page est en cours de construction ou de modification.</aside>` : "";
-  const insertionBandeau = { html: bandeau, inseree: false };
   const automatique = (texte) => () => `<span class="dse-b-vide dse-b-vide--auto">${texte}</span>`;
   const adapteursAuto = { HEADER: automatique("🔗 Logo et menu du site · affichés automatiquement"),
     FOOTER: automatique("🔗 Mentions et copyright du site · affichés automatiquement") };
-  const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: adapteursAuto, apercu: true, prefixe, typeConteneur,
-    ...(type === "page" ? { apresPremiereSection: insertionBandeau } : {}) });
+  const options = (prefixe, typeConteneur) => ({ apiBase: "/api/v1", adapteurs: adapteursAuto, apercu: true, prefixe, typeConteneur });
   // Meme rendu HERO que le site public (pages/accueil.js), alimente par le contenu du module edite.
   const heroApercu = (module) => {
     const contenu = module?.contenu?.find((x) => x?.champs || x?.media);
@@ -433,8 +431,7 @@ export function documentApercu(composition, type = "page") {
   const pageRepere = `<div class="dse-apercu-repere dse-apercu-repere--page">Contenu des pages${contexte.page ? ` · exemple : ${e(contexte.page)}` : ""}</div>`;
   const haut = type === "entete" ? `<header class="dse-apercu-edite">${principal || vide}</header>` : zoneContexte(contexte.entete, "entete", "header", "e", "ENTETE", "En-tête");
   const bas = type === "footer" ? `<footer class="dse-apercu-edite">${principal || vide}</footer>` : zoneContexte(contexte.footer, "footer", "footer", "f", "FOOTER", "Pied de page");
-  const avantContenu = bandeau && !insertionBandeau.inseree ? bandeau : "";
-  const corps = `<div class="dse-site-public">${haut}<main class="dse-apercu-principal dse-site-public-main">${avantContenu}${["entete", "footer"].includes(type) ? pageRepere : principal || vide}</main>${bas}</div>`;
+  const corps = `<div class="dse-site-public">${haut}<main class="dse-apercu-principal dse-site-public-main">${bandeau}${["entete", "footer"].includes(type) ? pageRepere : principal || vide}</main>${bas}</div>`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     ${["app", "components", "responsive", "public"].map((f) => `<link rel="stylesheet" href="/assets/css/${f}.css">`).join("")}
     <style>body{margin:0}.dse-site-public{min-height:100vh;display:flex;flex-direction:column}body.dse-public main.dse-apercu-principal{flex:1 0 auto;min-height:0!important}${STYLES_BUILDER}
@@ -514,7 +511,7 @@ function editeur(d) {
       <span class="constructeur-groupe constructeur-voir" role="group" aria-label="Options d'affichage"><span class="constructeur-groupe-titre">Voir</span>
         ${[["entete", "En-tête"], ["footer", "Pied de page"]].filter(([z]) => z !== type).map(([z, libelle]) => `<label title="${e(libelle)} affiché en lecture seule (modifiable dans son propre onglet)"><input type="checkbox" data-c-voir="${z}"${d.zonesMasquees?.[z] ? "" : " checked"}> ${libelle}</label>`).join("")}
         ${d.apercuVisiteur ? `<label title="Décoché : la composition montre exactement ce que voit le visiteur (brouillons, désactivés et contenus non validés masqués)"><input type="checkbox" data-c-voir="brouillons"${d.zonesMasquees?.brouillons ? "" : " checked"}> Brouillons</label>` : ""}
-        ${type === "page" ? `<label title="${peutAction(d, type, "conteneur.modifier") ? "Afficher aux visiteurs un message après la section de présentation (hero)" : "Votre profil ne dispose pas du droit de modifier cette page"}"><input type="checkbox" data-c-bandeau-chantier${a.bandeauChantier ? " checked" : ""}${peutAction(d, type, "conteneur.modifier") ? "" : " disabled"}> Page en chantier</label>` : ""}</span>
+        ${type === "page" ? `<label title="${peutAction(d, type, "conteneur.modifier") ? "Afficher aux visiteurs un message juste sous l'en-tête" : "Votre profil ne dispose pas du droit de modifier cette page"}"><input type="checkbox" data-c-bandeau-chantier${a.bandeauChantier ? " checked" : ""}${peutAction(d, type, "conteneur.modifier") ? "" : " disabled"}> Page en chantier</label>` : ""}</span>
       <span class="constructeur-separateur" aria-hidden="true"></span>
       <span class="constructeur-groupe" role="group" aria-label="Historique"><button type="button" class="btn btn-mini" data-c-action="annuler-design">↶ Annuler</button>
       <button type="button" class="btn btn-mini" data-c-action="retablir-design">↷ Rétablir</button></span>
