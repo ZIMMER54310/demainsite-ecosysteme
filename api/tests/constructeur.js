@@ -357,9 +357,46 @@ async function main() {
     assert.equal(valeurs.responsive.MOBILE.typoTexte.tailleTexte, "12");
     const inputs = [{ name: "typoTitre.tailleTexte", value: "" }, { name: "MOBILE.typoTexte.tailleTexte", value: "" }, { name: "typoTexte.soulignement", value: "" }];
     const outil = { dataset: { designOutil: "typoTexte.soulignement", designValeur: "NON" }, setAttribute: (_cle, v) => { outil.pressed = v; } };
-    design.appliquerValeursDesign({ querySelectorAll: (sel) => sel === "[name]" ? inputs : [outil] }, valeurs);
+    design.appliquerValeursDesign({ querySelectorAll: (sel) => sel === "[name]" ? inputs : sel === "[data-design-outil]" ? [outil] : [] }, valeurs);
     assert.deepEqual(inputs.map((x) => x.value), ["30", "12", "NON"], "annuler/coller conserve les deux typographies");
     assert.equal(outil.pressed, "true");
+    {
+      const noms = ["bordureRayon", "bordureLargeur", "couleurBordure", "bordureStyle",
+        ...["HautGauche", "HautDroite", "BasDroite", "BasGauche"].map((c) => `bordureRayon${c}`),
+        ...["Haut", "Droite", "Bas", "Gauche"].flatMap((c) => [`bordureEpaisseur${c}`, `bordureCouleur${c}`, `bordureStyle${c}`])];
+      const champs = Object.fromEntries(noms.map((name) => [name, { name, value: "", placeholder: "", matches: () => false }]));
+      const lies = { checked: false, matches: (s) => s === "[data-design-coins-lies]" };
+      const global = {}, details = {};
+      const zone = { dataset: { designBordure: "" }, querySelector: (s) => s === "[data-design-coins-lies]" ? lies : s === "[data-design-coins-global]" ? global : details,
+        querySelectorAll: () => [] };
+      for (const c of [...Object.values(champs), lies]) { c.closest = () => zone; c.dataset = {}; }
+      const form = { elements: { namedItem: (n) => champs[n] }, querySelectorAll: () => [zone] };
+      champs.bordureRayon.value = "10";
+      champs.bordureRayonHautGauche.value = "4";
+      champs.bordureRayonHautDroite.value = "12";
+      champs.bordureRayonBasDroite.value = "20";
+      champs.bordureRayonBasGauche.value = "28";
+      design.actualiserBordures(form, true);
+      assert.equal(lies.checked, false);
+      assert.equal(details.hidden, false);
+      assert.equal(champs.bordureRayonBasGauche.value, "28", "ouvrir ne modifie aucun coin");
+      lies.checked = true;
+      design.actionBordure(lies, form);
+      assert.equal(champs.bordureRayon.value, "4");
+      assert.equal(champs.bordureRayonBasGauche.value, "4");
+      lies.checked = false;
+      design.actionBordure(lies, form);
+      assert.equal(champs.bordureRayonBasGauche.value, "4", "decocher ne modifie pas les valeurs");
+      champs.couleurBordure.value = "#123456";
+      champs.bordureCouleurHaut.placeholder = "#abcdef";
+      champs.bordureEpaisseurHaut.value = "3";
+      design.actionBordure(champs.couleurBordure, form);
+      assert.equal(champs.bordureCouleurHaut.value, "#123456", "Tous remplace aussi la valeur heritee du cote");
+      assert.equal(champs.bordureEpaisseurHaut.value, "3", "changer couleur ne change pas epaisseur");
+      champs.bordureEpaisseurDroite.value = "5";
+      design.actionBordure(champs.bordureEpaisseurDroite, form);
+      assert.equal(champs.bordureEpaisseurHaut.value, "3", "changer un cote ne change pas les autres");
+    }
     assert.match(panneau, /name="typoTitre.soulignementCouleur"/);
     assert.match(panneau, /name="MOBILE.typoTexte.soulignementDistance"/);
     assert.match(panneau, /<option value="ONDULE">Ondule<\/option>/);
@@ -597,6 +634,12 @@ async function main() {
       assert.ok(detailRelu.design.champsResponsive.includes("imageTexteMasque"));
       const designUi = await front("cockpit/design.js");
       const imagePanneau = designUi.panneauDesign(detailRelu.design, { ref: "module.x" });
+      assert.equal((imagePanneau.match(/data-design-groupe="BORDURE"/g) || []).length, 3, "une rubrique bordure par appareil");
+      for (const ancien of ["COINS", "BORDURE_HAUT", "BORDURE_DROITE", "BORDURE_BAS", "BORDURE_GAUCHE", "ALIGNEMENT"]) assert.ok(!imagePanneau.includes(`data-design-groupe="${ancien}"`));
+      assert.ok(imagePanneau.includes("Même arrondi pour les quatre coins"));
+      assert.ok(imagePanneau.includes('data-design-cote="Tous"'));
+      assert.ok(imagePanneau.includes('data-design-curseur="bordureLargeur"'));
+      assert.ok(imagePanneau.includes('name="imagePosition"'));
       for (const nom of ["imageTitreMode", "imageTexteMasque", "bordureRayonBasGauche", "bordureCouleurDroite", "MOBILE.bordureEpaisseurBas"]) assert.ok(imagePanneau.includes(`name="${nom}"`), nom);
       await enregistrerTypo({ bordureRayonHautGauche: "" });
       const resetDetails = JSON.parse(stores.get(`OBJ-STYLE-PRESET/${dernier.id}`).BORDURESDETAIL);
@@ -638,6 +681,11 @@ async function main() {
       assert.equal(disposition.imageTexteMasque, false);
       assert.equal(disposition.imageTitrePosition, "DROITE", "autres reglages conserves");
       assert.equal(disposition.responsive.MOBILE.imageTitreMode, "AUTOUR", "responsive conserve");
+      await enregistrerTypo({ imagePosition: "DROITE", responsive: { MOBILE: { imagePosition: "CENTRE" } } });
+      const position = JSON.parse(stores.get(`OBJ-STYLE-PRESET/${dernier.id}`).IMAGEDISPOSITION);
+      assert.equal(position.imagePosition, "DROITE");
+      assert.equal(position.responsive.MOBILE.imagePosition, "CENTRE");
+      assert.equal((await enregistrerTypo({ imagePosition: "JUSTIFIE" })).status, 400);
       const retirer = await contenu("contenu.enregistrer", { [f.listes[0].cle]: "" });
       assert.match(retirer.message, /enregistré/);
       assert.equal(stores.get("OBJ-MODULE-IMAGE/8000").MEDIALookupId, null);

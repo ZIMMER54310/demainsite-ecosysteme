@@ -5,7 +5,7 @@ import { rendreBuilder, STYLES_BUILDER } from "../builder/rendu.js";
 import { nettoyerHtml } from "../texte/nettoyer.js";
 import { getConstruire, actionConstruire } from "../../services/cockpit.service.js";
 import { rendreEnteteCockpit, rendreAccompagnement } from "./cockpit.js";
-import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU, memoriserGroupe, controleTypographie, appliquerValeursDesign } from "./design.js";
+import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU, memoriserGroupe, controleTypographie, appliquerValeursDesign, actionBordure, actualiserBordures } from "./design.js";
 import { codeChamp, controleChamp, erreurValeur } from "../builder/proprietes.js";
 import { confirmerApercuConstruction } from "./confirmation.js";
 import { getState } from "../../js/state.js";
@@ -1834,7 +1834,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
       etat.design.ongletGenerique = ongletBuilder.dataset.builderOnglet;
       return afficherPanneau();
     }
-    const d1 = ev.target.closest("[data-c-appareil],[data-design-onglet],[data-design-choix-appareil],[data-design-fermer],[data-design-reset],[data-design-outil],[data-design-media],[data-design-appliquer]");
+    const d1 = ev.target.closest("[data-c-appareil],[data-design-onglet],[data-design-choix-appareil],[data-design-fermer],[data-design-reset],[data-design-outil],[data-design-media],[data-design-appliquer],[data-design-cote]");
     if (d1 && racine.contains(d1)) return actionDesign(d1);
     const replier = ev.target.closest("[data-c-replier]");
     if (replier && racine.contains(replier)) {
@@ -2001,6 +2001,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
 
   function actionDesign(b) {
     const form = b.closest("[data-design-form],[data-builder-valeurs]");
+    if (b.dataset.designCote) return actionBordure(b, form);
     if (b.dataset.cAppareil) {
       if (d.arbre?.generique && etat.design) {
         etat.design.appareilValeurs = b.dataset.cAppareil;
@@ -2027,8 +2028,9 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
     if (b.dataset.designFermer !== undefined) { if (!confirmerAbandon()) return; etat.design = null; return afficherPanneau(); }
     if (b.dataset.designReset) {
       const champ = form.querySelector(`[name="${CSS.escape(b.dataset.designReset)}"]`);
-      if (champ) champ.value = "";
+      if (champ) { champ.value = ""; actionBordure(champ, form); }
       for (const outil of form.querySelectorAll("[data-design-outil]")) if (outil.dataset.designOutil === b.dataset.designReset) outil.setAttribute("aria-pressed", "false");
+      actualiserBordures(form, true);
       if (form.matches("[data-builder-valeurs]")) return champ?.dispatchEvent(new Event("input", { bubbles: true }));
       memoriser();
       return apercuDesign();
@@ -2089,6 +2091,8 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
       return;
     }
     if (!s.closest?.("[data-design-form]")) return;
+    if (s.matches("[data-design-coins-lies]")) return;
+    actionBordure(s, s.closest("[data-design-form]"));
     if (s.dataset.designPipette) {
       const champ = s.form.querySelector(`[name="${CSS.escape(s.dataset.designPipette)}"]`);
       if (champ) champ.value = s.value;
@@ -2105,6 +2109,11 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
   });
   racine.addEventListener("change", async (ev) => {
     const s = ev.target;
+    if (s.matches?.("[data-design-coins-lies]")) {
+      actionBordure(s, s.closest("[data-design-form]"));
+      memoriser();
+      return apercuDesign();
+    }
     if (s.matches?.("[data-c-bandeau-chantier]")) {
       const ref = s.dataset.page || d.arbre?.ref;
       const page = s.dataset.page ? d.pages?.find((p) => p.ref === ref) : d.arbre;

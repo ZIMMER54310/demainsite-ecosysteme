@@ -183,6 +183,9 @@ function blocs(sel, type, style, ctx) {
     if (typoSeparee) add(`${sel} figcaption`, groupes(s, ctx).typo);
     const dims = g.dim.some((x) => x.startsWith("height")) ? [...g.dim, "object-fit:cover"] : g.dim;
     add(`${sel} .dse-b-image-img`, [...dims, ...g.bord, ...g.ombre]);
+    if (["GAUCHE", "CENTRE", "DROITE"].includes(s.imagePosition)) {
+      add(`${sel} .dse-b-image-img`, ["display:block", `margin-left:${s.imagePosition === "GAUCHE" ? "0" : "auto"}`, `margin-right:${s.imagePosition === "DROITE" ? "0" : "auto"}`]);
+    }
     add(`${sel} .dse-b-image-img:hover`, h.filter((x) => x.startsWith("border")));
     add(`${sel} .dse-b-image--contenu`, ["display:grid", "grid-template-columns:auto auto minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto auto", "grid-template-rows:auto auto auto minmax(0,1fr) minmax(0,1fr) auto auto auto auto", "isolation:isolate"]);
     add(`${sel} .dse-b-image-media`, ["grid-area:3/3/7/7", "min-width:0"]);

@@ -15,7 +15,7 @@ const GROUPES = {
   COINS: "Coins arrondis indépendants", BORDURE_HAUT: "Bordure du haut", BORDURE_DROITE: "Bordure de droite", BORDURE_BAS: "Bordure du bas", BORDURE_GAUCHE: "Bordure de gauche",
   TYPO_TITRE: "Typographie du titre", TYPO_TEXTE: "Typographie du texte",
   TYPO: "Typographie", FOND: "Fond", DIMENSIONS: "Dimensions", ESPACEMENT: "Marges et espacements internes",
-  BORDURE: "Bordures et coins arrondis", OMBRE: "Ombre", ALIGNEMENT: "Alignement des éléments", SURVOL: "Survol (bouton, lien)"
+  BORDURE: "Bordure et coins", OMBRE: "Ombre", ALIGNEMENT: "Disposition des éléments", IMAGE_POSITION: "Position de l’image", SURVOL: "Survol (bouton, lien)"
 };
 const COTES = [["Haut", "haut"], ["Droite", "droite"], ["Bas", "bas"], ["Gauche", "gauche"]];
 const GRAISSES = [
@@ -24,6 +24,7 @@ const GRAISSES = [
 ];
 // cle -> [groupe, libelle, nature, unite, min, max, pas]
 const CHAMPS = {
+  imagePosition: ["IMAGE_POSITION", "Position dans la colonne", "choix"],
   imageTitreMasque: ["IMAGE_DISPOSITION", "Masquer le titre", "ouinon"],
   imageTexteMasque: ["IMAGE_DISPOSITION", "Masquer le texte", "ouinon"],
   imageTitrePosition: ["IMAGE_DISPOSITION", "Position du titre", "choix"],
@@ -83,7 +84,8 @@ function controle(cle, valeur, herite, design, nom) {
     alignement: [["GAUCHE", "Aligner à gauche", "gauche"], ["CENTRE", "Centrer", "centre"], ["DROITE", "Aligner à droite", "droite"], ["JUSTIFIE", "Justifier", "justifie"]],
     stylePolice: [["NORMAL", "Normal", "N"], ["ITALIQUE", "Italique", "I"]],
     soulignement: [["OUI", "Souligner", "U"], ["NON", "Sans soulignement", "U"]],
-    transformation: [["AUCUNE", "Casse d’origine", "—"], ["MAJUSCULES", "Majuscules", "AA"], ["MINUSCULES", "Minuscules", "aa"], ["CAPITALES", "Initiales en majuscules", "Aa"]]
+    transformation: [["AUCUNE", "Casse d’origine", "—"], ["MAJUSCULES", "Majuscules", "AA"], ["MINUSCULES", "Minuscules", "aa"], ["CAPITALES", "Initiales en majuscules", "Aa"]],
+    imagePosition: [["GAUCHE", "Placer l’image à gauche", "Gauche"], ["CENTRE", "Centrer l’image", "Centre"], ["DROITE", "Placer l’image à droite", "Droite"]]
   };
   if (visuels[cle]) {
     const actif = typeof valeur === "boolean" ? valeur ? "OUI" : "NON" : valeur ?? "";
@@ -99,14 +101,19 @@ function controle(cle, valeur, herite, design, nom) {
     champ = `<span class="design-couleur"><input type="color" value="${e(v || (HEX.test(String(herite || "")) ? herite : "#000000"))}" data-design-pipette="${n}" aria-label="${e(libelle)}">
       <input name="${n}" value="${e(v)}" placeholder="${e(herite || "#rrggbb")}" pattern="#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?" maxlength="7" size="8"></span>`;
   } else if (nature === "nombre") {
-    champ = `<span class="design-nombre"><input type="number" name="${n}" value="${e(vide(valeur) ? "" : valeur)}" placeholder="${e(vide(herite) ? "" : herite)}" min="${min}" max="${max}" step="${pas}">${unite ? `<span>${e(unite)}</span>` : ""}</span>`;
+    const curseur = /^bordure(Largeur|Rayon|Epaisseur)/.test(cle)
+      ? `<input type="range" min="${min}" max="${max}" step="${pas}" value="${e(vide(valeur) ? herite ?? 0 : valeur)}" data-design-curseur="${n}" aria-label="${e(libelle)} : curseur">` : "";
+    champ = `${curseur}<span class="design-nombre"><input type="number" name="${n}" value="${e(vide(valeur) ? "" : valeur)}" placeholder="${e(vide(herite) ? "" : herite)}" min="${min}" max="${max}" step="${pas}">${unite ? `<span>${e(unite)}</span>` : ""}</span>`;
   } else if (nature === "poids") {
     champ = `<select name="${n}"><option value="">${vide(herite) ? "Par défaut" : "Hérité"}</option>${GRAISSES.map(([poids, titre]) => `<option value="${poids}"${String(poids) === String(valeur) ? " selected" : ""}>${titre}</option>`).join("")}</select>`;
   } else if (nature === "ouinon") {
     champ = `<select name="${n}"><option value="">${vide(herite) ? "Par défaut" : "Hérité"}</option><option value="OUI"${valeur === true ? " selected" : ""}>Oui</option><option value="NON"${valeur === false ? " selected" : ""}>Non</option></select>`;
   } else {
     const choixLocal = /^bordureStyle(Haut|Droite|Bas|Gauche)$/.test(cle) ? o.choix?.bordureStyle : /^image.*Position$/.test(cle) ? ["HAUT", "BAS", "GAUCHE", "DROITE"] : /^image.*Mode$/.test(cle) ? ["AUTOUR", "SUPERPOSE"] : o.choix?.[cle];
-    const opts = nature === "choix" ? (choixLocal || []).map((x) => ({ ref: x, titre: x === "SUPERPOSE" ? "Sur l’image" : x === "AUTOUR" ? "Autour de l’image" : lisible(x) }))
+    const nomsBordures = { AUCUNE: "Aucune", PLEINE: "──── Trait continu", TIRETS: "— — Tirets", POINTILLES: "···· Pointillés", DOUBLE: "════ Double" };
+    const nomsDisposition = { DEBUT: "Au début", CENTRE: "Au centre", FIN: "À la fin", "ESPACE-ENTRE": "Espacer entre les éléments", "ESPACE-AUTOUR": "Espacer autour des éléments" };
+    const opts = nature === "choix" ? (choixLocal || []).map((x) => ({ ref: x, titre: /^bordureStyle/.test(cle) ? nomsBordures[x] || lisible(x) :
+      cle === "justification" ? nomsDisposition[x] || lisible(x) : x === "SUPERPOSE" ? "Sur l’image" : x === "AUTOUR" ? "Autour de l’image" : lisible(x) }))
       : nature === "alignement" ? (o.alignements || []).map((x) => ({ ref: x, titre: lisible(x) }))
         : nature === "police" ? o.polices || [] : o.medias || [];
     if (!opts.length && nature !== "media") return "";
@@ -144,16 +151,121 @@ function groupeHtml(groupe, cles, valeurs, herite, design, prefixe = "") {
     <div class="design-grille">${champs}</div></details>`;
 }
 
+const COINS = ["HautGauche", "HautDroite", "BasDroite", "BasGauche"];
+const BORDURES = {
+  bordureLargeur: "bordureEpaisseur", couleurBordure: "bordureCouleur", bordureStyle: "bordureStyle"
+};
+const valeurEffective = (valeurs, herite, cle) => !vide(valeurs[cle]) ? valeurs[cle] : herite[cle];
+function coinsIdentiques(valeurs, herite) {
+  const global = valeurEffective(valeurs, herite, "bordureRayon") ?? 0;
+  const coins = COINS.map((c) => valeurEffective(valeurs, herite, `bordureRayon${c}`) ?? global);
+  return coins.every((v) => Number(v) === Number(global));
+}
+
+function bordureHtml(cles, valeurs, herite, design, prefixe) {
+  const champ = (cle) => cles.includes(cle) ? controle(cle, valeurs[cle], herite[cle], design, `${prefixe}${cle}`) : "";
+  const parCote = (cote) => Object.entries(BORDURES).map(([global, debut]) => {
+    const cle = `${debut}${cote}`;
+    const valeursHeritees = { ...herite, [cle]: valeurEffective(valeurs, herite, cle) ?? valeurEffective(valeurs, herite, global) };
+    return cles.includes(cle) ? controle(cle, valeurs[cle], valeursHeritees[cle], design, `${prefixe}${cle}`) : "";
+  }).join("");
+  const uniformes = coinsIdentiques(valeurs, herite);
+  const modifies = cles.filter((c) => !vide(valeurs[c])).length;
+  return `<details class="design-groupe design-groupe--bordure" data-design-groupe="BORDURE"${OUVERTS.has("BORDURE") ? " open" : ""}>
+    <summary><span>Bordure et coins</span>${modifies ? `<span class="design-groupe-compte" title="${modifies} réglage(s) personnalisé(s)">${modifies}</span>` : ""}</summary>
+    <div class="design-bordure" data-design-bordure="${e(prefixe)}">
+      <h4>Bordure</h4>
+      <div class="design-cotes" role="group" aria-label="Côté de la bordure à modifier">
+        <button type="button" class="btn btn-mini design-cotes-haut" data-design-cote="Haut" aria-pressed="false">Haut</button>
+        <button type="button" class="btn btn-mini design-cotes-gauche" data-design-cote="Gauche" aria-pressed="false">Gauche</button>
+        <button type="button" class="btn btn-mini design-cotes-tous" data-design-cote="Tous" aria-pressed="true">Tous les côtés</button>
+        <button type="button" class="btn btn-mini design-cotes-droite" data-design-cote="Droite" aria-pressed="false">Droite</button>
+        <button type="button" class="btn btn-mini design-cotes-bas" data-design-cote="Bas" aria-pressed="false">Bas</button>
+      </div>
+      <p class="c-aide">Choisissez tous les côtés pour un contour uniforme, ou cliquez sur un côté pour le personnaliser. Modifier un réglage « Tous les côtés » remplace ce réglage sur les quatre côtés.</p>
+      <div data-design-bordure-cote="Tous"><h5>Tous les côtés</h5><div class="design-grille">${Object.keys(BORDURES).map(champ).join("")}</div></div>
+      ${COTES.map(([c]) => `<div data-design-bordure-cote="${c}" hidden><h5>Bordure ${c === "Haut" ? "du haut" : c === "Bas" ? "du bas" : `de ${c.toLowerCase()}`}</h5><div class="design-grille">${parCote(c)}</div></div>`).join("")}
+      <h4>Coins arrondis</h4>
+      <label class="design-coins-lies"><input type="checkbox" data-design-coins-lies${uniformes ? " checked" : ""}>Même arrondi pour les quatre coins</label>
+      <p class="c-aide">0 donne un coin droit. Augmentez la valeur pour l’arrondir davantage. Décochez pour régler chaque coin sur le dessin.</p>
+      <div data-design-coins-global${uniformes ? "" : " hidden"}>${champ("bordureRayon")}</div>
+      <div class="design-coins" data-design-coins-details${uniformes ? " hidden" : ""}>${COINS.map((c) => {
+        const cle = `bordureRayon${c}`;
+        return `<div class="design-coin design-coin--${c.toLowerCase()}">${cles.includes(cle) ? controle(cle, valeurs[cle],
+          valeurEffective(valeurs, herite, cle) ?? valeurEffective(valeurs, herite, "bordureRayon"), design, `${prefixe}${cle}`) : ""}</div>`;
+      }).join("")}</div>
+    </div></details>`;
+}
+
+export function actualiserBordures(form, recalculerCoins = false) {
+  for (const zone of form.querySelectorAll("[data-design-bordure]")) {
+    const lie = zone.querySelector("[data-design-coins-lies]");
+    if (recalculerCoins) {
+      const effectif = (cle) => { const x = form.elements.namedItem(`${zone.dataset.designBordure}${cle}`); return x?.value || x?.placeholder || 0; };
+      const coins = COINS.map((c) => { const x = form.elements.namedItem(`${zone.dataset.designBordure}bordureRayon${c}`); return x?.value || x?.placeholder || effectif("bordureRayon"); });
+      lie.checked = coins.every((v) => Number(v) === Number(effectif("bordureRayon")));
+    }
+    zone.querySelector("[data-design-coins-global]").hidden = !lie.checked;
+    zone.querySelector("[data-design-coins-details]").hidden = lie.checked;
+    for (const range of zone.querySelectorAll("[data-design-curseur]")) {
+      const x = form.elements.namedItem(range.dataset.designCurseur);
+      range.value = x?.value || x?.placeholder || 0;
+    }
+    for (const pipette of zone.querySelectorAll("[data-design-pipette]")) {
+      const x = form.elements.namedItem(pipette.dataset.designPipette);
+      const v = x?.value || x?.placeholder;
+      if (HEX.test(v || "")) pipette.value = v.length === 4 ? `#${v.slice(1).split("").map((c) => c + c).join("")}` : v;
+    }
+  }
+}
+
+export function actionBordure(element, form) {
+  const zone = element.closest("[data-design-bordure]");
+  if (!zone) return false;
+  if (element.dataset.designCote) {
+    for (const b of zone.querySelectorAll("[data-design-cote]")) b.setAttribute("aria-pressed", String(b === element));
+    for (const p of zone.querySelectorAll("[data-design-bordure-cote]")) p.hidden = p.dataset.designBordureCote !== element.dataset.designCote;
+    return true;
+  }
+  const prefixe = zone.dataset.designBordure;
+  let champ = element;
+  if (element.dataset.designCurseur || element.dataset.designPipette) {
+    champ = form.elements.namedItem(element.dataset.designCurseur || element.dataset.designPipette);
+    champ.value = element.value;
+  }
+  if (element.matches("[data-design-coins-lies]")) {
+    if (element.checked) {
+      const rayon = form.elements.namedItem(`${prefixe}bordureRayon`);
+      const premier = COINS.map((c) => form.elements.namedItem(`${prefixe}bordureRayon${c}`)).find((x) => x?.value !== "");
+      if (rayon) rayon.value = premier?.value || premier?.placeholder || rayon.value || rayon.placeholder || "0";
+      for (const c of COINS) { const x = form.elements.namedItem(`${prefixe}bordureRayon${c}`); if (x) x.value = rayon?.value || ""; }
+    }
+  } else {
+    const cle = champ.name?.slice(prefixe.length);
+    const base = BORDURES[cle];
+    const cibles = base ? COTES.map(([c]) => `${base}${c}`) : cle === "bordureRayon" && zone.querySelector("[data-design-coins-lies]").checked ? COINS.map((c) => `bordureRayon${c}`) : [];
+    for (const c of cibles) { const x = form.elements.namedItem(`${prefixe}${c}`); if (x) x.value = champ.value; }
+  }
+  actualiserBordures(form);
+  return true;
+}
+
 export function panneauDesign(design, { ref, contenu = "", onglet = "design", appareil = "TABLETTE", renommable = false, aideDesign = "", colonnes = false, aideColonnes = "", statut = "" } = {}) {
   const g = design.groupes || [];
   const groupes = [...g];
-  if (["IMAGE", "IMAGE-TEXTE"].includes(design.type)) groupes.unshift("IMAGE_DISPOSITION");
-  if (g.includes("BORDURE")) groupes.push("COINS", "BORDURE_HAUT", "BORDURE_DROITE", "BORDURE_BAS", "BORDURE_GAUCHE");
+  const image = ["IMAGE", "IMAGE-TEXTE"].includes(design.type);
+  if (image) {
+    groupes.unshift("IMAGE_DISPOSITION", "IMAGE_POSITION");
+    const index = groupes.indexOf("ALIGNEMENT");
+    if (index !== -1) groupes.splice(index, 1);
+  }
   const clesDe = (groupe, filtre = () => true) => Object.keys(CHAMPS).filter((c) => CHAMPS[c][0] === groupe && filtre(c));
   const groupesHtml = (valeurs, herite, prefixe = "", filtre = () => true) => {
     const doubles = design.typographieSeparee ? ["typoTitre", "typoTexte"].map((cle) => groupeHtml(cle === "typoTitre" ? "TYPO_TITRE" : "TYPO_TEXTE",
       clesDe("TYPO"), valeurs[cle] || {}, { ...Object.fromEntries(clesDe("TYPO").map((c) => [c, herite[c]])), ...(herite[cle] || {}) }, design, `${prefixe}${cle}.`)).join("") : "";
-    return doubles + groupes.filter((x) => !design.typographieSeparee || x !== "TYPO").map((x) => groupeHtml(x, clesDe(x, filtre), valeurs, herite, design, prefixe)).join("");
+    return doubles + groupes.filter((x) => !design.typographieSeparee || x !== "TYPO").map((x) => x === "BORDURE"
+      ? bordureHtml(Object.keys(CHAMPS).filter((c) => /^(BORDURE|COINS)/.test(CHAMPS[c][0]) && filtre(c)), valeurs, herite, design, prefixe)
+      : groupeHtml(x, clesDe(x, filtre), valeurs, herite, design, prefixe)).join("");
   };
   const designHtml = groupesHtml(design.valeurs || {}, design.herite || {})
     || `<p class="muted">Aucun réglage de design n'est déclaré pour ce type d'élément.</p>`;
@@ -219,6 +331,7 @@ export function appliquerValeursDesign(form, valeurs) {
     const input = [...form.querySelectorAll("[name]")].find((x) => x.name === outil.dataset.designOutil);
     outil.setAttribute("aria-pressed", String(input?.value === outil.dataset.designValeur));
   }
+  actualiserBordures(form, true);
 }
 
 /* Valeurs plates (formulaire) -> style imbrique attendu par le generateur CSS. */

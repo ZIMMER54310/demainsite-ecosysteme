@@ -92,6 +92,7 @@ const TYPE_STYLE = { "TEXTE-ENRICHI": "TEXTE", BOUTONS: "BOUTON", CTA: "BOUTON",
 const typeStyle = (type) => TYPE_STYLE[String(type || "").toUpperCase()] || String(type || "").toUpperCase();
 const TYPES_TYPO_SEPAREE = ["CARTE", "LISTE-CARTES", "CTA", "FAQ", "ACCORDEON", "HERO", "IMAGE", "IMAGE-TEXTE"];
 const DETAILS_DESIGN = {
+  imagePosition: ["IMAGE-DISPOSITION", ["GAUCHE", "CENTRE", "DROITE"]],
   imageTitreMasque: ["IMAGE-DISPOSITION", "boolean"], imageTexteMasque: ["IMAGE-DISPOSITION", "boolean"],
   imageTitrePosition: ["IMAGE-DISPOSITION", ["HAUT", "BAS", "GAUCHE", "DROITE"]],
   imageTextePosition: ["IMAGE-DISPOSITION", ["HAUT", "BAS", "GAUCHE", "DROITE"]],

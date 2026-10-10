@@ -59,6 +59,17 @@ Les bordures proposent quatre rayons (0 a 200 px), puis une epaisseur
 Les reglages precis priment sur les reglages globaux ; les reinitialiser
 revient au style herite. Pour une image, les bordures ciblent l'image
 elle-meme, pas ses textes. Aucun champ JSON ne doit etre edite manuellement.
+Le panneau rassemble bordures et coins dans une seule rubrique par appareil.
+Le dessin permet de selectionner Tous/Haut/Droite/Bas/Gauche sans modifier
+les valeurs. Modifier une propriete globale l'applique explicitement aux
+quatre cotes, y compris si le preset parent les differencie. La case
+« Meme arrondi pour les quatre coins » regroupe les coins ; la decocher
+ne modifie pas les valeurs. Ouvrir le panneau conserve toutes les valeurs
+independantes. Annuler/retablir/copier/coller conservent les memes champs.
+`imagePosition` dans `IMAGE-DISPOSITION` accepte GAUCHE/CENTRE/DROITE et
+positionne l'image dans sa colonne sans changer l'alignement de ses textes.
+Il remplace dans le panneau Image le reglage de repartition des elements,
+reserve aux conteneurs et autres types disposant de ce groupe.
 Les alignements, l'italique, le soulignement et la casse utilisent des
 boutons accessibles au clavier avec infobulles et etat selectionne ;
 la fleche de reinitialisation revient a la valeur heritee.
