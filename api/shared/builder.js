@@ -142,7 +142,7 @@ function detailsDepuisPreset(preset) {
   }
   return { style, responsive };
 }
-const TYPO_CLES = ["police", "couleurTexte", "tailleTexte", "poidsPolice", "soulignement", "soulignementCouleur", "soulignementStyle", "soulignementEpaisseur", "soulignementDistance", "stylePolice", "hauteurLigne", "espacementLettres", "transformation", "alignement"];
+const TYPO_CLES = ["masque", "police", "couleurTexte", "tailleTexte", "poidsPolice", "soulignement", "soulignementCouleur", "soulignementStyle", "soulignementEpaisseur", "soulignementDistance", "stylePolice", "hauteurLigne", "espacementLettres", "transformation", "alignement"];
 function normaliserTypographie(valeurs) {
   if (!valeurs || typeof valeurs !== "object" || Array.isArray(valeurs)) throw new Error("Typographie invalide.");
   const sortie = {};
@@ -163,8 +163,8 @@ function normaliserTypographie(valeurs) {
       if (!ALIGNS.includes(v)) throw new Error("Alignement non autorisé.");
     } else if (cle === "couleurTexte" || cle === "soulignementCouleur") {
       if (!HEX.test(String(v))) throw new Error("Couleur typographique invalide.");
-    } else if (cle === "soulignement") {
-      if (typeof v !== "boolean") throw new Error("Soulignement invalide.");
+    } else if (cle === "soulignement" || cle === "masque") {
+      if (typeof v !== "boolean") throw new Error(`${cle} : booléen requis.`);
     } else if (cle === "police" && !/^\d{1,12}$/.test(String(v))) throw new Error("Police inconnue.");
     sortie[cle] = v;
   }
@@ -256,8 +256,8 @@ function styleDepuisPreset(preset, referentiels = {}) {
     marge: espaces(preset, "MARGE"), padding: espaces(preset, "PADDING"),
     bordureLargeur: borne(f(preset, "BORDURE-LARGEUR"), 0, 20), bordureRayon: borne(f(preset, "BORDURE-RAYON"), 0, 200),
     bordureStyle: choix(preset, "BORDURE-STYLE", CHOIX.bordureStyle),
-    ombre: ombreActive ? sansNuls({ x: borne(f(preset, "OMBRE-X"), -100, 100), y: borne(f(preset, "OMBRE-Y"), -100, 100),
-      flou: borne(f(preset, "OMBRE-FLOU"), 0, 200), etalement: borne(f(preset, "OMBRE-ETALEMENT"), -100, 100), couleur: hexDe("OBJ-COULEUR-OMBRE") }) : null,
+    ombre: f(preset, "OMBRE") === null ? null : sansNuls({ active: ombreActive, x: borne(f(preset, "OMBRE-X"), -100, 100), y: borne(f(preset, "OMBRE-Y"), -100, 100),
+      flou: borne(f(preset, "OMBRE-FLOU"), 0, 200), etalement: borne(f(preset, "OMBRE-ETALEMENT"), -100, 100), couleur: hexDe("OBJ-COULEUR-OMBRE") }),
     survol: Object.keys(survol).length ? survol : null,
     justification: choix(preset, "JUSTIFICATION", CHOIX.justification)
   });

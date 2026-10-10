@@ -73,6 +73,19 @@ reserve aux conteneurs et autres types disposant de ce groupe.
 Les alignements, l'italique, le soulignement et la casse utilisent des
 boutons accessibles au clavier avec infobulles et etat selectionne ;
 la fleche de reinitialisation revient a la valeur heritee.
+Une rubrique « Afficher le titre et le texte » pilote les rubriques
+typographiques independantes. Non cache la rubrique et le contenu public,
+sans effacer les valeurs. Pour les images, les positions et placements sont
+dans la rubrique de chaque partie et la visibilite reste dans
+`IMAGE-DISPOSITION`. Pour les autres modules a typographie separee, le
+booleen `masque` est stocke dans `TYPO-TITRE` / `TYPO-TEXTE`, avec les
+surcharges responsive habituelles. Les questions FAQ/accordeon restent
+visibles pour permettre l'ouverture de la reponse ; leur masquage est refuse.
+Les details d'ombre et de soulignement apparaissent uniquement si l'effet
+est actif, y compris apres reinitialisation ou annuler/retablir. Desactiver
+une ombre heritee supprime effectivement son rendu et conserve ses details.
+Un dessin distingue « Espace autour de l'element » (distance des voisins)
+et « Espace entre le bord et le contenu » (place a l'interieur).
 
 Le soulignement propose une couleur independante, un style SIMPLE / DOUBLE /
 POINTILLES / TIRETS / ONDULE, une epaisseur (0 a 10 px) et une distance sous

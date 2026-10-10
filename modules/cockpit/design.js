@@ -14,7 +14,7 @@ const GROUPES = {
   IMAGE_DISPOSITION: "Titre et texte de l’image : affichage et placement",
   COINS: "Coins arrondis indépendants", BORDURE_HAUT: "Bordure du haut", BORDURE_DROITE: "Bordure de droite", BORDURE_BAS: "Bordure du bas", BORDURE_GAUCHE: "Bordure de gauche",
   TYPO_TITRE: "Typographie du titre", TYPO_TEXTE: "Typographie du texte",
-  TYPO: "Typographie", FOND: "Fond", DIMENSIONS: "Dimensions", ESPACEMENT: "Marges et espacements internes",
+  TYPO: "Typographie", FOND: "Fond", DIMENSIONS: "Dimensions", ESPACEMENT: "Espaces autour et à l’intérieur",
   BORDURE: "Bordure et coins", OMBRE: "Ombre", ALIGNEMENT: "Disposition des éléments", IMAGE_POSITION: "Position de l’image", SURVOL: "Survol (bouton, lien)"
 };
 const COTES = [["Haut", "haut"], ["Droite", "droite"], ["Bas", "bas"], ["Gauche", "gauche"]];
@@ -54,8 +54,8 @@ const CHAMPS = {
   largeur: ["DIMENSIONS", "Largeur", "nombre", "%", 0, 100, 1], largeurMinimale: ["DIMENSIONS", "Largeur minimale", "nombre", "px", 0, 2400, 10],
   largeurMaximale: ["DIMENSIONS", "Largeur maximale", "nombre", "px", 0, 2400, 10], hauteur: ["DIMENSIONS", "Hauteur", "nombre", "px", 0, 4000, 10],
   hauteurMinimale: ["DIMENSIONS", "Hauteur minimale", "nombre", "px", 0, 4000, 10], hauteurMaximale: ["DIMENSIONS", "Hauteur maximale", "nombre", "px", 0, 4000, 10],
-  ...Object.fromEntries(COTES.flatMap(([k]) => [[`marge${k}`, ["ESPACEMENT", `Marge ${k.toLowerCase()}`, "nombre", "px", 0, 400, 1]],
-    [`padding${k}`, ["ESPACEMENT", `Espacement interne ${k.toLowerCase()}`, "nombre", "px", 0, 400, 1]]])),
+  ...Object.fromEntries(COTES.flatMap(([k]) => [[`marge${k}`, ["ESPACEMENT", k, "nombre", "px", 0, 400, 1]],
+    [`padding${k}`, ["ESPACEMENT", k, "nombre", "px", 0, 400, 1]]])),
   bordureLargeur: ["BORDURE", "Épaisseur", "nombre", "px", 0, 20, 1], bordureStyle: ["BORDURE", "Style de bordure", "choix"],
   couleurBordure: ["BORDURE", "Couleur de bordure", "couleur"], bordureRayon: ["BORDURE", "Coins arrondis", "nombre", "px", 0, 200, 1],
   ombre: ["OMBRE", "Afficher une ombre", "ouinon"], ombreX: ["OMBRE", "Décalage horizontal", "nombre", "px", -100, 100, 1],
@@ -142,13 +142,62 @@ export function memoriserGroupe(groupe, ouvert) {
 }
 
 function groupeHtml(groupe, cles, valeurs, herite, design, prefixe = "") {
-  const champs = cles.map((c) => controle(c, valeurs[c], herite[c], design, `${prefixe}${c}`)).filter(Boolean).join("");
+  const champs = cles.map((c) => {
+    const html = controle(c, valeurs[c], herite[c], design, `${prefixe}${c}`);
+    const condition = /^soulignement.+/.test(c) ? "soulignement" : groupe === "OMBRE" && c !== "ombre" ? "ombre" : null;
+    return condition ? conditionHtml(html, `${prefixe}${condition}`, valeurEffective(valeurs, herite, condition), true) : html;
+  }).filter(Boolean).join("");
   if (!champs) return "";
   const nom = groupe ? GROUPES[groupe] || groupe : "Visibilité";
   const modifies = cles.filter((c) => !vide(valeurs[c])).length;
   return `<details class="design-groupe design-groupe--${(groupe || "visibilite").toLowerCase()}" data-design-groupe="${e(groupe || "VISIBILITE")}"${OUVERTS.has(groupe || "VISIBILITE") ? " open" : ""}>
     <summary><span>${e(nom)}</span>${modifies ? `<span class="design-groupe-compte" title="${modifies} réglage(s) personnalisé(s)">${modifies}</span>` : ""}</summary>
     <div class="design-grille">${champs}</div></details>`;
+}
+
+function conditionHtml(html, nom, valeur, active) {
+  return `<div class="design-condition" data-design-condition="${e(nom)}" data-design-active="${active}"${Boolean(valeur) === active ? "" : " hidden"}>${html}</div>`;
+}
+
+function espacesHtml(valeurs, herite, design, prefixe, filtre) {
+  return `<details class="design-groupe" data-design-groupe="ESPACEMENT"${OUVERTS.has("ESPACEMENT") ? " open" : ""}>
+    <summary>${e(GROUPES.ESPACEMENT)}</summary>
+    <div class="design-espace-dessin"><span>Espace autour de l’élément</span><div><span>Bord de l’élément</span><div>Espace entre le bord et le contenu<strong>Votre contenu</strong></div></div></div>
+    ${[["marge", "Espace autour de l’élément", "Éloigne cet élément de ses voisins, sans déplacer son contenu à l’intérieur."],
+      ["padding", "Espace entre le bord et le contenu", "Ajoute de la place à l’intérieur : le contenu ne touche plus le bord."]].map(([cle, titre, aide]) =>
+      `<h4>${titre}</h4><p class="c-aide">${aide}</p><div class="design-grille">${COTES.map(([c]) => `${cle}${c}`).filter(filtre).map((c) => controle(c, valeurs[c], herite[c], design, `${prefixe}${c}`)).join("")}</div>`).join("")}
+    </details>`;
+}
+
+function affichageHtml(nom, libelle, valeur, herite) {
+  return `<label class="design-champ">${e(libelle)}<select name="${e(nom)}">
+    <option value="">${herite === true ? "Hérité : non" : "Par défaut : oui"}</option>
+    <option value="NON"${valeur === false ? " selected" : ""}>Oui</option>
+    <option value="OUI"${valeur === true ? " selected" : ""}>Non</option>
+    </select><span class="c-aide">Non masque les réglages et le contenu public, sans les effacer.</span></label>`;
+}
+
+export function actualiserConditions(form) {
+  if (!form?.dataset?.designHeritage) return;
+  const heritage = JSON.parse(form.dataset.designHeritage);
+  const inputs = [...form.querySelectorAll("[name]")];
+  const lire = (nom) => {
+    const input = inputs.find((x) => x.name === nom);
+    if (!vide(input?.value)) return input.value === "OUI" ? true : input.value === "NON" ? false : input.value;
+    const chemin = nom.split(".");
+    const appareil = ["TABLETTE", "MOBILE"].includes(chemin[0]) ? chemin.shift() : null;
+    const valeur = (objet) => chemin.reduce((o, c) => o?.[c], objet);
+    if (appareil) {
+      const v = valeur(heritage.responsive?.[appareil]);
+      if (!vide(v)) return v;
+      return lire(chemin.join("."));
+    }
+    const v = valeur(heritage.base);
+    return v ?? (chemin.length === 2 ? heritage.base?.[chemin[1]] : undefined);
+  };
+  for (const bloc of form.querySelectorAll("[data-design-condition]")) {
+    bloc.hidden = Boolean(lire(bloc.dataset.designCondition)) !== (bloc.dataset.designActive === "true");
+  }
 }
 
 const COINS = ["HautGauche", "HautDroite", "BasDroite", "BasGauche"];
@@ -255,16 +304,31 @@ export function panneauDesign(design, { ref, contenu = "", onglet = "design", ap
   const groupes = [...g];
   const image = ["IMAGE", "IMAGE-TEXTE"].includes(design.type);
   if (image) {
-    groupes.unshift("IMAGE_DISPOSITION", "IMAGE_POSITION");
+    groupes.unshift("IMAGE_POSITION");
     const index = groupes.indexOf("ALIGNEMENT");
     if (index !== -1) groupes.splice(index, 1);
   }
   const clesDe = (groupe, filtre = () => true) => Object.keys(CHAMPS).filter((c) => CHAMPS[c][0] === groupe && filtre(c));
   const groupesHtml = (valeurs, herite, prefixe = "", filtre = () => true) => {
-    const doubles = design.typographieSeparee ? ["typoTitre", "typoTexte"].map((cle) => groupeHtml(cle === "typoTitre" ? "TYPO_TITRE" : "TYPO_TEXTE",
-      clesDe("TYPO"), valeurs[cle] || {}, { ...Object.fromEntries(clesDe("TYPO").map((c) => [c, herite[c]])), ...(herite[cle] || {}) }, design, `${prefixe}${cle}.`)).join("") : "";
-    return doubles + groupes.filter((x) => !design.typographieSeparee || x !== "TYPO").map((x) => x === "BORDURE"
+    const faq = ["FAQ", "ACCORDEON"].includes(design.type);
+    const parties = ["typoTitre", "typoTexte"].map((cle, i) => {
+      const partie = i === 0 ? "Titre" : "Texte";
+      const masque = image ? `image${partie}Masque` : `${cle}.masque`;
+      const v = image ? valeurs[masque] : valeurs[cle]?.masque;
+      const h = image ? herite[masque] : herite[cle]?.masque;
+      const typo = groupeHtml(i === 0 ? "TYPO_TITRE" : "TYPO_TEXTE", clesDe("TYPO"),
+        valeurs[cle] || {}, { ...Object.fromEntries(clesDe("TYPO").map((c) => [c, herite[c]])), ...(herite[cle] || {}) }, design, `${prefixe}${cle}.`);
+      const placement = image ? `<div class="design-grille">${[`image${partie}Position`, `image${partie}Mode`].filter(filtre).map((c) => controle(c, valeurs[c], herite[c], design, `${prefixe}${c}`)).join("")}</div>` : "";
+      const html = placement ? typo.replace("</summary>", `</summary>${placement}`) : typo;
+      return { affichage: faq && i === 0 ? `<p class="c-aide">La question reste visible pour pouvoir ouvrir la réponse.</p>` :
+        affichageHtml(`${prefixe}${masque}`, `Afficher ${i === 0 ? "le titre" : "le texte"} au public`, v, h),
+      details: faq && i === 0 ? html : conditionHtml(html, `${prefixe}${masque}`, vide(v) ? h : v, false) };
+    });
+    const doubles = design.typographieSeparee ? `<details class="design-groupe" data-design-groupe="AFFICHAGE" open><summary>Afficher le titre et le texte</summary>
+      <div class="design-grille">${parties.map((p) => p.affichage).join("")}</div></details>${parties.map((p) => p.details).join("")}` : "";
+    return doubles + groupes.filter((x) => x !== "IMAGE_DISPOSITION" && (!design.typographieSeparee || x !== "TYPO")).map((x) => x === "BORDURE"
       ? bordureHtml(Object.keys(CHAMPS).filter((c) => /^(BORDURE|COINS)/.test(CHAMPS[c][0]) && filtre(c)), valeurs, herite, design, prefixe)
+      : x === "ESPACEMENT" ? espacesHtml(valeurs, herite, design, prefixe, filtre)
       : groupeHtml(x, clesDe(x, filtre), valeurs, herite, design, prefixe)).join("");
   };
   const designHtml = groupesHtml(design.valeurs || {}, design.herite || {})
@@ -275,11 +339,11 @@ export function panneauDesign(design, { ref, contenu = "", onglet = "design", ap
     for (const cle of ["typoTitre", "typoTexte"]) herite[cle] = { ...(design.herite?.[cle] || {}), ...(design.valeurs?.[cle] || {}), ...(design.responsiveHerite?.[a]?.[cle] || {}) };
     const blocs = groupesHtml(design.responsive?.[a] || {}, herite, `${a}.`, (c) => autorises.has(c));
     return `<div class="design-appareil" data-design-appareil="${a}"${a === appareil ? "" : " hidden"}>
-      ${groupeHtml("", autorises.has("masque") ? ["masque"] : [], design.responsive?.[a] || {}, {}, design, `${a}.`)}${blocs}</div>`;
+      ${groupeHtml("", autorises.has("masque") ? ["masque"] : [], design.responsive?.[a] || {}, design.responsiveHerite?.[a] || {}, design, `${a}.`)}${autorises.has("masque") ? conditionHtml(blocs, `${a}.masque`, design.responsive?.[a]?.masque ?? design.responsiveHerite?.[a]?.masque, false) : blocs}</div>`;
   }).join("");
   const presets = design.options?.presets || [];
   const onglets = [["contenu", "CONTENU"], ["design", "DESIGN"], ["responsive", "RESPONSIVE"], ["avance", "AVANCÉ"]];
-  return `<form class="card design-panneau" data-design-form data-ref="${e(ref)}">
+  return `<form class="card design-panneau" data-design-form data-ref="${e(ref)}" data-design-heritage="${e(JSON.stringify({ base: design.herite || {}, responsive: design.responsiveHerite || {} }))}">
     <header class="design-entete"><div><span class="constructeur-type">${e(design.libelle || "")}</span> <strong>🎨 ${e(design.titre || "")}</strong>${renommable ? ` <button type="button" class="btn btn-mini design-renommer" data-c-action="renommer" data-ref="${e(ref)}" title="Modifier le nom" aria-label="Modifier le nom">✏️</button>` : ""}${colonnes ? ` <button type="button" class="btn btn-mini constructeur-colonnes-btn" data-c-action="colonnes" data-ref="${e(ref)}"${aideColonnes} title="Colonnes : découper la ligne et régler les largeurs" aria-label="Colonnes de la ligne">▥ Colonnes</button>` : ""}${statut ? `<div>${statut}</div>` : ""}</div>
       <button type="button" class="btn btn-mini" data-design-fermer aria-label="Fermer le panneau Design">✕</button></header>
     <nav class="design-onglets" role="tablist">${onglets.map(([k, l]) => `<button type="button" role="tab" class="btn btn-mini ${k === onglet ? "btn-primary" : "btn-secondary"}" aria-selected="${k === onglet}" data-design-onglet="${k}">${l}</button>`).join("")}</nav>
@@ -332,6 +396,7 @@ export function appliquerValeursDesign(form, valeurs) {
     outil.setAttribute("aria-pressed", String(input?.value === outil.dataset.designValeur));
   }
   actualiserBordures(form, true);
+  actualiserConditions(form);
 }
 
 /* Valeurs plates (formulaire) -> style imbrique attendu par le generateur CSS. */
@@ -346,7 +411,7 @@ function imbriquer(plat, design) {
     const o = Object.fromEntries(COTES.filter(([k]) => !vide(plat[`${nom}${k}`])).map(([k, c]) => [c, Number(plat[`${nom}${k}`])]));
     if (Object.keys(o).length) s[cible] = o;
   }
-  if (plat.ombre === true) s.ombre = Object.fromEntries([["x", plat.ombreX], ["y", plat.ombreY], ["flou", plat.ombreFlou], ["etalement", plat.ombreEtalement], ["couleur", plat.couleurOmbre]].filter(([, x]) => !vide(x)));
+  if (typeof plat.ombre === "boolean") s.ombre = { active: plat.ombre, ...Object.fromEntries([["x", plat.ombreX], ["y", plat.ombreY], ["flou", plat.ombreFlou], ["etalement", plat.ombreEtalement], ["couleur", plat.couleurOmbre]].filter(([, x]) => !vide(x))) };
   const survol = Object.fromEntries([["couleurTexte", plat.survolTexte], ["couleurFond", plat.survolFond], ["couleurBordure", plat.survolBordure]].filter(([, x]) => !vide(x)));
   if (Object.keys(survol).length) s.survol = survol;
   const media = (design.options?.medias || []).find((m) => m.ref === plat.fondMedia);

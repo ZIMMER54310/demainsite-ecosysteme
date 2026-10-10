@@ -110,7 +110,8 @@ export function groupes(style = {}, ctx = {}) {
   }
 
   const o = s.ombre;
-  if (o && typeof o === "object") {
+  if (o === false || o?.active === false) g.ombre.push("box-shadow:none");
+  if (o && typeof o === "object" && o.active !== false) {
     const v = (k, min, max) => nb(o[k], min, max) ?? 0;
     // Couleur de repli technique si l'ombre est activee sans couleur.
     g.ombre.push(`box-shadow:${v("x", -100, 100)}px ${v("y", -100, 100)}px ${v("flou", 0, 200)}px ${v("etalement", -100, 100)}px ${hex(o.couleur) || "rgba(0,0,0,.2)"}`);
@@ -236,7 +237,11 @@ function blocs(sel, type, style, ctx) {
     IMAGE: [".dse-b-image-titre", ".dse-b-image-texte"],
     "IMAGE-TEXTE": [".dse-b-image-titre", ".dse-b-image-texte"]
   };
-  if (typoSeparee) for (const [i, cle] of ["typoTitre", "typoTexte"].entries()) add(`${sel} ${cibles[t][i]}`, groupes({ ...s, ...s[cle] }, ctx).typo);
+  if (typoSeparee) for (const [i, cle] of ["typoTitre", "typoTexte"].entries()) {
+    const visibilite = !["IMAGE", "IMAGE-TEXTE"].includes(t) && !(i === 0 && ["FAQ", "ACCORDEON"].includes(t)) && typeof s[cle]?.masque === "boolean"
+      ? [`display:${s[cle].masque ? "none" : "block"}`] : [];
+    add(`${sel} ${cibles[t][i]}`, [...groupes({ ...s, ...s[cle] }, ctx).typo, ...visibilite]);
+  }
   return r;
 }
 

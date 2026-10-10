@@ -346,6 +346,26 @@ async function main() {
     assert.match(panneau, /Typographie du texte/);
     assert.match(panneau, /name="MOBILE.typoTitre.stylePolice"/);
     assert.match(panneau, /data-design-outil="typoTexte.alignement"/);
+    assert.match(panneau, /Afficher le titre et le texte/);
+    assert.match(panneau, /name="typoTitre.masque"/);
+    assert.match(design.panneauDesign({ ...double, type: "FAQ" }, { ref: "module.x" }), /La question reste visible/);
+    assert.ok(!design.panneauDesign({ ...double, type: "FAQ" }, { ref: "module.x" }).includes('name="typoTitre.masque"'));
+    const conditionInputs = [{ name: "typoTitre.masque", value: "OUI" }, { name: "ombre", value: "NON" },
+      { name: "typoTitre.soulignement", value: "" }, { name: "MOBILE.typoTitre.masque", value: "" }];
+    const conditionBlocs = [
+      { dataset: { designCondition: "typoTitre.masque", designActive: "false" } },
+      { dataset: { designCondition: "ombre", designActive: "true" } },
+      { dataset: { designCondition: "typoTitre.soulignement", designActive: "true" } },
+      { dataset: { designCondition: "MOBILE.typoTitre.masque", designActive: "false" } }
+    ];
+    const conditionForm = { dataset: { designHeritage: JSON.stringify({ base: { typoTitre: { soulignement: true } }, responsive: {} }) },
+      querySelectorAll: (sel) => sel === "[name]" ? conditionInputs : conditionBlocs };
+    design.actualiserConditions(conditionForm);
+    assert.deepEqual(conditionBlocs.map((x) => x.hidden), [true, true, false, true]);
+    conditionInputs[0].value = "NON"; conditionInputs[1].value = "OUI"; conditionInputs[2].value = "NON";
+    design.actualiserConditions(conditionForm);
+    assert.deepEqual(conditionBlocs.map((x) => x.hidden), [false, false, true, false], "changement immediat, responsive herite");
+    assert.equal(conditionInputs[2].value, "NON", "masquer un bloc ne modifie pas sa valeur");
     assert.match(panneau, /aria-label="Initiales en majuscules"/);
     assert.ok(!panneau.includes('name="tailleTexte"'), "pas de typographie unique pour les cartes");
     const valeurs = design.lireValeurs({ querySelectorAll: () => [
@@ -576,8 +596,8 @@ async function main() {
       const invalide = await enregistrerTypo({ typoTitre: { tailleTexte: 999 } });
       assert.equal(invalide.status, 400);
       assert.equal(writes.length, avantTypo, "aucune creation si valeur invalide");
-      const ok = await enregistrerTypo({ typoTitre: { tailleTexte: 30, poidsPolice: "700" }, typoTexte: { tailleTexte: 16, soulignement: false },
-        responsive: { MOBILE: { typoTitre: { tailleTexte: 20 } } } });
+      const ok = await enregistrerTypo({ typoTitre: { tailleTexte: 30, poidsPolice: "700", masque: true }, typoTexte: { tailleTexte: 16, soulignement: false, masque: false },
+        responsive: { MOBILE: { typoTitre: { tailleTexte: 20, masque: false } } } });
       assert.match(ok.message, /Design enregistré/);
       const dernier = writes.at(-1);
       assert.equal(dernier.liste, "OBJ-STYLE-PRESET");
@@ -588,6 +608,9 @@ async function main() {
       const relu = await C.executer({ d: copies, perimetre, siteId: "4", action: "design.lire", params: { ref: C.ref("module", 7000) } });
       assert.equal(relu.design.typographieSeparee, true);
       assert.equal(relu.design.valeurs.typoTitre.tailleTexte, 30);
+      assert.equal(relu.design.valeurs.typoTitre.masque, true);
+      assert.equal(relu.design.valeurs.typoTexte.masque, false);
+      assert.equal(relu.design.responsive.MOBILE.typoTitre.masque, false);
       assert.equal(relu.design.valeurs.typoTexte.tailleTexte, 16);
       assert.equal(relu.design.responsive.MOBILE.typoTitre.tailleTexte, 20);
       await enregistrerTypo({ responsive: { MOBILE: { typoTitre: { tailleTexte: 18 } } } });
@@ -599,6 +622,12 @@ async function main() {
       const sauvegarde = JSON.parse(stores.get(`OBJ-STYLE-PRESET/${dernier.id}`).TYPOTITRE);
       assert.equal(sauvegarde.soulignementEpaisseur, 2.5);
       assert.equal(sauvegarde.soulignementCouleur, "#abcdef");
+      copies.types.push(el(4, "FAQ"));
+      copies.modules[0].relations.OBJMODULESITEPUBLICTYPE = lien(4, "FAQ");
+      const avantFaq = writes.length;
+      assert.equal((await enregistrerTypo({ typoTitre: { masque: true } })).status, 400);
+      assert.equal((await enregistrerTypo({ responsive: { MOBILE: { typoTitre: { masque: true } } } })).status, 400);
+      assert.equal(writes.length, avantFaq, "question masquee refusee sans ecriture");
       copies.modules[0].relations.OBJMODULESITEPUBLICTYPE = lien(1, "TITRE");
       assert.equal((await enregistrerTypo(underline)).status, 400, "colonnes uniques absentes : erreur explicite");
       proto.cols = async () => [

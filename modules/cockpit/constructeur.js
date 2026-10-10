@@ -5,7 +5,7 @@ import { rendreBuilder, STYLES_BUILDER } from "../builder/rendu.js";
 import { nettoyerHtml } from "../texte/nettoyer.js";
 import { getConstruire, actionConstruire } from "../../services/cockpit.service.js";
 import { rendreEnteteCockpit, rendreAccompagnement } from "./cockpit.js";
-import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU, memoriserGroupe, controleTypographie, appliquerValeursDesign, actionBordure, actualiserBordures } from "./design.js";
+import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU, memoriserGroupe, controleTypographie, appliquerValeursDesign, actionBordure, actualiserBordures, actualiserConditions } from "./design.js";
 import { codeChamp, controleChamp, erreurValeur } from "../builder/proprietes.js";
 import { confirmerApercuConstruction } from "./confirmation.js";
 import { getState } from "../../js/state.js";
@@ -882,6 +882,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
   };
   const identifiantDe = (el) => [...(el?.classList || [])].find((c) => /^dse-b-[a-z]{0,3}[mclsr]\d+$/.test(c));
   const apercuDesign = () => {
+    actualiserConditions(racine.querySelector("[data-design-form]"));
     const doc = docApercu();
     if (!doc) return;
     for (const x of doc.querySelectorAll(".dse-design-cible")) x.classList.remove("dse-design-cible");

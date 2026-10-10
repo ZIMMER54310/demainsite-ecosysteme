@@ -258,6 +258,25 @@ async function main() {
     for (const declaration of ["text-decoration-color:#f12345", "text-decoration-style:wavy", "text-decoration-thickness:2.5px", "text-underline-offset:4px"]) assert.ok(cssComplet.includes(declaration));
     for (const [cle, valeur] of [["soulignementCouleur", "red;}body{x"], ["soulignementStyle", "inconnu"], ["soulignementEpaisseur", 11], ["soulignementDistance", -1]]) assert.throws(() => B.normaliserTypographie({ [cle]: valeur }));
     assert.deepEqual(B.normaliserTypographie(complet), complet);
+    assert.deepEqual(B.normaliserTypographie({ masque: false }), { masque: false });
+    assert.throws(() => B.normaliserTypographie({ masque: "NON" }), /booléen/);
+    const ombreNon = B.styleDepuisPreset(el(96, { OMBRE: false, "OMBRE-X": 20, "OMBRE-FLOU": 12 }));
+    assert.equal(ombreNon.ombre.active, false);
+    assert.equal(ombreNon.ombre.x, 20, "details conserves lorsque l'ombre est masquee");
+    assert.match(styles.cssElement("dse-b-ombre", "CARTE", ombreNon), /box-shadow:none/);
+    for (const [type, titre, texte] of [
+      ["CARTE", ".dse-b-carte h3", ".dse-b-carte p"], ["LISTE-CARTES", ".dse-b-carte h3", ".dse-b-carte p"],
+      ["CTA", ".dse-b-cta h2", ".dse-b-cta p"], ["HERO", ".dse-hero-title", ".dse-hero-text"],
+      ["FAQ", ".dse-b-faq-item summary", ".dse-b-faq-item p"], ["ACCORDEON", ".dse-b-faq-item summary", ".dse-b-faq-item p"]
+    ]) {
+      const hidden = styles.cssElement("dse-b-visible", type, { typoTitre: { masque: true }, typoTexte: { masque: true } },
+        { MOBILE: { typoTitre: { tailleTexte: 18 }, typoTexte: { tailleTexte: 14 } } });
+      assert.ok(hidden.includes(`${texte}{display:none}`), type);
+      assert.equal(hidden.includes(`${titre}{display:none}`), !["FAQ", "ACCORDEON"].includes(type), "question accessible");
+      assert.equal(hidden.includes("display:block"), false, "une autre surcharge ne reaffiche pas le contenu");
+      const visible = styles.cssElement("dse-b-visible", type, { typoTexte: { masque: true } }, { MOBILE: { typoTexte: { masque: false } } });
+      assert.ok(visible.includes(`${texte}{display:block !important}`), "surcharge explicite de visibilite");
+    }
     const presetComplet = el(95, { SOULIGNEMENT: true, "SOULIGNEMENT-COULEUR": "#f12345", "SOULIGNEMENT-STYLE": "ONDULE", "SOULIGNEMENT-EPAISSEUR": 2.5, "SOULIGNEMENT-DISTANCE": 4 });
     const reluComplet = B.styleDepuisPreset(presetComplet);
     for (const [cle, valeur] of Object.entries(complet)) assert.equal(reluComplet[cle], valeur);

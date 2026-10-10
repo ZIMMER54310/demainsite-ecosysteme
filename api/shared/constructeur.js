@@ -827,7 +827,8 @@ function plat(style = {}, polices = []) {
     if (style.marge?.[c.toLowerCase()] !== undefined) v[`marge${k}`] = style.marge[c.toLowerCase()];
     if (style.padding?.[c.toLowerCase()] !== undefined) v[`padding${k}`] = style.padding[c.toLowerCase()];
   }
-  if (style.ombre) Object.assign(v, { ombre: true, ombreX: style.ombre.x, ombreY: style.ombre.y, ombreFlou: style.ombre.flou, ombreEtalement: style.ombre.etalement, couleurOmbre: style.ombre.couleur });
+  if (style.ombre) Object.assign(v, { ombre: style.ombre.active !== false, ombreX: style.ombre.x, ombreY: style.ombre.y, ombreFlou: style.ombre.flou, ombreEtalement: style.ombre.etalement, couleurOmbre: style.ombre.couleur });
+  if (style.ombre === false) v.ombre = false;
   if (style.survol) Object.assign(v, { survolTexte: style.survol.couleurTexte, survolFond: style.survol.couleurFond, survolBordure: style.survol.couleurBordure });
   if (style.fondMedia) v.fondMedia = `media.${signer(`media:${style.fondMedia}`)}`;
   return Object.fromEntries(Object.entries(v).filter(([, x]) => x !== undefined && x !== null));
@@ -1524,6 +1525,7 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
           const { responsive: anciensAppareils = {}, ...ancienneBase } = precedent;
           const objet = cle in v ? convertirTypo(v[cle]) : ancienneBase;
           objet.responsive = Object.fromEntries(APPAREILS_SURCHARGE.map((a) => [a, cle in (resp[a] || {}) ? convertirTypo(resp[a][cle]) : anciensAppareils[a] || {}]));
+          if (["FAQ", "ACCORDEON"].includes(typeModule) && cle === "typoTitre" && (objet.masque === true || Object.values(objet.responsive).some((x) => x.masque === true))) throw new Error("La question doit rester visible pour ouvrir la réponse.");
           champsTypo[nom] = JSON.stringify(objet);
         } catch (err) { erreurs.push(`${colonne} : ${err.message}`); }
       }
