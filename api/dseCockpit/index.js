@@ -599,6 +599,7 @@ async function menusLire(req, res) {
     if (!info || !lectureAutorisee) return refuser(res, 403, "Les menus de ce site ne sont pas disponibles dans votre espace.");
     const donnees = await require("../shared/multi-menus").lire({ siteId: info.id, siteAccessible: await accesSites(base) });
     repondre(res, 200, { succes: true, donnees: { site: info.titre, ...donnees,
+      peutSupprimerEntree: Boolean(ctx.droits.autorisations) && peutOperation(ctx.droits, "menu.entree.supprimer", "menu"),
       peutInitialiser: peutOperation(ctx.droits, "menu.creer", "menu") &&
         peutOperation(ctx.droits, "menu.affecter", "menu") }, meta: meta() });
   } catch (e) {
@@ -635,10 +636,10 @@ async function menusApercu(req, res) {
     if (JSON.stringify(params).length > 12000) return refuser(res, 413, "Saisie trop volumineuse.");
     const base = ctx.droits;
     const info = await siteDuPerimetre(ctx, domaine);
-    const operation = action === "menu.creer" ? "menu.creer"
+    const operation = action === "entree.supprimer" ? "menu.entree.supprimer" : action === "menu.creer" ? "menu.creer"
       : action === "menu.publier" || action === "entree.publier" ? "menu.publier"
         : action === "affectation.creer" ? "menu.affecter" : "menu.modifier";
-    if (!info || !peutOperation(ctx.droits, operation, "menu")) {
+    if (!info || action === "entree.supprimer" && !ctx.droits.autorisations || !peutOperation(ctx.droits, operation, "menu")) {
       return refuserEcriture(res, ctx, domaine, operation, "Cette opération de menu n'est pas autorisée dans le périmètre du site.");
     }
     const resultat = await require("../shared/multi-menus").preparer({
@@ -763,7 +764,7 @@ async function confirmer(req, res) {
         if (op.portee === "menus") {
           const donnees = await droits.donneesDroits();
           d = droits.contexteSite(d, donnees, op.siteId);
-          if (!peutOperation(d, op.operation || "menu.modifier", "menu") ||
+          if (op.type === "supprimer" && !d.autorisations || !peutOperation(d, op.operation || "menu.modifier", "menu") ||
             !d.siteIds.includes(String(op.siteId))) return "Vous n'avez plus l'autorisation de réaliser cette opération.";
           op.contexteJournal = { ...op.contexteJournal, acteur: ctx.identite.sujet,
             utilisateurId: d.utilisateurId, siteId: String(op.siteId) };

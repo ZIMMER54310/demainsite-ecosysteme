@@ -392,6 +392,7 @@ async function configurerOperationsMenuLogo(appliquer = false) {
     { operation: "menu.voir", fonction: "menu", capacite: capEntete.id, action: actionVoir.id, libelle: "Menus", route: "menu", mode: "read" },
     { operation: "menu.creer", fonction: "menu", capacite: capEntete.id, action: actionCreer.id, libelle: "Créer un menu", route: "menu" },
     { operation: "menu.modifier", fonction: "menu", capacite: capEntete.id, action: actionModifier.id, libelle: "Modifier un menu", route: "menu" },
+    { operation: "menu.entree.supprimer", fonction: "menu", capacite: capEntete.id, action: actionAdministrer.id, libelle: "Supprimer une entrée de menu", route: "menu" },
     { operation: "menu.publier", fonction: "menu", capacite: capEntete.id, action: actionPublier.id, libelle: "Publier un menu", route: "menu" },
     { operation: "menu.affecter", fonction: "menu", capacite: capEntete.id, action: actionAdministrer.id, libelle: "Affecter un menu", route: "menu" },
     { operation: "logo-medias.modifier", fonction: "logo-medias", capacite: capMedias.id, action: actionModifier.id, libelle: "Logo et médias", route: "logo-medias" }

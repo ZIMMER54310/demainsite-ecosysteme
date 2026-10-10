@@ -18,7 +18,7 @@ function entreeHtml(entree, data, niveau = 0) {
         <button class="btn btn-mini btn-secondary" type="button" data-entry-move="${e(entree.ref)}" data-direction="-1" aria-label="Monter ${e(entree.titre)}">Monter</button>
         <button class="btn btn-mini btn-secondary" type="button" data-entry-move="${e(entree.ref)}" data-direction="1" aria-label="Descendre ${e(entree.titre)}">Descendre</button>
         <button class="btn btn-mini btn-secondary" type="button" data-entry-visible="${e(entree.ref)}" data-visible="${!entree.visible}">${entree.visible ? "Masquer" : "Afficher"}</button>
-        <button class="btn btn-mini btn-secondary" type="button" data-entry-remove="${e(entree.ref)}">Retirer logiquement</button>
+        <button class="btn btn-mini btn-secondary" type="button" data-entry-remove="${e(entree.ref)}"${data.peutSupprimerEntree === true && !enfants.length ? "" : ` disabled title="${data.peutSupprimerEntree !== true ? "Votre profil ne dispose pas du droit de supprimer une entrée sur ce site." : "Déplacez ou supprimez les sous-menus avant de supprimer cette entrée."}"`}>Supprimer</button>
       </div></div><div data-entry-form="${e(entree.ref)}"></div>
     ${enfants.length ? `<ol>${enfants.map((x) => entreeHtml(x, data, niveau + 1)).join("")}</ol>` : ""}</li>`;
 }
@@ -165,6 +165,7 @@ export function activerMenus(root, donnees, { domaine, menuRef = "" } = {}) {
   };
   const run = async (button, action, params, openTitle = "") => {
     button.disabled = true;
+    message(action === "entree.supprimer" ? "Suppression de l’entrée et vérification en cours…" : "Enregistrement en cours…");
     try { await confirmer(action, params); await reload(openTitle); }
     catch (err) { message(err.message || "L’opération n’a pas abouti.", true); button.disabled = false; }
   };
@@ -228,7 +229,8 @@ export function activerMenus(root, donnees, { domaine, menuRef = "" } = {}) {
     if(entry)run(button,button.dataset.visible==="true"?"entree.afficher":"entree.masquer",{menuRef,entryRef:entry.ref});
   }));
   host.querySelectorAll("[data-entry-remove]").forEach((button)=>button.addEventListener("click",()=>{
-    if(confirm("Retirer logiquement cette entrée ? Elle sera conservée dans SharePoint."))run(button,"entree.retirer",{menuRef,entryRef:button.dataset.entryRemove});
+    if(button.disabled || donnees.peutSupprimerEntree !== true)return;
+    if(confirm("Supprimer réellement cette entrée du menu ? La page liée sera conservée."))run(button,"entree.supprimer",{menuRef,entryRef:button.dataset.entryRemove});
   }));
   host.querySelector("[data-menu-publish]")?.addEventListener("click",async(event)=>{
     const button=event.currentTarget;button.disabled=true;message("Publication des entrées visibles…");

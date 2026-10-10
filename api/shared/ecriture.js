@@ -248,7 +248,7 @@ async function executerOperation({ cle, op, revalider, acteur }) {
   const noms = Object.keys(op.champs || {});
   let ancien = {};
   let etag = null;
-  if (op.type === "modifier") {
+  if (op.type === "modifier" || op.type === "supprimer") {
     const expansion = op.selectionChamps ? `fields($select=${op.selectionChamps.join(",")})` : "fields";
     const version = await dse.graphSansCache(g.token, `/sites/${g.siteGraphId}/lists/${op.listId}/items/${encodeURIComponent(op.itemId)}?$expand=${expansion}`);
     if (op.verifierVersion) {
@@ -258,7 +258,7 @@ async function executerOperation({ cle, op, revalider, acteur }) {
     ancien = valeursDe(version?.fields, noms);
     etag = version?.eTag || version?.["@odata.etag"] || version?.fields?.["@odata.etag"] || null;
     if (!etag) return { status: 409, erreur: "La version de ces données n'a pas pu être vérifiée. Écriture refusée." };
-    if (hash(ancien) === hash(op.champs)) {
+    if (op.type === "modifier" && hash(ancien) === hash(op.champs)) {
       const r = { succes: true, journal: null, message: "Cette modification est déjà appliquée." };
       executees.set(cle, r);
       return { status: 200, ...r, deja: true };
@@ -290,11 +290,21 @@ async function executerOperation({ cle, op, revalider, acteur }) {
   try {
     if (op.type === "modifier") {
       await dse.graphEcriture(g.token, "PATCH", `/sites/${g.siteGraphId}/lists/${op.listId}/items/${encodeURIComponent(op.itemId)}/fields`, op.champs, etag);
+    } else if (op.type === "supprimer") {
+      if (op.portee !== "menus" || op.operation !== "menu.entree.supprimer") throw new Error("Suppression non autorisée.");
+      await dse.graphEcriture(g.token, "DELETE", `/sites/${g.siteGraphId}/lists/${op.listId}/items/${encodeURIComponent(op.itemId)}`, null, etag);
+      try {
+        await lireItemFrais(g, op.listId, itemId, op.selectionChamps);
+        throw new Error("L'entrée existe encore après la suppression.");
+      } catch (err) {
+        if (err.status !== 404 && err.statusCode !== 404) throw err;
+      }
+      relu = {};
     } else {
       const cree = await dse.graphEcriture(g.token, "POST", `/sites/${g.siteGraphId}/lists/${op.listId}/items`, { fields: op.champs });
       itemId = String(cree?.id || "");
     }
-    relu = valeursDe(await lireItemFrais(g, op.listId, itemId, op.selectionChamps), noms);
+    if (op.type !== "supprimer") relu = valeursDe(await lireItemFrais(g, op.listId, itemId, op.selectionChamps), noms);
   } catch (e) {
     console.error("[DSE ecriture]", e.message);
     if (entreeJournal) {
@@ -322,7 +332,7 @@ async function executerOperation({ cle, op, revalider, acteur }) {
     return { status: 502, erreur: "L'enregistrement ou sa vérification a échoué. Relisez les données avant de recommencer." };
   }
   invaliderCaches();
-  const conforme = noms.every((n) => normaliserTexte(relu[n]) === normaliserTexte(op.champs[n]));
+  const conforme = op.type === "supprimer" || noms.every((n) => normaliserTexte(relu[n]) === normaliserTexte(op.champs[n]));
   const r = { succes: conforme, relecture: conforme ? "conforme" : "différente", journal: null };
   if (entreeJournal) {
     const resultatJournal = {

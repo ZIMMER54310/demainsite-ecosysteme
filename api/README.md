@@ -96,6 +96,16 @@ L'editeur d'en-tete/pied de page indique ses pages d'utilisation et propose
 l'affectation selon les droits ; construire un bloc ne l'affecte pas.
 Les formulaires d'informations Menu proposent « Modifier les liens du menu »
 vers l'editeur de navigation du meme site (liens, ordre et sous-menus).
+« Supprimer » une entree de menu effectue un DELETE SharePoint avec ETag,
+confirmation signee, journal et verification de l'absence (404). La page
+liee n'est pas supprimee. Les entrees parentes sont bloquees tant que leurs
+sous-menus existent, y compris masques et lors du controle avant ecriture.
+Le droit distinct `menu.entree.supprimer` doit etre configure dans
+OBJ-DROIT-OPERATION puis accorde dans le perimetre du site ; aucune
+compatibilite avec le droit de modification ne donne ce droit implicitement.
+Le bouton est grise sans autorisation ou en presence de sous-menus.
+Le provisionneur des autorisations declare cette operation avec l'action
+ADMINISTRER ; son execution et les affectations utilisateur restent explicites.
 
 Le soulignement propose une couleur independante, un style SIMPLE / DOUBLE /
 POINTILLES / TIRETS / ONDULE, une epaisseur (0 a 10 px) et une distance sous

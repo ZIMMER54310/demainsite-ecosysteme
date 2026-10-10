@@ -61,6 +61,38 @@ async function tester() {
     dse.graphSansCache = original.graph; dse.graphEcriture = original.ecriture;
   }
   const identite = { fournisseur: "offline", sujet: "technique" };
+  {
+    const keys = ["obtenirJetonGraph", "obtenirSiteGraph", "collecter", "graphSansCache", "graphEcriture"];
+    const originals = Object.fromEntries(keys.map(k => [k, dse[k]]));
+    let removed = false, deletions = 0;
+    try {
+      dse.obtenirJetonGraph = async () => "offline";
+      dse.obtenirSiteGraph = async () => ({ id: "site" });
+      dse.collecter = async () => [];
+      dse.graphSansCache = async () => {
+        if (removed) throw Object.assign(new Error("Absent"), { status: 404 });
+        return { eTag: '"v1"', fields: { Title: "Lien" } };
+      };
+      dse.graphEcriture = async (_token, method, path, body, etag) => {
+        assert.equal(method, "DELETE");
+        assert.equal(path, "/sites/site/lists/entries/items/1");
+        assert.equal(etag, '"v1"');
+        assert.equal(body, null);
+        removed = true; deletions++;
+      };
+      const operation = { type: "supprimer", portee: "menus", operation: "menu.entree.supprimer",
+        listId: "entries", itemId: "1", champs: { Title: "Lien" }, avant: ecriture.hash({ Title: "Lien" }) };
+      const refuse = ecriture.emettreJeton(identite, operation).jeton;
+      assert.equal((await ecriture.executer({ identite, jeton: refuse, revalider: async () => "Droit absent" })).status, 403);
+      const parent = ecriture.emettreJeton(identite, { ...operation, verifierCible: async () => "Sous-menus présents" }).jeton;
+      assert.equal((await ecriture.executer({ identite, jeton: parent, revalider: async () => null })).status, 409);
+      assert.equal(deletions, 0);
+      const jeton = ecriture.emettreJeton(identite, operation).jeton;
+      assert.equal((await ecriture.executer({ identite, jeton, revalider: async () => null })).succes, true);
+      assert.equal((await ecriture.executer({ identite, jeton, revalider: async () => null })).deja, true);
+      assert.equal(deletions, 1, "suppression verifiee et idempotente");
+    } finally { for (const key of keys) dse[key] = originals[key]; }
+  }
   const t = ecriture.emettreJeton(identite, { type: "construction" }).jeton;
   assert.equal(ecriture.consommerJeton({ ...identite, sujet: "autre" }, t), false);
   assert.equal(ecriture.consommerJeton(identite, t), true);

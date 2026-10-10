@@ -711,6 +711,18 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   const htmlEd = ui.rendreEdition(moi, { disponible: true, libelle: "En-tête", site: "Site A", domaine: "a.fr", champs: [{ cle: cT, libelle: "Titre", valeur: "<b>", max: 20 }] }, { composant: "entete" });
   assert.ok(htmlEd.includes("data-edition") && htmlEd.includes("&lt;b&gt;") && !TERMES_TECHNIQUES.test(htmlEd));
   assert.ok(!htmlEd.includes("Modifier les liens du menu"), "raccourci reserve au menu");
+  const menusUI = await import(url("modules/cockpit/menus.js"));
+  const menuData = { menus: [{ ref: "menu.x", titre: "Menu", etat: "Publié", entrees: [
+    { ref: "entry.x", titre: "Accueil", ordre: 10, parentRef: "", visible: true, etat: "Publié", url: "/" }
+  ] }], pages: [], entetes: [], footers: [] };
+  for (const allowed of [true, false]) {
+    const rendu = menusUI.rendreMenus({ ...menuData, peutSupprimerEntree: allowed }, { domaine: "site.example", menuRef: "menu.x" });
+    assert.ok(rendu.includes(">Supprimer</button>") && !rendu.includes("Retirer logiquement"));
+    assert.equal(/data-entry-remove="entry.x" disabled/.test(rendu), !allowed);
+  }
+  const parentMenu = structuredClone(menuData);
+  parentMenu.menus[0].entrees.push({ ...parentMenu.menus[0].entrees[0], ref: "entry.child", parentRef: "entry.x", titre: "Sous-menu" });
+  assert.ok(menusUI.rendreMenus({ ...parentMenu, peutSupprimerEntree: true }, { domaine: "site.example", menuRef: "menu.x" }).includes('data-entry-remove="entry.x" disabled'));
   for (const d of [
     { disponible: true, champs: [{ cle: cT, libelle: "Titre", valeur: "Menu" }] },
     { selection: true, elements: [] },

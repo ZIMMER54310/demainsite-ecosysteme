@@ -316,7 +316,7 @@ async function preparer({ identite, siteId, siteNom, action, params, siteAccessi
   const mk = (type, listName, itemId, fields, oldFields, label, op="menu.modifier") => {
     const list=pathList(g,listName);
     return ecriture.emettreJeton(identite,{
-      type:itemId?"modifier":"ajouter",portee:"menus",fonction:"menu",operation:op,siteId:String(siteId),
+      type:action==="entree.supprimer"?"supprimer":itemId?"modifier":"ajouter",portee:"menus",fonction:"menu",operation:op,siteId:String(siteId),
       listId:list.id,itemId:itemId||undefined,champs:fields,avant:ecriture.hash(Object.fromEntries(Object.entries(oldFields||{}).map(([k,v])=>[k,v===undefined||v===null?"":String(v)]))),
       selectionChamps:Object.keys(fields),journalComptes:true,cleDoublon:`menus:${type}:${empreinte([siteId,itemId||"",JSON.stringify(fields)])}`,
       action:`Menus : ${action}`,nom:`${label} — ${siteNom}`,
@@ -324,6 +324,10 @@ async function preparer({ identite, siteId, siteNom, action, params, siteAccessi
       verifierCible:async(frais)=>{
         const live=await schema(frais);
         if(live.ids[listName]!==list.id) return "La structure SharePoint du menu a changé.";
+        if(action==="entree.supprimer"){
+          const enfants=await listeItems(frais,live,"OBJ-MENU-ENTREE",["ENTREEPARENTELookupId"]);
+          if(enfants.some(x=>String(x.fields.ENTREEPARENTELookupId||"")===String(itemId)))return "Déplacez ou supprimez les sous-menus avant de supprimer cette entrée.";
+        }
         if(itemId){
           const current=await fraisItem(frais,list.id,itemId,Object.keys(fields).concat(
             s.colonnes[listName].filter(c=>c.lookup).map(c=>`${c.name}LookupId`)));
@@ -376,6 +380,14 @@ async function preparer({ identite, siteId, siteNom, action, params, siteAccessi
       Object.assign(fields,simpleField(s,"OBJ-MENU","DATEMODIFICATION",maintenantSharePoint()));
       old=Object.fromEntries(Object.keys(fields).map(k=>[k,item.fields[k]??""]));
     }
+  } else if(action==="entree.supprimer"){
+    const menu=trouverRef(menus,params.menuRef,"menu");
+    const item=trouverRef(entries,params.entryRef,"entry");
+    if(String(item.fields.OBJMENULookupId)!==menu.id)throw new Error("Cette entrée n’appartient pas à ce menu.");
+    if(entriesAll.some(x=>String(x.fields.ENTREEPARENTELookupId||"")===String(item.id)))throw Object.assign(new Error("Déplacez ou supprimez les sous-menus avant de supprimer cette entrée."),{refus:true});
+    itemId=item.id;type="entry";listName="OBJ-MENU-ENTREE";label=String(item.fields.Title||"");operation="menu.entree.supprimer";
+    old=Object.fromEntries(s.colonnes[listName].map(c=>c.lookup?`${c.name}LookupId`:c.name).map(k=>[k,item.fields[k]??""]));
+    fields={...old};
   } else if(action==="entree.ajouter"||action==="entree.modifier"||action==="entree.publier"||action==="entree.masquer"||action==="entree.afficher"||action==="entree.retirer"||action==="entree.ordre"){
     const menu=trouverRef(menus,params.menuRef,"menu");
     const menuId=menu.id;
