@@ -888,7 +888,7 @@ body.dse-apercu-seul .dse-c-hp{display:none}`;
     const style = doc.createElement("style");
     style.id = "dse-design-live";
     style.textContent = cssApercu(id, etat.design.data, lireValeurs(form));
-    doc.head.appendChild(style);
+    doc.body.appendChild(style);
     dimensionner();
   };
   // Rendu visiteur (ou brouillons masques) : meme regle que le site public, calculee par l'API.
