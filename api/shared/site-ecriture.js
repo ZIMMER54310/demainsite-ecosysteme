@@ -4,7 +4,6 @@ const crypto = require("node:crypto");
 const dse = require("./dse");
 const ecriture = require("./ecriture");
 const catalogue = require("./catalogue");
-const autorisations = require("../auth/autorisations");
 
 const cle = catalogue.cleChamp;
 const normaliserNomSite = (valeur) => String(valeur || "").normalize("NFD")
@@ -35,18 +34,16 @@ function operationGlobaleAutorisee(droits, donnees, operation) {
   const modeAttendu = { "site.creer": "create", "site.valider": "validate" }[operation];
   if (!definition || !modeAttendu || definition.mode !== modeAttendu) return false;
   if (!dynamique.roles.some((role) => String(role.id) === String(droits.roleId))) return false;
-  const roleCapacite = dynamique.bases.some((base) => String(base.roleId) === String(droits.roleId) &&
-    String(base.capaciteId) === String(definition.capaciteId)) &&
+  const autorisations = require("../auth/autorisations");
+  const roleCapacite = autorisations.basePour(dynamique, droits.roleId, definition) &&
     dynamique.possibles.some((item) => String(item.capaciteId) === String(definition.capaciteId) &&
       String(item.actionId) === String(definition.actionId));
   if (!roleCapacite) return false;
-  const permissionsGlobales = dynamique.permissions.filter((permission) =>
-    String(permission.utilisateurId) === String(droits.utilisateurId) &&
-    permission.affectationId == null &&
-    String(permission.capaciteId) === String(definition.capaciteId) &&
-    String(permission.actionId) === String(definition.actionId));
+  const permissionsGlobales = autorisations.permissionsPour(dynamique, droits.utilisateurId, null, definition);
   return !permissionsGlobales.some((permission) => permission.autorisation === false) &&
-    permissionsGlobales.some((permission) => permission.autorisation === true);
+    (permissionsGlobales.some((permission) => permission.autorisation === true) ||
+      !permissionsGlobales.length && dynamique.bases.some((base) => String(base.roleId) === String(droits.roleId) &&
+        base.operationId && base.operationId === definition.id && base.autorisation === true));
 }
 
 function referenceDomaine(listeId, itemId) {

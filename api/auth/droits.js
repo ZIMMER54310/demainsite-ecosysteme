@@ -112,8 +112,16 @@ function calculerDroits({ identite, utilisateurs = [], clients = [], liens = [],
 }
 
 function contraintesOperations(d, donnees, siteId) {
+  const dynamique = donnees.dynamique;
   return { ...d, contraintesOperations: (donnees.dynamique?.operations || [])
-    .filter((o) => !autorisations.decisionPolitique(donnees.dynamique, o, d.clientIds || [], siteId).autorise)
+    .filter((o) => {
+      if (!autorisations.decisionPolitique(dynamique, o, d.clientIds || [], siteId).autorise) return true;
+      const permissions = dynamique.permissions.filter((p) => p.utilisateurId === String(d.utilisateurId) &&
+        p.affectationId === String(d.contexte?.relationId) && p.operationId === o.id);
+      const bases = dynamique.bases.filter((b) => b.roleId === String(d.roleId) && b.operationId === o.id);
+      return permissions.some((p) => p.autorisation === false) || bases.some((b) => b.autorisation === false) ||
+        o.individuelRequis && !permissions.some((p) => p.autorisation === true) && !bases.some((b) => b.autorisation === true);
+    })
     .map((o) => o.operation) };
 }
 

@@ -8,6 +8,9 @@ import {
   getDomainesCreationSite, getBrouillonsSite, apercuCreationSite, apercuModificationSite, apercuValidationSite
 } from "../services/cockpit.service.js";
 import { activerConstructeur } from "../modules/cockpit/constructeur.js";
+import { rendreDroits, activerDroits } from "../modules/cockpit/droits.js";
+import { getAdminDroits } from "../services/cockpit.service.js";
+export { activerDroits };
 import {
   rendreConnexion, rendreSansAcces, rendreAccueil, rendreListeSites, rendreVueSite, rendreAssistant,
   CRITERES_SITES, lienSites, rendreEdition, adressePublique, rendreApercu, rendreResultatEcriture, rendreAdministration, rendreUtilisateurs, rendreMonCompte
@@ -643,7 +646,17 @@ export async function cockpitAdministrationPage(params) {
     if (!c.moi.fonctions.includes("administration")) return nonDisponible("L'administration n'est pas disponible pour votre profil.");
     const r = await getAdminTableau(params.domaine || "");
     if (!r?.donnees) return echecChargement();
-    return rendreAdministration(c.moi, r.donnees);
+    return rendreAdministration(c.moi, { ...r.donnees, contexteDomaine: params.domaine || "" });
+  } catch (err) { return echec(err); }
+}
+
+export async function cockpitDroitsPage(params) {
+  try {
+    const c = await contexte(params);
+    if (c.html) return c.html;
+    const r = await getAdminDroits(params.domaine || "");
+    if (!r?.donnees) return echecChargement();
+    return rendreDroits(c.moi, r.donnees, params.domaine || "");
   } catch (err) { return echec(err); }
 }
 

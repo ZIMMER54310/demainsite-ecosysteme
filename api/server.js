@@ -278,6 +278,8 @@ application.post("/api/v1/cockpit/edition/confirmer", controleurCockpit.confirme
 application.post("/api/v1/cockpit/demandes-acces/apercu", controleurCockpit.demandeAccesApercu);
 application.post("/api/v1/cockpit/demandes-acces/confirmer", controleurCockpit.confirmer);
 application.get("/api/v1/cockpit/admin/tableau", controleurCockpit.adminTableau);
+application.get("/api/v1/cockpit/admin/droits", controleurCockpit.adminDroits);
+application.post("/api/v1/cockpit/admin/droits/apercu", controleurCockpit.adminDroitsApercu);
 application.get("/api/v1/cockpit/admin/utilisateurs", controleurCockpit.adminUtilisateurs);
 application.get("/api/v1/cockpit/espaces", controleurCockpit.espaces);
 application.post("/api/v1/cockpit/admin/apercu", controleurCockpit.adminApercu);

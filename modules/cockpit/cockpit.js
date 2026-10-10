@@ -537,6 +537,7 @@ export function rendreAdministration(moi, t) {
     : t.journal?.derniere && !t.journal.derniere.enregistre ? `<p>🔴 La dernière écriture n'a pas pu être journalisée.</p>` : "";
   return `<section class="cockpit">${rendreEnteteCockpit(moi)}
     <h2>Administration</h2>
+    <p><a class="btn btn-secondary" href="#/cockpit/droits${t.contexteDomaine ? `?domaine=${encodeURIComponent(t.contexteDomaine)}` : ""}">Tableau des droits et autorisations</a></p>
     <h3>Sites par statut <span class="muted">(${Number(t.nombreSites) || 0})</span></h3>
     ${cartesStatut ? `<ul class="cockpit-fil cockpit-compteurs">${cartesStatut}</ul>` : '<p class="muted">Aucun site.</p>'}
     <div class="grid cockpit-admin">

@@ -27,6 +27,8 @@ export const confirmerEdition = (jeton) => apiPost("/cockpit/edition/confirmer",
 export const apercuDemandeAcces = (domaine, operation, motif) => apiPost("/cockpit/demandes-acces/apercu", { domaine, operation, motif });
 export const confirmerDemandeAcces = (jeton) => apiPost("/cockpit/demandes-acces/confirmer", { jeton });
 export const getAdminTableau = (contexteDomaine = "") => apiGet("/cockpit/admin/tableau", { contexteDomaine });
+export const getAdminDroits = (contexteDomaine = "") => apiGet("/cockpit/admin/droits", { contexteDomaine }, { timeoutMs: 45000 });
+export const apercuDroitAdmin = (params) => apiPost("/cockpit/admin/droits/apercu", params);
 export const getAdminUtilisateurs = (contexteDomaine = "", criteres = {}) => apiGet("/cockpit/admin/utilisateurs", { ...criteres, contexteDomaine });
 export const getEspaces = (criteres = {}) => apiGet("/cockpit/espaces", criteres);
 export const apercuAdmin = (action, params) => apiPost("/cockpit/admin/apercu", { action, params });

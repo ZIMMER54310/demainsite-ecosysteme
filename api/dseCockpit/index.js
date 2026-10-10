@@ -745,6 +745,11 @@ async function confirmer(req, res) {
         dse.viderCacheGraph();
         droits.viderCache();
         let d = await droits.droitsPour(ctx.identite);
+        if (op.portee === "droits-admin") {
+          const admin = await contexteDroitsAdmin({ droits: d, identite: ctx.identite }, op.params?.contexteDomaine);
+          if (!admin) return "Administration des droits non autorisée dans ce périmètre.";
+          return require("../shared/droits-administration").revalider(admin, op);
+        }
         if (op.portee === "demande") {
           const donnees = await droits.donneesDroits();
           d = droits.contexteSite(d, donnees, op.siteId);
@@ -832,6 +837,50 @@ async function confirmer(req, res) {
 }
 
 /* ---------------- Administration ---------------- */
+
+async function contexteDroitsAdmin(ctx, domaine) {
+  const superAdministrateur = ctx.droits.global === true && ctx.droits.fonctions.includes("plateforme");
+  if (!domaine && !superAdministrateur) return null;
+  if (domaine && !await siteDuPerimetre(ctx, domaine)) return null;
+  const donnees = await droits.donneesDroits();
+  const regle = droits.regleRole(donnees.politique, ctx.droits.roleId);
+  if (!superAdministrateur && (regle?.niveau !== "administration" ||
+    !regle.fonctions.includes("administration") || !ctx.droits.fonctions.includes("administration"))) return null;
+  return { ...ctx.droits, reconnu: true, niveau: "administration",
+    fonctions: [...new Set([...ctx.droits.fonctions, "administration"])],
+    global: superAdministrateur, superAdministrateur };
+}
+
+async function adminDroits(req, res) {
+  try {
+    const ctx = await contexteUtilisateur(req);
+    if (!ctx) return refuser(res, 401, "Connexion requise.");
+    const d = await contexteDroitsAdmin(ctx, req.query.contexteDomaine);
+    if (!d) return refuser(res, 403, "Administration des droits non autorisée dans ce périmètre.");
+    const donnees = await require("../shared/droits-administration").lire(d);
+    repondre(res, 200, { succes: true, donnees, meta: meta() });
+  } catch (e) {
+    console.error("[DSE cockpit] lecture droits", e.message);
+    refuser(res, e.status || 503, e.status ? e.message : "La lecture des droits est indisponible.");
+  }
+}
+
+async function adminDroitsApercu(req, res) {
+  try {
+    const ctx = await contexteEcriture(req, res);
+    if (!ctx) return;
+    const p = req.body || {};
+    const params = Object.fromEntries(["action", "cible", "operation", "valeur", "contexteDomaine",
+      "titre", "code", "capacite", "typeAction", "fonction", "route", "mode"]
+      .filter((k) => typeof p[k] === "string").map((k) => [k, p[k].slice(0, 255)]));
+    const d = await contexteDroitsAdmin(ctx, params.contexteDomaine);
+    if (!d) return refuser(res, 403, "Administration des droits non autorisée dans ce périmètre.");
+    repondreResultat(res, { status: 200, ...await require("../shared/droits-administration").preparer(ctx.identite, d, params) });
+  } catch (e) {
+    console.error("[DSE cockpit] aperçu droits", e.message);
+    refuser(res, e.status || 503, e.status ? e.message : "La préparation des droits est indisponible.");
+  }
+}
 
 async function adminTableau(req, res) {
   try {
@@ -1449,7 +1498,7 @@ module.exports = {
   moi, monCompte, sites, site, galerieListe, galerieCockpit, connexion, retour, deconnexion, inscrire, mediasTeleverser, mediasSynchroniser,
   contenus, espaces, editionLire, editionApercu, demandeAccesApercu, confirmer, construireLire, construireAction, referentielsCreationSite,
   domainesCreationSite, brouillonsSiteLire, siteCreationApercu, siteModificationApercu, siteValidationApercu,
-  usageSiteApercu, usagesSiteLire, adminTableau, adminUtilisateurs, adminApercu,
+  usageSiteApercu, usagesSiteLire, adminTableau, adminUtilisateurs, adminApercu, adminDroits, adminDroitsApercu,
   menusLire, menusApercu,
   menusInitialiser,
   demandesComptesLire, demandesComptesDecision,

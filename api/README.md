@@ -12,6 +12,62 @@ Le cockpit utilise une session native Entra et des controles de perimetre cote s
 
 ## Droits et edition cockpit
 
+### Tableau des droits individuels
+
+Depuis Administration, « Tableau des droits et autorisations » ouvre
+`#/cockpit/droits?domaine=…`. Chaque affectation utilisateur/site dispose de
+cases par operation technique, regroupees par capacite ; « Tout » ne change
+que les cases modifiables du groupe. Les groupes et informations techniques
+sont repliables. Le tableau distingue le reglage herite/individuel du droit
+effectif, qui tient aussi compte du profil, des options et des autres affectations.
+
+L'administrateur agit dans le contexte d'un site autorise, uniquement sur
+les affectations dont **tous** les sites sont dans ce contexte. Il ne peut
+depasser ses droits effectifs, modifier un compte administrateur ou superieur,
+ses propres acces ou des droits verrouilles. Une politique de role absente
+ne permet jamais d'inferer un niveau inferieur. Le super administrateur
+(politique globale avec fonction `plateforme`) peut egalement gerer les
+profils et ajouter des droits au catalogue. Son propre profil est protege.
+
+Le schema est complete par `node tools/provision-droits-individuels.js`
+(simulation), puis `--apply` apres autorisation. Quatre colonnes facultatives :
+
+- `OBJ-ROLE-CAPACITE` : lookup simple `OBJ-DROIT-OPERATION`, booleen `AUTORISATION`.
+- `OBJ-UTILISATEUR-PERMISSION` : lookup simple `OBJ-DROIT-OPERATION`.
+- `OBJ-DROIT-OPERATION` : booleen `INDIVIDUEL-REQUIS`.
+
+Aucun element existant n'est migre ou modifie par ce provisionneur.
+Sans relation a une operation, les permissions historiques restent
+inchangees. Une surcharge utilisateur precise remplace le couple
+capacite/action pour cette operation et cette affectation seulement ;
+un ancien refus verrouille reste prioritaire. Une interdiction de profil
+retire cette operation du plafond du role ; un profil individuel autorise
+fournit une permission de base, sous reserve des restrictions utilisateur.
+Le modele historique de sites applique egalement ces interdictions
+individuelles, sans depasser ses limites de role/profil d'acces.
+Les operations globales (creation et validation d'un site) figurent
+egalement dans le catalogue. Le super administrateur dispose d'entrees
+« Droits globaux » pour les comptes globaux autorises ; leur permission
+precise n'a pas d'affectation a un site, et les controles de creation/
+validation utilisent le meme moteur de selection par operation.
+
+Les nouveaux droits crees depuis le tableau portent `INDIVIDUEL-REQUIS=true` :
+aucune permission historique ne les attribue automatiquement. Creer une
+entree de catalogue ne cree **pas** la fonctionnalite metier ; son code doit
+etre raccorde dans le logiciel.
+
+Routes : `GET /cockpit/admin/droits`, `POST /cockpit/admin/droits/apercu`,
+confirmation commune `POST /cockpit/edition/confirmer`.
+Les references utilisateur/operation/profil sont opaques. Les ID, colonnes,
+etats et perimetres sont recalcules cote serveur ; apercu signe lie a
+l'identite, revalidation des droits, verrou de concurrence, ETag, journal
+debut/fin et relecture utilisent le pipeline commun. Plusieurs cases sont
+confirmees ensemble puis enregistrees **separement**, sans promesse de
+transaction globale : un echec arrete la suite et affiche le nombre confirme.
+Une relecture est obligatoire avant de reprendre apres un echec.
+
+Tests hors reseau : `npm run test:droits-individuels`.
+
 ### Bandeau de chantier et typographie
 
 Le bandeau « Page en chantier » utilise la colonne booleenne
