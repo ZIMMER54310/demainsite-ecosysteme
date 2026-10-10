@@ -614,12 +614,13 @@ async function main() {
         { name: "TEXTE", displayName: "TEXTE", text: { allowMultipleLines: true, textType: "plain" } },
         { name: "LEGENDE", displayName: "LEGENDE", text: {} },
         { name: "MEDIA", displayName: "MEDIA", lookup: { listId: "media" } },
-        { name: "ALIGNEMENT", displayName: "ALIGNEMENT", lookup: { listId: "align" } }
+        { name: "OBJALIGNEMENT", displayName: "OBJ-ALIGNEMENT", lookup: { listId: "align" } }
       ] : colsStyle;
       const contenu = (action, valeurs) => C.executer({ d: copies, perimetre, siteId: "4", action, params: { ref: C.ref("module", 7000), valeurs } });
       const f = (await contenu("contenu.formulaire")).formulaire;
       assert.ok(!f.textes.some((x) => x.libelle === "LEGENDE"));
       assert.ok(!f.listes.some((x) => x.libelle === "ALIGNEMENT"));
+      assert.equal(f.listes.length, 1, "relation OBJ-ALIGNEMENT masquee elle aussi");
       const titrePublic = f.textes.find((x) => x.affichage === "afficherTitreImage");
       assert.equal(titrePublic.valeur, "Ancien titre public");
       assert.match(titrePublic.aide, /Design/);

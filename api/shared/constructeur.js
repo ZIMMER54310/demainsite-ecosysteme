@@ -555,6 +555,7 @@ async function formulaireContenu(w, nomListe, perimetre, d) {
     if (!c.lookup || c.lookup.allowMultipleValues || c.readOnly || c.hidden || exclus.has(cleChamp(c.displayName)) || image && cleChamp(c.displayName) === "ALIGNEMENT") continue;
     const cible = w.g.listes.find((l) => l.id === c.lookup.listId);
     if (!cible) continue;
+    if (image && cleChamp(cible.displayName) === cleChamp("OBJ-ALIGNEMENT")) continue;
     let options;
     if (cleChamp(cible.displayName) === cleChamp("OBJ-MEDIA")) {
       options = (d.medias || []).filter((m) => mediaAutorise(m, perimetre) &&
