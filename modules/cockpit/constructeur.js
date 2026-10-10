@@ -507,6 +507,12 @@ function editeur(d) {
   const type = a.type;
   const peut = ecrit(d, FONCTION[type]);
   const colonnes = colonnesDe(a.sections);
+  const commun = ["entete", "footer"].includes(type) ? (type === "entete" ? d.entetes : d.footers)?.find((c) => c.ref === a.ref) : null;
+  const usage = commun ? `<div class="c-aide-bloc" data-c-usage-commun>${commun.pages.length
+    ? `Utilisé par : ${commun.pages.map((p) => e(p.titre)).join(", ")}. Les éléments en brouillon restent invisibles sur le site public.`
+    : `Ce ${type === "entete" ? "bloc d’en-tête" : "pied de page"} n’est associé à aucune page. Vous pouvez le construire ici, mais le site public ne l’utilise pas encore.`}
+    ${peutAction(d, type, "page.affecter") && peutAction(d, "page", "page.affecter")
+      ? bouton("📄 Affecter aux pages", "affecter", `data-ref="${e(a.ref)}" data-type="${type}"`, "btn btn-mini") : ""}</div>` : "";
   const publicationRequise = !a.etat.publiable || a.generique || contientBrouillon(a.sections);
   return `<header class="constructeur-barre-visuelle"><strong>${e(d.site?.titre || "")} · ${e(a.titre)}</strong>${rendreVersion()}
     <div class="constructeur-boutons constructeur-outils-barre"><span class="constructeur-appareils" role="group" aria-label="Affichage sur l'appareil"><span class="constructeur-groupe-titre">Affichage</span>${APPAREILS_BARRE.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "GENERAL") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}"${aideAttr(d, x.aide)} title="${x.cle === "GENERAL" ? "Tout voir : les éléments masqués sur un appareil restent affichés, encadrés en pointillés" : `Voir exactement ce que voit un visiteur sur ${NOMS_APPAREILS[x.cle]}`}" aria-pressed="${x.cle === (d.appareil || "GENERAL")}">${x.libelle}</button>`).join("")}</span>
@@ -528,7 +534,7 @@ function editeur(d) {
     <div class="constructeur-espace-visuel${d.cotesReplies?.design ? " constructeur-espace--design-replie" : ""}${d.cotesReplies?.structure ? " constructeur-espace--structure-replie" : ""}" data-c-espace>
   <aside class="card constructeur-editeur constructeur-cote constructeur-cote--design" aria-label="Design">
     ${enteteCote("design", "🎨 Design")}
-    <div class="constructeur-cote-corps">
+    <div class="constructeur-cote-corps">${usage}
     <header class="constructeur-editeur-entete">
       <div><span class="constructeur-type">${LIBELLES[type]}</span><h3>${e(a.titre)}</h3>${a.realisation ? realisation(a.realisation) : badgeEtat(a.etat)}</div>
       <div class="constructeur-boutons constructeur-boutons--compacts">

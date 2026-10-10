@@ -274,6 +274,13 @@ async function main() {
       "état indépendant de chaque page dans la liste");
     assert.equal(/HERO/i.test(html), false, "vocabulaire En-tete, jamais HERO");
     const editeur = rendreConstructeur({ fonctions: [] }, { ...donneesFront, arbre: a, apercu: apEntete }, {});
+    const communSansPages = rendreConstructeur({}, { ...donneesFront, arbre: a, apercu: apEntete,
+      entetes: [{ ref: a.ref, pages: [] }], operations: ["constructeur.entete.page.affecter", "constructeur.page.page.affecter"] }, {});
+    assert.ok(communSansPages.includes("n’est associé à aucune page"));
+    assert.ok(communSansPages.includes(`data-c-action="affecter" data-ref="${a.ref}" data-type="entete"`), "affectation accessible dans l'editeur");
+    const communAssocie = rendreConstructeur({}, { ...donneesFront, arbre: a, apercu: apEntete,
+      entetes: [{ ref: a.ref, pages: [{ titre: "Accueil" }] }] }, {});
+    assert.ok(communAssocie.includes("Utilisé par : Accueil"));
     assert.ok(editeur.includes("Pasc ARA IA") && editeur.includes("Ajouter une section") && editeur.includes("📱 Mobile") && editeur.includes("🎨 Design"));
     for (const classe of ["constructeur--plein-ecran", "constructeur-barre-visuelle", "constructeur-espace-visuel", "constructeur-design-zone"]) assert.ok(editeur.includes(classe), classe);
     for (const action of ["annuler-design", "retablir-design", "copier-style", "coller-style", "enregistrer-design"]) assert.ok(editeur.includes(`data-c-action="${action}"`), action);

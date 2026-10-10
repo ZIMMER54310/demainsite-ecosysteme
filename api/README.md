@@ -92,6 +92,8 @@ est calcule separement du contexte de travail ; les brouillons recursifs
 sont exclus. Une zone vide en vue visiteur reprend le rendu historique,
 comme le site public. En composition, les zones vides restent editables.
 Un conteneur de contexte non associe ne remplace jamais le rendu du site.
+L'editeur d'en-tete/pied de page indique ses pages d'utilisation et propose
+l'affectation selon les droits ; construire un bloc ne l'affecte pas.
 
 Le soulignement propose une couleur independante, un style SIMPLE / DOUBLE /
 POINTILLES / TIRETS / ONDULE, une epaisseur (0 a 10 px) et une distance sous
