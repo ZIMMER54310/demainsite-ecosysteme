@@ -28,7 +28,9 @@ export function rendreMatrice(d, cible) {
 
 export function rendreDroits(moi, d, domaine = "") {
   const choix = (xs) => xs.map((x) => `<option value="${e(x.ref)}">${e(x.titre)}</option>`).join("");
-  const creation = !d.peutCreer ? "" : `<details class="card"><summary>Ajouter un nouveau droit · Super administrateur</summary>
+  const creation = !d.peutCreer
+    ? "<p>La gestion des profils et l’ajout de nouveaux droits nécessitent un accès super administrateur global. Un rôle limité à un site ne donne pas cet accès global.</p>"
+    : `<details class="card"><summary>Ajouter un nouveau droit · Super administrateur</summary>
     <p>Ajoute une entrée au catalogue, sans attribuer de permission. Une nouvelle action métier doit aussi être raccordée dans le logiciel : ce formulaire ne crée pas sa fonctionnalité.</p>
     <form data-creer-droit>
       <p><label>Nom affiché <input name="titre" required maxlength="255"></label></p>
