@@ -67,7 +67,10 @@ async function main() {
       assert.equal(await provisionneur.typographieChantier("plan"), 0);
       assert.deepEqual(definitionsLues.map((d) => d.nom), ["OBJ-POLICE", "OBJ-STYLE-PRESET", "OBJ-PAGES-SITE"]);
       assert.deepEqual(definitionsLues.find((d) => d.nom === "OBJ-STYLE-PRESET").colonnes.map((c) => c.name),
-        ["SOULIGNEMENT", "STYLE-POLICE", "TRANSFORMATION-TEXTE", "ESPACEMENT-LETTRES", "TYPO-TITRE", "TYPO-TEXTE"]);
+        ["SOULIGNEMENT", "STYLE-POLICE", "TRANSFORMATION-TEXTE", "ESPACEMENT-LETTRES", "TYPO-TITRE", "TYPO-TEXTE",
+          "SOULIGNEMENT-COULEUR", "SOULIGNEMENT-STYLE", "SOULIGNEMENT-EPAISSEUR", "SOULIGNEMENT-DISTANCE"]);
+      const choix = definitionsLues.find((d) => d.nom === "OBJ-STYLE-PRESET").colonnes.find((c) => c.name === "SOULIGNEMENT-STYLE");
+      assert.deepEqual(P.colonneGraph(choix, {}).choice, { choices: B.CHOIX.soulignementStyle, allowTextEntry: false, displayAs: "dropDownMenu" });
       await assert.rejects(provisionneur.typographieChantier("apply"), /Droit de provisionnement absent/);
     } finally {
       Object.assign(P, originaux);
@@ -248,8 +251,17 @@ async function main() {
     const typo = styles.cssElement("dse-b-typo", "TITRE", { poidsPolice: 900, soulignement: true, stylePolice: "ITALIQUE" });
     assert.match(typo, /font-weight:900/);
     assert.match(typo, /font-style:italic/);
-    assert.match(typo, /text-decoration:underline/);
-    assert.match(styles.cssElement("dse-b-no-underline", "TITRE", { soulignement: false }), /text-decoration:none/);
+    assert.match(typo, /text-decoration-line:underline/);
+    assert.match(styles.cssElement("dse-b-no-underline", "TITRE", { soulignement: false }), /text-decoration-line:none/);
+    const complet = { soulignement: true, soulignementCouleur: "#f12345", soulignementStyle: "ONDULE", soulignementEpaisseur: 2.5, soulignementDistance: 4 };
+    const cssComplet = styles.cssElement("dse-b-complet", "TITRE", complet);
+    for (const declaration of ["text-decoration-color:#f12345", "text-decoration-style:wavy", "text-decoration-thickness:2.5px", "text-underline-offset:4px"]) assert.ok(cssComplet.includes(declaration));
+    for (const [cle, valeur] of [["soulignementCouleur", "red;}body{x"], ["soulignementStyle", "inconnu"], ["soulignementEpaisseur", 11], ["soulignementDistance", -1]]) assert.throws(() => B.normaliserTypographie({ [cle]: valeur }));
+    assert.deepEqual(B.normaliserTypographie(complet), complet);
+    const presetComplet = el(95, { SOULIGNEMENT: true, "SOULIGNEMENT-COULEUR": "#f12345", "SOULIGNEMENT-STYLE": "ONDULE", "SOULIGNEMENT-EPAISSEUR": 2.5, "SOULIGNEMENT-DISTANCE": 4 });
+    const reluComplet = B.styleDepuisPreset(presetComplet);
+    for (const [cle, valeur] of Object.entries(complet)) assert.equal(reluComplet[cle], valeur);
+    assert.equal(styles.cssElement("dse-b-simple", "TITRE", { soulignement: true }).includes("text-decoration-style"), false, "aucun changement des anciens styles");
     const parent = el(91, { "TYPO-TITRE": JSON.stringify({ tailleTexte: 30, poidsPolice: 700, responsive: { MOBILE: { tailleTexte: 20 } } }),
       "TYPO-TEXTE": JSON.stringify({ tailleTexte: 16, soulignement: false }) });
     const enfant = el(92, { "TYPO-TITRE": JSON.stringify({ couleurTexte: "#123456", responsive: { MOBILE: { alignement: "CENTRE" } } }) },
@@ -264,7 +276,7 @@ async function main() {
     assert.match(separe, /\.dse-b-carte p\{[^}]*font-size:16px/);
     assert.match(separe, /@media[^}]*h3\{[^}]*font-size:20px !important/);
     const decoration = styles.cssElement("dse-b-separe", "CARTE", { soulignement: true, typoTitre: { soulignement: false }, typoTexte: {} });
-    assert.ok(!decoration.includes(".dse-b-separe{text-decoration:underline"), "pas de soulignement sur l'ancetre");
+    assert.ok(!decoration.includes(".dse-b-separe{text-decoration-line:underline"), "pas de soulignement sur l'ancetre");
     assert.throws(() => B.normaliserTypographie({ tailleTexte: 200 }), /entre 8 et 96/);
     assert.throws(() => B.normaliserTypographie({ couleurTexte: "red;}body{x" }), /invalide/);
     assert.throws(() => B.normaliserTypographie({ poidsPolice: 950 }), /non autorisé/);

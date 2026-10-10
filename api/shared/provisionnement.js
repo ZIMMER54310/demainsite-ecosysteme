@@ -51,6 +51,10 @@ function colonneGraph(c, ids) {
     case "text": return { ...base, text: {} };
     case "note": return { ...base, text: { allowMultipleLines: true, textType: "plain" } };
     case "number": return { ...base, number: {} };
+    case "choice": {
+      if (!Array.isArray(c.choices) || !c.choices.length || c.choices.some((v) => typeof v !== "string" || !v.trim())) throw new Error(`Choix invalides ${c.name}`);
+      return { ...base, choice: { choices: c.choices, allowTextEntry: false, displayAs: "dropDownMenu" } };
+    }
     case "bool": return { ...base, boolean: {}, defaultValue: { value: "false" } };
     case "date": return { ...base, dateTime: { displayAs: "default", format: "dateOnly" } };
     case "lookup": return { ...base, lookup: { listId: ids[c.liste], columnName: "Title", allowMultipleValues: Boolean(c.multiple) } };

@@ -66,6 +66,7 @@ const ALIGNS = ["GAUCHE", "CENTRE", "DROITE", "JUSTIFIE"];
 const CHOIX = {
   poidsPolice: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   stylePolice: ["NORMAL", "ITALIQUE"], transformation: ["AUCUNE", "MAJUSCULES", "MINUSCULES", "CAPITALES"],
+  soulignementStyle: ["SIMPLE", "DOUBLE", "POINTILLES", "TIRETS", "ONDULE"],
   fondPosition: ["CENTRE", "HAUT", "BAS", "GAUCHE", "DROITE"], fondTaille: ["COUVRIR", "CONTENIR", "AUTO"],
   fondRepetition: ["NON", "OUI", "HORIZONTALE", "VERTICALE"], bordureStyle: ["AUCUNE", "PLEINE", "TIRETS", "POINTILLES", "DOUBLE"],
   justification: ["DEBUT", "CENTRE", "FIN", "ESPACE-ENTRE", "ESPACE-AUTOUR"]
@@ -90,11 +91,11 @@ const GROUPES_REPLI = {
 const TYPE_STYLE = { "TEXTE-ENRICHI": "TEXTE", BOUTONS: "BOUTON", CTA: "BOUTON", "IMAGE-TEXTE": "IMAGE", CARROUSEL: "GALERIE" };
 const typeStyle = (type) => TYPE_STYLE[String(type || "").toUpperCase()] || String(type || "").toUpperCase();
 const TYPES_TYPO_SEPAREE = ["CARTE", "LISTE-CARTES", "CTA", "FAQ", "ACCORDEON", "HERO"];
-const TYPO_CLES = ["police", "couleurTexte", "tailleTexte", "poidsPolice", "soulignement", "stylePolice", "hauteurLigne", "espacementLettres", "transformation", "alignement"];
+const TYPO_CLES = ["police", "couleurTexte", "tailleTexte", "poidsPolice", "soulignement", "soulignementCouleur", "soulignementStyle", "soulignementEpaisseur", "soulignementDistance", "stylePolice", "hauteurLigne", "espacementLettres", "transformation", "alignement"];
 function normaliserTypographie(valeurs) {
   if (!valeurs || typeof valeurs !== "object" || Array.isArray(valeurs)) throw new Error("Typographie invalide.");
   const sortie = {};
-  const bornes = { tailleTexte: [8, 96], hauteurLigne: [1, 3], espacementLettres: [-5, 20] };
+  const bornes = { tailleTexte: [8, 96], hauteurLigne: [1, 3], espacementLettres: [-5, 20], soulignementEpaisseur: [0, 10], soulignementDistance: [0, 20] };
   for (const [cle, brut] of Object.entries(valeurs)) {
     if (!TYPO_CLES.includes(cle)) throw new Error(`Réglage typographique inconnu : ${cle}.`);
     if (brut === "" || brut === null || brut === undefined) continue;
@@ -109,7 +110,7 @@ function normaliserTypographie(valeurs) {
       if (cle === "poidsPolice") v = Number(v);
     } else if (cle === "alignement") {
       if (!ALIGNS.includes(v)) throw new Error("Alignement non autorisé.");
-    } else if (cle === "couleurTexte") {
+    } else if (cle === "couleurTexte" || cle === "soulignementCouleur") {
       if (!HEX.test(String(v))) throw new Error("Couleur typographique invalide.");
     } else if (cle === "soulignement") {
       if (typeof v !== "boolean") throw new Error("Soulignement invalide.");
@@ -183,6 +184,10 @@ function styleDepuisPreset(preset, referentiels = {}) {
     couleurTexte: hexDe("OBJ-COULEUR-TEXTE"), couleurFond: hexDe("OBJ-COULEUR-FOND"), couleurBordure: hexDe("OBJ-COULEUR-BORDURE"),
     police, policeFamille, tailleTexte: borne(f(preset, "TAILLE-TEXTE"), 8, 96), poidsPolice: borne(f(preset, "POIDS-POLICE"), 100, 900),
     soulignement: f(preset, "SOULIGNEMENT") === null ? null : booleen(preset, "SOULIGNEMENT", false),
+    soulignementCouleur: HEX.test(String(f(preset, "SOULIGNEMENT-COULEUR") || "").trim()) ? String(f(preset, "SOULIGNEMENT-COULEUR")).trim() : null,
+    soulignementStyle: choix(preset, "SOULIGNEMENT-STYLE", CHOIX.soulignementStyle),
+    soulignementEpaisseur: borne(f(preset, "SOULIGNEMENT-EPAISSEUR"), 0, 10),
+    soulignementDistance: borne(f(preset, "SOULIGNEMENT-DISTANCE"), 0, 20),
     hauteurLigne: borne(f(preset, "HAUTEUR-LIGNE"), 1, 3), alignement: alignDe(preset),
     stylePolice: choix(preset, "STYLE-POLICE", CHOIX.stylePolice),
     espacementLettres: borne(f(preset, "ESPACEMENT-LETTRES"), -5, 20),

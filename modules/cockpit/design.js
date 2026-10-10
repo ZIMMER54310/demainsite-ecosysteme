@@ -25,6 +25,10 @@ const CHAMPS = {
   police: ["TYPO", "Police", "police"], couleurTexte: ["TYPO", "Couleur du texte", "couleur"],
   tailleTexte: ["TYPO", "Taille du texte", "nombre", "px", 8, 96, 1], poidsPolice: ["TYPO", "Graisse", "poids"],
   soulignement: ["TYPO", "Soulignement", "ouinon"],
+  soulignementCouleur: ["TYPO", "Couleur du soulignement", "couleur"],
+  soulignementStyle: ["TYPO", "Style du soulignement", "choix"],
+  soulignementEpaisseur: ["TYPO", "Épaisseur du soulignement", "nombre", "px", 0, 10, 0.5],
+  soulignementDistance: ["TYPO", "Distance sous le texte", "nombre", "px", 0, 20, 0.5],
   stylePolice: ["TYPO", "Style", "choix"], hauteurLigne: ["TYPO", "Hauteur de ligne", "nombre", "×", 1, 3, 0.05],
   espacementLettres: ["TYPO", "Espacement des lettres", "nombre", "px", -5, 20, 0.5], transformation: ["TYPO", "Casse", "choix"],
   alignement: ["TYPO", "Alignement du texte", "alignement"],
@@ -222,6 +226,7 @@ function imbriquer(plat, design) {
   for (const k of ["tailleTexte", "poidsPolice", "hauteurLigne", "espacementLettres", "fondOpacite", "degradeAngle", "largeur", "largeurMinimale", "largeurMaximale", "hauteur", "hauteurMinimale", "hauteurMaximale", "bordureLargeur", "bordureRayon"]) {
     if (s[k] !== undefined) s[k] = Number(s[k]);
   }
+  for (const k of ["soulignementEpaisseur", "soulignementDistance"]) if (s[k] !== undefined) s[k] = Number(s[k]);
   return s;
 }
 

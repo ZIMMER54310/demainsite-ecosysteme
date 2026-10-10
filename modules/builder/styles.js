@@ -7,6 +7,7 @@ const ALIGNEMENTS = { GAUCHE: "left", CENTRE: "center", DROITE: "right", JUSTIFI
 const FLEX = { DEBUT: "flex-start", CENTRE: "center", FIN: "flex-end", "ESPACE-ENTRE": "space-between", "ESPACE-AUTOUR": "space-around" };
 const FLEX_ALIGNEMENT = { GAUCHE: "flex-start", CENTRE: "center", DROITE: "flex-end", JUSTIFIE: "space-between" };
 const STYLE_POLICE = { NORMAL: "normal", ITALIQUE: "italic" };
+const SOULIGNEMENT_STYLE = { SIMPLE: "solid", DOUBLE: "double", POINTILLES: "dotted", TIRETS: "dashed", ONDULE: "wavy" };
 const TRANSFORMATION = { AUCUNE: "none", MAJUSCULES: "uppercase", MINUSCULES: "lowercase", CAPITALES: "capitalize" };
 const FOND_POSITION = { CENTRE: "center", HAUT: "top", BAS: "bottom", GAUCHE: "left", DROITE: "right" };
 const FOND_TAILLE = { COUVRIR: "cover", CONTENIR: "contain", AUTO: "auto" };
@@ -52,7 +53,11 @@ export function groupes(style = {}, ctx = {}) {
   if (nb(s.tailleTexte, 8, 96) !== null) g.typo.push(`font-size:${nb(s.tailleTexte, 8, 96)}px`);
   if (nb(s.poidsPolice, 100, 900) !== null) g.typo.push(`font-weight:${Math.round(nb(s.poidsPolice, 100, 900) / 100) * 100}`);
   if (STYLE_POLICE[s.stylePolice]) g.typo.push(`font-style:${STYLE_POLICE[s.stylePolice]}`);
-  if (typeof s.soulignement === "boolean") g.typo.push(`text-decoration:${s.soulignement ? "underline" : "none"}`);
+  if (typeof s.soulignement === "boolean") g.typo.push(`text-decoration-line:${s.soulignement ? "underline" : "none"}`);
+  if (hex(s.soulignementCouleur)) g.typo.push(`text-decoration-color:${s.soulignementCouleur}`);
+  if (SOULIGNEMENT_STYLE[s.soulignementStyle]) g.typo.push(`text-decoration-style:${SOULIGNEMENT_STYLE[s.soulignementStyle]}`);
+  if (nb(s.soulignementEpaisseur, 0, 10) !== null) g.typo.push(`text-decoration-thickness:${nb(s.soulignementEpaisseur, 0, 10)}px`);
+  if (nb(s.soulignementDistance, 0, 20) !== null) g.typo.push(`text-underline-offset:${nb(s.soulignementDistance, 0, 20)}px`);
   if (nb(s.hauteurLigne, 1, 3) !== null) g.typo.push(`line-height:${nb(s.hauteurLigne, 1, 3)}`);
   if (nb(s.espacementLettres, -5, 20) !== null) g.typo.push(`letter-spacing:${nb(s.espacementLettres, -5, 20)}px`);
   if (TRANSFORMATION[s.transformation]) g.typo.push(`text-transform:${TRANSFORMATION[s.transformation]}`);

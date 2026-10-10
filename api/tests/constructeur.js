@@ -344,6 +344,16 @@ async function main() {
     design.appliquerValeursDesign({ querySelectorAll: (sel) => sel === "[name]" ? inputs : [outil] }, valeurs);
     assert.deepEqual(inputs.map((x) => x.value), ["30", "12", "NON"], "annuler/coller conserve les deux typographies");
     assert.equal(outil.pressed, "true");
+    assert.match(panneau, /name="typoTitre.soulignementCouleur"/);
+    assert.match(panneau, /name="MOBILE.typoTexte.soulignementDistance"/);
+    assert.match(panneau, /<option value="ONDULE">Ondule<\/option>/);
+    const soulignement = design.cssApercu("dse-b-underline", double, { typoTitre: {
+      soulignement: true, soulignementCouleur: "#abcdef", soulignementStyle: "DOUBLE", soulignementEpaisseur: "2.5", soulignementDistance: "4"
+    }, typoTexte: { soulignement: false }, responsive: { MOBILE: { typoTitre: { soulignementDistance: "3" } } } });
+    assert.match(soulignement, /h3\{[^}]*text-decoration-color:#abcdef;[^}]*text-decoration-style:double/);
+    assert.match(soulignement, /text-decoration-thickness:2.5px/);
+    assert.match(soulignement, /text-underline-offset:3px !important/);
+    assert.match(soulignement, /p\{[^}]*text-decoration-line:none/);
     const cssDouble = design.cssApercu("dse-b-separe", { ...double, herite: { typoTitre: { poidsPolice: 700 } } }, { ...valeurs, typoTexte: { tailleTexte: "16", soulignement: false } });
     assert.match(cssDouble, /h3\{[^}]*font-size:30px;[^}]*font-weight:700/);
     assert.match(cssDouble, /p\{[^}]*font-size:16px/);
@@ -531,6 +541,25 @@ async function main() {
       const partiel = JSON.parse(stores.get(`OBJ-STYLE-PRESET/${dernier.id}`).TYPOTITRE);
       assert.equal(partiel.tailleTexte, 30, "une surcharge seule conserve le general");
       assert.equal(partiel.responsive.MOBILE.tailleTexte, 18);
+      const underline = { soulignement: true, soulignementCouleur: "#abcdef", soulignementStyle: "DOUBLE", soulignementEpaisseur: "2.5", soulignementDistance: "4" };
+      await enregistrerTypo({ typoTitre: underline, typoTexte: { soulignement: false } });
+      const sauvegarde = JSON.parse(stores.get(`OBJ-STYLE-PRESET/${dernier.id}`).TYPOTITRE);
+      assert.equal(sauvegarde.soulignementEpaisseur, 2.5);
+      assert.equal(sauvegarde.soulignementCouleur, "#abcdef");
+      copies.modules[0].relations.OBJMODULESITEPUBLICTYPE = lien(1, "TITRE");
+      assert.equal((await enregistrerTypo(underline)).status, 400, "colonnes uniques absentes : erreur explicite");
+      proto.cols = async () => [
+        { name: "SOULIGNEMENT", boolean: {} },
+        { name: "SOULIGNEMENTCOULEUR", text: {} },
+        { name: "SOULIGNEMENTSTYLE", choice: { choices: B.CHOIX.soulignementStyle, allowTextEntry: false } },
+        { name: "SOULIGNEMENTEPAISSEUR", number: {} }, { name: "SOULIGNEMENTDISTANCE", number: {} }
+      ];
+      assert.match((await enregistrerTypo(underline)).message, /Design enregistré/);
+      const platSauve = stores.get(`OBJ-STYLE-PRESET/${dernier.id}`);
+      assert.equal(platSauve.SOULIGNEMENTCOULEUR, "#abcdef");
+      assert.equal(platSauve.SOULIGNEMENTSTYLE, "DOUBLE");
+      assert.equal(platSauve.SOULIGNEMENTEPAISSEUR, 2.5);
+      assert.equal(platSauve.SOULIGNEMENTDISTANCE, 4);
     } finally {
       ecriture.contexteGraph = originalGraph;
       ecriture.lireItemFrais = originalLecture;

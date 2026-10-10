@@ -33,6 +33,19 @@ Les alignements, l'italique, le soulignement et la casse utilisent des
 boutons accessibles au clavier avec infobulles et etat selectionne ;
 la fleche de reinitialisation revient a la valeur heritee.
 
+Le soulignement propose une couleur independante, un style SIMPLE / DOUBLE /
+POINTILLES / TIRETS / ONDULE, une epaisseur (0 a 10 px) et une distance sous
+le texte (0 a 20 px). Ces reglages ne l'activent pas automatiquement :
+utiliser le bouton « Souligner ». Une valeur vide suit le style herite ou
+le comportement du navigateur (couleur du texte, ligne simple, epaisseur
+et distance automatiques).
+Pour la typographie unique, ajouter dans `OBJ-STYLE-PRESET`, sans valeur
+par defaut et non obligatoires : `SOULIGNEMENT-COULEUR` (texte sur une ligne,
+hexadecimal), `SOULIGNEMENT-STYLE` (Choix avec les cinq valeurs ci-dessus,
+sans choix libres), `SOULIGNEMENT-EPAISSEUR` et `SOULIGNEMENT-DISTANCE`
+(Nombres decimaux). Pour les deux typographies, les memes proprietes
+restent dans `TYPO-TITRE` / `TYPO-TEXTE`, y compris les surcharges responsive.
+
 Pour installer uniquement ces reglages et les 25 familles de polices, sans
 provisionner les autres modules ni les modeles :
 

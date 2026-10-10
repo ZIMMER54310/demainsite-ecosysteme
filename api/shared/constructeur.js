@@ -747,6 +747,10 @@ const DESIGN = {
   couleurTexte: ["TYPO", "OBJ-COULEUR-TEXTE", "couleur"], police: ["TYPO", "OBJ-POLICE", "police"],
   tailleTexte: ["TYPO", "TAILLE-TEXTE", "nombre", 8, 96], poidsPolice: ["TYPO", "POIDS-POLICE", "poids"],
   soulignement: ["TYPO", "SOULIGNEMENT", "ouinon"],
+  soulignementCouleur: ["TYPO", "SOULIGNEMENT-COULEUR", "hex"],
+  soulignementStyle: ["TYPO", "SOULIGNEMENT-STYLE", "choix"],
+  soulignementEpaisseur: ["TYPO", "SOULIGNEMENT-EPAISSEUR", "nombre", 0, 10],
+  soulignementDistance: ["TYPO", "SOULIGNEMENT-DISTANCE", "nombre", 0, 20],
   stylePolice: ["TYPO", "STYLE-POLICE", "choix"], hauteurLigne: ["TYPO", "HAUTEUR-LIGNE", "nombre", 1, 3],
   espacementLettres: ["TYPO", "ESPACEMENT-LETTRES", "nombre", -5, 20], transformation: ["TYPO", "TRANSFORMATION-TEXTE", "choix"],
   alignement: ["TYPO", "ALIGNEMENT", "alignement"],
@@ -783,6 +787,7 @@ function typeStyleDe(d, type, el) {
 /* Style imbrique (moteur) -> valeurs plates (formulaire). */
 function plat(style = {}, polices = []) {
   const v = {};
+  for (const cle of ["soulignementCouleur", "soulignementStyle", "soulignementEpaisseur", "soulignementDistance"]) if (style[cle] !== undefined && style[cle] !== null) v[cle] = style[cle];
   for (const cle of ["typoTitre", "typoTexte"]) if (style[cle]) v[cle] = plat(style[cle], polices);
   for (const k of ["couleurTexte", "couleurFond", "couleurBordure", "couleurDegrade", "tailleTexte", "poidsPolice", "soulignement", "stylePolice", "hauteurLigne",
     "espacementLettres", "transformation", "alignement", "fondPosition", "fondTaille", "fondRepetition", "fondOpacite", "degradeAngle", "largeur",
@@ -1462,11 +1467,22 @@ async function executer({ d, perimetre, siteId, action, params = {}, apercu = fa
         const [, colonne, nature, min, max] = table[cle];
         const nom = await colonneDe(liste, colonne, nature);
         if (!nom) {
-          if (cle === "soulignement" && brut !== "" && brut !== null && brut !== undefined) erreurs.push(`Soulignement : colonne SOULIGNEMENT manquante dans ${liste}.`);
+          if (cle.startsWith("soulignement") && brut !== "" && brut !== null && brut !== undefined) erreurs.push(`Soulignement : colonne ${colonne} manquante dans ${liste}.`);
           return null;
         }
         const vide = brut === "" || brut === null || brut === undefined;
         if (vide) return [nom, null];
+        if (cle.startsWith("soulignement") && cle !== "soulignement") {
+          const col = (await w.cols(liste)).find((x) => x.name === nom);
+          if ((nature === "hex" && (!col?.text || col.text.allowMultipleLines)) || (nature === "nombre" && !col?.number) || (nature === "choix" && (!col?.choice || col.choice.allowTextEntry))) {
+            erreurs.push(`Soulignement : type de colonne incorrect pour ${colonne}.`);
+            return null;
+          }
+        }
+        if (nature === "hex") {
+          if (!HEX.test(String(brut))) { erreurs.push(`${libelle} : couleur invalide.`); return null; }
+          return [nom, String(brut).toLowerCase()];
+        }
         if (nature === "nombre") {
           const n = Number(String(brut).replace(",", "."));
           if (!Number.isFinite(n) || n < min || n > max) { erreurs.push(`${libelle} : valeur entre ${min} et ${max}.`); return null; }
