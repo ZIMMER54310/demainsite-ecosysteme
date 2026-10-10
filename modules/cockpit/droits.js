@@ -56,7 +56,21 @@ export function rendreDroits(moi, d, domaine = "") {
   const choix = (xs) => xs.map((x) => `<option value="${e(x.ref)}">${e(x.titre)}</option>`).join("");
   const creation = !d.peutCreer
     ? "<p>La gestion des profils et l’ajout de nouveaux droits nécessitent un accès super administrateur global. Un rôle limité à un site ne donne pas cet accès global.</p>"
-    : `<details class="card"><summary>Ajouter un nouveau droit · Super administrateur</summary>
+    : `<details class="card"><summary>Créer un groupe · Super administrateur</summary>
+    <p>Exemple : MENU, avec le code menu. Le groupe est ajouté au catalogue SharePoint. Il apparaîtra dans le tableau lorsqu’il contiendra des droits ; aucun droit existant n’est déplacé.</p>
+    <form data-creer-groupe>
+      <p><label>Nom du groupe <input name="titre" required maxlength="255" placeholder="MENU"></label></p>
+      <p><label>Code technique unique <input name="code" required pattern="[a-z][a-z0-9.\\-]{2,119}" maxlength="120" placeholder="menu"></label></p>
+      <button class="btn btn-primary">Vérifier avant de créer le groupe</button>
+    </form></details>
+    <details class="card"><summary>Définir les actions d’un groupe · Super administrateur</summary>
+    <p>Après avoir créé un groupe, ajoutez les types d’actions nécessaires, un par un, avant de créer ses droits individuels. Cela n’accorde aucun accès.</p>
+    <form data-associer-action>
+      <p><label>Groupe <select name="capacite" required><option value="">Choisir</option>${choix(d.capacites)}</select></label></p>
+      <p><label>Type d’action à rendre disponible <select name="typeAction" required><option value="">Choisir</option>${choix(d.actions)}</select></label></p>
+      <button class="btn btn-primary">Vérifier avant d’ajouter l’action au groupe</button>
+    </form></details>
+    <details class="card"><summary>Ajouter un nouveau droit · Super administrateur</summary>
     <p>Ajoute une entrée au catalogue, sans attribuer de permission. Une nouvelle action métier doit aussi être raccordée dans le logiciel : ce formulaire ne crée pas sa fonctionnalité.</p>
     <form data-creer-droit>
       <p><label>Nom affiché <input name="titre" required maxlength="255"></label></p>
@@ -165,6 +179,21 @@ export function activerDroits(racine = document) {
     cible.innerHTML = xs.map((x) => `<option value="${e(x.ref)}">${e(x.titre)}${x.profil ? ` · ${e(x.profil)} · ${e(x.sites.join(", "))}` : ""}</option>`).join("");
     afficher();
   };
+  const actualiserCatalogue = () => {
+    for (const select of root.querySelectorAll('[data-creer-droit] select[name="capacite"],[data-associer-action] select[name="capacite"]')) {
+      const selection = select.value;
+      select.innerHTML = `<option value="">Choisir</option>` + d.capacites.map((x) => `<option value="${e(x.ref)}">${e(x.titre)}</option>`).join("");
+      if ([...select.options].some((x) => x.value === selection)) select.value = selection;
+    }
+    for (const [attribut, valeurs, libelle] of [
+      ["data-filtre-groupe", [...new Set(d.operations.map((o) => o.groupe))], "Tous les groupes"],
+      ["data-filtre-action", [...new Set(d.operations.map((o) => o.action).filter(Boolean))], "Toutes les actions"]
+    ]) {
+      const select = root.querySelector(`[${attribut}]`), selection = select.value;
+      select.innerHTML = `<option value="">${libelle}</option>` + valeurs.map((v) => `<option value="${e(v)}">${e(v)}</option>`).join("");
+      if (valeurs.includes(selection)) select.value = selection;
+    }
+  };
   const modifie = () => !!matrice.querySelector('[data-modifie="true"]');
   root.addEventListener("input", (event) => {
     if (event.target.matches("[data-recherche-droits],[data-recherche-groupe]")) actualiserFiltresDroits(root);
@@ -198,6 +227,7 @@ export function activerDroits(racine = document) {
       const r = await getAdminDroits(root.dataset.domaine);
       if (!r?.donnees) throw new Error("Relecture des droits incomplète.");
       d = r.donnees;
+      actualiserCatalogue();
       choisir();
       precedente = cible.value;
       relectureRequise = false;
@@ -254,10 +284,11 @@ export function activerDroits(racine = document) {
       const r = await getAdminDroits(root.dataset.domaine);
       if (!r?.donnees) throw new Error("La relecture du tableau est incomplète.");
       d = r.donnees;
+      actualiserCatalogue();
       const selection = cible.value;
       choisir();
       if ([...cible.options].some((x) => x.value === selection)) { cible.value = selection; afficher(); }
-      resultat.textContent = `${termines} droit(s) enregistré(s), relu(s) et journalisé(s).`;
+      resultat.textContent = `${termines} modification(s) enregistrée(s), relue(s) et journalisée(s).`;
     } catch (err) {
       console.error("[DSE droits]", err.message);
       relectureRequise = true;
@@ -280,6 +311,13 @@ export function activerDroits(racine = document) {
     const params = Object.fromEntries(new FormData(event.target));
     void enregistrer([{ ...params, action: "creer" }]);
   });
+  for (const [attribut, action] of [["data-creer-groupe", "creer-groupe"], ["data-associer-action", "associer-action"]]) {
+    root.querySelector(`[${attribut}]`)?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const params = Object.fromEntries(new FormData(event.target));
+      void enregistrer([{ ...params, action }]);
+    });
+  }
   choisir();
   precedente = cible.value;
 }

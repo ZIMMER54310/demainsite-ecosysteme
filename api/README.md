@@ -40,6 +40,14 @@ ses propres acces ou des droits verrouilles. Une politique de role absente
 ne permet jamais d'inferer un niveau inferieur. Le super administrateur
 (politique globale avec fonction `plateforme`) peut egalement gerer les
 profils et ajouter des droits au catalogue. Son propre profil est protege.
+« Creer un groupe » ajoute un element actif dans `OBJ-CAPACITE`, avec un nom
+et un code uniques (doublons inactifs inclus). « Definir les actions d'un groupe »
+ajoute une association dans `OBJ-CAPACITE-ACTION`, avant de creer ses droits.
+Ces formulaires sont reserves aux super administrateurs et utilisent l'apercu,
+la confirmation, la relecture et le journal communs. Ils n'attribuent aucun acces
+et ne deplacent aucun droit existant. Les groupes vides restent disponibles dans
+le catalogue de creation ; seuls les groupes contenant des droits apparaissent
+dans la matrice et ses filtres. Les listes de choix sont actualisees apres relecture.
 Un profil verrouille propose « Deverrouiller ce profil pour modifier ses
 droits » uniquement au super administrateur, hors de ses propres profils.
 Cette action exige apercu/confirmation, ETag et journal ; elle ne modifie

@@ -158,6 +158,11 @@ function etats(data, nom) {
   return fields;
 }
 
+function champsCatalogue(data, nom, valeurs) {
+  return Object.fromEntries(valeurs.filter(([label]) => data.source[nom].cols.some((c) => c.displayName === label))
+    .map(([label, type, valeur]) => [champ(data, nom, label, type), valeur]));
+}
+
 async function planifier(d, params) {
   const { data, donnees } = await contexte(d);
   let nom, fields, existants = [], titre;
@@ -177,6 +182,31 @@ async function planifier(d, params) {
       fields = { [`${c.name}LookupId`]: non[0].id };
     } else throw new Error("Type de verrouillage de profil incompatible.");
     existants = [{ id: role.id }];
+  } else if (params.action === "creer-groupe") {
+    if (!superAdmin(d)) erreur("Seul un super administrateur peut créer un groupe.");
+    titre = String(params.titre || "").trim();
+    const code = String(params.code || "").trim();
+    if (!titre || titre.length > 255 || !/^[a-z][a-z0-9.-]{2,119}$/.test(code)) erreur("Renseignez un nom et un code de groupe valides.");
+    nom = "OBJ-CAPACITE";
+    const codeChamp = champ(data, nom, "CODE-CAPACITÉ", "text");
+    const normaliser = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    if (data.source[nom].items.some((i) => normaliser(i.fields.Title) === normaliser(titre) ||
+      normaliser(i.fields[codeChamp]) === normaliser(code))) erreur("Ce groupe existe déjà, y compris éventuellement désactivé.");
+    fields = { Title: titre, [codeChamp]: code, ...etats(data, nom),
+      ...champsCatalogue(data, nom, [["LIBELLÉ-CAPACITÉ", "text", titre], ["VERROUILLE", "boolean", false]]) };
+  } else if (params.action === "associer-action") {
+    if (!superAdmin(d)) erreur("Seul un super administrateur peut définir les actions d’un groupe.");
+    const capacite = trouver(data.capacites, "capacite", params.capacite);
+    const action = trouver(data.actions, "action", params.typeAction);
+    if (!capacite || !action || capacite.verrouille) erreur("Groupe ou type d’action indisponible ou protégé.");
+    nom = "OBJ-CAPACITE-ACTION";
+    const capaciteChamp = champ(data, nom, "OBJ-CAPACITE", "lookup", "OBJ-CAPACITE");
+    const actionChamp = champ(data, nom, "OBJ-ACTION", "lookup", "OBJ-ACTION");
+    if (data.source[nom].items.some((i) => String(i.fields[capaciteChamp]) === capacite.id &&
+      String(i.fields[actionChamp]) === action.id)) erreur("Cette association existe déjà, y compris éventuellement désactivée.");
+    titre = `${capacite.titre} · ${action.titre}`;
+    fields = { Title: titre.slice(0, 255), [capaciteChamp]: capacite.id, [actionChamp]: action.id, ...etats(data, nom),
+      ...champsCatalogue(data, nom, [["CODE-CAPACITÉ", "text", capacite.code], ["CODE-ACTION", "text", action.code], ["VERROUILLE", "boolean", false]]) };
   } else if (params.action === "creer") {
     if (!superAdmin(d)) erreur("Seul un super administrateur peut ajouter un droit.");
     const capacite = trouver(data.capacites, "capacite", params.capacite);
@@ -248,8 +278,10 @@ async function planifier(d, params) {
   if (itemId && !row) throw new Error("La permission actuelle est indisponible. Relisez avant de modifier.");
   const avant = Object.fromEntries(Object.keys(fields).map((k) => [k, row?.fields[k] == null ? "" : String(row.fields[k])]));
   return { type: itemId ? "modifier" : "ajouter", listId: data.source[nom].id, itemId, champs: fields,
+    ...(params.action === "creer-groupe" ? { verrouRessource: "droits-catalogue-groupes" } : {}),
     avant: ecriture.hash(avant), selectionChamps: Object.keys(fields), nom: titre, action: `Droits : ${params.action}`,
-    cleDoublon: ecriture.hash([nom, params.action === "creer" ? params.code : params.cible, params.operation || ""]),
+    cleDoublon: ecriture.hash([nom, ["creer", "creer-groupe"].includes(params.action) ? params.code :
+      params.action === "associer-action" ? params.capacite : params.cible, params.typeAction || params.operation || ""]),
     portee: "droits-admin", params, journalComptes: true, contexteJournal: { utilisateurId: d.utilisateurId, siteId: d.contexte?.siteId || null } };
 }
 
@@ -257,6 +289,8 @@ async function preparer(identite, d, params) {
   const op = await planifier(d, params);
   return { jeton: ecriture.emettreJeton(identite, op).jeton, changements: [{ libelle: op.nom, avant: "Configuration actuelle",
     apres: params.action === "creer" ? "Nouveau droit (aucune autorisation attribuée automatiquement)" :
+      params.action === "creer-groupe" ? "Nouveau groupe vide ; aucun droit ni accès existant modifié" :
+      params.action === "associer-action" ? "Type d’action disponible pour créer des droits ; aucune autorisation attribuée" :
       params.action === "deverrouiller-profil" ? "Profil déverrouillé ; ses droits restent inchangés jusqu’à leur modification explicite" :
         params.valeur === "true" ? "Autoriser cette action" : "Interdire cette action" }] };
 }
