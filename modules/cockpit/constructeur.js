@@ -9,6 +9,7 @@ import { panneauDesign, lireValeurs, cssApercu, APPAREILS_APERCU, memoriserGroup
 import { codeChamp, controleChamp, erreurValeur } from "../builder/proprietes.js";
 import { confirmerApercuConstruction } from "./confirmation.js";
 import { getState } from "../../js/state.js";
+import { rendreVersion } from "../../js/mise-a-jour.js";
 import { rendusPublics, rendreHeroPublic } from "../../pages/accueil.js";
 import { getSiteByDomain } from "../../services/domaine.service.js";
 import { getSiteFull } from "../../services/site.service.js";
@@ -507,7 +508,7 @@ function editeur(d) {
   const peut = ecrit(d, FONCTION[type]);
   const colonnes = colonnesDe(a.sections);
   const publicationRequise = !a.etat.publiable || a.generique || contientBrouillon(a.sections);
-  return `<header class="constructeur-barre-visuelle"><strong>${e(d.site?.titre || "")} · ${e(a.titre)}</strong>
+  return `<header class="constructeur-barre-visuelle"><strong>${e(d.site?.titre || "")} · ${e(a.titre)}</strong>${rendreVersion()}
     <div class="constructeur-boutons constructeur-outils-barre"><span class="constructeur-appareils" role="group" aria-label="Affichage sur l'appareil"><span class="constructeur-groupe-titre">Affichage</span>${APPAREILS_BARRE.map((x) => `<button type="button" class="btn btn-mini ${x.cle === (d.appareil || "GENERAL") ? "btn-primary" : "btn-secondary"}" data-c-appareil="${x.cle}"${aideAttr(d, x.aide)} title="${x.cle === "GENERAL" ? "Tout voir : les éléments masqués sur un appareil restent affichés, encadrés en pointillés" : `Voir exactement ce que voit un visiteur sur ${NOMS_APPAREILS[x.cle]}`}" aria-pressed="${x.cle === (d.appareil || "GENERAL")}">${x.libelle}</button>`).join("")}</span>
       <span class="constructeur-separateur" aria-hidden="true"></span>
       <span class="constructeur-groupe constructeur-voir" role="group" aria-label="Options d'affichage"><span class="constructeur-groupe-titre">Voir</span>
@@ -648,6 +649,12 @@ export function activerConstructeur(racine, { moi, domaine, donnees, onglet }) {
   let historiqueBuilder = [], positionBuilder = -1, empreinteHistorique = "";
   let copieReglages = null;
   let enCours = false;
+  racine.addEventListener("dse:avant-mise-a-jour", (ev) => {
+    if (racine.isConnected && enCours) {
+      ev.preventDefault();
+      message("Attendez la fin de l'enregistrement avant de mettre à jour le cockpit.");
+    }
+  });
   let glisse = null;
   const replies = new Set();
   const selection = new Set();

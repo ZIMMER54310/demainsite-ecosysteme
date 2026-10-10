@@ -108,6 +108,19 @@ Le script exporte le commit via `git archive`, ne publie que `index.html`, `404.
 `.env`, sauvegardes, etc.), controle avant/apres copie et ne touche pas a `/var/www/html/media`.
 Il ecrit le SHA deploye dans `/var/www/.dse-front-commit`.
 
+Le cockpit affiche la version du front charge par le navigateur (identifiant
+court du commit), y compris dans le constructeur plein ecran. Il verifie la
+version publiee a l'ouverture du cockpit, puis chaque minute et au retour sur
+l'onglet visible. Le bouton « Verifier » permet une verification immediate.
+Si une autre version est publiee, « Mettre a jour » propose un rechargement
+apres confirmation : enregistrer les saisies avant de continuer. L'adresse et
+la page courante sont conservees, avec un parametre de version pour eviter
+de reutiliser le document en cache. Aucun rechargement n'est automatique ;
+un enregistrement du constructeur en cours bloque la mise a jour.
+Ce bouton ne deploie aucun code serveur et ne provisionne pas SharePoint.
+Une erreur de verification est affichee avec « Reessayer », sans annoncer
+que le cockpit est a jour.
+
 ## Deploiement / redemarrage de l'API
 
 ```bash

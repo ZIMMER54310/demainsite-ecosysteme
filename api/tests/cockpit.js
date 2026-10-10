@@ -284,6 +284,51 @@ const TERMES_TECHNIQUES = /OBJ-|Lookup|listeId|"liste"|Graph|GitHub|SharePoint|s
   assert.ok(profil.includes("data-recherche-cockpit") && profil.includes("/api/v1/auth/deconnexion"));
   assert.ok(!profil.includes("<b>"), "profil echappe");
   assert.ok(!header.renderHeader({ succes: true }, { fonctions: [] }).includes("data-recherche-cockpit"), "recherche reservee aux sites autorises");
+  assert.ok(profil.includes("data-cockpit-version"), "version visible dans le cadre du cockpit");
+  {
+    const { creerSuiviVersion, rendreVersion, versionPubliee } = await import(url("js/mise-a-jour.js"));
+    const version = "a".repeat(40), nouvelle = "b".repeat(40);
+    const html = (v) => `<script type="module" src="/js/app.js?v=${v}"></script>`;
+    assert.equal(versionPubliee(html(nouvelle)), nouvelle);
+    assert.throws(() => versionPubliee('<script src="https://autre.test/js/app.js?v=' + nouvelle + '"></script>'));
+    assert.throws(() => versionPubliee(html("invalide")));
+    let publication = version, accord = false, autorise = true, navigation = null, lectures = 0;
+    const suivi = creerSuiviVersion({
+      version,
+      lire: async () => { lectures++; return html(publication); },
+      confirmer: () => accord,
+      avant: () => autorise,
+      naviguer: (v) => { navigation = v; }
+    });
+    await Promise.all([suivi.verifier(), suivi.verifier()]);
+    assert.equal(lectures, 1, "pas de verification concurrente");
+    assert.ok(rendreVersion(suivi.etat).includes("Version aaaaaaa"));
+    assert.ok(!rendreVersion(suivi.etat).includes("data-cockpit-mise-a-jour"), "pas de bouton lorsque le cockpit est a jour");
+    publication = nouvelle;
+    await suivi.verifier();
+    assert.ok(rendreVersion(suivi.etat).includes("data-cockpit-mise-a-jour"));
+    assert.equal(navigation, null, "jamais de rechargement automatique");
+    assert.equal(suivi.appliquer(), false, "annulation conserve les saisies");
+    accord = true;
+    autorise = false;
+    assert.equal(suivi.appliquer(), false, "enregistrement en cours bloque le rechargement");
+    autorise = true;
+    assert.equal(suivi.appliquer(), true);
+    assert.equal(navigation, nouvelle);
+    assert.equal(suivi.etat.version, version, "la version chargee reste affichee jusqu'au rechargement");
+    publication = "invalide";
+    await suivi.verifier();
+    assert.ok(suivi.etat.erreur);
+    assert.ok(rendreVersion(suivi.etat).includes("Réessayer"));
+    assert.ok(!rendreVersion(suivi.etat).includes("data-cockpit-mise-a-jour"));
+    assert.equal(suivi.appliquer(), false, "une erreur ne provoque jamais une mise a jour");
+    publication = nouvelle;
+    await suivi.verifier();
+    assert.equal(suivi.etat.erreur, "");
+    const indisponible = creerSuiviVersion({ version, lire: async () => { throw new Error("Réseau indisponible"); } });
+    await indisponible.verifier();
+    assert.ok(rendreVersion(indisponible.etat).includes("Réseau indisponible"));
+  }
 
   const sidebar = await import(url("components/sidebar.js"));
   const publicUser = { authenticated: true, reconnu: true, sitesPublics: [
